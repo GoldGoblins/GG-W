@@ -1,0 +1,19 @@
+[workspace]
+resolver = "2"
+members = ["crates/engine-ui-core", "crates/gg-engine-ui"]
+[workspace.package]
+version = "0.2.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["sam <samuv.eth@gmail.com>"]
+[workspace.lints.clippy]
+too_many_arguments = "allow"
+[patch.crates-io]
+lua-src = { path = "third_party/lua-src" }
+[profile.release]
+strip = "symbols"
+debug = false
+incremental = false
+[profile.test]
+debug = false
+incremental = false

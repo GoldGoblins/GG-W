@@ -1,0 +1,33 @@
+[package]
+name = "engine-formats-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "WoW 1.12.1 asset-format adapters (MPQ/BLP/DBC/ADT/WDT) and the engine-extract CLI"
+
+[lints]
+workspace = true
+
+[features]
+# `dev` gates one thing, the project folder (`install::project_folder`), whose fallback bakes this
+# source tree's path into the binary. Every dependent takes this crate without default features and
+# forwards `dev`, or unification puts the path back into a player build.
+default = ["dev"]
+dev = []
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+engine-adt = { path = "../engine-adt" }
+engine-bytes = { path = "../engine-bytes" }
+engine-dbc = { path = "../engine-dbc" }
+engine-m2 = { path = "../engine-m2" }
+engine-mpq = { path = "../engine-mpq" }
+engine-blp = { path = "../engine-blp" }
+# PNG only: the default `avif` feature would pull in rav1e, a whole AV1 encoder, to write PNGs.
+image = { version = "0.25", default-features = false, features = ["png"] }
+engine-wdt = { path = "../engine-wdt" }
+engine-wmo = { path = "../engine-wmo" }
+
+[dev-dependencies]
+glam = "0.31"

@@ -1,0 +1,6 @@
+interface:
+  display_name: "GG Blender Reference Workflow"
+  short_description: "Model from text or images and correct from visual evidence"
+  default_prompt: "Use $gg-blender-reference-workflow to create the model, generate coherent references, inspect multi-view renders, correct mismatches, and save tested lessons."
+policy:
+  allow_implicit_invocation: true

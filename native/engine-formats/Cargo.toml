@@ -1,0 +1,20 @@
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+[workspace.package]
+version = "0.2.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+[workspace.lints.clippy]
+too_many_arguments = "allow"
+[workspace.dependencies]
+anyhow = "1"
+clap = { version = "4.6.1", features = ["derive"] }
+sha1 = "0.10.6"
+[profile.release]
+strip = "symbols"
+debug = false
+incremental = false
+[profile.test]
+debug = false
+incremental = false

@@ -1,0 +1,71 @@
+{
+  "$id": "gg.workbench.local-ai-response.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "duration_ms": {
+          "maximum": 900000,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "exit_code": {
+          "maximum": 255,
+          "minimum": -255,
+          "type": "integer"
+        },
+        "model_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "runtime_image_digest": {
+          "maxLength": 256,
+          "minLength": 1,
+          "type": "string"
+        },
+        "runtime_image_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "type": "string"
+        },
+        "stderr_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "request_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._:-]{1,128}$",
+      "type": "string"
+    },
+    "schema": {
+      "const": "gg.workbench.local-ai-response.v1"
+    },
+    "status": {
+      "enum": [
+        "PASS",
+        "BLOCK",
+        "ERROR"
+      ]
+    },
+    "text": {
+      "maxLength": 65536,
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "request_id",
+    "status",
+    "text",
+    "evidence"
+  ],
+  "title": "GG Workbench Local AI Response v1",
+  "type": "object"
+}

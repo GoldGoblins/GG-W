@@ -1,0 +1,55 @@
+ARG BASE_REF
+FROM ${BASE_REF}
+
+ARG GG_CODE_GATE_VERSION
+ARG GG_SOURCE_DIGEST
+ARG GG_TOOL_SHA256
+ARG GG_RULES_SHA256
+
+LABEL org.opencontainers.image.title="GG Code Gate"
+LABEL org.opencontainers.image.version="${GG_CODE_GATE_VERSION}"
+LABEL org.opencontainers.image.description="Deterministic local code gate for Bash, Python, PHP and JSON"
+LABEL io.goldgoblins.code-gate.source-digest="${GG_SOURCE_DIGEST}"
+LABEL io.goldgoblins.code-gate.tool-sha256="${GG_TOOL_SHA256}"
+LABEL io.goldgoblins.code-gate.rules-sha256="${GG_RULES_SHA256}"
+
+RUN dnf5 -y --refresh --setopt=install_weak_deps=False install \
+        'bash-5.3.9-3.fc44.x86_64' \
+        'coreutils-9.10-4.fc44.x86_64' \
+        'diffutils-3.12-5.fc44.x86_64' \
+        'file-5.46-10.fc44.x86_64' \
+        'findutils-1:4.10.0-7.fc44.x86_64' \
+        'gawk-5.3.2-3.fc44.x86_64' \
+        'grep-3.12-3.fc44.x86_64' \
+        'jq-1.8.1-3.fc44.x86_64' \
+        'php-cli-8.5.8-1.fc44.x86_64' \
+        'python3-3.14.6-1.fc44.x86_64' \
+        'python3-pytest-8.4.2-2.fc44.noarch' \
+        'ruff-0.15.21-1.fc44.x86_64' \
+        'sed-4.9-7.fc44.x86_64' \
+        'ShellCheck-0.11.0-4.fc44.x86_64' \
+    && mkdir -p /opt/gg-code-gate /usr/share/gg-code-gate /input /output /work \
+    && rpm -q --qf '%{NAME}|%{VERSION}-%{RELEASE}|%{ARCH}\n' \
+        bash coreutils diffutils file findutils gawk grep jq php-cli \
+        python3 python3-pytest ruff sed ShellCheck \
+        | LC_ALL=C sort > /usr/share/gg-code-gate/PACKAGES.runtime \
+    && dnf5 clean all \
+    && rm -rf /var/cache/dnf /var/cache/libdnf5 /var/log/dnf* \
+    && chmod 0555 /opt/gg-code-gate /input /output /work \
+    && chmod 0444 /usr/share/gg-code-gate/PACKAGES.runtime
+
+COPY gg-code-gate.py /opt/gg-code-gate/gg-code-gate.py
+COPY secret-rules.json /opt/gg-code-gate/secret-rules.json
+
+RUN chmod 0555 /opt/gg-code-gate/gg-code-gate.py \
+    && chmod 0444 /opt/gg-code-gate/secret-rules.json
+
+ENV HOME=/nonexistent
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+ENV PATH=/usr/local/bin:/usr/bin:/bin
+
+USER 1000:1000
+WORKDIR /work
+ENTRYPOINT ["python3", "-I", "-B", "/opt/gg-code-gate/gg-code-gate.py"]

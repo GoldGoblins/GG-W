@@ -1,0 +1,4 @@
+{
+  "schema": "gg-code-gate-report-v1",
+  "status": "<PASS|FAIL|CONDITIONAL>"
+}

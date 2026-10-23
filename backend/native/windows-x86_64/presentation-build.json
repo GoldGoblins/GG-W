@@ -1,0 +1,31 @@
+{
+  "schema": "gg.native-presentation-build.v1",
+  "abi": 1,
+  "platform": "windows-x86_64",
+  "compiler": "MSVC",
+  "flags": [
+    "/nologo",
+    "/O2",
+    "/MD",
+    "/W4",
+    "/EHsc",
+    "/std:c++17",
+    "/DGG_NATIVE_BUILD"
+  ],
+  "source_sha256": "0c8d4c310abcc0795c1ac221eff7db49ac6bcd41a35735c829ce8ff288b8ca35",
+  "binary_sha256": "ff12eea65f5b5c6231ff0dcf82795f474b22ba9edfc1893ea946dbb41e7a0fa3",
+  "binary_bytes": 160768,
+  "probe": {
+    "status": "PASS",
+    "lua_host_api_tested": false,
+    "checks": [
+      "instance-buffer",
+      "audio-voices-limiter-lifetime",
+      "audio-reverb-stream-fade-lifetime",
+      "audio-stereo-pitch-voice-generation",
+      "Lua-sandbox-instructions-memory-lifetime"
+    ]
+  },
+  "lua_c_files": 24,
+  "sanitizers": false
+}

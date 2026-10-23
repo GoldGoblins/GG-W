@@ -1,0 +1,863 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+export LC_ALL=C
+umask 077
+
+VERSION="1.0.2-candidate.1"
+SCRIPT_PATH="$(readlink -f "$0")"
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
+REPO_ROOT="$(readlink -f "$SCRIPT_DIR/../..")"
+QML_GATE_ROOT="$REPO_ROOT/infrastructure/code-gate-qml"
+IMAGE_LOCK="$QML_GATE_ROOT/IMAGE.lock"
+CONTEXT_DIR="$QML_GATE_ROOT"
+RUNS_ROOT="${XDG_STATE_HOME:-$HOME/.local/state}/goldgoblins/qml-code-gate/runs"
+FIXTURE_ROOT="$REPO_ROOT/tests/code-gate-qml/fixtures"
+
+TARGET=""
+CONTAINER_NAME=""
+CONTAINER_CREATED=0
+
+fail() {
+    printf 'FAIL: %s\n' "$1" >&2
+    exit 2
+}
+
+# shellcheck disable=SC2329  # cleanup invoked via EXIT trap
+cleanup() {
+    local rc="$?"
+    trap - EXIT INT TERM
+    set +e
+    if [[ "$CONTAINER_CREATED" -eq 1 && -n "$CONTAINER_NAME" ]]; then
+        podman rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
+    fi
+    exit "$rc"
+}
+
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+usage() {
+    cat <<'EOF'
+Användning:
+  gg-code-gate-qml.sh FIL
+
+Candidate-versionen accepterar endast vanliga .qml-filer under:
+  /home/GG/GoldGoblins
+eller candidate-testernas syntetiska fixture-katalog.
+EOF
+}
+
+canonical_image_id() {
+    local value="$1"
+    value="${value#sha256:}"
+    [[ "$value" =~ ^[0-9a-f]{64}$ ]] || return 1
+    printf '%s' "$value"
+}
+
+read_lock_value() {
+    local key="$1"
+    local value
+    value="$(
+        awk -F= -v wanted="$key" '
+            $1 == wanted {
+                print substr($0, index($0, "=") + 1)
+                count++
+            }
+            END {
+                if (count != 1) {
+                    exit 20
+                }
+            }
+        ' "$IMAGE_LOCK"
+    )" || fail "Ogiltigt eller dubblerat låsvärde: $key"
+    printf '%s' "$value"
+}
+
+if [[ "$#" -eq 1 ]]; then
+    TARGET="$1"
+elif [[ "$#" -eq 0 ]]; then
+    usage >&2
+    fail "Målfil saknas."
+else
+    usage >&2
+    fail "Exakt en målfil krävs."
+fi
+
+[[ -f "$IMAGE_LOCK" && ! -L "$IMAGE_LOCK" ]] || fail "IMAGE.lock saknas eller är symlänk."
+[[ -f "$CONTEXT_DIR/gg-code-gate-qml.py" ]] || fail "Candidate-runner saknas."
+[[ -f "$CONTEXT_DIR/secret-rules.json" ]] || fail "Candidate secret-rules saknas."
+[[ -f "$CONTEXT_DIR/RUNTIME.lock.json" ]] || fail "Candidate runtime-lock saknas."
+
+if [[ -L "$TARGET" ]]; then
+    fail "Målfilen får inte vara symlänk."
+fi
+
+TARGET_REAL="$(readlink -f -- "$TARGET")"
+[[ -f "$TARGET_REAL" ]] || fail "Målfilen saknas eller är inte vanlig fil."
+
+case "${TARGET_REAL,,}" in
+    *.qml)
+        ;;
+    *)
+        fail "Candidate QML Gate accepterar endast .qml."
+        ;;
+esac
+
+TARGET_SIZE="$(stat -c '%s' -- "$TARGET_REAL")"
+[[ "$TARGET_SIZE" -le 2097152 ]] || fail "Målfilen är större än 2 MiB."
+
+if ! python3 - "$REPO_ROOT" "$FIXTURE_ROOT" "$TARGET_REAL" <<'PY'
+from __future__ import annotations
+
+import pathlib
+import sys
+
+roots = [
+    pathlib.Path(sys.argv[1]).resolve(strict=True),
+    pathlib.Path(sys.argv[2]).resolve(strict=True),
+]
+target = pathlib.Path(sys.argv[3]).resolve(strict=True)
+
+if not any(target != root and root in target.parents for root in roots):
+    raise SystemExit(30)
+PY
+then
+    fail "Målfilen ligger utanför tillåtna rötter."
+fi
+
+IMAGE_REF="$(read_lock_value image_ref)"
+EXPECTED_IMAGE_ID="$(canonical_image_id "$(read_lock_value image_id)")" || fail "Ogiltigt image_id."
+EXPECTED_RUNNER_SHA="$(read_lock_value runner_sha256)"
+EXPECTED_RULES_SHA="$(read_lock_value rules_sha256)"
+EXPECTED_RUNTIME_LOCK_SHA="$(read_lock_value runtime_lock_sha256)"
+
+ACTUAL_RUNNER_SHA="$(sha256sum "$CONTEXT_DIR/gg-code-gate-qml.py" | awk '{print $1}')"
+ACTUAL_RULES_SHA="$(sha256sum "$CONTEXT_DIR/secret-rules.json" | awk '{print $1}')"
+ACTUAL_RUNTIME_LOCK_SHA="$(sha256sum "$CONTEXT_DIR/RUNTIME.lock.json" | awk '{print $1}')"
+
+[[ "$ACTUAL_RUNNER_SHA" == "$EXPECTED_RUNNER_SHA" ]] || fail "Runner-hash avviker."
+[[ "$ACTUAL_RULES_SHA" == "$EXPECTED_RULES_SHA" ]] || fail "Secret-rules-hash avviker."
+[[ "$ACTUAL_RUNTIME_LOCK_SHA" == "$EXPECTED_RUNTIME_LOCK_SHA" ]] || fail "Runtime-lock-hash avviker."
+
+RAW_CURRENT_IMAGE_ID="$(
+    podman image inspect --format '{{.Id}}' "$IMAGE_REF" 2>/dev/null
+)" || fail "Candidate-imagen saknas."
+
+CURRENT_IMAGE_ID="$(canonical_image_id "$RAW_CURRENT_IMAGE_ID")" || fail "Candidate image-id är ogiltigt."
+[[ "$CURRENT_IMAGE_ID" == "$EXPECTED_IMAGE_ID" ]] || fail "Candidate image-id avviker från IMAGE.lock."
+
+for controlled in "$SCRIPT_DIR" "$CONTEXT_DIR" "$RUNS_ROOT" "$FIXTURE_ROOT"; do
+    if [[ -L "$controlled" ]]; then
+        fail "Kontrollerad candidate-sökväg får inte vara symlänk: $controlled"
+    fi
+done
+
+mkdir -p "$RUNS_ROOT" "$FIXTURE_ROOT"
+chmod 0700 "$RUNS_ROOT" "$FIXTURE_ROOT"
+
+RUN_ID="$(
+    python3 - <<'PY'
+from __future__ import annotations
+
+import secrets
+import time
+
+print(f"{time.time_ns()}-{secrets.token_hex(6)}")
+PY
+)"
+
+RUN_DIR="$RUNS_ROOT/$RUN_ID"
+INPUT_DIR="$RUN_DIR/input"
+OUTPUT_DIR="$RUN_DIR/output"
+
+mkdir -p "$INPUT_DIR" "$OUTPUT_DIR"
+chmod 0700 "$INPUT_DIR" "$OUTPUT_DIR"
+
+SOURCE_COPY="$INPUT_DIR/source"
+install -m 0400 -- "$TARGET_REAL" "$SOURCE_COPY"
+
+ORIGINAL_SHA="$(sha256sum "$TARGET_REAL" | awk '{print $1}')"
+COPIED_SHA="$(sha256sum "$SOURCE_COPY" | awk '{print $1}')"
+[[ "$ORIGINAL_SHA" == "$COPIED_SHA" ]] || fail "Källkopians SHA-256 avviker."
+
+# QML-filer kan referera både till vanliga sibling-komponenter och till
+# quoted lokala importkataloger. Materialisera en bounded dependency closure
+# read-only under /input och bevara relativa sökvägar från targetkatalogen.
+QML_CONTEXT_MANIFEST="$RUN_DIR/qml-context.sha256"
+
+if ! QML_CONTEXT_RESULT="$(
+    python3 - \
+        "$TARGET_REAL" \
+        "$INPUT_DIR" \
+        "$QML_CONTEXT_MANIFEST" \
+        "$REPO_ROOT" \
+        "$FIXTURE_ROOT" <<'PY'
+from __future__ import annotations
+
+import hashlib
+import os
+import pathlib
+import re
+import stat
+import sys
+
+
+TARGET = pathlib.Path(sys.argv[1])
+INPUT = pathlib.Path(sys.argv[2])
+MANIFEST = pathlib.Path(sys.argv[3])
+REPO_ROOT = pathlib.Path(sys.argv[4])
+FIXTURE_ROOT = pathlib.Path(sys.argv[5])
+
+MAX_FILES = 128
+MAX_BYTES = 8 * 1024 * 1024
+MAX_FILE_BYTES = 2 * 1024 * 1024
+MAX_IMPORT_DEPTH = 8
+
+IMPORT_RE = re.compile(
+    r'(?m)^[ \t]*import[ \t]+"([^"]+)"'
+)
+
+
+def fail(message: str) -> "NoReturn":
+    raise SystemExit(message)
+
+
+def canonical(path: pathlib.Path) -> pathlib.Path:
+    return path.resolve(strict=True)
+
+
+target = canonical(TARGET)
+target_dir = target.parent
+input_dir = canonical(INPUT)
+
+allowed_roots = (
+    canonical(REPO_ROOT),
+    canonical(FIXTURE_ROOT),
+)
+
+if not any(
+    target != root and root in target.parents
+    for root in allowed_roots
+):
+    fail(
+        "QML context target escaped allowed roots."
+    )
+
+
+def relative_under_target(
+    path: pathlib.Path,
+) -> pathlib.Path:
+    try:
+        return path.relative_to(target_dir)
+
+    except ValueError:
+        fail(
+            "QML local import escaped target directory: "
+            + str(path)
+        )
+
+
+def reject_symlink_chain(
+    path: pathlib.Path,
+) -> None:
+    relative = relative_under_target(path)
+    cursor = target_dir
+
+    for part in relative.parts:
+        cursor = cursor / part
+
+        try:
+            info = os.lstat(cursor)
+
+        except FileNotFoundError:
+            fail(
+                "QML local import does not exist: "
+                + str(cursor)
+            )
+
+        if stat.S_ISLNK(info.st_mode):
+            fail(
+                "QML local import may not contain symlink: "
+                + str(cursor)
+            )
+
+
+def read_regular(
+    path: pathlib.Path,
+) -> bytes:
+    reject_symlink_chain(path)
+
+    flags = os.O_RDONLY | os.O_NOFOLLOW
+
+    try:
+        fd = os.open(path, flags)
+
+    except OSError as exc:
+        fail(
+            "QML context source could not be opened safely: "
+            + str(path)
+            + ": "
+            + str(exc)
+        )
+
+    try:
+        info = os.fstat(fd)
+
+        if not stat.S_ISREG(info.st_mode):
+            fail(
+                "QML context source is not a regular file: "
+                + str(path)
+            )
+
+        if info.st_size > MAX_FILE_BYTES:
+            fail(
+                "QML context file exceeds 2 MiB: "
+                + str(path)
+            )
+
+        with os.fdopen(
+            fd,
+            "rb",
+            closefd=False,
+        ) as handle:
+            data = handle.read(
+                MAX_FILE_BYTES + 1
+            )
+
+    finally:
+        os.close(fd)
+
+    if len(data) > MAX_FILE_BYTES:
+        fail(
+            "QML context file exceeded 2 MiB while reading: "
+            + str(path)
+        )
+
+    return data
+
+
+def quoted_imports(
+    path: pathlib.Path,
+) -> tuple[str, ...]:
+    if path.suffix.lower() != ".qml":
+        return ()
+
+    data = read_regular(path)
+
+    try:
+        text = data.decode("utf-8")
+
+    except UnicodeDecodeError:
+        fail(
+            "QML dependency is not UTF-8: "
+            + str(path)
+        )
+
+    return tuple(
+        match.group(1)
+        for match in IMPORT_RE.finditer(text)
+    )
+
+
+records: dict[pathlib.Path, str] = {}
+parse_queue: list[
+    tuple[pathlib.Path, int]
+] = [
+    (target, 0)
+]
+parsed: set[pathlib.Path] = set()
+
+total_bytes = 0
+
+
+def validate_import_text(
+    raw: str,
+) -> pathlib.PurePosixPath:
+    if not raw:
+        fail(
+            "QML local import path is empty."
+        )
+
+    if "\\" in raw:
+        fail(
+            "QML local import uses forbidden path separator: "
+            + raw
+        )
+
+    value = pathlib.PurePosixPath(raw)
+
+    if value.is_absolute():
+        fail(
+            "QML local import may not be absolute: "
+            + raw
+        )
+
+    if ".." in value.parts:
+        fail(
+            "QML local import traversal forbidden: "
+            + raw
+        )
+
+    return value
+
+
+def write_context_file(
+    source: pathlib.Path,
+) -> None:
+    global total_bytes
+
+    relative = relative_under_target(
+        source
+    )
+
+    if relative == pathlib.Path("."):
+        fail(
+            "QML context attempted to copy target directory."
+        )
+
+    if relative.as_posix() == "source":
+        fail(
+            "QML context destination collides with /input/source."
+        )
+
+    if relative in records:
+        return
+
+    data = read_regular(source)
+
+    if len(records) + 1 > MAX_FILES:
+        fail(
+            "QML context contains more than 128 files."
+        )
+
+    if total_bytes + len(data) > MAX_BYTES:
+        fail(
+            "QML context exceeds 8 MiB."
+        )
+
+    destination = input_dir / relative
+
+    destination.parent.mkdir(
+        parents=True,
+        mode=0o700,
+        exist_ok=True,
+    )
+
+    flags = (
+        os.O_WRONLY
+        | os.O_CREAT
+        | os.O_EXCL
+        | os.O_NOFOLLOW
+    )
+
+    try:
+        fd = os.open(
+            destination,
+            flags,
+            0o400,
+        )
+
+    except OSError as exc:
+        fail(
+            "QML context destination collision: "
+            + str(relative)
+            + ": "
+            + str(exc)
+        )
+
+    try:
+        with os.fdopen(
+            fd,
+            "wb",
+            closefd=False,
+        ) as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(
+                handle.fileno()
+            )
+
+    finally:
+        os.close(fd)
+
+    os.chmod(
+        destination,
+        0o400,
+    )
+
+    source_digest = (
+        hashlib.sha256(data).hexdigest()
+    )
+
+    copied_digest = hashlib.sha256(
+        destination.read_bytes()
+    ).hexdigest()
+
+    if source_digest != copied_digest:
+        fail(
+            "QML context copy SHA-256 mismatch: "
+            + str(relative)
+        )
+
+    records[relative] = source_digest
+    total_bytes += len(data)
+
+
+def add_directory(
+    directory: pathlib.Path,
+    depth: int,
+) -> None:
+    reject_symlink_chain(directory)
+
+    try:
+        info = os.lstat(directory)
+
+    except FileNotFoundError:
+        fail(
+            "QML local import directory missing: "
+            + str(directory)
+        )
+
+    if not stat.S_ISDIR(info.st_mode):
+        fail(
+            "QML local import is not a directory: "
+            + str(directory)
+        )
+
+    entries = sorted(
+        directory.iterdir(),
+        key=lambda item: item.name,
+    )
+
+    for item in entries:
+        name = item.name
+
+        include = (
+            item.suffix.lower()
+            in {".qml", ".js"}
+            or name == "qmldir"
+        )
+
+        if not include:
+            continue
+
+        reject_symlink_chain(item)
+
+        item_info = os.lstat(item)
+
+        if stat.S_ISLNK(
+            item_info.st_mode
+        ):
+            fail(
+                "QML local import may not contain symlink: "
+                + str(item)
+            )
+
+        if not stat.S_ISREG(
+            item_info.st_mode
+        ):
+            fail(
+                "QML local import dependency is not regular: "
+                + str(item)
+            )
+
+        write_context_file(item)
+
+        if item.suffix.lower() == ".qml":
+            parse_queue.append(
+                (item, depth)
+            )
+
+
+# Preserve the pre-existing same-directory component semantics.
+for sibling in sorted(
+    target_dir.glob("*.qml"),
+    key=lambda item: item.name,
+):
+    if sibling == target:
+        continue
+
+    # Same-directory siblings preserve existing local component lookup.
+    # They are copied, but an unrelated sibling must not expand the
+    # recursive quoted-import closure.
+    write_context_file(sibling)
+
+
+while parse_queue:
+    source_path, depth = parse_queue.pop(0)
+
+    if source_path in parsed:
+        continue
+
+    parsed.add(source_path)
+
+    if depth > MAX_IMPORT_DEPTH:
+        fail(
+            "QML local import depth exceeds 8."
+        )
+
+    for raw_import in quoted_imports(
+        source_path
+    ):
+        import_path = validate_import_text(
+            raw_import
+        )
+
+        candidate = (
+            source_path.parent
+            / pathlib.Path(
+                *import_path.parts
+            )
+        )
+
+        relative_under_target(candidate)
+        reject_symlink_chain(candidate)
+
+        info = os.lstat(candidate)
+
+        if stat.S_ISDIR(info.st_mode):
+            add_directory(
+                candidate,
+                depth + 1,
+            )
+            continue
+
+        if not stat.S_ISREG(info.st_mode):
+            fail(
+                "QML local import is neither regular file nor directory: "
+                + str(candidate)
+            )
+
+        write_context_file(candidate)
+
+        if candidate.suffix.lower() == ".qml":
+            parse_queue.append(
+                (
+                    candidate,
+                    depth + 1,
+                )
+            )
+
+
+manifest_lines = [
+    digest
+    + "  "
+    + relative.as_posix()
+    for relative, digest
+    in sorted(
+        records.items(),
+        key=lambda item:
+            item[0].as_posix(),
+    )
+]
+
+MANIFEST.write_text(
+    (
+        "\n".join(manifest_lines)
+        + (
+            "\n"
+            if manifest_lines
+            else ""
+        )
+    ),
+    encoding="utf-8",
+)
+
+os.chmod(
+    MANIFEST,
+    0o400,
+)
+
+print(
+    "QML_CONTEXT_FILE_COUNT="
+    + str(len(records))
+)
+
+print(
+    "QML_CONTEXT_BYTES="
+    + str(total_bytes)
+)
+PY
+)"; then
+    fail "QML-context kunde inte materialiseras."
+fi
+
+printf '%s\n' "$QML_CONTEXT_RESULT"
+
+chmod 0400 "$QML_CONTEXT_MANIFEST"
+
+
+ORIGINAL_NAME="$(basename "$TARGET_REAL")"
+CONTAINER_NAME="gg-code-gate-qml-$RUN_ID"
+CID_FILE="$RUN_DIR/container.cid"
+INSPECT_FILE="$RUN_DIR/container-inspect.json"
+LOG_FILE="$RUN_DIR/container.log"
+
+podman create \
+    --name "$CONTAINER_NAME" \
+    --cidfile "$CID_FILE" \
+    --pull=never \
+    --network=none \
+    --no-hosts \
+    --read-only \
+    --read-only-tmpfs=false \
+    --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777 \
+    --tmpfs /work:rw,noexec,nosuid,nodev,size=64m,mode=0755 \
+    --cap-drop=all \
+    --security-opt=no-new-privileges \
+    --userns=keep-id \
+    --user 1000:1000 \
+    --pids-limit=128 \
+    --memory=512m \
+    --memory-swap=512m \
+    --cpus=1 \
+    --mount "type=bind,src=$INPUT_DIR,target=/input,ro=true,relabel=private" \
+    --mount "type=bind,src=$OUTPUT_DIR,target=/output,rw=true,relabel=private" \
+    "$EXPECTED_IMAGE_ID" \
+    --target /input/source \
+    --name "$ORIGINAL_NAME" \
+    --output /output/report.json \
+    >/dev/null
+
+CONTAINER_CREATED=1
+podman inspect "$CONTAINER_NAME" >"$INSPECT_FILE"
+
+python3 - "$INSPECT_FILE" <<'PY'
+from __future__ import annotations
+
+import json
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+data = json.loads(path.read_text(encoding="utf-8"))
+
+if not isinstance(data, list) or len(data) != 1:
+    raise SystemExit("inspect_shape_invalid")
+
+item = data[0]
+host = item.get("HostConfig") or {}
+config = item.get("Config") or {}
+mounts = item.get("Mounts") or []
+
+if host.get("NetworkMode") != "none":
+    raise SystemExit("network_not_none")
+if host.get("Privileged") is True:
+    raise SystemExit("privileged_forbidden")
+if host.get("ReadonlyRootfs") is not True:
+    raise SystemExit("rootfs_not_readonly")
+if host.get("CapAdd"):
+    raise SystemExit("cap_add_forbidden")
+if host.get("PortBindings"):
+    raise SystemExit("ports_forbidden")
+if config.get("User") != "1000:1000":
+    raise SystemExit("user_mismatch")
+
+security = " ".join(str(value) for value in (host.get("SecurityOpt") or []))
+if "no-new-privileges" not in security:
+    raise SystemExit("no_new_privileges_missing")
+
+expected = {
+    "/input": False,
+    "/output": True,
+}
+actual = {
+    mount.get("Destination"): bool(mount.get("RW"))
+    for mount in mounts
+    if mount.get("Destination") in expected
+}
+if actual != expected:
+    raise SystemExit(f"mount_policy_mismatch:{actual!r}")
+
+if len([m for m in mounts if m.get("Type") == "bind"]) != 2:
+    raise SystemExit("unexpected_bind_mount_count")
+
+pids_limit = host.get("PidsLimit")
+if pids_limit != 128:
+    raise SystemExit(f"pids_limit_mismatch:{pids_limit!r}")
+
+memory = host.get("Memory")
+if memory != 512 * 1024 * 1024:
+    raise SystemExit(f"memory_limit_mismatch:{memory!r}")
+
+nano_cpus = host.get("NanoCpus")
+if nano_cpus not in (0, 1_000_000_000):
+    raise SystemExit(f"cpu_limit_mismatch:{nano_cpus!r}")
+
+print("CANDIDATE_PRESTART_INSPECT=PASS")
+PY
+
+podman start "$CONTAINER_NAME" >/dev/null
+TOOL_RC="$(podman wait "$CONTAINER_NAME")"
+podman logs "$CONTAINER_NAME" >"$LOG_FILE" 2>&1 || true
+podman rm "$CONTAINER_NAME" >/dev/null
+CONTAINER_CREATED=0
+
+REPORT="$OUTPUT_DIR/report.json"
+REPORT_SHA="$OUTPUT_DIR/report.json.sha256"
+
+[[ -f "$REPORT" && ! -L "$REPORT" ]] || fail "Rapport saknas eller är symlänk."
+[[ "$(stat -c '%s' "$REPORT")" -le 1048576 ]] || fail "Rapporten är för stor."
+
+(
+    cd "$OUTPUT_DIR"
+    sha256sum "$(basename "$REPORT")" >"$(basename "$REPORT_SHA")"
+    sha256sum --check "$(basename "$REPORT_SHA")" >/dev/null
+)
+
+REPORT_STATUS="$(
+    python3 - "$REPORT" "$ORIGINAL_SHA" "$TOOL_RC" <<'PY'
+from __future__ import annotations
+
+import json
+import pathlib
+import sys
+
+report_path = pathlib.Path(sys.argv[1])
+expected_sha = sys.argv[2]
+tool_rc = int(sys.argv[3])
+
+report = json.loads(report_path.read_text(encoding="utf-8"))
+
+if report.get("schema") != "gg-code-gate-report-v1":
+    raise SystemExit("report_schema_mismatch")
+
+source = report.get("source")
+if not isinstance(source, dict) or source.get("sha256") != expected_sha:
+    raise SystemExit("source_sha_mismatch")
+
+runtime = report.get("runtime")
+if not isinstance(runtime, dict):
+    raise SystemExit("runtime_missing")
+if runtime.get("default_route_count") != 0:
+    raise SystemExit("default_route_present")
+if runtime.get("no_new_privileges") is not True:
+    raise SystemExit("nnp_runtime_mismatch")
+cap_eff = str(runtime.get("cap_eff") or "")
+if cap_eff not in {"0", "0000000000000000"}:
+    raise SystemExit(f"effective_caps_nonzero:{cap_eff}")
+
+status = report.get("status")
+if status not in {"PASS", "FAIL"}:
+    raise SystemExit(f"unexpected_status:{status!r}")
+
+expected_rc = 0 if status == "PASS" else 1
+if tool_rc != expected_rc:
+    raise SystemExit(f"tool_rc_status_mismatch:{tool_rc}:{status}")
+
+print(status)
+PY
+)" || fail "Rapportens transport-/statuskontrakt avviker."
+
+printf 'QML_GATE_VERSION=%s\n' "$VERSION"
+printf 'QML_GATE_STATUS=%s\n' "$REPORT_STATUS"
+printf 'QML_GATE_REPORT=%s\n' "$REPORT"
+printf 'QML_GATE_REPORT_SHA256=%s\n' "$(sha256sum "$REPORT" | awk '{print $1}')"
+
+if [[ "$REPORT_STATUS" == "PASS" ]]; then
+    exit 0
+fi
+
+exit 1

@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gg.live-aid.learning-candidate.v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "claim_key",
+    "statement",
+    "supporting_fact_ids",
+    "limitation",
+    "promotion_authority",
+    "status"
+  ],
+  "properties": {
+    "schema": {
+      "const": "gg.live-aid.learning-candidate.v1"
+    },
+    "claim_key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "statement": {
+      "type": "string",
+      "minLength": 1
+    },
+    "supporting_fact_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "limitation": {
+      "type": "string"
+    },
+    "promotion_authority": {
+      "const": "NONE"
+    },
+    "status": {
+      "const": "PROPOSAL_ONLY"
+    }
+  },
+  "additionalProperties": false
+}

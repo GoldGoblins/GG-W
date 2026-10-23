@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+export LC_ALL=C
+export PYTHONDONTWRITEBYTECODE=1
+umask 077
+
+SCRIPT_PATH="$(readlink -f -- "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(dirname -- "$SCRIPT_PATH")"
+REPO_ROOT="$(readlink -f -- "${SCRIPT_DIR}/../..")"
+RUNNER="${REPO_ROOT}/infrastructure/debug-runner/gg_debug_runner.py"
+
+if [ ! -f "$RUNNER" ] || [ -L "$RUNNER" ]; then
+    printf 'GG_DEBUG_RUNNER_ERROR_CLASS=SOURCE_FAIL\n' >&2
+    printf 'GG_DEBUG_RUNNER_MESSAGE=runner-source-missing-or-symlink\n' >&2
+    exit 1
+fi
+
+exec python3 "$RUNNER" "$@"

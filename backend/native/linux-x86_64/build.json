@@ -1,0 +1,30 @@
+{
+  "schema": "gg.native-world-build.v1",
+  "abi": 1,
+  "platform": "linux-x86_64",
+  "compiler": "g++ (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+  "flags": [
+    "-std=c++17",
+    "-O2",
+    "-fPIC",
+    "-fvisibility=hidden",
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic",
+    "-Werror"
+  ],
+  "source_sha256": "9fd1dae3cadb3ed3fa8e5cbe236248ceecc37e604b3145e66285b9ca5a0619e5",
+  "binary_sha256": "b6037924198fbc3194c1b19670a510d60b1a356566983a72b319180d140b31f7",
+  "binary_bytes": 33664,
+  "probe": {
+    "status": "PASS",
+    "abi": 1,
+    "checks": [
+      "negative-grid-window",
+      "30-second-residency",
+      "sphere-culling",
+      "sector-selection",
+      "LRU-lifetime-stress"
+    ]
+  }
+}

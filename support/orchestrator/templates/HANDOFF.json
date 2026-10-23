@@ -1,0 +1,10 @@
+{
+  "artifacts": [],
+  "from_role": "<required>",
+  "handoff_id": "<required>",
+  "next_action": "<required>",
+  "risks": [],
+  "status": "PASS",
+  "task_id": "<required>",
+  "to_role": "<required>"
+}

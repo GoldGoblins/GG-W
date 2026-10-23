@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gg.live-aid.fact.v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "key",
+    "value",
+    "epistemic_class",
+    "source_kind",
+    "source_id",
+    "source_sha256",
+    "scope",
+    "freshness",
+    "supersedes"
+  ],
+  "properties": {
+    "schema": {
+      "const": "gg.live-aid.fact.v1"
+    },
+    "key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "value": {},
+    "epistemic_class": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_kind": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "scope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "freshness": {
+      "type": "string",
+      "minLength": 1
+    },
+    "supersedes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,28 @@
+{
+  "schema": "gg.native-physics-build.v1",
+  "abi": 1,
+  "backend": "BOX3D",
+  "version": "0.1.0",
+  "platform": "linux-x86_64",
+  "precision": "DOUBLE_POSITIONS",
+  "simd": "SSE2",
+  "compiler": "gcc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)",
+  "flags": [
+    "-O2",
+    "-fPIC",
+    "-fvisibility=hidden",
+    "-ffp-contract=off",
+    "-pthread",
+    "-DBOX3D_DOUBLE_PRECISION",
+    "-DBOX3D_VALIDATE",
+    "-Dbox3d_EXPORTS"
+  ],
+  "source_sha256": "30217a993475fb5b1dd326358b0dd77fd90bd9150d54837e9d60c0beb6706c14",
+  "binary_sha256": "1cedd86ef7b9f9ba7cc741a6870734ad2e81e25656d4296ab971cf38f6b6f92a",
+  "binary_bytes": 1268824,
+  "probe": {
+    "status": "PASS",
+    "backend": "BOX3D",
+    "settled_y": 0.499931
+  }
+}

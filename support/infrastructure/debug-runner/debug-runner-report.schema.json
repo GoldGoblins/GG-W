@@ -1,0 +1,336 @@
+{
+  "$defs": {
+    "artifact": {
+      "properties": {
+        "bytes": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "exists": {
+          "type": "boolean"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "path",
+        "exists",
+        "bytes",
+        "sha256"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "gg.debug-runner-report.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "PASS"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "cleanup": {
+            "properties": {
+              "cleanup_errors": {
+                "maxItems": 0
+              },
+              "container_removed": {
+                "const": true
+              },
+              "runtime_empty_after": {
+                "const": true
+              }
+            }
+          },
+          "error_class": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "argv": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "artifacts": {
+      "items": {
+        "$ref": "#/$defs/artifact"
+      },
+      "type": "array"
+    },
+    "cleanup": {
+      "properties": {
+        "attempted": {
+          "type": "boolean"
+        },
+        "cleanup_errors": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "container_removed": {
+          "type": "boolean"
+        },
+        "runtime_empty_after": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "attempted",
+        "container_removed",
+        "runtime_empty_after",
+        "cleanup_errors"
+      ],
+      "type": "object"
+    },
+    "command": {
+      "type": "string"
+    },
+    "container": {
+      "additionalProperties": true,
+      "properties": {
+        "contract_path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "inspect_path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "id",
+        "inspect_path",
+        "contract_path"
+      ],
+      "type": "object"
+    },
+    "created_files": {
+      "type": "array"
+    },
+    "error_class": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "enum": [
+            "SOURCE_FAIL",
+            "TRANSPORT_FAIL",
+            "DEPENDENCY_FAIL",
+            "HARNESS_FAIL",
+            "SANDBOX_FAIL",
+            "TARGET_FAIL",
+            "POLICY_STOP"
+          ]
+        }
+      ]
+    },
+    "execution": {
+      "type": "object"
+    },
+    "exit_code": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "filesystem_after": {
+      "type": "object"
+    },
+    "filesystem_before": {
+      "type": "object"
+    },
+    "identity": {
+      "type": "object"
+    },
+    "image": {
+      "type": "object"
+    },
+    "lifecycle": {
+      "items": {
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "limits": {
+      "type": "object"
+    },
+    "message": {
+      "type": "string"
+    },
+    "missing_files": {
+      "type": "array"
+    },
+    "modified_files": {
+      "type": "array"
+    },
+    "mounts": {
+      "items": {
+        "type": "object"
+      },
+      "minItems": 3,
+      "type": "array"
+    },
+    "network": {
+      "const": "none"
+    },
+    "policy": {
+      "type": "object"
+    },
+    "run_id": {
+      "pattern": "^[0-9]{8}T[0-9]{6}Z-[0-9a-f]{12}$",
+      "type": "string"
+    },
+    "runner_version": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "schema": {
+      "const": "gg.debug-runner-report.v1"
+    },
+    "signal": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "source": {
+      "type": "object"
+    },
+    "status": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "CONDITIONAL"
+      ]
+    },
+    "stderr": {
+      "$ref": "#/$defs/artifact"
+    },
+    "stdout": {
+      "$ref": "#/$defs/artifact"
+    },
+    "timeout": {
+      "required": [
+        "seconds",
+        "timed_out"
+      ],
+      "type": "object"
+    },
+    "timestamps": {
+      "properties": {
+        "finished_at_utc": {
+          "type": "string"
+        },
+        "started_at_utc": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "started_at_utc",
+        "finished_at_utc"
+      ],
+      "type": "object"
+    },
+    "tool_versions": {
+      "type": "object"
+    },
+    "working_directory": {
+      "const": "/work"
+    }
+  },
+  "required": [
+    "argv",
+    "artifacts",
+    "cleanup",
+    "command",
+    "container",
+    "created_files",
+    "error_class",
+    "execution",
+    "exit_code",
+    "filesystem_after",
+    "filesystem_before",
+    "identity",
+    "image",
+    "lifecycle",
+    "limits",
+    "missing_files",
+    "modified_files",
+    "mounts",
+    "network",
+    "policy",
+    "run_id",
+    "runner_version",
+    "schema",
+    "signal",
+    "source",
+    "status",
+    "stderr",
+    "stdout",
+    "timeout",
+    "timestamps",
+    "tool_versions",
+    "working_directory"
+  ],
+  "title": "GG Debug Runner report v1",
+  "type": "object",
+  "x-gg-entrypoint-transport": {
+    "container_contract_schema": "gg.debug-runner.container-contract.v1.2",
+    "mode": "explicit-entrypoint",
+    "version": "1.2"
+  }
+}

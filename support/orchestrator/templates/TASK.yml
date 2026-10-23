@@ -1,0 +1,41 @@
+{
+  "acceptance_criteria": [
+    "<required>"
+  ],
+  "assigned_participant": "<one verified participant>",
+  "code_task": false,
+  "creator_actor": "<required>",
+  "expected_artifacts": [
+    "<required>"
+  ],
+  "expected_value": "<required>",
+  "first_gate": "idekompassen-2.0",
+  "forbidden_scope": [
+    "<required>"
+  ],
+  "goal": "<required>",
+  "historical_context": {},
+  "owner": "<required>",
+  "requested_effects": {
+    "credentials": false,
+    "unbounded_background_autonomy": false,
+    "deploy": false,
+    "merge": false,
+    "network": false,
+    "one_com": false,
+    "production": false,
+    "write": false,
+    "sudo": false
+  },
+  "task_scoped_scope_authority": "ALL_TASK_SCOPED_EFFECTS",
+  "rights_expansion": false,
+  "risk_class": "<GREEN|YELLOW|RED>",
+  "scope": [
+    "<required>"
+  ],
+  "stop_conditions": [
+    "<required>"
+  ],
+  "task_id": "<required>",
+  "verified_context": {}
+}

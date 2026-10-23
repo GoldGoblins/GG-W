@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+"""Inspect an installation or expose its GG skills to the local CLI clients."""
+from __future__ import annotations
+
+import argparse
+import importlib.util
+import json
+import os
+import platform
+from pathlib import Path
+import shutil
+import sys
+
+ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT))
+from backend.platform_support import configure_stdio, find_executable, native_directory, native_library_name
+
+configure_stdio()
+
+
+def inspect_installation() -> dict:
+    from backend.application_paths import GPT_KNOWLEDGE_ROOT, bundled_skills
+    from backend.omni_gpt_profiles import discover_profiles
+    dependencies = json.loads((ROOT / "config/dependencies.json").read_text(encoding="utf-8"))
+    modules = {name: importlib.util.find_spec(name) is not None for name in ("PySide6", "PIL", "numpy", "duckdb")}
+    cli = {item["name"]: bool(find_executable(item["name"])) for item in dependencies["cli"]
+           if platform.system() in item.get('platforms', (platform.system(),))}
+    if os.name == "nt":
+        modules.update({name: importlib.util.find_spec(name) is not None for name in ("winpty", "psutil")})
+    native = {name: (native_directory(ROOT) / native_library_name(name)).is_file()
+              for name in ("gg_world", "gg_presentation", "gg_physics", "gg_engine_ui", "gg_engine_formats", "gg_engine_client")}
+    from backend.container_platform import runtime_status
+    containers = runtime_status() if cli.get('podman') else {'running': False, 'required_images': {}, 'ready': False}
+    return {
+        "application": "GG AI DESKTOP",
+        "platform": platform.system(),
+        "python": platform.python_version(),
+        "gpt_packages": len(discover_profiles()),
+        "bundled_gpt_sources": GPT_KNOWLEDGE_ROOT.is_relative_to(ROOT),
+        "gg_skills": [p.name for p in bundled_skills()],
+        "python_modules": modules,
+        "cli_dependencies": cli,
+        "native_libraries": native,
+        "container_runtime": containers,
+        "features": {"desktop": all(modules.values()), "blender": cli.get("blender", False),
+                     "external_audio_video": any(cli.get(name, False) for name in ("vlc", "ffmpeg", "mpv")),
+                     "linux_isolated_workers": containers['ready'],
+                     "authored_game_content": (ROOT/'qml/game/lua/host.lua').is_file(),
+                     "native_game_runtime": all(native.values())},
+        "missing_optional_dependencies": [name for name, present in cli.items() if not present],
+        "external_plugins": [{"name": p["name"], "delivery": p["delivery"], "bundled": p["bundled"]} for p in dependencies["external_plugins"]],
+    }
+
+
+def prepare_clients() -> None:
+    from backend.application_paths import STATE_ROOT, bundled_skills, expose_directory, prepare_application_skills, prepare_codex_skills
+    prepare_application_skills()
+    prepare_codex_skills(STATE_ROOT / "codex-gpt-tui")
+    grok = STATE_ROOT / "grok-home/skills"
+    grok.mkdir(mode=0o700, parents=True, exist_ok=True)
+    for source in bundled_skills():
+        target = grok / source.name
+        if not target.exists() and not target.is_symlink():
+            expose_directory(target, source)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--prepare", action="store_true", help="register bundled GG skills in this user's CLI homes")
+    parser.add_argument("--check", action="store_true", help="inspect dependencies without changing settings")
+    args = parser.parse_args()
+    if args.prepare:
+        prepare_clients()
+    result = inspect_installation()
+    result["prepared"] = args.prepare
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 0 if result["gpt_packages"] == 7 and result["python_modules"]["PySide6"] else 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

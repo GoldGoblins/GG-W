@@ -1,0 +1,66 @@
+#!/usr/bin/python3
+"""Shared local Research tools for GPT TUI, Grok TUI and the desktop."""
+import argparse
+import json
+from pathlib import Path
+import sys
+import time
+
+PROJECT = Path(__file__).resolve().parent
+sys.path.insert(0, str(PROJECT))
+from backend import research_jobs, research_lab, research_desk, research_learning
+
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__)
+    sub = p.add_subparsers(dest='command', required=True)
+    sub.add_parser('tools')
+    sub.add_parser('history')
+    sub.add_parser('self-test')
+    for name in ['analyze', 'search', 'function', 'decompile', 'xrefs']:
+        s = sub.add_parser(name)
+        s.add_argument('path')
+        if name != 'analyze':
+            s.add_argument('query')
+        s.add_argument('--wait', action='store_true')
+    for name in ['status', 'cancel']:
+        s = sub.add_parser(name)
+        s.add_argument('job_id')
+    s = sub.add_parser('save')
+    s.add_argument('job_id')
+    s.add_argument('--title', required=True)
+    s.add_argument('--claim', required=True)
+    s.add_argument('--lesson', default='')
+    s = sub.add_parser('methods')
+    s.add_argument('query')
+    args = p.parse_args()
+    if args.command == 'tools':
+        result = research_lab.tool_inventory()
+    elif args.command == 'history':
+        result = research_jobs.history()
+    elif args.command == 'self-test':
+        result = research_learning.self_test()
+    elif args.command == 'status':
+        result = research_jobs.status(args.job_id)
+    elif args.command == 'cancel':
+        result = research_jobs.cancel(args.job_id)
+    elif args.command == 'save':
+        result = research_lab.save_finding(args.job_id, args.title, args.claim, args.lesson)
+    elif args.command == 'methods':
+        result = {'methods': research_desk.match_methods(args.query)}
+    else:
+        result = research_jobs.start(args.path, args.command, getattr(args, 'query', ''))
+        if args.wait and result.get('status') == 'QUEUED':
+            deadline = time.monotonic() + research_jobs.TIMEOUT + 25
+            while result.get('status') in research_jobs.BUSY and time.monotonic() < deadline:
+                time.sleep(0.25)
+                result = research_jobs.status(result['job_id'])
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return int(result.get('status') in {'ERROR', 'FAIL', 'CANCELLED'})
+
+
+from backend.platform_support import configure_stdio
+configure_stdio()
+
+if __name__ == '__main__':
+    raise SystemExit(main())

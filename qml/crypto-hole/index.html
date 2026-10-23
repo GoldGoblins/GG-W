@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <style>
+    html, body, #chart {
+      margin: 0;
+      height: 100%;
+      width: 100%;
+      background: #161616;
+      overflow: hidden;
+    }
+    #chart a { display: none !important; }
+  </style>
+</head>
+<body>
+  <div id="chart"></div>
+  <!-- TradingView Lightweight Charts v4.2.3, Apache-2.0 -->
+  <script src="lightweight-charts.min.js"></script>
+  <script>
+    var chart = null;
+    var series = null;
+    var equitySeries = null;
+    var pending = null;
+    var lastSig = "";
+    var lastCount = 0;
+    var lastW = 0;
+    var lastH = 0;
+
+    function unixSeconds(raw) {
+      var t = Number(raw || 0);
+      if (!(t > 0))
+        return 0;
+      if (t > 1e12)
+        t = Math.floor(t / 1000);
+      return Math.floor(t);
+    }
+
+    function uniqPoints(rows) {
+      var out = [];
+      var i;
+      var sorted = [];
+      for (i = 0; i < rows.length; i++) {
+        var row = rows[i] || {};
+        var t = unixSeconds(row.time);
+        var v = Number(row.value || 0);
+        if (!(t > 0) || !(v > 0))
+          continue;
+        sorted.push({ time: t, value: v });
+      }
+      sorted.sort(function(a, b) { return a.time - b.time; });
+      var last = null;
+      for (i = 0; i < sorted.length; i++) {
+        var point = sorted[i];
+        if (last !== null && point.time === last) {
+          out[out.length - 1] = point;
+          continue;
+        }
+        last = point.time;
+        out.push(point);
+      }
+      return out;
+    }
+
+    function boot() {
+      if (chart || !window.LightweightCharts)
+        return;
+      var host = document.getElementById("chart");
+      chart = LightweightCharts.createChart(host, {
+        layout: {
+          background: { color: "#161616" },
+          textColor: "#8b949e",
+          fontFamily: "monospace",
+          fontSize: 10,
+          attributionLogo: false
+        },
+        grid: {
+          vertLines: { color: "#1e1e1e" },
+          horzLines: { color: "#1e1e1e" }
+        },
+        rightPriceScale: { borderColor: "#242424" },
+        leftPriceScale: { borderColor: "#242424", visible: false },
+        timeScale: {
+          borderColor: "#242424",
+          timeVisible: true,
+          secondsVisible: false
+        },
+        crosshair: { mode: LightweightCharts.CrosshairMode.Magnet },
+        autoSize: true
+      });
+      series = chart.addAreaSeries({
+        lineColor: "#c98989",
+        topColor: "rgba(201,137,137,0.28)",
+        bottomColor: "rgba(36,24,24,0.04)",
+        lineWidth: 1,
+        priceLineVisible: false
+      });
+      equitySeries = chart.addLineSeries({
+        color: "#8db89a",
+        lineWidth: 1,
+        priceScaleId: "left",
+        lastValueVisible: true,
+        priceLineVisible: false
+      });
+    }
+
+    function setTape(payload) {
+      payload = payload || {};
+      if (!series) {
+        pending = payload;
+        boot();
+        if (!series)
+          return 0;
+      }
+      var host = document.getElementById("chart");
+      var viewW = host ? host.clientWidth : 0;
+      var viewH = host ? host.clientHeight : 0;
+      if (viewW < 8 || viewH < 8) {
+        lastSig = "";
+        return 0;
+      }
+      if (chart)
+        chart.resize(viewW, viewH);
+      var points = uniqPoints(payload.points || []);
+      var markers = payload.markers || [];
+      var eq = uniqPoints(payload.equity || []);
+      var sig = points.length + ":" + (points.length ? points[0].time : 0)
+        + ":" + (points.length ? points[points.length - 1].time : 0)
+        + ":" + (points.length ? points[points.length - 1].value : 0)
+        + ":" + markers.length + ":" + eq.length
+        + ":" + (eq.length ? eq[eq.length - 1].value : 0);
+      if (sig === lastSig && points.length === lastCount && viewW === lastW && viewH === lastH)
+        return points.length;
+      lastSig = sig;
+      lastW = viewW;
+      lastH = viewH;
+      try {
+        var up = points.length < 2 || points[points.length - 1].value >= points[0].value;
+        series.applyOptions({
+          lineColor: up ? "#8db89a" : "#c98989",
+          topColor: up ? "rgba(141,184,154,0.28)" : "rgba(201,137,137,0.24)",
+          bottomColor: up ? "rgba(28,42,34,0.55)" : "rgba(36,24,24,0.55)"
+        });
+        series.setData(points);
+        var cleanMarks = [];
+        var mi;
+        for (mi = 0; mi < markers.length; mi++) {
+          var mark = markers[mi] || {};
+          var mt = unixSeconds(mark.time);
+          if (!(mt > 0))
+            continue;
+          cleanMarks.push({
+            time: mt,
+            position: mark.position || "aboveBar",
+            color: mark.color || "#c8a97e",
+            shape: mark.shape || "circle"
+          });
+        }
+        series.setMarkers(cleanMarks);
+        if (equitySeries) {
+          equitySeries.setData(eq);
+          if (chart)
+            chart.priceScale("left").applyOptions({ visible: eq.length > 1 });
+        }
+        if (chart && points.length)
+          chart.timeScale().fitContent();
+      } catch (err) {
+        lastSig = "";
+        return 0;
+      }
+      lastCount = points.length;
+      pending = null;
+      return points.length;
+    }
+
+    function fitTape() {
+      if (!chart)
+        return 0;
+      var host = document.getElementById("chart");
+      var w = host ? host.clientWidth : 0;
+      var h = host ? host.clientHeight : 0;
+      if (w < 8 || h < 8)
+        return 0;
+      chart.resize(w, h);
+      if (lastCount)
+        chart.timeScale().fitContent();
+      lastW = w;
+      lastH = h;
+      return lastCount;
+    }
+
+    boot();
+    if (pending)
+      setTape(pending);
+    window.setTape = setTape;
+    window.fitTape = fitTape;
+  </script>
+</body>
+</html>

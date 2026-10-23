@@ -1,0 +1,75 @@
+{
+  "$id": "urn:goldgoblins:gg-code-gate-qml-report:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "messages": {
+      "type": "array"
+    },
+    "policy": {
+      "type": "object"
+    },
+    "qml": {
+      "required": [
+        "qml_invoked",
+        "qmllint_sha256",
+        "argv",
+        "return_code",
+        "timed_out",
+        "json_valid",
+        "file_identity_ok",
+        "files_count",
+        "success",
+        "diagnostics",
+        "harness_error"
+      ],
+      "type": "object"
+    },
+    "runtime": {
+      "type": "object"
+    },
+    "schema": {
+      "const": "gg-code-gate-report-v1"
+    },
+    "secret_findings": {
+      "type": "array"
+    },
+    "source": {
+      "required": [
+        "original_name",
+        "container_path",
+        "sha256",
+        "size_bytes",
+        "language"
+      ],
+      "type": "object"
+    },
+    "static_checks": {
+      "type": "array"
+    },
+    "status": {
+      "enum": [
+        "PASS",
+        "CONDITIONAL",
+        "FAIL"
+      ]
+    },
+    "tool_version": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "tool_version",
+    "status",
+    "source",
+    "secret_findings",
+    "static_checks",
+    "runtime",
+    "policy",
+    "qml",
+    "messages"
+  ],
+  "title": "GG QML Code Gate candidate report",
+  "type": "object"
+}

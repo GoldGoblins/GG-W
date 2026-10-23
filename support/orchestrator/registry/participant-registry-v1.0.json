@@ -1,0 +1,67 @@
+{
+  "background_routing": false,
+  "model_based_routing": false,
+  "participant_count": 7,
+  "participants": [
+    {
+      "may_expand_rights": false,
+      "name": "GG-idekompassen",
+      "source_path": "knowledge/web-gpts/GG-idekompassen",
+      "source_tree_sha256": "1f881d5a3d2b5f79fa52546b0553ce52f3504ecad6566c4e5d00e5091085d97e",
+      "source_type": "verified_web_gpt_package_snapshot"
+    },
+    {
+      "may_expand_rights": false,
+      "name": "GG-Metaarkitekt-gptskapare",
+      "source_path": "knowledge/web-gpts/GG-Metaarkitekt-gptskapare",
+      "source_tree_sha256": "abb68b62b61c4dbba72703f9f0396e40aea2f8d44c129a3526448bb7484ab0f6",
+      "source_type": "verified_web_gpt_package_snapshot"
+    },
+    {
+      "may_expand_rights": false,
+      "name": "GG-Agentarkitekt-agentskapare",
+      "source_path": "knowledge/web-gpts/GG-Agentarkitekt-agentskapare",
+      "source_tree_sha256": "649fc19bcf047b12c8f525d21967bc8aafe661df2ab68752ff4e92442439415d",
+      "source_type": "verified_web_gpt_package_snapshot"
+    },
+    {
+      "may_expand_rights": false,
+      "name": "GG-AI-installator",
+      "source_path": "knowledge/web-gpts/GG-AI-installator",
+      "source_tree_sha256": "334931958a8773f690aa7c41e6bca8cb194f416bc58987f8ef552f344a3815c3",
+      "source_type": "verified_web_gpt_package_snapshot"
+    },
+    {
+      "may_expand_rights": false,
+      "name": "GG-Webmaster",
+      "source_path": "knowledge/web-gpts/GG-Webmaster",
+      "source_tree_sha256": "aaecbf653d528b7043058411d804ab13281619e058cdae5c0e88fbbec2f6bc30",
+      "source_type": "verified_web_gpt_package_snapshot"
+    },
+    {
+      "may_expand_rights": false,
+      "name": "GG-Content-Studio",
+      "source_path": "knowledge/web-gpts/GG-Content-Studio",
+      "source_tree_sha256": "6c2a48469a746459762537e8fb8307995de1a6942be6f921ddb1a23d4efe721f",
+      "source_type": "verified_web_gpt_package_snapshot"
+    },
+    {
+      "may_expand_rights": false,
+      "name": "GG-Marknadsföring",
+      "source_path": "knowledge/web-gpts/GG-Marknadsföring",
+      "source_tree_sha256": "a5e5d1b808fa88f255a88cbf4a5da4218be748dc8e53eebf33843bd88ce622c6",
+      "source_type": "verified_web_gpt_package_snapshot"
+    }
+  ],
+  "review_control": {
+    "is_eighth_web_gpt": false,
+    "must_differ_from_creator": true,
+    "required": true,
+    "separate_from_participant_registry": true
+  },
+  "routing_mode": "explicit_assignment_only",
+  "schema": "gg.cp6b.participant-registry.v1",
+  "semantic_auto_routing": false,
+  "version": "1.0.0",
+  "web_gpt_direct_calls": false
+}

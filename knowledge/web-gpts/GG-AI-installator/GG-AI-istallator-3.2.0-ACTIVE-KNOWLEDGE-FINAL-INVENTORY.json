@@ -1,0 +1,98 @@
+{
+  "package": "GG-AI-istallator-3.2.0-ACTIVE-KNOWLEDGE-FINAL",
+  "created": "2026-08-07",
+  "audit_status": "PASS",
+  "active_file_count": 17,
+  "max_active_files": 20,
+  "reserved_free_slots": 3,
+  "current_main": "1144492f17df1c749f734175c6a1e4742ff95a41",
+  "cp6a": "PASS_LOCAL_PROMOTION_COMPLETE",
+  "cp6b": "SCOPE_AND_CONTRACT_INVENTORY_PASS_BUILD_NOT_STARTED",
+  "files": [
+    {
+      "name": "01-identitet-malbild-och-avgransning.md",
+      "bytes": 6066,
+      "sha256": "2e24ce4ff27a671241510671127c50a811a547d75917ae8be10b1483f97731d7"
+    },
+    {
+      "name": "02-systemprofil-status-och-dataprioritet-v3.2.0.md",
+      "bytes": 13456,
+      "sha256": "372153b1ba0f4822ac33000b7b1847b9fbcb0429f91de1486c1771789ef4e910"
+    },
+    {
+      "name": "03-riskmodell-godkannanden-och-stopp.md",
+      "bytes": 5734,
+      "sha256": "fcd191dd7a3ef91ec14d417de21b68a0798b494fdef2037df80c43dfdeb6ca2a"
+    },
+    {
+      "name": "04-arbetsfloden-faser-och-checkpoints.md",
+      "bytes": 6094,
+      "sha256": "5a34725d20eda4d90891613e6d50c1b9c62abb39035f79940c592c6b545292fd"
+    },
+    {
+      "name": "05-fedora-boot-kryptering-backup-v3.1.2.md",
+      "bytes": 12773,
+      "sha256": "ccc261e66bbf6258142a4f128440d76ad88efbc04b424b61d9752d03ded8bbd9"
+    },
+    {
+      "name": "06-podman-wordpress-woocommerce.md",
+      "bytes": 4434,
+      "sha256": "d5c7915162e7fa6814d64f8529642244576669d8d63c216570ccb06173d0e315"
+    },
+    {
+      "name": "07-lokal-ai-och-agentarkitektur.md",
+      "bytes": 7466,
+      "sha256": "49002b8df1d1dfbcbdd18655f70377fdff3cf3f5bc19dc8d52c8fa0ce3b85633"
+    },
+    {
+      "name": "08-test-felsokning-och-acceptans.md",
+      "bytes": 6607,
+      "sha256": "f87bcbe283eee2cbaaa39a18cb6af4eeb62a89d36f96b026c5f9d20f3ca529b7"
+    },
+    {
+      "name": "09-kommandobibliotek-journaler-och-regelkort.md",
+      "bytes": 7224,
+      "sha256": "1724c66a5c6f266c60d8f8ea54ec2e675178d07ea9d5b3605c44fd72bfa41ce7"
+    },
+    {
+      "name": "CHECKPOINTPLAN-CP1-CP6.md",
+      "bytes": 1301,
+      "sha256": "848e817c6362d3983f3bed1bfc2a680568e9ae8a94062adf9c196c8dcfa108cb"
+    },
+    {
+      "name": "DECISION-KNOWLEDGE-CHECKPOINT-CADENCE-2026-08-07.md",
+      "bytes": 994,
+      "sha256": "8a640eedcb137596f1ebcd8a6b9031104010a8af6e03cf41103356c11e6f8791"
+    },
+    {
+      "name": "GG-AI-KUNSKAP-AKTUELL-2026-08-07-v1.5.md",
+      "bytes": 4726,
+      "sha256": "3d562e19c73ae4a55183536f7e149e0397aa34b87268cff7a6df09076f2138cd"
+    },
+    {
+      "name": "KALLOR.md",
+      "bytes": 1410,
+      "sha256": "05eb260adc1b9bc236774e480e5e515ae46397dd1b92e7b5342673a7961193d7"
+    },
+    {
+      "name": "README.md",
+      "bytes": 1494,
+      "sha256": "48e435387ecdfaaa75d1afb3cc5fc67f86cf0d09890a49a772bd2af8b25437bb"
+    },
+    {
+      "name": "ROADMAP-DECISION-2026-07-29.md",
+      "bytes": 3944,
+      "sha256": "2ad7a04ef1fc4c268c4d6b56ee37747f1eee92d5a95d9cdd3a8fc66f0f301cae"
+    },
+    {
+      "name": "SYSTEMSTATUS-CP6A-COMPLETE-2026-08-07-v1.0.md",
+      "bytes": 1005,
+      "sha256": "1fc3cd457ac520c0ba652434751ab875a672ea5d92dbc073e3ba198ebd8662b0"
+    },
+    {
+      "name": "TESTSVIT.md",
+      "bytes": 11884,
+      "sha256": "b9e091658433a6f1b362264937fc36a08ce6103518b0b8695fca8bcbf11910f1"
+    }
+  ]
+}

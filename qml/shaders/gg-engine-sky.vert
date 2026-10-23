@@ -1,0 +1,6 @@
+VARYING vec3 vSkyDirection;
+void MAIN() {
+    vSkyDirection=(MODEL_MATRIX*vec4(VERTEX,1.0)).xyz-uEye;
+    POSITION=MODELVIEWPROJECTION_MATRIX*vec4(VERTEX,1.0);
+    POSITION.z=POSITION.w;
+}

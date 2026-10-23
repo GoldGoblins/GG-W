@@ -1,0 +1,38 @@
+T	packed SELFDEV work order
+TS	TASK_SCOPED
+Y	yellow allowed
+R	red forbidden
+A=0	GENERAL_ACTION_AUTHORITY none
+SITE	local WordPress SITE pane + PHP preview
+WEB	WEB pane
+DESK	gg-desk chrome
+look	snapshot then read names
+move	move gold pointer
+click	click named control
+type	type into focused field
+reload	QML RELOAD
+fix	edit local file/snippet/mu-plugin
+get	GET localhost PHP page
+hdr	header chrome; cream #f1dfc4; no extra nav box
+h1	one designed H1 per URL
+canon	canonical and og:url non-WWW goldgoblins.se
+bar	offer bar fri frakt / retur / garanti
+btop	footer link Till toppen
+search	search placeholder and empty-results page
+ship	empty-cart fri-frakt note
+sticky	do not re-add sticky nav background
+php	localhost PHP preview 200, router 644, volume :z, reuse origin
+block	cannot do here (needs live, ESP, reviews, or cart)
+review	reviews/stars — no fake data
+ac	search autocomplete — needs index
+cart	filled cart/checkout — no cart click
+mail	welcome/abandoned mail — no ESP
+rank	rank tracker / Ahrefs — paid live
+gsc	GSC indexing — live
+consent	consent DebugView — live
+restart	user restarts GG AI Desktop process
+learn	idle catalog tick into long memory; no second brain
+idle	host timer while chat is quiet
+catalog	unique source catalog of house files
+mem	long_memory capture recall consolidate
+house	desktop+FEDORA unique source, not copies

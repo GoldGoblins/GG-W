@@ -1,0 +1,6 @@
+VARYING vec2 vStarUv;
+void MAIN() {
+    vStarUv=UV0;
+    POSITION=MODELVIEWPROJECTION_MATRIX*vec4(VERTEX,1.0);
+    POSITION.z=POSITION.w;
+}

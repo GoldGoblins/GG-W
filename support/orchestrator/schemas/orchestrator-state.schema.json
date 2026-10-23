@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "state": {
+      "enum": [
+        "NEW",
+        "IDEKOMPASS_REQUIRED",
+        "TASK_ACCEPTED",
+        "EXPLICIT_PARTICIPANT_ASSIGNED",
+        "HANDOFF_READY",
+        "EVIDENCE_REQUIRED",
+        "CODE_GATE_REQUIRED",
+        "CODE_GATE_PASS",
+        "INDEPENDENT_REVIEW_REQUIRED",
+        "ACCEPTED",
+        "BLOCKED",
+        "STOPPED_COMPLETE"
+      ]
+    },
+    "task_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "task_id",
+    "state"
+  ],
+  "title": "GG CP6B orchestrator state",
+  "type": "object"
+}

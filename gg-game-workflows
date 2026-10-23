@@ -1,0 +1,102 @@
+#!/usr/bin/python3
+"""Shared GG asset, binary analysis, candidate review and route workflows."""
+import argparse
+import json
+from pathlib import Path
+import sys
+import time
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from backend import game_workflows, game_workflow_jobs
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--no-wait", action="store_true", help="Return a supervised job immediately")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("tools")
+    for command in ("status", "cancel", "context-job"):
+        sub.add_parser(command).add_argument("job_id")
+    for command in ("scout-index", "flow-import"):
+        item = sub.add_parser(command)
+        item.add_argument("path")
+        item.add_argument("--game", default="")
+    sub.add_parser("scout-collections").add_argument("path")
+    item = sub.add_parser("scout-batch")
+    item.add_argument("path")
+    item.add_argument("--game", default="")
+    item.add_argument("--cursor", default="")
+    item.add_argument("--batch-files", type=int, default=128)
+    item.add_argument("--shallow", dest="recursive", action="store_false")
+    item.add_argument("--partition", type=int, default=0)
+    item.add_argument("--partitions", type=int, default=1)
+    sub.add_parser("scout-batch-cancel").add_argument("cursor")
+    sub.add_parser("scout-relations").add_argument("key")
+    item = sub.add_parser("rig-trial")
+    item.add_argument("path")
+    item.add_argument("animation")
+    item.add_argument("--fps", type=float, required=True)
+    item.add_argument("--basis", choices=("SMD_LOCAL", "SMD_ROOT_X90"), required=True)
+    item = sub.add_parser("asset-profile")
+    item.add_argument("path")
+    item.add_argument("--lod", dest="lod_path", default="")
+    item = sub.add_parser("scene-measure")
+    item.add_argument("path")
+    item.add_argument("--samples", type=int, default=24)
+    item = sub.add_parser("scout-search")
+    item.add_argument("query", nargs="?", default="")
+    item.add_argument("--game", default="")
+    item.add_argument("--kind", default="")
+    item.add_argument("--limit", type=int, default=32)
+    item = sub.add_parser("inspect")
+    item.add_argument("path")
+    item.add_argument("--native", action="store_true", help="Use the installed version-specific native engine reader")
+    item = sub.add_parser("annotate")
+    item.add_argument("key")
+    item.add_argument("--tags", required=True)
+    item.add_argument("--note", default="")
+    sub.add_parser("visual").add_argument("keys", nargs="+")
+    item = sub.add_parser("context-export")
+    item.add_argument("path")
+    item.add_argument("--target", required=True)
+    item.add_argument("--function", dest="query", required=True)
+    item = sub.add_parser("verify")
+    item.add_argument("context")
+    item.add_argument("candidate")
+    item.add_argument("--syntax", action="store_true")
+    for command in ("flow-check", "flow-export"):
+        sub.add_parser(command).add_argument("path")
+    args = vars(parser.parse_args())
+    command, no_wait = args.pop("command"), args.pop("no_wait")
+    if command == "tools":
+        result = game_workflows.capabilities()
+    elif command in ("status", "cancel"):
+        result = getattr(game_workflow_jobs, command)(args["job_id"])
+    else:
+        if command == "asset-profile":
+            args = {"assets": [args]}
+        operation = {"inspect": "scout_inspect", "annotate": "scout_annotate", "visual": "scout_visual",
+                     "verify": "verify_candidate"}.get(command, command.replace("-", "_"))
+        result = game_workflow_jobs.start(operation, args)
+        if not no_wait and result.get("status") == "QUEUED":
+            deadline = time.monotonic() + game_workflow_jobs.TIMEOUT + 10
+            while result.get("status") in game_workflow_jobs.BUSY and time.monotonic() < deadline:
+                time.sleep(0.15)
+                result = game_workflow_jobs.status(result["job_id"])
+            if result.get("status") in game_workflow_jobs.BUSY:
+                game_workflow_jobs.cancel(result["job_id"])
+                result = {"status": "ERROR", "reason": "WORKFLOW_WAIT_TIMEOUT"}
+            if result.get("result"):
+                result = result["result"]
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    outcome = result.get("result") if isinstance(result.get("result"), dict) else result
+    return int(result.get("status") in ("ERROR", "FAIL", "CANCELLED", "AMBIGUOUS")
+               or outcome.get("status") in ("ERROR", "FAIL", "CANCELLED", "AMBIGUOUS")
+               or outcome.get("acceptance") in ("UNKNOWN", "REJECTED"))
+
+
+from backend.platform_support import configure_stdio
+configure_stdio()
+
+if __name__ == "__main__":
+    raise SystemExit(main())

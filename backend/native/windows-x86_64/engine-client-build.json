@@ -1,0 +1,7 @@
+{
+  "schema": "gg.engine-client-build.v1",
+  "abi": 1,
+  "source_sha256": "337f484825d256facdc749c8d5de107feedf389ae1cf99ca503f7f8931ed4819",
+  "binary_sha256": "030acf2e5ce40630eb67c99dcfef92ac34ffd294cd84ff58d35bb02be71ab74c",
+  "binary_bytes": 5623808
+}

@@ -1,0 +1,450 @@
+{
+  "pack": {
+    "alias": {
+      "file": "alias.png",
+      "hotX": 3,
+      "hotY": 3,
+      "frames": 1,
+      "delay": 0
+    },
+    "all-scroll": {
+      "file": "all-scroll.png",
+      "hotX": 11,
+      "hotY": 11,
+      "frames": 1,
+      "delay": 0
+    },
+    "bottom_left_corner": {
+      "file": "bottom_left_corner.png",
+      "hotX": 3,
+      "hotY": 20,
+      "frames": 1,
+      "delay": 0
+    },
+    "bottom_right_corner": {
+      "file": "bottom_right_corner.png",
+      "hotX": 20,
+      "hotY": 20,
+      "frames": 1,
+      "delay": 0
+    },
+    "bottom_side": {
+      "file": "bottom_side.png",
+      "hotX": 12,
+      "hotY": 20,
+      "frames": 1,
+      "delay": 0
+    },
+    "cell": {
+      "file": "cell.png",
+      "hotX": 11,
+      "hotY": 11,
+      "frames": 1,
+      "delay": 0
+    },
+    "center_ptr": {
+      "file": "center_ptr.png",
+      "hotX": 12,
+      "hotY": 3,
+      "frames": 1,
+      "delay": 0
+    },
+    "col-resize": {
+      "file": "col-resize.png",
+      "hotX": 12,
+      "hotY": 11,
+      "frames": 1,
+      "delay": 0
+    },
+    "color-picker": {
+      "file": "color-picker.png",
+      "hotX": 2,
+      "hotY": 21,
+      "frames": 1,
+      "delay": 0
+    },
+    "context-menu": {
+      "file": "context-menu.png",
+      "hotX": 3,
+      "hotY": 3,
+      "frames": 1,
+      "delay": 0
+    },
+    "copy": {
+      "file": "copy.png",
+      "hotX": 3,
+      "hotY": 3,
+      "frames": 1,
+      "delay": 0
+    },
+    "crosshair": {
+      "file": "crosshair.png",
+      "hotX": 13,
+      "hotY": 13,
+      "frames": 1,
+      "delay": 0
+    },
+    "default": {
+      "file": "default.png",
+      "hotX": 3,
+      "hotY": 3,
+      "frames": 1,
+      "delay": 0
+    },
+    "dnd-move": {
+      "file": "dnd-move.png",
+      "hotX": 12,
+      "hotY": 12,
+      "frames": 1,
+      "delay": 0
+    },
+    "dnd-no-drop": {
+      "file": "dnd-no-drop.png",
+      "hotX": 11,
+      "hotY": 11,
+      "frames": 1,
+      "delay": 0
+    },
+    "down-arrow": {
+      "file": "down-arrow.png",
+      "hotX": 12,
+      "hotY": 20,
+      "frames": 1,
+      "delay": 0
+    },
+    "draft": {
+      "file": "draft.png",
+      "hotX": 2,
+      "hotY": 21,
+      "frames": 1,
+      "delay": 0
+    },
+    "fleur": {
+      "file": "fleur.png",
+      "hotX": 11,
+      "hotY": 11,
+      "frames": 1,
+      "delay": 0
+    },
+    "help": {
+      "file": "help.png",
+      "hotX": 3,
+      "hotY": 3,
+      "frames": 1,
+      "delay": 0
+    },
+    "left-arrow": {
+      "file": "left-arrow.png",
+      "hotX": 3,
+      "hotY": 11,
+      "frames": 1,
+      "delay": 0
+    },
+    "left_side": {
+      "file": "left_side.png",
+      "hotX": 3,
+      "hotY": 11,
+      "frames": 1,
+      "delay": 0
+    },
+    "no-drop": {
+      "file": "no-drop.png",
+      "hotX": 3,
+      "hotY": 3,
+      "frames": 1,
+      "delay": 0
+    },
+    "not-allowed": {
+      "file": "not-allowed.png",
+      "hotX": 12,
+      "hotY": 11,
+      "frames": 1,
+      "delay": 0
+    },
+    "openhand": {
+      "file": "openhand.png",
+      "hotX": 12,
+      "hotY": 12,
+      "frames": 1,
+      "delay": 0
+    },
+    "pencil": {
+      "file": "pencil.png",
+      "hotX": 2,
+      "hotY": 21,
+      "frames": 1,
+      "delay": 0
+    },
+    "pirate": {
+      "file": "pirate.png",
+      "hotX": 11,
+      "hotY": 11,
+      "frames": 1,
+      "delay": 0
+    },
+    "pointer": {
+      "file": "pointer.png",
+      "hotX": 12,
+      "hotY": 3,
+      "frames": 1,
+      "delay": 0
+    },
+    "progress": {
+      "file": "progress.png",
+      "hotX": 3,
+      "hotY": 3,
+      "frames": 23,
+      "delay": 30
+    },
+    "right-arrow": {
+      "file": "right-arrow.png",
+      "hotX": 20,
+      "hotY": 11,
+      "frames": 1,
+      "delay": 0
+    },
+    "right_ptr": {
+      "file": "right_ptr.png",
+      "hotX": 21,
+      "hotY": 3,
+      "frames": 1,
+      "delay": 0
+    },
+    "right_side": {
+      "file": "right_side.png",
+      "hotX": 20,
+      "hotY": 11,
+      "frames": 1,
+      "delay": 0
+    },
+    "row-resize": {
+      "file": "row-resize.png",
+      "hotX": 12,
+      "hotY": 11,
+      "frames": 1,
+      "delay": 0
+    },
+    "size_bdiag": {
+      "file": "size_bdiag.png",
+      "hotX": 12,
+      "hotY": 11,
+      "frames": 1,
+      "delay": 0
+    },
+    "size_fdiag": {
+      "file": "size_fdiag.png",
+      "hotX": 12,
+      "hotY": 11,
+      "frames": 1,
+      "delay": 0
+    },
+    "size_hor": {
+      "file": "size_hor.png",
+      "hotX": 12,
+      "hotY": 11,
+      "frames": 1,
+      "delay": 0
+    },
+    "size_ver": {
+      "file": "size_ver.png",
+      "hotX": 12,
+      "hotY": 11,
+      "frames": 1,
+      "delay": 0
+    },
+    "text": {
+      "file": "text.png",
+      "hotX": 12,
+      "hotY": 11,
+      "frames": 1,
+      "delay": 0
+    },
+    "top_left_corner": {
+      "file": "top_left_corner.png",
+      "hotX": 4,
+      "hotY": 3,
+      "frames": 1,
+      "delay": 0
+    },
+    "top_right_corner": {
+      "file": "top_right_corner.png",
+      "hotX": 19,
+      "hotY": 3,
+      "frames": 1,
+      "delay": 0
+    },
+    "top_side": {
+      "file": "top_side.png",
+      "hotX": 12,
+      "hotY": 3,
+      "frames": 1,
+      "delay": 0
+    },
+    "up-arrow": {
+      "file": "up-arrow.png",
+      "hotX": 11,
+      "hotY": 3,
+      "frames": 1,
+      "delay": 0
+    },
+    "vertical-text": {
+      "file": "vertical-text.png",
+      "hotX": 12,
+      "hotY": 11,
+      "frames": 1,
+      "delay": 0
+    },
+    "wait": {
+      "file": "wait.png",
+      "hotX": 12,
+      "hotY": 11,
+      "frames": 23,
+      "delay": 30
+    },
+    "wayland-cursor": {
+      "file": "wayland-cursor.png",
+      "hotX": 12,
+      "hotY": 12,
+      "frames": 1,
+      "delay": 0
+    },
+    "x-cursor": {
+      "file": "x-cursor.png",
+      "hotX": 12,
+      "hotY": 11,
+      "frames": 1,
+      "delay": 0
+    },
+    "zoom-in": {
+      "file": "zoom-in.png",
+      "hotX": 11,
+      "hotY": 11,
+      "frames": 1,
+      "delay": 0
+    },
+    "zoom-out": {
+      "file": "zoom-out.png",
+      "hotX": 11,
+      "hotY": 11,
+      "frames": 1,
+      "delay": 0
+    }
+  },
+  "aliases": {
+    "3085a0e285430894940527032f8b26df": "alias",
+    "640fb0e74195791501fd1ed57b41487f": "alias",
+    "a2a266d0498c3104214a47bd64ab0fc8": "alias",
+    "alias": "alias",
+    "link": "alias",
+    "all-scroll": "all-scroll",
+    "bottom_left_corner": "bottom_left_corner",
+    "bottom_right_corner": "bottom_right_corner",
+    "bottom_side": "bottom_side",
+    "cell": "cell",
+    "plus": "cell",
+    "center_ptr": "center_ptr",
+    "col-resize": "col-resize",
+    "split_h": "col-resize",
+    "color-picker": "color-picker",
+    "context-menu": "context-menu",
+    "1081e37283d90000800003c07f3ef6bf": "copy",
+    "6407b0e94181790501fd1e167b474872": "copy",
+    "b66166c04f8c3109214a4fbd64a50fc8": "copy",
+    "copy": "copy",
+    "dnd-copy": "copy",
+    "cross": "crosshair",
+    "crosshair": "crosshair",
+    "tcross": "crosshair",
+    "arrow": "default",
+    "default": "default",
+    "left_ptr": "default",
+    "size-bdiag": "default",
+    "size-fdiag": "default",
+    "size-hor": "default",
+    "size-ver": "default",
+    "top_left_arrow": "default",
+    "4498f0e0c1937ffe01fd06f973665830": "dnd-move",
+    "9081237383d90e509aa00f00170e968f": "dnd-move",
+    "closedhand": "dnd-move",
+    "dnd-move": "dnd-move",
+    "dnd-none": "dnd-move",
+    "fcf21c00b30f7e3f83fe0dfd12e71cff": "dnd-move",
+    "grabbing": "dnd-move",
+    "move": "dnd-move",
+    "dnd-no-drop": "dnd-no-drop",
+    "down-arrow": "down-arrow",
+    "draft": "draft",
+    "fleur": "fleur",
+    "size_all": "fleur",
+    "5c6cd98b3f3ebcb1f9c7f1c204630408": "help",
+    "d9ce0ab605698f320427677b458ad60b": "help",
+    "help": "help",
+    "left_ptr_help": "help",
+    "question_arrow": "help",
+    "whats_this": "help",
+    "left-arrow": "left-arrow",
+    "left_side": "left_side",
+    "forbidden": "no-drop",
+    "no-drop": "no-drop",
+    "03b6e0fcb3499374a867c041f52298f0": "not-allowed",
+    "circle": "not-allowed",
+    "crossed_circle": "not-allowed",
+    "not-allowed": "not-allowed",
+    "grab": "openhand",
+    "openhand": "openhand",
+    "pencil": "pencil",
+    "pirate": "pirate",
+    "9d800788f1b08800ae810202380a0822": "pointer",
+    "e29285e634086352946a0e7090d73106": "pointer",
+    "hand1": "pointer",
+    "hand2": "pointer",
+    "pointer": "pointer",
+    "pointing_hand": "pointer",
+    "00000000000000020006000e7e9ffc3f": "progress",
+    "08e8e1c95fe2fc01f976f1e063a24ccd": "progress",
+    "3ecb610c1bf2410f44200f48c40d3599": "progress",
+    "half-busy": "progress",
+    "left_ptr_watch": "progress",
+    "progress": "progress",
+    "right-arrow": "right-arrow",
+    "right_ptr": "right_ptr",
+    "right_side": "right_side",
+    "row-resize": "row-resize",
+    "split_v": "row-resize",
+    "ne-resize": "size_bdiag",
+    "nesw-resize": "size_bdiag",
+    "size_bdiag": "size_bdiag",
+    "sw-resize": "size_bdiag",
+    "nw-resize": "size_fdiag",
+    "nwse-resize": "size_fdiag",
+    "se-resize": "size_fdiag",
+    "size_fdiag": "size_fdiag",
+    "e-resize": "size_hor",
+    "ew-resize": "size_hor",
+    "h_double_arrow": "size_hor",
+    "sb_h_double_arrow": "size_hor",
+    "size_hor": "size_hor",
+    "w-resize": "size_hor",
+    "00008160000006810000408080010102": "size_ver",
+    "n-resize": "size_ver",
+    "ns-resize": "size_ver",
+    "s-resize": "size_ver",
+    "sb_v_double_arrow": "size_ver",
+    "size_ver": "size_ver",
+    "v_double_arrow": "size_ver",
+    "ibeam": "text",
+    "text": "text",
+    "xterm": "text",
+    "top_left_corner": "top_left_corner",
+    "top_right_corner": "top_right_corner",
+    "top_side": "top_side",
+    "up-arrow": "up-arrow",
+    "vertical-text": "vertical-text",
+    "wait": "wait",
+    "watch": "wait",
+    "wayland-cursor": "wayland-cursor",
+    "x-cursor": "x-cursor",
+    "zoom-in": "zoom-in",
+    "zoom-out": "zoom-out"
+  }
+}

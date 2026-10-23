@@ -1,0 +1,19 @@
+#!/usr/bin/python3
+"""Drive GG AI Desktop with a visible pointer and real input."""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+PROJECT = Path(__file__).resolve().parent
+if str(PROJECT) not in sys.path:
+    sys.path.insert(0, str(PROJECT))
+
+from backend.desktop_operator import main
+
+from backend.platform_support import configure_stdio
+configure_stdio()
+
+if __name__ == "__main__":
+    raise SystemExit(main())

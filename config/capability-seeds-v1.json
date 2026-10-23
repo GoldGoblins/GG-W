@@ -1,0 +1,1294 @@
+{
+  "schema": "gg.capability-seeds.v1",
+  "capabilities": [
+    {
+      "human_id": "verify.source.foundation",
+      "description": "Runs the frozen Foundation Code Gate profile against one repository source target and produces attested static verification evidence. Capability existence does not grant execution authority.",
+      "kind": "VERIFIER",
+      "source_path": "infrastructure/scripts/gg-code-gate",
+      "manifest_key": null,
+      "content_sha256": "2688a7630303dead3bf9ced512339dd32ddf1fb42197349c0eea16593fa0e1d2",
+      "entrypoint_kind": "executable",
+      "entrypoint": "__file__",
+      "contract": {
+        "effect_class": "TRANSIENT_EVIDENCE_WRITE",
+        "risk_floor": "YELLOW",
+        "persistent_write": "RUNTIME_ONLY",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "CONTROLLED_PROFILE",
+        "model_inference": false
+      },
+      "depends_on": [],
+      "tags": [
+        "foundation",
+        "gate",
+        "static",
+        "verify",
+        "source"
+      ],
+      "relations": [
+        {
+          "type": "RELATED_TO",
+          "target": "verify.qml.gate"
+        }
+      ]
+    },
+    {
+      "human_id": "verify.qml.gate",
+      "description": "Runs the frozen QML Gate profile for one QML source target and emits profile-bound diagnostics and report identity without granting target execution authority.",
+      "kind": "VERIFIER",
+      "source_path": "infrastructure/scripts/gg-code-gate-qml",
+      "manifest_key": null,
+      "content_sha256": "71d2e1f25dcc66ab9fc61806ffaa6a6c414734ded47e7e1398cc3a84ec3d6e72",
+      "entrypoint_kind": "executable",
+      "entrypoint": "__file__",
+      "contract": {
+        "effect_class": "TRANSIENT_EVIDENCE_WRITE",
+        "risk_floor": "YELLOW",
+        "persistent_write": "RUNTIME_ONLY",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "CONTROLLED_PROFILE",
+        "model_inference": false
+      },
+      "depends_on": [],
+      "tags": [
+        "qml",
+        "gate",
+        "syntax",
+        "profile",
+        "verify"
+      ],
+      "relations": [
+        {
+          "type": "RELATED_TO",
+          "target": "verify.source.foundation"
+        },
+        {
+          "type": "USED_WITH",
+          "target": "analyze.source.qml"
+        }
+      ]
+    },
+    {
+      "human_id": "analyze.source.python",
+      "description": "Analyzes Python candidate source deterministically and returns structured diagnostics without executing candidate code.",
+      "kind": "ANALYZER",
+      "source_path": "projects/gg-ai-desktop/backend/live_aid/python_analyzer.py",
+      "manifest_key": "backend/live_aid/python_analyzer.py",
+      "content_sha256": "71d9bf40eec6bef5eaf7d73908c7376aa57ed4e0aeec6316a3165d13eff4bd68",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "analyze_python",
+      "contract": {
+        "effect_class": "IN_MEMORY_ONLY",
+        "risk_floor": "GREEN",
+        "persistent_write": "NONE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [],
+      "tags": [
+        "python",
+        "analyze",
+        "diagnostic",
+        "source",
+        "fast"
+      ],
+      "relations": [
+        {
+          "type": "USED_WITH",
+          "target": "index.source.repository"
+        }
+      ]
+    },
+    {
+      "human_id": "analyze.source.qml",
+      "description": "Analyzes QML candidate source deterministically and returns structured diagnostics before any expensive model escalation.",
+      "kind": "ANALYZER",
+      "source_path": "projects/gg-ai-desktop/backend/live_aid/qml_analyzer.py",
+      "manifest_key": "backend/live_aid/qml_analyzer.py",
+      "content_sha256": "2434c0f3692daf7e27dd330286c3a1da36f7a3df072fa49d0c237c9232a236f7",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "analyze_qml",
+      "contract": {
+        "effect_class": "IN_MEMORY_ONLY",
+        "risk_floor": "GREEN",
+        "persistent_write": "NONE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [],
+      "tags": [
+        "qml",
+        "analyze",
+        "diagnostic",
+        "source",
+        "fast"
+      ],
+      "relations": [
+        {
+          "type": "USED_WITH",
+          "target": "verify.qml.gate"
+        },
+        {
+          "type": "USED_WITH",
+          "target": "verify.qml.preflight"
+        },
+        {
+          "type": "USED_WITH",
+          "target": "index.source.repository"
+        }
+      ]
+    },
+    {
+      "human_id": "analyze.source.shell",
+      "description": "Analyzes shell candidate source deterministically and returns diagnostics without executing the shell candidate.",
+      "kind": "ANALYZER",
+      "source_path": "projects/gg-ai-desktop/backend/live_aid/shell_analyzer.py",
+      "manifest_key": "backend/live_aid/shell_analyzer.py",
+      "content_sha256": "865ea5c1284fdc879d3d9bd486eda857437b7064289e5cb6f1729976afbf7f7f",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "analyze_shell",
+      "contract": {
+        "effect_class": "IN_MEMORY_ONLY",
+        "risk_floor": "GREEN",
+        "persistent_write": "NONE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [],
+      "tags": [
+        "shell",
+        "bash",
+        "analyze",
+        "diagnostic",
+        "fast"
+      ],
+      "relations": [
+        {
+          "type": "USED_WITH",
+          "target": "verify.source.foundation"
+        }
+      ]
+    },
+    {
+      "human_id": "analyze.source.json",
+      "description": "Analyzes JSON candidate bytes deterministically for structured syntax and contract diagnostics without model inference.",
+      "kind": "ANALYZER",
+      "source_path": "projects/gg-ai-desktop/backend/live_aid/json_analyzer.py",
+      "manifest_key": "backend/live_aid/json_analyzer.py",
+      "content_sha256": "77d15ea46a7d97cad14ba3042fcb11456ae7c28ffe148e66af808aeb763516fe",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "analyze_json",
+      "contract": {
+        "effect_class": "IN_MEMORY_ONLY",
+        "risk_floor": "GREEN",
+        "persistent_write": "NONE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [],
+      "tags": [
+        "json",
+        "schema",
+        "analyze",
+        "diagnostic",
+        "fast"
+      ],
+      "relations": [
+        {
+          "type": "USED_WITH",
+          "target": "verify.source.foundation"
+        }
+      ]
+    },
+    {
+      "human_id": "index.source.repository",
+      "description": "Builds an in-memory source and symbol index for a bounded repository root so nearby source can be resolved without repeated global search.",
+      "kind": "STATE_SERVICE",
+      "source_path": "projects/gg-ai-desktop/backend/live_aid/source_index.py",
+      "manifest_key": "backend/live_aid/source_index.py",
+      "content_sha256": "2c25a95adc3d7c3de3099a6ac1ca155f1840df96fd8010f5d9e4e603ec977efd",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "SourceIndex.build",
+      "contract": {
+        "effect_class": "READ_ONLY_SCAN",
+        "risk_floor": "GREEN",
+        "persistent_write": "NONE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [],
+      "tags": [
+        "source",
+        "index",
+        "symbol",
+        "repository",
+        "locality"
+      ],
+      "relations": [
+        {
+          "type": "USED_WITH",
+          "target": "resolve.unknown.forensic"
+        },
+        {
+          "type": "USED_WITH",
+          "target": "analyze.source.python"
+        },
+        {
+          "type": "USED_WITH",
+          "target": "analyze.source.qml"
+        }
+      ]
+    },
+    {
+      "human_id": "resolve.unknown.forensic",
+      "description": "Reduces UNKNOWN by using already indexed source facts first and emits typed GREEN probe requests when runtime observation is still required.",
+      "kind": "ANALYZER",
+      "source_path": "projects/gg-ai-desktop/backend/live_aid/forensic_resolver.py",
+      "manifest_key": "backend/live_aid/forensic_resolver.py",
+      "content_sha256": "fbf846aae97cc4cbbe98f54e27f8cf97be3a78b18c856d437278953593013788",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "ForensicResolver.resolve",
+      "contract": {
+        "effect_class": "IN_MEMORY_ONLY",
+        "risk_floor": "GREEN",
+        "persistent_write": "NONE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [
+        "index.source.repository"
+      ],
+      "tags": [
+        "forensic",
+        "unknown",
+        "probe",
+        "source",
+        "evidence"
+      ],
+      "relations": [
+        {
+          "type": "PRODUCES_FOR",
+          "target": "tool.safe.dispatch"
+        }
+      ]
+    },
+    {
+      "human_id": "state.fact.store",
+      "description": "Append-only content-addressed fact storage with explicit provenance and retrieval semantics; existence of the store does not grant callers write authority.",
+      "kind": "STATE_SERVICE",
+      "source_path": "projects/gg-ai-desktop/backend/live_aid/fact_store.py",
+      "manifest_key": "backend/live_aid/fact_store.py",
+      "content_sha256": "aeeda8326c7b5f70abc04ae6e031ea27eef6339d82289be6807b337347b9de5a",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "FactStore",
+      "contract": {
+        "effect_class": "RUNTIME_STATE_WRITE",
+        "risk_floor": "YELLOW",
+        "persistent_write": "LOCAL_STATE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [],
+      "tags": [
+        "fact",
+        "store",
+        "content",
+        "provenance",
+        "state"
+      ],
+      "relations": [
+        {
+          "type": "USED_WITH",
+          "target": "resolve.unknown.forensic"
+        }
+      ]
+    },
+    {
+      "human_id": "verify.qml.preflight",
+      "description": "Adapts a candidate QML buffer into the frozen QML Gate and returns validated profile-bound diagnostics and report hashes before execution.",
+      "kind": "VERIFIER",
+      "source_path": "projects/gg-ai-desktop/backend/live_aid/qml_preflight_runner.py",
+      "manifest_key": "backend/live_aid/qml_preflight_runner.py",
+      "content_sha256": "64edf0686ed540e0b0bb22a6618ba5b409d3240e261f1c0dcad51f236c1a3728",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "run_request",
+      "contract": {
+        "effect_class": "TRANSIENT_EVIDENCE_WRITE",
+        "risk_floor": "YELLOW",
+        "persistent_write": "RUNTIME_ONLY",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "CONTROLLED_PROFILE",
+        "model_inference": false
+      },
+      "depends_on": [
+        "verify.qml.gate"
+      ],
+      "tags": [
+        "qml",
+        "preflight",
+        "verify",
+        "diagnostic",
+        "gate"
+      ],
+      "relations": [
+        {
+          "type": "USED_WITH",
+          "target": "analyze.source.qml"
+        },
+        {
+          "type": "VALIDATES",
+          "target": "repair.qml.local_model"
+        },
+        {
+          "type": "USED_WITH",
+          "target": "workflow.qml.post_draft_repair"
+        }
+      ]
+    },
+    {
+      "human_id": "model.autonomy.propose",
+      "description": "Task-bound local semantic proposal model runner used by autonomy and repair flows. Model output remains untrusted and network authority is none.",
+      "kind": "MODEL",
+      "source_path": "projects/gg-ai-desktop/backend/autonomy_model_runner.py",
+      "manifest_key": "backend/autonomy_model_runner.py",
+      "content_sha256": "1c21911e0879696bafadc741a7bf146a68d225b6734fd8502697ac03b89337c3",
+      "entrypoint_kind": "python_module",
+      "entrypoint": "__module__",
+      "contract": {
+        "effect_class": "LOCAL_MODEL_INFERENCE",
+        "risk_floor": "YELLOW",
+        "persistent_write": "RUNTIME_ONLY",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "CONTROLLED_PROFILE",
+        "model_inference": true
+      },
+      "depends_on": [],
+      "tags": [
+        "model",
+        "local",
+        "semantic",
+        "proposal",
+        "autonomy"
+      ],
+      "relations": [
+        {
+          "type": "USED_WITH",
+          "target": "repair.qml.local_model"
+        },
+        {
+          "type": "USED_WITH",
+          "target": "control.autonomy.task"
+        }
+      ]
+    },
+    {
+      "human_id": "model.local.infer",
+      "description": "Frozen local model runtime adapter for bounded local inference using the locked model/runtime stack with network mode none.",
+      "kind": "MODEL",
+      "source_path": "projects/gg-ai-desktop/backend/local_ai_model_runner.py",
+      "manifest_key": "backend/local_ai_model_runner.py",
+      "content_sha256": "1d32863be1886e737969b765b1d87744654253abc6b3074fc1dc93087e86d232",
+      "entrypoint_kind": "python_module",
+      "entrypoint": "__module__",
+      "contract": {
+        "effect_class": "LOCAL_MODEL_INFERENCE",
+        "risk_floor": "YELLOW",
+        "persistent_write": "RUNTIME_ONLY",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "CONTROLLED_PROFILE",
+        "model_inference": true
+      },
+      "depends_on": [],
+      "tags": [
+        "model",
+        "local",
+        "inference",
+        "gpu",
+        "runtime"
+      ],
+      "relations": [
+        {
+          "type": "USED_WITH",
+          "target": "model.local.chat"
+        }
+      ]
+    },
+    {
+      "human_id": "model.local.chat",
+      "description": "Local-only CHAT adapter around the frozen model runner for bounded conversation transport without broad agent or action authority.",
+      "kind": "MODEL",
+      "source_path": "projects/gg-ai-desktop/backend/local_ai_chat_runner.py",
+      "manifest_key": "backend/local_ai_chat_runner.py",
+      "content_sha256": "4ee410afdee2f7ac2ecfea148abff548f8fba2a096fd18f28baf375e70240549",
+      "entrypoint_kind": "python_module",
+      "entrypoint": "__module__",
+      "contract": {
+        "effect_class": "LOCAL_MODEL_INFERENCE",
+        "risk_floor": "YELLOW",
+        "persistent_write": "RUNTIME_ONLY",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "CONTROLLED_PROFILE",
+        "model_inference": true
+      },
+      "depends_on": [
+        "model.local.infer"
+      ],
+      "tags": [
+        "model",
+        "local",
+        "chat",
+        "conversation",
+        "runtime"
+      ],
+      "relations": [
+        {
+          "type": "RELATED_TO",
+          "target": "model.autonomy.propose"
+        }
+      ]
+    },
+    {
+      "human_id": "repair.qml.local_model",
+      "description": "Builds a bounded QML repair proposal from host-attested blocking diagnostics, using a local model only after deterministic verification identifies the target.",
+      "kind": "REPAIR",
+      "source_path": "projects/gg-ai-desktop/backend/live_aid/repair_model_runner.py",
+      "manifest_key": "backend/live_aid/repair_model_runner.py",
+      "content_sha256": "d0c56756fece6c4895623f4eb4323113b62f823afaab99a101eed8cea1e12c32",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "execute",
+      "contract": {
+        "effect_class": "LOCAL_MODEL_INFERENCE",
+        "risk_floor": "YELLOW",
+        "persistent_write": "RUNTIME_ONLY",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "CONTROLLED_PROFILE",
+        "model_inference": true
+      },
+      "depends_on": [
+        "model.autonomy.propose"
+      ],
+      "tags": [
+        "qml",
+        "repair",
+        "model",
+        "diagnostic",
+        "candidate"
+      ],
+      "relations": [
+        {
+          "type": "USED_WITH",
+          "target": "verify.qml.preflight"
+        },
+        {
+          "type": "REPAIRS",
+          "target": "analyze.source.qml"
+        },
+        {
+          "type": "USED_WITH",
+          "target": "workflow.qml.post_draft_repair"
+        }
+      ]
+    },
+    {
+      "human_id": "tool.safe.dispatch",
+      "description": "Dispatches existing bounded Safe Tool profiles such as READ, SEARCH, GIT, TEST and RUN while preserving fixed effect and authority contracts.",
+      "kind": "ACTION",
+      "source_path": "projects/gg-ai-desktop/backend/safe_tool_runner.py",
+      "manifest_key": "backend/safe_tool_runner.py",
+      "content_sha256": "86441b7454a7d4c89921fbde976c01906b27f8c26bda5cddb680dd1c7483a284",
+      "entrypoint_kind": "python_module",
+      "entrypoint": "__module__",
+      "contract": {
+        "effect_class": "READ_ONLY_TOOL_EXECUTION",
+        "risk_floor": "YELLOW",
+        "persistent_write": "RUNTIME_ONLY",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "CONTROLLED_PROFILE",
+        "model_inference": false
+      },
+      "depends_on": [],
+      "tags": [
+        "tool",
+        "safe",
+        "read",
+        "search",
+        "test",
+        "git"
+      ],
+      "relations": [
+        {
+          "type": "OBSERVES",
+          "target": "index.source.repository"
+        },
+        {
+          "type": "USED_WITH",
+          "target": "resolve.unknown.forensic"
+        }
+      ]
+    },
+    {
+      "human_id": "write.limited.apply",
+      "description": "Existing Limited Write boundary for a bounded approved source proposal with post-write verification; it is not general action authority.",
+      "kind": "ACTION",
+      "source_path": "projects/gg-ai-desktop/backend/write_runner.py",
+      "manifest_key": "backend/write_runner.py",
+      "content_sha256": "edb39687a6940dd7e663430694273560802b8dab8a4b7c4932f47a4674e9e796",
+      "entrypoint_kind": "python_module",
+      "entrypoint": "__module__",
+      "contract": {
+        "effect_class": "BOUNDED_PERSISTENT_WRITE",
+        "risk_floor": "YELLOW",
+        "persistent_write": "BOUNDED_SOURCE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "CONTROLLED_PROFILE",
+        "model_inference": false
+      },
+      "depends_on": [],
+      "tags": [
+        "write",
+        "limited",
+        "patch",
+        "approval",
+        "verify"
+      ],
+      "relations": [
+        {
+          "type": "RELATED_TO",
+          "target": "control.autonomy.task"
+        }
+      ]
+    },
+    {
+      "human_id": "control.task.ledger",
+      "description": "Owner-only local task ledger contract for bounded task identity, goal, status and control-plane state under the runtime directory.",
+      "kind": "STATE_SERVICE",
+      "source_path": "projects/gg-ai-desktop/backend/control_plane_contract.py",
+      "manifest_key": "backend/control_plane_contract.py",
+      "content_sha256": "2e3e54571e13d05afe8748684adc8e5696ae91749c2d24f5339dc15b84eb7656",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "TaskLedger",
+      "contract": {
+        "effect_class": "RUNTIME_STATE_WRITE",
+        "risk_floor": "YELLOW",
+        "persistent_write": "RUNTIME_ONLY",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [],
+      "tags": [
+        "task",
+        "ledger",
+        "goal",
+        "state",
+        "control"
+      ],
+      "relations": [
+        {
+          "type": "USED_WITH",
+          "target": "control.autonomy.task"
+        }
+      ]
+    },
+    {
+      "human_id": "control.autonomy.task",
+      "description": "Deterministic task-bound autonomy conductor that coordinates goal-WHY state, Safe Tools, semantic proposals, candidate verification and separate Limited Write boundaries.",
+      "kind": "CONTROL",
+      "source_path": "projects/gg-ai-desktop/backend/autonomy_controller.py",
+      "manifest_key": "backend/autonomy_controller.py",
+      "content_sha256": "9fc1083a81d0d3909265b4bee14648df9a86c28de981b3dd06d2c9731a8250cb",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "execute",
+      "contract": {
+        "effect_class": "TASK_BOUND_CONTROLLED_RUNTIME",
+        "risk_floor": "YELLOW",
+        "persistent_write": "RUNTIME_ONLY",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "CONTROLLED_PROFILE",
+        "model_inference": true
+      },
+      "depends_on": [
+        "control.task.ledger",
+        "tool.safe.dispatch",
+        "model.autonomy.propose"
+      ],
+      "tags": [
+        "autonomy",
+        "task",
+        "goal",
+        "why",
+        "controller"
+      ],
+      "relations": [
+        {
+          "type": "PRODUCES_FOR",
+          "target": "write.limited.apply"
+        },
+        {
+          "type": "RELATED_TO",
+          "target": "state.fact.store"
+        }
+      ]
+    },
+    {
+      "human_id": "workflow.qml.post_draft_repair",
+      "description": "Composes QML preflight, diagnostic-bound local repair, private in-memory candidate mutation and revalidation into the verified post-draft repair workflow.",
+      "kind": "COMPOSITE",
+      "source_path": "projects/gg-ai-desktop/backend/live_aid/post_draft_qml_executor.py",
+      "manifest_key": "backend/live_aid/post_draft_qml_executor.py",
+      "content_sha256": "dfdb9d9a762b6f5be6072d0d1f39dd0a5f29f490d2f9fd907d239523dae96152",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "PostDraftQmlExecutor",
+      "contract": {
+        "effect_class": "LOCAL_MODEL_INFERENCE",
+        "risk_floor": "YELLOW",
+        "persistent_write": "RUNTIME_ONLY",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "CONTROLLED_PROFILE",
+        "model_inference": true
+      },
+      "depends_on": [
+        "verify.qml.preflight",
+        "repair.qml.local_model"
+      ],
+      "tags": [
+        "qml",
+        "repair",
+        "workflow",
+        "post",
+        "draft",
+        "verify"
+      ],
+      "relations": [
+        {
+          "type": "COMPOSES",
+          "target": "verify.qml.preflight"
+        },
+        {
+          "type": "COMPOSES",
+          "target": "repair.qml.local_model"
+        },
+        {
+          "type": "RELATED_TO",
+          "target": "analyze.source.qml"
+        }
+      ]
+    },
+    {
+      "human_id": "state.capability.registry",
+      "description": "Content-addressed capability registry loader and bounded semantic graph index.",
+      "kind": "STATE_SERVICE",
+      "source_path": "projects/gg-ai-desktop/backend/capability_registry.py",
+      "manifest_key": "backend/capability_registry.py",
+      "content_sha256": "ecdd91d0d01589cd0e0efe9e3265d3297e14f7b78be32a8d02aabccadbb8fb52",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "CapabilityRegistry.load",
+      "contract": {
+        "effect_class": "READ_ONLY_SCAN",
+        "risk_floor": "GREEN",
+        "persistent_write": "NONE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [],
+      "relations": [
+        {
+          "type": "PRODUCES_FOR",
+          "target": "route.solver.deterministic"
+        }
+      ],
+      "tags": [
+        "capability",
+        "registry",
+        "graph",
+        "index",
+        "resident"
+      ]
+    },
+    {
+      "human_id": "route.solver.deterministic",
+      "description": "Passive deterministic solver router that reuses suitable capability identities before any model fallback.",
+      "kind": "CONTROL",
+      "source_path": "projects/gg-ai-desktop/backend/solver_router.py",
+      "manifest_key": "backend/solver_router.py",
+      "content_sha256": "c9b7e553f226b172e5c96a039894bbca40006603f307fbe1da98f16a8f50c0d6",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "SolverRouter.route",
+      "contract": {
+        "effect_class": "IN_MEMORY_ONLY",
+        "risk_floor": "GREEN",
+        "persistent_write": "NONE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [
+        "state.capability.registry"
+      ],
+      "relations": [
+        {
+          "type": "PRODUCES_FOR",
+          "target": "focus.route.laser"
+        }
+      ],
+      "tags": [
+        "route",
+        "solver",
+        "deterministic",
+        "reuse",
+        "decision"
+      ]
+    },
+    {
+      "human_id": "focus.route.laser",
+      "description": "Compiled bounded LaserFocus direct-handle cache for repeated hot-path routing without graph search, disk I/O, sorting, or model use.",
+      "kind": "STATE_SERVICE",
+      "source_path": "projects/gg-ai-desktop/backend/solver_router.py",
+      "manifest_key": "backend/solver_router.py",
+      "content_sha256": "c9b7e553f226b172e5c96a039894bbca40006603f307fbe1da98f16a8f50c0d6",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "LaserFocusCache.lookup",
+      "contract": {
+        "effect_class": "IN_MEMORY_ONLY",
+        "risk_floor": "GREEN",
+        "persistent_write": "NONE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [
+        "route.solver.deterministic"
+      ],
+      "relations": [
+        {
+          "type": "USED_WITH",
+          "target": "route.solver.deterministic"
+        }
+      ],
+      "tags": [
+        "focus",
+        "laser",
+        "cache",
+        "hot",
+        "route"
+      ]
+    },
+    {
+      "human_id": "repair.source.safe_edit",
+      "description": "Applies exact machine-attested safe text edits to a source-revision-bound resident source and returns an in-memory candidate without model inference or persistent write.",
+      "kind": "REPAIR",
+      "source_path": "projects/gg-ai-desktop/backend/safe_edit_engine.py",
+      "manifest_key": "backend/safe_edit_engine.py",
+      "content_sha256": "0a39ec5f011845376b7046034241bb650b96461a6de7129099095031a27da5a3",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "apply_safe_edits",
+      "contract": {
+        "effect_class": "IN_MEMORY_ONLY",
+        "risk_floor": "GREEN",
+        "persistent_write": "NONE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [],
+      "relations": [
+        {
+          "type": "USED_WITH",
+          "target": "route.solver.deterministic"
+        }
+      ],
+      "tags": [
+        "repair",
+        "source",
+        "safe",
+        "edit",
+        "machine",
+        "attested",
+        "deterministic",
+        "route_evidence_required"
+      ]
+    },
+    {
+      "human_id": "control.solver.in_memory_execute",
+      "description": "Executes only statically bound deterministic in-memory solver adapters selected by a current LaserFocus route and content-addressed capability identity, without process spawn, network, model inference, or persistent source write.",
+      "kind": "CONTROL",
+      "source_path": "projects/gg-ai-desktop/backend/deterministic_solver_executor.py",
+      "manifest_key": "backend/deterministic_solver_executor.py",
+      "content_sha256": "a6d7905949fefa273aae2c7b974b0e034949acba944e73c0cd04134a2bfc3b33",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "execute_registered_solver",
+      "contract": {
+        "effect_class": "IN_MEMORY_ONLY",
+        "risk_floor": "GREEN",
+        "persistent_write": "NONE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [
+        "route.solver.deterministic",
+        "repair.source.safe_edit"
+      ],
+      "relations": [],
+      "tags": [
+        "control",
+        "solver",
+        "execute",
+        "in_memory",
+        "deterministic",
+        "content_addressed"
+      ]
+    },
+    {
+      "human_id": "verify.semantic.done_when",
+      "description": "Pure content-addressed boundary separating machine correctness, semantic DONE_WHEN, visible human acceptance and learning candidate eligibility without granting promotion or action authority.",
+      "kind": "VERIFIER",
+      "source_path": "projects/gg-ai-desktop/backend/semantic_closure.py",
+      "manifest_key": "backend/semantic_closure.py",
+      "content_sha256": "11b76338d6d79846bea410d4ec311ce789961cc33fad46e7f14af330a611223d",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "evaluate_semantic_closure",
+      "contract": {
+        "effect_class": "IN_MEMORY_ONLY",
+        "risk_floor": "GREEN",
+        "persistent_write": "NONE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [],
+      "relations": [],
+      "tags": [
+        "verify",
+        "semantic",
+        "done_when",
+        "acceptance",
+        "learning",
+        "provenance"
+      ]
+    },
+    {
+      "human_id": "compile.knowledge.specialization",
+      "description": "Pure deterministic compiler deriving content-addressed machine-specialized knowledge from generic facts, verified machine facts, policy identity and exact specializer identity without granting promotion or action authority.",
+      "kind": "ANALYZER",
+      "source_path": "projects/gg-ai-desktop/backend/live_aid/knowledge_compiler.py",
+      "manifest_key": "backend/live_aid/knowledge_compiler.py",
+      "content_sha256": "92ea5722e3ef4f895fa1aac026b04301188d952a05204241446398f9b74ea41b",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "compile_specialization",
+      "contract": {
+        "effect_class": "IN_MEMORY_ONLY",
+        "risk_floor": "GREEN",
+        "persistent_write": "NONE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [],
+      "relations": [
+        {
+          "type": "PRODUCES_FOR",
+          "target": "focus.compiled.generic"
+        }
+      ],
+      "tags": [
+        "knowledge",
+        "compile",
+        "specialization",
+        "machine",
+        "merkle",
+        "deterministic",
+        "content_addressed"
+      ]
+    },
+    {
+      "human_id": "focus.compiled.generic",
+      "description": "General bounded resident compiled-focus cache providing direct content-bound handle lookup after expensive discovery or derivation has already completed.",
+      "kind": "STATE_SERVICE",
+      "source_path": "projects/gg-ai-desktop/backend/compiled_focus.py",
+      "manifest_key": "backend/compiled_focus.py",
+      "content_sha256": "1558124c38de296aa69bd66c294814368e826e335005763ad3eb768722fd0713",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "CompiledFocusCache.lookup",
+      "contract": {
+        "effect_class": "IN_MEMORY_ONLY",
+        "risk_floor": "GREEN",
+        "persistent_write": "NONE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [],
+      "relations": [],
+      "tags": [
+        "focus",
+        "laserfocus",
+        "cache",
+        "resident",
+        "merkle",
+        "content_addressed",
+        "hot_path"
+      ]
+    },
+    {
+      "human_id": "state.merkle.domain",
+      "description": "Pure in-memory canonical Merkle domain and subtree root compiler used for selective focus invalidation without discovery, persistent state write or action authority.",
+      "kind": "STATE_SERVICE",
+      "source_path": "projects/gg-ai-desktop/backend/domain_merkle.py",
+      "manifest_key": "backend/domain_merkle.py",
+      "content_sha256": "9e78d5a4c997d2f2a7ba7e10a194314f08cd59d8ffb75bfef9a601f269053543",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "build_domain_root",
+      "contract": {
+        "effect_class": "IN_MEMORY_ONLY",
+        "risk_floor": "GREEN",
+        "persistent_write": "NONE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [],
+      "relations": [
+        {
+          "type": "PRODUCES_FOR",
+          "target": "focus.compiled.generic"
+        }
+      ],
+      "tags": [
+        "merkle",
+        "domain",
+        "subtree",
+        "identity",
+        "invalidation",
+        "focus",
+        "content_addressed"
+      ]
+    },
+    {
+      "human_id": "compile.neighborhood.bounded",
+      "description": "Pure bounded cold-path compiler that reuses the existing capability semantic working set and preloaded content-addressed source identities to produce a Merkle-bound compiled focus neighborhood for direct resident hot-path lookup.",
+      "kind": "ANALYZER",
+      "source_path": "projects/gg-ai-desktop/backend/neighborhood_compiler.py",
+      "manifest_key": "backend/neighborhood_compiler.py",
+      "content_sha256": "db915981aabd5f4880073666ffc93b38a156f663c8352d3a714a23e2819b4de5",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "compile_neighborhood",
+      "contract": {
+        "effect_class": "IN_MEMORY_ONLY",
+        "risk_floor": "GREEN",
+        "persistent_write": "NONE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [
+        "state.capability.registry",
+        "state.merkle.domain",
+        "focus.compiled.generic"
+      ],
+      "relations": [
+        {
+          "type": "PRODUCES_FOR",
+          "target": "focus.compiled.generic"
+        }
+      ],
+      "tags": [
+        "neighborhood",
+        "focus",
+        "cold_path",
+        "working_set",
+        "merkle",
+        "bounded",
+        "content_addressed",
+        "deterministic"
+      ]
+    },
+    {
+      "human_id": "state.focus.incremental",
+      "description": "Bounded in-memory reverse dependency index that maps exact compiled-focus dependency identities to resident handles and selectively invalidates only affected handles when a bound Merkle root changes.",
+      "kind": "STATE_SERVICE",
+      "source_path": "projects/gg-ai-desktop/backend/incremental_focus.py",
+      "manifest_key": "backend/incremental_focus.py",
+      "content_sha256": "36248bd10fdb5a09b9b91179fbc998fada9abea436ac9b4c27fbd572b67be38a",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "IncrementalFocusIndex",
+      "contract": {
+        "effect_class": "IN_MEMORY_ONLY",
+        "risk_floor": "GREEN",
+        "persistent_write": "NONE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [
+        "focus.compiled.generic"
+      ],
+      "relations": [
+        {
+          "type": "USED_WITH",
+          "target": "compile.neighborhood.bounded"
+        }
+      ],
+      "tags": [
+        "focus",
+        "incremental",
+        "merkle",
+        "reverse_index",
+        "invalidation",
+        "resident",
+        "change_routing",
+        "content_addressed"
+      ]
+    },
+    {
+      "human_id": "state.merkle.propagation",
+      "description": "Bounded in-memory Merkle propagation DAG that routes an exact leaf preimage change only through its registered parent ancestors and emits selective dependency changes for the existing incremental focus invalidator.",
+      "kind": "STATE_SERVICE",
+      "source_path": "projects/gg-ai-desktop/backend/merkle_propagation.py",
+      "manifest_key": "backend/merkle_propagation.py",
+      "content_sha256": "c7b02d6e82e659c6a2054753b5f7518088215ebb6fe577e9107a9ef8d7e5efba",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "ResidentMerklePropagationDAG",
+      "contract": {
+        "effect_class": "IN_MEMORY_ONLY",
+        "risk_floor": "GREEN",
+        "persistent_write": "NONE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [
+        "state.merkle.domain",
+        "state.focus.incremental"
+      ],
+      "relations": [
+        {
+          "type": "PRODUCES_FOR",
+          "target": "state.focus.incremental"
+        }
+      ],
+      "tags": [
+        "merkle",
+        "propagation",
+        "dag",
+        "incremental",
+        "change_routing",
+        "resident",
+        "selective_invalidation",
+        "content_addressed"
+      ]
+    },
+    {
+      "human_id": "state.source.change_event",
+      "description": "Generic in-memory verified source-change event adapter that binds an already attested old/new source transition to a stable Merkle leaf and feeds the existing resident Merkle propagation and selective focus invalidation.",
+      "kind": "STATE_SERVICE",
+      "source_path": "projects/gg-ai-desktop/backend/source_change_event.py",
+      "manifest_key": "backend/source_change_event.py",
+      "content_sha256": "e411865e1821686370b70ffe75f5b289975b75013bb744acac9d9deb91c64470",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "ingest_verified_host_source_change",
+      "contract": {
+        "effect_class": "IN_MEMORY_ONLY",
+        "risk_floor": "GREEN",
+        "persistent_write": "NONE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [
+        "state.merkle.propagation"
+      ],
+      "relations": [
+        {
+          "type": "PRODUCES_FOR",
+          "target": "state.merkle.propagation"
+        }
+      ],
+      "tags": [
+        "source_change",
+        "verified_event",
+        "host_source",
+        "merkle",
+        "provenance",
+        "heredity",
+        "incremental",
+        "selective_invalidation"
+      ]
+    },
+    {
+      "human_id": "state.information.resident",
+      "description": "Single bounded application-lifetime Workbench owner for resident Merkle source state and the incremental compiled-focus reverse index. It ingests already verified host-source change events without acquiring write authority.",
+      "kind": "STATE_SERVICE",
+      "source_path": "projects/gg-ai-desktop/backend/resident_information_state.py",
+      "manifest_key": "backend/resident_information_state.py",
+      "content_sha256": "bac59c8d474d6a64f7966b67c8e236548c8be257a352903d7bff173f67e8a3b4",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "WorkbenchResidentInformationState",
+      "contract": {
+        "effect_class": "IN_MEMORY_ONLY",
+        "risk_floor": "GREEN",
+        "persistent_write": "NONE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [
+        "state.source.change_event",
+        "state.focus.incremental"
+      ],
+      "relations": [
+        {
+          "type": "USED_WITH",
+          "target": "state.source.change_event"
+        }
+      ],
+      "tags": [
+        "resident",
+        "workbench",
+        "information_state",
+        "merkle",
+        "incremental_focus",
+        "source_change",
+        "fail_closed",
+        "bounded"
+      ]
+    },
+    {
+      "human_id": "focus.grok.knowledge_tree",
+      "description": "Grok TUI adapter over the existing SOURCE-MANIFEST head, LaserFocus handle cache and Merkle neighborhood compiler. Lookup is identity-in nearby-hashes-out; observations append to FactStore without promoting canonical policy.",
+      "kind": "STATE_SERVICE",
+      "source_path": "projects/gg-ai-desktop/backend/grok_knowledge_tree.py",
+      "manifest_key": "backend/grok_knowledge_tree.py",
+      "content_sha256": "c27b1e3267f015b67583b53f5ba836786bf8126dc6859e5bdf47f3f0e994a252",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "lookup",
+      "contract": {
+        "effect_class": "RUNTIME_STATE_WRITE",
+        "risk_floor": "YELLOW",
+        "persistent_write": "LOCAL_STATE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [
+        "focus.route.laser",
+        "compile.neighborhood.bounded",
+        "state.merkle.domain",
+        "state.fact.store"
+      ],
+      "relations": [
+        {
+          "type": "USED_WITH",
+          "target": "focus.route.laser"
+        },
+        {
+          "type": "USED_WITH",
+          "target": "compile.neighborhood.bounded"
+        },
+        {
+          "type": "USED_WITH",
+          "target": "state.fact.store"
+        }
+      ],
+      "tags": [
+        "grok",
+        "tui",
+        "laser",
+        "merkle",
+        "neighborhood",
+        "knowledge",
+        "head",
+        "content_addressed",
+        "fail_closed"
+      ]
+    },
+    {
+      "human_id": "state.memory.long",
+      "description": "Motor-independent long-term memory on the laser-Merkle FactStore: compact episodes, token posting lists, bounded WORKING.md. Lookup is identity-in nearby-lessons-out; it does not dump transcripts or promote canonical policy.",
+      "kind": "STATE_SERVICE",
+      "source_path": "projects/gg-ai-desktop/backend/long_memory.py",
+      "manifest_key": "backend/long_memory.py",
+      "content_sha256": "3dc2e1d4bb8499ea94dc4be312d419543b88277e68c6a03f9b26e29380e03977",
+      "entrypoint_kind": "python_symbol",
+      "entrypoint": "recall",
+      "contract": {
+        "effect_class": "RUNTIME_STATE_WRITE",
+        "risk_floor": "YELLOW",
+        "persistent_write": "LOCAL_STATE",
+        "network": "NONE",
+        "sudo": "NO",
+        "execution_authority": "NONE",
+        "model_inference": false
+      },
+      "depends_on": [
+        "state.fact.store",
+        "focus.grok.knowledge_tree"
+      ],
+      "relations": [
+        {
+          "type": "USED_WITH",
+          "target": "state.fact.store"
+        },
+        {
+          "type": "USED_WITH",
+          "target": "focus.grok.knowledge_tree"
+        }
+      ],
+      "tags": [
+        "memory",
+        "long_term",
+        "laser",
+        "merkle",
+        "fact",
+        "episode",
+        "lesson",
+        "shared",
+        "content_addressed",
+        "fail_closed"
+      ]
+    }
+  ]
+}

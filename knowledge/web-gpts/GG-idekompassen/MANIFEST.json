@@ -1,0 +1,90 @@
+{
+  "package_name": "Idékompassen",
+  "version": "2.0.0",
+  "created": "2026-07-28",
+  "package_type": "complete_replacement_package",
+  "instruction_characters": 7474,
+  "instruction_limit": 8000,
+  "knowledge_file_count": 8,
+  "required_capabilities": [
+    "Web Search",
+    "Code Interpreter & Data Analysis",
+    "File Uploads / Knowledge"
+  ],
+  "optional_capabilities": [
+    "Image Generation",
+    "Actions"
+  ],
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "bytes": 2448,
+      "sha256": "04570292d8588f285498aafe55b7a5245b5a6c9c4493a2e088443665f912da53"
+    },
+    {
+      "path": "INSTRUKTIONER.txt",
+      "bytes": 7796,
+      "sha256": "06615fbdb93ccf1b7006eaf133b0e594013971461e8354eae6cfe5499294df43"
+    },
+    {
+      "path": "KALLOR.md",
+      "bytes": 2401,
+      "sha256": "b6622040207465c3e8e0309d3a864753caed1c0b55aa5bb498d4461cbc5bc82d"
+    },
+    {
+      "path": "MIGRERING.md",
+      "bytes": 3397,
+      "sha256": "ae902e514acc842fa478d0c212d10848dd567adbecb0eb91118a0830c5092387"
+    },
+    {
+      "path": "README.md",
+      "bytes": 5706,
+      "sha256": "657e22435f19ba208170773340c089b1340cd657915d5109b18a31b5583fc75b"
+    },
+    {
+      "path": "TESTSVIT.md",
+      "bytes": 6614,
+      "sha256": "071720ef1c2793c119909c8f17e539f62c17fa5018a55cd6259f95227db74fff"
+    },
+    {
+      "path": "knowledge/01-identitet-och-karnide.md",
+      "bytes": 2791,
+      "sha256": "56eaf4c210985273b691a6b1939928c3de535ab4eab4cebb384fa58172009886"
+    },
+    {
+      "path": "knowledge/02-hypotesmotor-och-fragelogik.md",
+      "bytes": 3540,
+      "sha256": "66a4b5238fb15d683bc01a6506e92ee66fbbe62c7bda3cfef0ae42cd26c868bc"
+    },
+    {
+      "path": "knowledge/03-researchgrind-och-kallkritik.md",
+      "bytes": 3311,
+      "sha256": "d15d0977c6f62cd9702d3778f8d65c69f0057f9f1a87a3ab0d7823f1a896132d"
+    },
+    {
+      "path": "knowledge/04-idekontrakt-och-overlamning.md",
+      "bytes": 2934,
+      "sha256": "31a628df8fb7054970445e24537a35d65f8d1dc6441d3fe9858338ce7cbc00fe"
+    },
+    {
+      "path": "knowledge/05-genomforandeunderlag-per-destination.md",
+      "bytes": 3130,
+      "sha256": "89a1afb45882c5cb319949c4f5b1c689f138c255115b636a11a32aa8ba322e0f"
+    },
+    {
+      "path": "knowledge/06-exempel-och-felmonster.md",
+      "bytes": 3759,
+      "sha256": "6034b6efba12bb2962994030f3f8882c40516ea9d33e654ec10db6f41eacfcfb"
+    },
+    {
+      "path": "knowledge/07-chatgpt-plattformsbaslinje-2026-07-28.md",
+      "bytes": 2381,
+      "sha256": "fa6d303153cfe653ae8b0f87534b8de20e4b52ab241c8bb16c710e2810f299c0"
+    },
+    {
+      "path": "knowledge/08-godkant-gpt-kontrakt.md",
+      "bytes": 2810,
+      "sha256": "3116595ce4fe73b78c25e0be0f8117d8ed3e6da9ddac0ab1625a371a2bcd1a2e"
+    }
+  ]
+}

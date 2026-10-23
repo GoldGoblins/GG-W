@@ -1,0 +1,335 @@
+{
+  "schema": "gg.ai-desktop.dependencies.v1",
+  "platform": "Windows 10/11 or Linux with X11 or Wayland/XWayland",
+  "python": {
+    "minimum": "3.12",
+    "requirements": "requirements.txt",
+    "tested": {
+      "PySide6": "6.11.2 (Windows)",
+      "Pillow": "12.3.0"
+    }
+  },
+  "cli": [
+    {
+      "name": "codex",
+      "provider": "OpenAI",
+      "required_for": "GPT TUI",
+      "installation": "https://developers.openai.com/codex/cli/"
+    },
+    {
+      "name": "grok",
+      "provider": "xAI",
+      "required_for": "GROK TUI",
+      "installation": "https://grok.com/build"
+    },
+    {
+      "name": "blender",
+      "required_for": "Blender EXT",
+      "installation": "https://www.blender.org/download/"
+    },
+    {
+      "name": "ffmpeg",
+      "required_for": "video and audio tools"
+    },
+    {
+      "name": "yt-dlp",
+      "required_for": "public media URL decoding"
+    },
+    {
+      "name": "podman",
+      "required_for": "locked local model and code-gate containers"
+    },
+    {
+      "name": "cargo",
+      "required_for": "build bundled Rust engine libraries"
+    },
+    {
+      "name": "cc",
+      "required_for": "build native capture helper",
+      "platforms": [
+        "Linux"
+      ]
+    },
+    {
+      "name": "msvc",
+      "required_for": "build native Windows libraries",
+      "platforms": [
+        "Windows"
+      ]
+    },
+    {
+      "name": "node",
+      "required_for": "Node research integrations"
+    },
+    {
+      "name": "ssh",
+      "required_for": "SSH/SFTP integrations"
+    },
+    {
+      "name": "git",
+      "required_for": "repository-backed code tools"
+    },
+    {
+      "name": "vlc",
+      "required_for": "external audio and video playback"
+    }
+  ],
+  "bundled_gg_skills": [
+    "gg-blender-reference-workflow",
+    "gg-live-eyes",
+    "selfdev-t",
+    "visible-web"
+  ],
+  "codex_builtin_skills": [
+    "imagegen",
+    "openai-docs",
+    "review-agent",
+    "skill-creator",
+    "skill-installer"
+  ],
+  "grok_builtin_skills": [
+    "build-with-ai",
+    "code-review",
+    "create-skill",
+    "create-workflow",
+    "design",
+    "docx",
+    "execute-plan",
+    "game-animation-frames",
+    "game-asset-core",
+    "game-character-consistency",
+    "game-tilesets",
+    "game-ui-icons",
+    "imagine",
+    "implement",
+    "pdf",
+    "pptx",
+    "pr-babysit",
+    "resume-claude",
+    "resume-codex",
+    "resume-cursor",
+    "review",
+    "skill-design-principles"
+  ],
+  "external_plugins": [
+    {
+      "provider": "OpenAI",
+      "name": "gmail",
+      "installed_version_reference": "0.1.10",
+      "skills": [],
+      "delivery": "provider-plugin-directory",
+      "bundled": false,
+      "license_declared": "MIT",
+      "redistribution": "not-redistributed",
+      "installation": "Install through the OpenAI plugin directory in the client that supplies this capability; authenticate with your own account."
+    },
+    {
+      "provider": "OpenAI",
+      "name": "openai-templates",
+      "installed_version_reference": "0.1.1",
+      "skills": [
+        "artifact-template-analytics-dashboard",
+        "artifact-template-business-review",
+        "artifact-template-design-report",
+        "artifact-template-experiment-analysis",
+        "artifact-template-financial-budget",
+        "artifact-template-investment-committee-memo",
+        "artifact-template-legal-memorandum",
+        "artifact-template-market-trends-report",
+        "artifact-template-minimal-letterhead",
+        "artifact-template-operating-calendar",
+        "artifact-template-operating-review",
+        "artifact-template-project-kickoff",
+        "artifact-template-project-tracker",
+        "artifact-template-sales-pipeline",
+        "artifact-template-simple-dark-mode",
+        "artifact-template-simple-light-mode",
+        "artifact-template-strategy-memorandum",
+        "artifact-template-system-design",
+        "artifact-template-team-alignment",
+        "artifact-template-three-statement-forecast"
+      ],
+      "delivery": "provider-plugin-directory",
+      "bundled": false,
+      "license_declared": "Proprietary",
+      "redistribution": "not-redistributed",
+      "installation": "Install through the OpenAI plugin directory in the client that supplies this capability; authenticate with your own account."
+    },
+    {
+      "provider": "OpenAI",
+      "name": "pages",
+      "installed_version_reference": "0.1.23",
+      "skills": [
+        "maintain-space",
+        "manage-schedules",
+        "organize-space",
+        "write-page"
+      ],
+      "delivery": "provider-plugin-directory",
+      "bundled": false,
+      "license_declared": "Proprietary",
+      "redistribution": "not-redistributed",
+      "installation": "Install through the OpenAI plugin directory in the client that supplies this capability; authenticate with your own account."
+    },
+    {
+      "provider": "OpenAI",
+      "name": "plugin-management",
+      "installed_version_reference": "0.1.0",
+      "skills": [
+        "plugin-management"
+      ],
+      "delivery": "provider-plugin-directory",
+      "bundled": false,
+      "license_declared": "Proprietary",
+      "redistribution": "not-redistributed",
+      "installation": "Install through the OpenAI plugin directory in the client that supplies this capability; authenticate with your own account."
+    },
+    {
+      "provider": "OpenAI",
+      "name": "sites",
+      "installed_version_reference": "1.0.0",
+      "skills": [
+        "sites"
+      ],
+      "delivery": "provider-plugin-directory",
+      "bundled": false,
+      "license_declared": "Proprietary",
+      "redistribution": "not-redistributed",
+      "installation": "Install through the OpenAI plugin directory in the client that supplies this capability; authenticate with your own account."
+    },
+    {
+      "provider": "OpenAI",
+      "name": "work-pets",
+      "installed_version_reference": "0.1.6",
+      "skills": [
+        "create-pet",
+        "pets",
+        "update-pet"
+      ],
+      "delivery": "provider-plugin-directory",
+      "bundled": false,
+      "license_declared": "Proprietary",
+      "redistribution": "not-redistributed",
+      "installation": "Install through the OpenAI plugin directory in the client that supplies this capability; authenticate with your own account."
+    },
+    {
+      "provider": "OpenAI",
+      "name": "documents",
+      "installed_version_reference": "26.930.11008",
+      "skills": [
+        "documents"
+      ],
+      "delivery": "provider-plugin-directory",
+      "bundled": false,
+      "license_declared": "MIT",
+      "redistribution": "not-redistributed",
+      "installation": "Install through the OpenAI plugin directory in the client that supplies this capability; authenticate with your own account."
+    },
+    {
+      "provider": "OpenAI",
+      "name": "pdf",
+      "installed_version_reference": "26.930.11008",
+      "skills": [
+        "pdf"
+      ],
+      "delivery": "provider-plugin-directory",
+      "bundled": false,
+      "license_declared": "MIT",
+      "redistribution": "not-redistributed",
+      "installation": "Install through the OpenAI plugin directory in the client that supplies this capability; authenticate with your own account."
+    },
+    {
+      "provider": "OpenAI",
+      "name": "presentations",
+      "installed_version_reference": "26.930.11008",
+      "skills": [
+        "presentations"
+      ],
+      "delivery": "provider-plugin-directory",
+      "bundled": false,
+      "license_declared": "MIT",
+      "redistribution": "not-redistributed",
+      "installation": "Install through the OpenAI plugin directory in the client that supplies this capability; authenticate with your own account."
+    },
+    {
+      "provider": "OpenAI",
+      "name": "spreadsheets",
+      "installed_version_reference": "26.930.11008",
+      "skills": [
+        "excel-live-control",
+        "spreadsheets"
+      ],
+      "delivery": "provider-plugin-directory",
+      "bundled": false,
+      "license_declared": "MIT",
+      "redistribution": "not-redistributed",
+      "installation": "Install through the OpenAI plugin directory in the client that supplies this capability; authenticate with your own account."
+    },
+    {
+      "provider": "OpenAI",
+      "name": "template-creator",
+      "installed_version_reference": "26.930.11008",
+      "skills": [
+        "template-creator"
+      ],
+      "delivery": "provider-plugin-directory",
+      "bundled": false,
+      "license_declared": "Proprietary",
+      "redistribution": "not-redistributed",
+      "installation": "Install through the OpenAI plugin directory in the client that supplies this capability; authenticate with your own account."
+    }
+  ],
+  "optional_python_modules": [
+    "gi",
+    "timesfm3"
+  ],
+  "local_models": {
+    "delivery": "user-installed weights outside source",
+    "configuration": "model paths and container checks remain local; the desktop can start with a cloud TUI without weights"
+  },
+  "provider_authentication": "Each user signs in through the provider client; authentication files and tokens are never distributed.",
+  "windows": {
+    "python_environment": ".venv-windows",
+    "qt_version": "6.11.2",
+    "launcher": "run-gg-ai-desktop.cmd",
+    "setup": "setup-windows.cmd",
+    "cli_wrappers": "gg-*.cmd",
+    "terminal": "ConPTY via pywinpty",
+    "worker_limits": "Windows Job Objects",
+    "web_browser": {
+      "engine": "Microsoft Edge WebView2 through Qt WebView or the optional GG extension host",
+      "scope": "All WEB tabs, all HTTP/HTTPS sites",
+      "profile": "Per-user application state / webview2-profile",
+      "delivery": "Microsoft Evergreen Runtime, supplied and updated by Microsoft",
+      "installation": "https://developer.microsoft.com/microsoft-edge/webview2/",
+      "content_blocking": {
+        "provider": "uBlock Origin",
+        "version": "1.75.0",
+        "manifest_version": 2,
+        "package": "https://github.com/gorhill/uBlock/releases/download/1.75.0/uBlock0_1.75.0.chromium.zip",
+        "source": "https://github.com/gorhill/uBlock",
+        "license": "GPL-3.0-or-later",
+        "modified": false,
+        "bundled": false,
+        "delivery": "Original publisher archive installed per user outside source",
+        "installation": "tools/install_web_filter.py",
+        "controls": "Per-site on/off and the original uBO dashboard",
+        "compatibility": "Verified on WebView2 155.0.4283.62; future Manifest V2 support depends on Microsoft"
+      },
+      "extension_host": {
+        "source": "native/webview/gg_webview.cpp",
+        "binary": "backend/native/windows-x86_64/gg_webview.dll",
+        "sdk": "Microsoft.Web.WebView2",
+        "sdk_version": "1.0.4258.31",
+        "sdk_package": "https://api.nuget.org/v3-flatcontainer/microsoft.web.webview2/1.0.4258.31/microsoft.web.webview2.1.0.4258.31.nupkg",
+        "sdk_delivery": "Original Microsoft NuGet package during explicit build/install",
+        "sdk_license": "native/webview/MICROSOFT-LICENSE.txt",
+        "sdk_notice": "native/webview/MICROSOFT-NOTICE.txt",
+        "startup_download": false,
+        "debug_port": false
+      }
+    },
+    "native_libraries": "backend/native/windows-x86_64 or windows-arm64",
+    "linux_workers": "Configured Podman Linux VM; no host fallback without isolation"
+  }
+}

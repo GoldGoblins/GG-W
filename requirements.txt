@@ -1,0 +1,11 @@
+# Core desktop and locally used analysis/image interfaces.
+PySide6>=6.8,<7; sys_platform != "win32"
+# 6.12.0 crashes on Windows when a QObject-returning QML slot returns None.
+PySide6==6.11.2; sys_platform == "win32"
+Pillow>=10
+numpy
+duckdb
+
+# Windows desktop terminal and telemetry.
+psutil>=7.0,<8
+pywinpty>=2.0,<4; sys_platform == "win32"

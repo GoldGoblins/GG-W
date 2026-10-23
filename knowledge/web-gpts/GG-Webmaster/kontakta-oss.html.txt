@@ -1,0 +1,693 @@
+<!-- wp:shortcode -->
+[gg_header]
+<!-- /wp:shortcode -->
+
+<!-- wp:html -->
+<section class="gg-contact-header">
+
+    <h1>KONTAKTA OSS</h1>
+
+    <div class="gg-contact-divider">
+        <img src="https://www.goldgoblins.se/wp-content/uploads/2026/06/e01we3r5y6tyjggretgh.png" alt="">
+    </div>
+
+    <p>
+        Har du frågor om ett smycke, en specialbeställning,
+        storlek, leverans eller skötsel?<br>
+        Vi hjälper dig gärna.
+    </p>
+
+</section>
+
+<style>
+.gg-contact-header{
+    width:100%;
+    text-align:center;
+    padding:clamp(60px,6vw,120px) 5% clamp(50px,5vw,90px);
+    background-color: #f1dfc4;
+
+background-image:
+    radial-gradient(circle at 20% 15%, rgba(255,255,255,0.10), transparent 30%),
+    radial-gradient(circle at 80% 35%, rgba(120,90,55,0.03), transparent 35%),
+    radial-gradient(circle at 45% 80%, rgba(255,255,255,0.06), transparent 30%),
+    linear-gradient(135deg, rgba(255,255,255,0.03), rgba(120,90,55,0.02));
+    background-size:100% 100%;
+    background-position:center;
+    border-bottom:0px solid #9F8560;
+    box-sizing:border-box;
+}
+
+.gg-contact-header h1{
+    margin:0;
+    color:#2f2b25;
+    font-family:'PT Serif', serif;
+    font-size:clamp(42px,5vw,92px);
+    font-weight:400;
+    letter-spacing:0.18em;
+}
+
+.gg-contact-divider{
+    margin:clamp(20px,2vw,35px) auto;
+}
+
+.gg-contact-divider img{
+    width:clamp(120px,12vw,260px);
+    height:auto;
+    display:block;
+    margin:auto;
+}
+
+.gg-contact-header p{
+    max-width:900px;
+    margin:0 auto;
+    color:#2f2b25;
+    font-family:'PT Serif', serif;
+    font-size:clamp(18px,1.3vw,28px);
+    line-height:1.7;
+    letter-spacing:0.08em;
+}
+</style>
+<!-- /wp:html -->
+
+<!-- wp:html -->
+<section class="gg-info-page">
+
+    <div class="gg-info-heading">
+        <img class="gg-heading-image" src="https://www.goldgoblins.se/wp-content/uploads/2026/06/9b12-49af-8218-3f9fa75d735a.png" alt="">
+        <h2 class="gg-small-title gg-info-title">VANLIGA FRÅGOR</h2>
+        <img class="gg-heading-image" src="https://www.goldgoblins.se/wp-content/uploads/2026/06/e018b.png" alt="">
+    </div>
+
+    <div class="gg-info-content">
+
+        <div id="faq" class="gg-info-block">
+           
+
+            <h3>Är era smycken handgjorda?</h3>
+            <p>Ja, våra smycken tillverkas för hand i vår verkstad med fokus på kvalitet, hantverk och hållbarhet.</p>
+
+            <h3>Vilka material använder ni?</h3>
+            <p>Vi arbetar främst med ädelmetaller som silver och använder endast material som uppfyller våra kvalitetskrav.</p>
+
+            <h3>Kan jag beställa ett specialdesignat smycke?</h3>
+            <p>Ja, vi erbjuder specialbeställningar och skräddarsydda lösningar. Kontakta oss gärna för att diskutera dina idéer.</p>
+
+            <h3>Hur sköter jag mitt smycke?</h3>
+            <p>För bästa hållbarhet rekommenderar vi att du förvarar smycket torrt, undviker starka kemikalier och rengör det regelbundet med lämpliga produkter för ädelmetaller.</p>
+
+            <h3>Hur hittar jag rätt ringstorlek?</h3>
+            <p>För att hitta rätt storlek rekommenderar vi att du använder vår storleksguide för ringar, där du hittar instruktioner för mätning och storlekstabeller.</p>
+
+            <h3>Vilken längd ska jag välja på mitt halsband?</h3>
+            <p>Valet av halsbandslängd är individuellt och beror på önskad passform. Se vår storleksguide för halsband för att jämföra olika längder och hitta den som passar dig bäst.</p>
+
+            <h3>Hur kontaktar jag er?</h3>
+            <p>Du kan kontakta oss via vårt kontaktformulär eller e-post. Vi svarar normalt inom 1–3 arbetsdagar.</p>
+        </div>
+
+        <div id="leverans" class="gg-info-block">
+            <div class="gg-info-heading">
+        <img class="gg-heading-image" src="https://www.goldgoblins.se/wp-content/uploads/2026/06/9b12-49af-8218-3f9fa75d735a.png" alt="">
+        <h2 class="gg-small-title gg-info-title">FRAKT &amp; LEVERANS</h2>
+        <img class="gg-heading-image" src="https://www.goldgoblins.se/wp-content/uploads/2026/06/e018b.png" alt="">
+    </div>
+
+            <h3>Hur lång är leveranstiden?</h3>
+            <p>Leveranstiden varierar beroende på produkt och aktuell arbetsbelastning. Vi tillverkar många av våra smycken för hand, vilket innebär att vissa beställningar kan ta lite längre tid. Normal leveranstid är vanligtvis några arbetsdagar upp till två veckor. Maximal leveranstid är 14 dagar från beställningstillfället.</p>
+
+            <h3>Vad kostar frakten?</h3>
+            <p>Vi erbjuder gratis frakt på alla beställningar över 1 000 kr. För beställningar under detta belopp tillkommer fraktkostnad enligt aktuell prislista i kassan.</p>
+
+            <h3>Kan jag spåra min beställning?</h3>
+            <p>Ja, när din beställning skickas får du en leveransbekräftelse med spårningsinformation om vald fraktmetod erbjuder detta.</p>
+
+            <h3>Levererar ni internationellt?</h3>
+            <p>Nej, för närvarande levererar vi endast inom Sverige.</p>
+        </div>
+
+        <div id="retur" class="gg-info-block">
+            <div class="gg-info-heading">
+        <img class="gg-heading-image" src="https://www.goldgoblins.se/wp-content/uploads/2026/06/9b12-49af-8218-3f9fa75d735a.png" alt="">
+        <h2 class="gg-small-title gg-info-title">RETUR &amp; ÅNGERRÄTT</h2>
+        <img class="gg-heading-image" src="https://www.goldgoblins.se/wp-content/uploads/2026/06/e018b.png" alt="">
+    </div>
+
+            <h3>Kan jag returnera en vara?</h3>
+            <p>Ja, som privatkund har du enligt svensk lag 14 dagars ångerrätt från det att du mottagit din beställning.</p>
+
+            <h3>Vilka villkor gäller för retur?</h3>
+            <p>Produkten ska returneras i oförändrat skick och i originalförpackning. Kunden ansvarar för returfrakten om inget annat avtalats.</p>
+
+            <h3>Kan jag returnera specialtillverkade produkter?</h3>
+            <p>Nej, ångerrätten gäller normalt inte för specialbeställda, personligt anpassade eller graverade produkter som tillverkats specifikt efter kundens önskemål.</p>
+        </div>
+
+        <div id="reklamation" class="gg-info-block">
+            <div class="gg-info-heading">
+        <img class="gg-heading-image" src="https://www.goldgoblins.se/wp-content/uploads/2026/06/9b12-49af-8218-3f9fa75d735a.png" alt="">
+        <h2 class="gg-small-title gg-info-title">REKLAMATION</h2>
+        <img class="gg-heading-image" src="https://www.goldgoblins.se/wp-content/uploads/2026/06/e018b.png" alt="">
+    </div>
+
+            <h3>Vad gör jag om min vara är skadad eller felaktig?</h3>
+            <p>Kontakta oss så snart som möjligt efter att felet upptäckts. Skicka gärna med bilder och en beskrivning av problemet så hjälper vi dig vidare.</p>
+
+            <h3>Hur lång reklamationsrätt har jag?</h3>
+            <p>Som konsument har du reklamationsrätt enligt gällande svensk konsumentlagstiftning.</p>
+
+            <h3>Vem betalar frakten vid en godkänd reklamation?</h3>
+            <p>Om reklamationen godkänns står vi självklart för samtliga kostnader kopplade till reklamationen, inklusive frakt.</p>
+        </div>
+
+    </div>
+</section>
+
+<style>
+.gg-info-page{
+    width:100%;
+    background-color:#f1dfc4;
+    background-image:
+        radial-gradient(circle at 20% 15%, rgba(255,255,255,0.10), transparent 30%),
+        radial-gradient(circle at 80% 35%, rgba(120,90,55,0.03), transparent 35%),
+        radial-gradient(circle at 45% 80%, rgba(255,255,255,0.06), transparent 30%),
+        linear-gradient(135deg, rgba(255,255,255,0.03), rgba(120,90,55,0.02));
+    background-size:cover;
+    background-position:center;
+    padding:clamp(50px,6vw,110px) 2%;
+    box-sizing:border-box;
+    border-top:3px solid #9F8560;
+    border-bottom:3px solid #9F8560;
+}
+
+.gg-info-heading{
+    max-width:950px;
+    margin:0 auto clamp(40px,4vw,70px);
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
+    align-items:center;
+    gap:clamp(20px,3vw,60px);
+}
+
+.gg-heading-image{
+    width:100%;
+    height:auto;
+    display:block;
+}
+
+.gg-info-heading .gg-small-title{
+    color:#B9965F;
+    font-family:'PT Serif', serif;
+    font-size:clamp(18px,2.2vw,32px);
+    letter-spacing:0.35em;
+    white-space:nowrap;
+}
+
+.gg-info-content{
+    max-width:1100px;
+    margin:0 auto;
+}
+
+.gg-info-block{
+    scroll-margin-top:120px;
+    margin-bottom:clamp(45px,5vw,80px);
+    padding-bottom:clamp(35px,4vw,60px);
+    border-bottom:1px solid rgba(159,133,96,0.55);
+}
+
+.gg-info-block:last-child{
+    border-bottom:none;
+    margin-bottom:0;
+    padding-bottom:0;
+}
+
+.gg-info-block h2{
+    font-family:'PT Serif', serif;
+    color:#B9965F;
+    font-size:clamp(26px,3vw,46px);
+    letter-spacing:0.08em;
+    margin:0 0 clamp(25px,3vw,45px);
+}
+
+.gg-info-block h3{
+    font-family:'PT Serif', serif;
+    color:#2f2b25;
+    font-size:clamp(19px,1.6vw,28px);
+    line-height:1.45;
+    margin:clamp(22px,2vw,34px) 0 8px;
+}
+
+.gg-info-block p{
+    font-family:'PT Serif', serif;
+    color:#2f2b25;
+    font-size:clamp(17px,1.25vw,23px);
+    line-height:1.8;
+    margin:0 0 clamp(14px,1.6vw,24px);
+}
+
+.gg-info-heading .gg-small-title{
+    color:#B9965F;
+    font-family:'PT Serif', serif;
+    font-size:clamp(18px,2.2vw,32px);
+    letter-spacing:0.35em;
+    white-space:nowrap;
+}
+
+.gg-info-heading h2.gg-small-title.gg-info-title{
+    margin:0;
+    font-weight:400;
+    line-height:normal;
+}
+
+
+
+@media(max-width:768px){
+    .gg-info-heading{
+        grid-template-columns:1fr;
+        text-align:center;
+    }
+
+    .gg-heading-image{
+        max-width:260px;
+        margin:0 auto;
+    }
+
+    .gg-info-heading .gg-small-title{
+        letter-spacing:0.22em;
+    }
+
+    .gg-info-page{
+        padding-left:5%;
+        padding-right:5%;
+    }
+}
+</style>
+<!-- /wp:html -->
+
+<!-- wp:html -->
+<section class="gg-contact-page">
+
+    <div class="gg-contact-left">
+
+        <h3>KONTAKTA OSS</h3>
+
+        <p>
+            Vi finns här för att hjälpa dig. Oavsett om du har frågor om en produkt,
+            behöver hjälp med en beställning eller vill diskutera en specialbeställning,
+            är du varmt välkommen att höra av dig.
+        </p>
+
+        <p>Vi svarar vanligtvis inom 1–3 arbetsdagar.</p>
+
+        <p>Tack för att du är en del av Gold Goblins.</p>
+
+        <div class="gg-contact-ornament">
+            <img src="https://www.goldgoblins.se/wp-content/uploads/2026/06/e01we3r5y6tyjggretgh.png" alt="">
+        </div>
+
+        <div class="gg-contact-info">
+            <img src="https://www.goldgoblins.se/wp-content/uploads/2026/06/213RWEEEWFSD1.png" alt="">
+            <div>
+                <span>E-POST</span>
+                <strong>KONTAKT@GOLDGOBLINS.SE</strong>
+            </div>
+        </div>
+
+        <div class="gg-contact-info">
+            <img src="https://www.goldgoblins.se/wp-content/uploads/2026/06/213RWEEEWFSD2.png" alt="">
+            <div>
+                <span>PLATS</span>
+                <strong>LIDKÖPING SVERIGE</strong>
+            </div>
+        </div>
+
+        <div class="gg-contact-info">
+            <img src="https://www.goldgoblins.se/wp-content/uploads/2026/06/213RWEEEWFSD3.png" alt="">
+            <div>
+                <span>SPECIALBESTÄLLNINGAR</span>
+                <strong>VÄLKOMMEN ATT KONTAKTA OSS FÖR UNIKA SMYCKEN.</strong>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="kontaktformular" class="gg-contact-right">
+
+        <div class="gg-form-title-row">
+            <span>FORMULÄR</span>
+            <img src="https://www.goldgoblins.se/wp-content/uploads/2026/06/e018b.png" alt="">
+        </div>
+
+        <h2>Skicka ett meddelande.</h2>
+
+        <p>
+            Fyll i formuläret så återkommer vi så snart vi kan.
+        </p>
+
+        <form class="gg-contact-form">
+            <label>Namn *</label>
+            <input type="text" name="name">
+
+            <label>E-post *</label>
+            <input type="email" name="email">
+
+            <label>Meddelande *</label>
+            <textarea name="message"></textarea>
+
+            <label>Ämne</label>
+            <input type="text" name="subject">
+
+            <label class="gg-checkbox">
+                <input type="checkbox" name="campaigns">
+                <span>Ja, jag vill få nyheter om kampanjer.</span>
+            </label>
+
+            <button type="submit">SKICKA</button>
+        </form>
+
+        <div class="gg-form-bottom-image">
+            <img src="LITEN-BILD.png" alt="">
+        </div>
+
+        <p class="gg-form-note">
+            Genom att skicka formuläret godkänner du att vi använder dina uppgifter
+            för att besvara din förfrågan.
+        </p>
+
+    </div>
+
+</section>
+
+<style>
+.gg-contact-page{
+    width:100%;
+    display:grid;
+    grid-template-columns:35% 65%;
+    background-color: #f1dfc4;
+
+background-image:
+    radial-gradient(circle at 20% 15%, rgba(255,255,255,0.10), transparent 30%),
+    radial-gradient(circle at 80% 35%, rgba(120,90,55,0.03), transparent 35%),
+    radial-gradient(circle at 45% 80%, rgba(255,255,255,0.06), transparent 30%),
+    linear-gradient(135deg, rgba(255,255,255,0.03), rgba(120,90,55,0.02));
+    background-size:100% 100%;
+    background-position:center;
+    border-top:3px solid #9F8560;
+    border-bottom:3px solid #9F8560;
+    box-sizing:border-box;
+}
+
+.gg-contact-left{
+    background-image:url("https://www.goldgoblins.se/wp-content/uploads/2026/06/yt6r7dtxft78rfrcvgh.png");
+    background-size:100% 100%;
+    background-position:center;
+    padding:clamp(45px,5vw,90px);
+    box-sizing:border-box;
+    color:#f4f1ec;
+}
+
+.gg-contact-left h3{
+    color:#B9965F;
+    font-family:'PT Serif', serif;
+    font-size:clamp(18px,1.8vw,32px);
+    letter-spacing:0.35em;
+    margin:0 0 clamp(40px,4vw,70px);
+}
+
+.gg-contact-left p{
+    font-family:'PT Serif', serif;
+    font-size:clamp(15px,1.1vw,21px);
+    line-height:1.8;
+    letter-spacing:0.12em;
+    margin-bottom:clamp(25px,3vw,45px);
+}
+
+.gg-contact-ornament{
+    text-align:center;
+    margin:clamp(30px,4vw,70px) 0;
+}
+
+.gg-contact-ornament img{
+    width:clamp(120px,12vw,240px);
+    height:auto;
+}
+
+.gg-contact-info{
+    display:grid;
+    grid-template-columns:clamp(45px,4vw,80px) 1fr;
+    gap:20px;
+    align-items:center;
+    margin-top:clamp(25px,3vw,50px);
+}
+
+.gg-contact-info img{
+    width:100%;
+    height:auto;
+}
+
+.gg-contact-info span{
+    display:block;
+    color:#B9965F;
+    font-family:'PT Serif', serif;
+    letter-spacing:0.25em;
+}
+
+.gg-contact-info strong{
+    display:block;
+    color:#f4f1ec;
+    font-family:'PT Serif', serif;
+    letter-spacing:0.12em;
+    font-size:clamp(12px,0.9vw,17px);
+}
+
+.gg-contact-right{
+    padding:clamp(45px,5vw,90px);
+    box-sizing:border-box;
+}
+
+.gg-form-title-row{
+    display:flex;
+    align-items:center;
+    gap:20px;
+    margin-bottom:25px;
+}
+
+.gg-form-title-row span{
+    color:#B9965F;
+    font-family:'PT Serif', serif;
+    font-size:clamp(18px,1.8vw,32px);
+    letter-spacing:0.35em;
+    white-space:nowrap;
+}
+
+.gg-form-title-row img{
+    width:clamp(140px,18vw,340px);
+    max-width:none;
+    height:auto;
+    display:block;
+    flex:none;
+}
+
+.gg-contact-right h2{
+    font-family:'PT Serif', serif;
+    color:#2f2b25;
+    font-size:clamp(32px,3vw,60px);
+    letter-spacing:0.18em;
+    font-weight:400;
+    margin:0 0 20px;
+}
+
+.gg-contact-right p,
+.gg-contact-form label{
+    font-family:'PT Serif', serif;
+    color:#2f2b25;
+    font-size:clamp(15px,1.1vw,21px);
+    letter-spacing:0.08em;
+}
+
+.gg-contact-form{
+    max-width:620px;
+}
+
+.gg-contact-form input,
+.gg-contact-form textarea{
+    width:100%;
+    background:transparent;
+    border:1px solid #9F8560;
+    padding:14px;
+    box-sizing:border-box;
+    margin:8px 0 22px;
+    font-family:'PT Serif', serif;
+    font-size:18px;
+}
+
+.gg-contact-form textarea{
+    min-height:170px;
+}
+
+.gg-checkbox{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    margin-bottom:25px;
+}
+
+.gg-checkbox input{
+    width:auto;
+    margin:0;
+}
+
+.gg-contact-form button{
+    background:#1f1f1f;
+    color:#B9965F;
+    border:1px solid #9F8560;
+    padding:10px 38px;
+    font-family:'PT Serif', serif;
+    letter-spacing:0.25em;
+    cursor:pointer;
+}
+
+.gg-form-bottom-image{
+    margin-top:clamp(35px,4vw,70px);
+}
+
+.gg-form-bottom-image img{
+    width:clamp(120px,15vw,280px);
+    height:auto;
+}
+
+.gg-form-note{
+    max-width:620px;
+    margin-top:25px;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+
+@media(max-width:768px){
+    .gg-contact-page{
+        width:100vw;
+        max-width:100vw;
+        margin-left:calc(50% - 50vw);
+        margin-right:calc(50% - 50vw);
+        grid-template-columns:1fr;
+        background-size:cover;
+    }
+
+    .gg-contact-left{
+        padding:42px 7%;
+        background-size:cover;
+    }
+
+    .gg-contact-left h3{
+        font-size:18px;
+        letter-spacing:0.22em;
+        margin-bottom:28px;
+    }
+
+    .gg-contact-left p{
+        font-size:14px;
+        line-height:1.65;
+        letter-spacing:0.06em;
+        margin-bottom:22px;
+    }
+
+    .gg-contact-ornament{
+        margin:28px 0;
+    }
+
+    .gg-contact-ornament img{
+        width:130px;
+    }
+
+    .gg-contact-info{
+        grid-template-columns:42px 1fr;
+        gap:14px;
+        margin-top:24px;
+    }
+
+    .gg-contact-info span{
+        font-size:11px;
+        letter-spacing:0.16em;
+    }
+
+    .gg-contact-info strong{
+        font-size:11px;
+        letter-spacing:0.06em;
+        line-height:1.45;
+        word-break:break-word;
+    }
+
+    .gg-contact-right{
+        padding:42px 7%;
+    }
+
+    .gg-form-title-row{
+        gap:12px;
+        margin-bottom:22px;
+    }
+
+    .gg-form-title-row span{
+        font-size:18px;
+        letter-spacing:0.22em;
+    }
+
+    .gg-form-title-row img{
+        width:110px;
+        max-width:38vw;
+    }
+
+    .gg-contact-right h2{
+        font-size:clamp(30px, 9vw, 42px);
+        letter-spacing:0.08em;
+        line-height:1.2;
+    }
+
+    .gg-contact-right p,
+    .gg-contact-form label{
+        font-size:14px;
+        letter-spacing:0.04em;
+        line-height:1.6;
+    }
+
+    .gg-contact-form{
+        max-width:100%;
+    }
+
+    .gg-contact-form input,
+    .gg-contact-form textarea{
+        font-size:16px;
+        padding:12px;
+        margin:7px 0 18px;
+    }
+
+    .gg-contact-form textarea{
+        min-height:140px;
+    }
+
+    .gg-checkbox{
+        align-items:flex-start;
+        gap:10px;
+    }
+
+    .gg-contact-form button{
+        width:100%;
+        padding:12px 20px;
+    }
+
+    .gg-form-bottom-image img{
+        width:130px;
+    }
+}
+
+</style>
+<!-- /wp:html -->
+
+<!-- wp:shortcode -->
+[gg_banner]
+<!-- /wp:shortcode -->
+
+<!-- wp:shortcode -->
+[gg_footer]
+<!-- /wp:shortcode -->

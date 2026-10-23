@@ -1,0 +1,29 @@
+{
+  "schema": "gg.native-world-build.v1",
+  "abi": 1,
+  "platform": "windows-x86_64",
+  "compiler": "MSVC",
+  "flags": [
+    "/nologo",
+    "/O2",
+    "/MD",
+    "/W4",
+    "/EHsc",
+    "/std:c++17",
+    "/DGG_NATIVE_BUILD"
+  ],
+  "source_sha256": "7264f231855818f770d39cdf60cc8d39cc21b8905081391ace9875091fdf1ae8",
+  "binary_sha256": "668e84fe29536b3c9d5a7a879882317046738412c76cdf0bc0a1931ee4f03448",
+  "binary_bytes": 44544,
+  "probe": {
+    "status": "PASS",
+    "abi": 1,
+    "checks": [
+      "negative-grid-window",
+      "30-second-residency",
+      "sphere-culling",
+      "sector-selection",
+      "LRU-lifetime-stress"
+    ]
+  }
+}

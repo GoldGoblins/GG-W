@@ -1,0 +1,11 @@
+[package]
+name = "gg-engine-ui"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+[lib]
+crate-type = ["cdylib", "rlib"]
+[dependencies]
+engine-ui-core = { path = "../engine-ui-core" }
+serde_json = "1"
+mlua = { version = "0.11", features = ["lua51", "vendored"] }

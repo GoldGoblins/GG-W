@@ -1,0 +1,14 @@
+{
+  "schema": "gg.native-physics-build.v1",
+  "abi": 1,
+  "precision": "DOUBLE_POSITIONS",
+  "platform": "windows-x86_64",
+  "source_sha256": "49d9ea3d704ed395daa7830101739e7336ad78ab6d8168869a3859788baa923a",
+  "binary_sha256": "8b16ce3f686ba2cae94b539fdf7b5555c85d4ff753e078b97507656c082d55e3",
+  "binary_bytes": 989184,
+  "probe": {
+    "status": "PASS",
+    "backend": "BOX3D",
+    "settled_y": 0.499931
+  }
+}

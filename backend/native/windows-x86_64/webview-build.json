@@ -1,0 +1,6 @@
+{
+  "source": "native/webview/gg_webview.cpp",
+  "sdk_version": "1.0.4258.31",
+  "source_sha256": "336eb13ef0d0310eb27469698b086cb412ee1d2bfabe779aa8ca5a088d1544c0",
+  "dll_sha256": "f33d41b73ff42a43460a136529250235c4886828f18ba2428d60e0c046552bb6"
+}

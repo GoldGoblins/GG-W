@@ -1,0 +1,98 @@
+{
+  "activity": {
+    "fake_progress": "FORBIDDEN",
+    "never_silent_while_busy": true,
+    "percentage_policy": "SHOW_ONLY_WHEN_REAL_AND_KNOWN",
+    "states": [
+      "IDLE",
+      "QUEUED",
+      "STARTING",
+      "RUNNING",
+      "STREAMING",
+      "GENERATING",
+      "WAITING",
+      "WAITING_FOR_USER",
+      "BLOCKED",
+      "STOPPING",
+      "PASS",
+      "FAIL",
+      "CANCELLED",
+      "TIMED_OUT"
+    ],
+    "unknown_progress_policy": "ACTIVITY_PHASE_ELAPSED_LAST_ACTIVITY"
+  },
+  "composer": {
+    "bridge": "NOT_CONNECTED",
+    "context_reference": "@current",
+    "editable": true,
+    "submit_payload_fields": [
+      "text",
+      "resolved_context_reference",
+      "resolved_workspace_object_id"
+    ],
+    "submit_state_class": "REAL_UI_STATE"
+  },
+  "data_mode": "LOCAL_UI_ONLY",
+  "integrations": {
+    "code_gate_runtime": "DISABLED",
+    "model": "DISABLED",
+    "network": "DISABLED",
+    "operator_terminal_process": "DISABLED",
+    "orchestrator": "DISABLED",
+    "real_command_execution": "DISABLED"
+  },
+  "interaction_model": "GG_INTENT_NATIVE_DESKTOP",
+  "lifecycle": {
+    "complete_local_status_in_implementation_commit": false,
+    "phase": "IMPLEMENTATION_SOURCE",
+    "visible_preview_required_before_complete_local": true
+  },
+  "live_aid": {
+    "draft_blocking": "NO",
+    "fixture_provenance": "SYNTHETIC_UI_FIXTURE",
+    "mode": "UI_GRAMMAR_ONLY",
+    "real_checker": "NOT_CONNECTED"
+  },
+  "primary_surfaces": {
+    "chat": "UNIVERSAL_OPERATIONAL_STREAM",
+    "telemetry": "COMPACT_PERIPHERAL_RAIL",
+    "workspace": "VISUAL_MULTI_OBJECT_SURFACE"
+  },
+  "safety": {
+    "agent_console_separate_from_operator_shell": "REQUIRED",
+    "automatic_visual_layout_writes": "NO",
+    "general_action_authority": "NONE",
+    "hidden_chain_of_thought_ui_requirement": "NO",
+    "network_authority": "NONE",
+    "operator_terminal_direct_ai_input": "FORBIDDEN",
+    "reasoning_summary_and_evidence_ui": "REQUIRED",
+    "thinking_authority": "ENABLED",
+    "visual_change_policy": "PROPOSE_PREVIEW_DISCUSS_APPROVE_APPLY"
+  },
+  "schema": "gg.ai-desktop.workbench-config.v1.1",
+  "ui_provenance": {
+    "classes": [
+      "REAL_UI_STATE",
+      "SYNTHETIC_UI_FIXTURE"
+    ],
+    "synthetic_fixture_fake_progress": "FORBIDDEN",
+    "synthetic_fixture_real_authority_claim": "FORBIDDEN",
+    "synthetic_fixture_real_execution_claim": "FORBIDDEN",
+    "synthetic_fixture_visible_marker": "DEMO_SAMPLE_REQUIRED"
+  },
+  "version": "1.1",
+  "visual_language": "GG_OBSIDIAN_LEDGER",
+  "window": {
+    "design_height": 1080,
+    "design_width": 1920,
+    "desktop_owner": "KDE Plasma/Wayland",
+    "launch_mode": "maximized"
+  },
+  "workspace": {
+    "active_reference": "@current",
+    "ai_activity": "MAY_SPAN_MULTIPLE_OPEN_OBJECTS_LATER",
+    "human_primary_focus": "NORMALLY_ONE",
+    "multi_tab": true,
+    "stable_object_id": "REQUIRED"
+  }
+}

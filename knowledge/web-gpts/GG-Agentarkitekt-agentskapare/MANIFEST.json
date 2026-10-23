@@ -1,0 +1,87 @@
+{
+  "package_name": "GG Agentarkitekten",
+  "version": "1.0.0",
+  "created": "2026-07-28",
+  "instruction_characters": 7996,
+  "instruction_limit": 8000,
+  "knowledge_file_count": 10,
+  "platform_baseline_verified": "2026-07-28",
+  "manifest_note": "MANIFEST.json och VALIDERING.md exkluderas från checksummelistningen för att undvika självreferens.",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "bytes": 654,
+      "sha256": "d64e28a9f23a34af008f00ce21d032da45307f74814b9e2d3142f05a7285864d"
+    },
+    {
+      "path": "INSTRUKTIONER.txt",
+      "bytes": 8273,
+      "sha256": "88ce42eb2104d46d3e15e17e68c45d9de4c6ceff56ae2e511a4112d3566efed5"
+    },
+    {
+      "path": "KALLOR.md",
+      "bytes": 4295,
+      "sha256": "3df181e162595ec85c32b05f0b42f1435dfe486516652c06e01f54c243b3a2d7"
+    },
+    {
+      "path": "README.md",
+      "bytes": 5756,
+      "sha256": "21085026535ff5ac43c3a9eafd74a1a7ec76c4ef348c528a2af17200ade244eb"
+    },
+    {
+      "path": "TESTSVIT.md",
+      "bytes": 5700,
+      "sha256": "eca04d299853b09c62824cffa3859dc9711a2ba2fa7da76c82a924361db6b3c6"
+    },
+    {
+      "path": "knowledge/01-verksamhetsbehov-och-problemanalys.md",
+      "bytes": 2243,
+      "sha256": "1775aefc0e8e98d218b3e32febcd6c669c5cbbefb95a96e93435aeffbef1126c"
+    },
+    {
+      "path": "knowledge/02-losningsstege-och-arkitekturbeslut.md",
+      "bytes": 2530,
+      "sha256": "b60b6b05b49309ee7f844350a7a50ef133d742b41f79f774074580b635f8a167"
+    },
+    {
+      "path": "knowledge/03-agentdesign-roller-och-arbetsfloden.md",
+      "bytes": 1913,
+      "sha256": "93bf2e04685f5ab67473eb4bbcd849d65042aa5216cf915e2f01d38f41865c15"
+    },
+    {
+      "path": "knowledge/04-risk-autonomi-behorighet-och-godkannande.md",
+      "bytes": 2221,
+      "sha256": "5798669b65d99f23fe63b0831c253d706f0662707f336365b3e8ff7d82640011"
+    },
+    {
+      "path": "knowledge/05-data-system-verktyg-och-integrationer.md",
+      "bytes": 1841,
+      "sha256": "0761ed089e46fd112bf3b49152e7996f63c89bb799ff0da87bd987b424bcf380"
+    },
+    {
+      "path": "knowledge/06-multiagent-orkestrering-och-handoffs.md",
+      "bytes": 1792,
+      "sha256": "0f7dc4fee181cd0c1af92fbf555eb04c632bb6007a2e47250dfd693217fb03e7"
+    },
+    {
+      "path": "knowledge/07-testning-utvardering-loggning-och-observability.md",
+      "bytes": 1743,
+      "sha256": "8d08cf691e9b189a566aaa3f8310ea77918226bdec7ea99146a8123dbda09266"
+    },
+    {
+      "path": "knowledge/08-paketmallar-och-implementationsunderlag.md",
+      "bytes": 1980,
+      "sha256": "2f4285bf5415b98b3ac53798599b259f74b9b800067aecc42a6dc3a7b2bcb4c6"
+    },
+    {
+      "path": "knowledge/09-plattformsbaslinje-2026-07-28.md",
+      "bytes": 2720,
+      "sha256": "1bb34fd6ce4f039c54320e913615d2a58346355b29e7bd219b2c779ef3923bdb"
+    },
+    {
+      "path": "knowledge/10-godkant-gpt-kontrakt.md",
+      "bytes": 2396,
+      "sha256": "bc53db88a0c59ba49e0ef7f038de9e1b1284e5b6073fa5aee4386195347560e6"
+    }
+  ]
+}

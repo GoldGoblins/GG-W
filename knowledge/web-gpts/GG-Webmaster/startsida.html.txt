@@ -1,0 +1,309 @@
+<!-- wp:shortcode -->
+[gg_header]
+<!-- /wp:shortcode -->
+
+<!-- wp:group {"layout":{"type":"constrained"}} -->
+<div class="wp-block-group"><!-- wp:html -->
+<section class="gg-section-heritage">
+
+  <div class="gg-bg gg-bg-1"></div>
+  <div class="gg-bg gg-bg-2"></div>
+
+  <div class="gg-heritage-content">
+    <h1>
+  Svenska smycken<br>
+ i silver &amp; <em>GULD</em>
+</h1>
+
+    <img class="gg-heritage-arrow" src="https://www.goldgoblins.se/wp-content/uploads/2026/06/e01we3r5y6tyjggretgh.png" alt="">
+
+    <p>
+      Varje skapelse börjar som en idé och formas för hand i vår verkstad. Genom traditionellt silversmide, modern design och genuint svenskt hantverk skapar vi handgjorda silversmycken och guldsmycken med personlighet, kvalitet och bestående värde.<br>
+    </p>
+
+    <a id="gg-heritage-btn" class="gg-heritage-btn" href="/ringar">
+      <span class="gg-star">✤</span>
+
+      <span class="gg-btn-text-wrap">
+        <span class="gg-btn-text gg-btn-text-1">UPPTÄCK SORTIMENTET</span>
+        <span class="gg-btn-text gg-btn-text-2"></span>
+      </span>
+
+      <span class="gg-star">✤</span>
+    </a>
+  </div>
+
+</section>
+
+<style>
+.gg-section-heritage{
+  position:relative;
+  width:100%;
+  min-height:clamp(520px, 42vw, 760px);
+  overflow:hidden;
+}
+
+.gg-bg{
+  position:absolute;
+  inset:0;
+  background-color:#f1dfc4;
+  background-size:cover;
+  background-position:center;
+  transition:opacity 2s ease-in-out;
+}
+
+.gg-bg-1{
+  opacity:1;
+  z-index:1;
+}
+
+.gg-bg-2{
+  opacity:0;
+  z-index:2;
+}
+
+.gg-heritage-content{
+  position:absolute;
+  z-index:10;
+  top:9%;
+  left:10%;
+  max-width:420px;
+  color:#2f3035;
+}
+
+.gg-heritage-content h1{
+  margin:0;
+  font-family:Georgia, "Times New Roman", serif;
+  font-size:clamp(24px, 3vw, 42px);
+  line-height:1.15;
+  font-weight:400;
+  letter-spacing:0.5px;
+}
+
+.gg-heritage-content h1 em{
+  color:#a68b63;
+  font-style:italic;
+}
+
+.gg-heritage-arrow{
+  display:block;
+  width:clamp(140px, 12vw, 230px);
+  margin:32px 0 38px 42px;
+}
+
+.gg-heritage-content p{
+  margin:0 0 40px;
+  font-family:Georgia, "Times New Roman", serif;
+  font-size:clamp(16px, 1.1vw, 22px);
+  line-height:1.75;
+  color:#2d2d2d;
+}
+
+.gg-heritage-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 18px;
+  border:2px solid #aa8a58;
+  color:#3a2c1f;
+  text-decoration:none;
+  font-family:Georgia, "Times New Roman", serif;
+  font-size:clamp(12px, 0.8vw, 15px);
+  text-transform:uppercase;
+  background-color:#f1dfc4;
+  background-image:
+    radial-gradient(circle at 20% 15%, rgba(255,255,255,0.10), transparent 30%),
+    radial-gradient(circle at 80% 35%, rgba(120,90,55,0.03), transparent 35%),
+    radial-gradient(circle at 45% 80%, rgba(255,255,255,0.06), transparent 30%),
+    linear-gradient(135deg, rgba(255,255,255,0.03), rgba(120,90,55,0.02));
+  background-size:cover;
+  background-position:center;
+}
+
+.gg-star{
+  color:#aa8a58;
+}
+
+.gg-btn-text-wrap{
+  position:relative;
+  display:inline-block;
+  min-width:120px;
+  text-align:center;
+}
+
+.gg-btn-text{
+  display:block;
+  color:#aa8a58;
+  transition:opacity 2s ease-in-out;
+  white-space:nowrap;
+}
+
+.gg-btn-text-1{
+  opacity:1;
+}
+
+.gg-btn-text-2{
+  position:absolute;
+  inset:0;
+  opacity:0;
+}
+
+@media(max-width:768px){
+  .gg-section-heritage{
+    width:100vw;
+    max-width:100vw;
+    margin-left:calc(50% - 50vw);
+    margin-right:calc(50% - 50vw);
+    min-height:680px;
+    overflow:hidden;
+  }
+
+  .gg-bg{
+    width:100%;
+    max-width:100%;
+    background-size:cover;
+    background-position:center center;
+  }
+
+  .gg-heritage-content{
+    position:relative;
+    top:auto;
+    left:auto;
+    width:100%;
+    max-width:none;
+    padding:42px 7% 48px;
+    box-sizing:border-box;
+  }
+
+  .gg-heritage-content h1{
+    font-size:clamp(34px, 10vw, 46px);
+    line-height:1.1;
+  }
+
+  .gg-heritage-arrow{
+    width:150px;
+    margin:24px 0 28px 18px;
+  }
+
+  .gg-heritage-content p{
+    font-size:15px;
+    line-height:1.65;
+    margin-bottom:30px;
+    max-width:92%;
+  }
+
+  .gg-heritage-btn{
+    max-width:100%;
+    padding:10px 14px;
+    font-size:11px;
+    gap:8px;
+  }
+
+  .gg-btn-text-wrap{
+    min-width:auto;
+  }
+
+  .gg-btn-text{
+    white-space:normal;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+
+    const slides = [
+        {
+            image: 'https://www.goldgoblins.se/wp-content/uploads/2026/06/silverhange-med-onyx-46ct-sammet-1.webp',
+            text: 'HÄNGSMYCKEN',
+            link: '/hangsmycke'
+        },
+        {
+            image: 'https://www.goldgoblins.se/wp-content/uploads/2026/06/hamrad-silverring-830-silver-produktbild-1.webp',
+            text: 'RINGAR',
+            link: '/ringar'
+        },
+        {
+            image: 'https://www.goldgoblins.se/wp-content/uploads/2026/06/aurora-silverring-830-silver-produktbild-1.webp',
+            text: 'RINGAR',
+            link: '/ringar'
+        }
+    ];
+
+    const bg1 = document.querySelector('.gg-bg-1');
+    const bg2 = document.querySelector('.gg-bg-2');
+
+    const button = document.getElementById('gg-heritage-btn');
+    const text1 = document.querySelector('.gg-btn-text-1');
+    const text2 = document.querySelector('.gg-btn-text-2');
+
+    let current = 0;
+    let showingFirstBg = true;
+    let showingFirstText = true;
+
+    bg1.style.backgroundImage = `url('${slides[0].image}')`;
+    button.href = slides[0].link;
+    text1.textContent = slides[0].text;
+
+    setInterval(() => {
+
+        current = (current + 1) % slides.length;
+
+        if(showingFirstBg){
+            bg2.style.backgroundImage = `url('${slides[current].image}')`;
+
+            requestAnimationFrame(() => {
+                bg2.style.opacity = '1';
+                bg1.style.opacity = '0';
+            });
+
+        } else {
+            bg1.style.backgroundImage = `url('${slides[current].image}')`;
+
+            requestAnimationFrame(() => {
+                bg1.style.opacity = '1';
+                bg2.style.opacity = '0';
+            });
+        }
+
+        if(showingFirstText){
+            text2.textContent = slides[current].text;
+            text2.style.opacity = '1';
+            text1.style.opacity = '0';
+        } else {
+            text1.textContent = slides[current].text;
+            text1.style.opacity = '1';
+            text2.style.opacity = '0';
+        }
+
+        button.href = slides[current].link;
+
+        showingFirstBg = !showingFirstBg;
+        showingFirstText = !showingFirstText;
+
+    }, 7777);
+
+});
+</script>
+<!-- /wp:html --></div>
+<!-- /wp:group -->
+
+<!-- wp:shortcode -->
+[gg_slider]
+<!-- /wp:shortcode -->
+
+<!-- wp:shortcode -->
+[gg_craft]
+<!-- /wp:shortcode -->
+
+<!-- wp:shortcode -->
+[gg_work]
+<!-- /wp:shortcode -->
+
+<!-- wp:shortcode -->
+[gg_banner]
+<!-- /wp:shortcode -->
+
+<!-- wp:shortcode -->
+[gg_footer]
+<!-- /wp:shortcode -->

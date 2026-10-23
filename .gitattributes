@@ -1,0 +1,3 @@
+# FILE-CATALOG.json verifies exact bytes, including native build inputs.
+# Keep checkouts and GitHub source archives independent of core.autocrlf.
+* -text

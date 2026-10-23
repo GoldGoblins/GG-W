@@ -1,0 +1,159 @@
+#!/usr/bin/env python3
+"""Live screen and video observations, with RAM-only image transport."""
+from __future__ import annotations
+
+import argparse
+import atexit
+import json
+import os
+from pathlib import Path
+import sys
+
+PROJECT = Path(__file__).resolve().parent
+sys.path.insert(0, str(PROJECT))
+from backend import live_vision as vision
+
+
+def schema(properties=None):
+    return {"type": "object", "properties": properties or {}, "additionalProperties": False}
+
+
+TOOLS = [
+    {"name": "status", "description": "Actual screen capture fps, frame age, RAM usage and last image delivery. Capture fps is not model analysis fps.", "inputSchema": schema()},
+    {"name": "start", "description": "Linux: connect the screen source at up to 25 fps. Windows: report ready for bounded on-demand frame/clip workers, without starting a daemon. No movie or disk image cache is created.", "inputSchema": schema()},
+    {"name": "frame", "description": "Receive native screen detail (up to 4096x2160), directly from RAM. Windows captures on demand: age must be zero; optional region is primary-screen physical X Y WIDTH HEIGHT. Linux supports age from its live ring. Crop is in returned frame pixels; inspect before input.",
+     "inputSchema": schema({"age": {"type": "number", "minimum": 0, "maximum": 6},
+                            "region": {"type": "array", "items": {"type": "integer"}, "minItems": 4, "maxItems": 4},
+                            "crop": {"type": "array", "items": {"type": "integer"}, "minItems": 4, "maxItems": 4}})},
+    {"name": "clip", "description": "Receive ordered, timestamped contact sheets, default two seconds at up to 25 fps. Windows captures the next interval on demand, optionally within a physical-pixel region; no frames persist afterward. Linux reads its recent ring. Reports actual gaps and coverage; this is visual sampling.",
+     "inputSchema": schema({"seconds": {"type": "number", "exclusiveMinimum": 0, "maximum": 6},
+                            "region": {"type": "array", "items": {"type": "integer"}, "minItems": 4, "maxItems": 4},
+                            "fps": {"type": "number", "minimum": 1, "maximum": 25}})},
+    {"name": "video", "description": "Open a public video URL or existing local file and visually inspect a requested interval, through RAM pipes. Default two seconds at 25 fps. Returns decoder timestamps and all extracted frames in ordered contact sheets. No full video download, cookies or API key. Audio is not transcribed by this tool. Never infer an entire video's contents from one interval.",
+     "inputSchema": {**schema({"source": {"type": "string"}, "start": {"type": "number", "minimum": 0},
+                               "seconds": {"type": "number", "exclusiveMinimum": 0, "maximum": 6},
+                               "fps": {"type": "number", "minimum": 1, "maximum": 25},
+                               "detail": {"type": "boolean", "description": "Return a single full resolution frame; use a short interval."}}), "required": ["source"]}},
+    {"name": "stop", "description": "Stop screen sharing and clear live frames and exported image views from RAM.", "inputSchema": schema()},
+]
+
+
+def perform(name, args):
+    if name == "video":
+        value = vision.video_observation(args["source"], start=args.get("start", 0),
+                                         seconds=args.get("seconds", 2), fps=args.get("fps", 25))
+        return vision.image_parts(value, sequence=not args.get("detail", False))
+    if name in {"start","frame","clip"}:
+        vision.ensure_service()
+    if name == "status":
+        return [{"type": "text", "text": vision.ui_status()}]
+    value = vision.request(name, **{k: v for k, v in args.items() if k != "crop"})
+    if name in {"frame", "clip"}:
+        return vision.image_parts(value, sequence=name == "clip", crop=args.get("crop"))
+    return [{"type": "text", "text": json.dumps(value, ensure_ascii=False)}]
+
+
+def mcp():
+    """Small stdio MCP endpoint; stdout contains only protocol messages."""
+    image_guard = None
+    for line in sys.stdin:
+        try:
+            message = json.loads(line)
+            identity, method = message.get("id"), message.get("method", "")
+            if identity is None:
+                continue
+            params = message.get("params", {})
+            if method == "initialize":
+                requested = params.get("protocolVersion")
+                version = requested if requested in {"2024-11-05", "2025-03-26", "2025-06-18"} else "2025-06-18"
+                result = {"protocolVersion": version, "capabilities": {"tools": {}},
+                          "serverInfo": {"name": "gg-eyes", "version": "1.0.0"}}
+            elif method == "ping":
+                result = {}
+            elif method == "tools/list":
+                result = {"tools": TOOLS}
+            elif method == "tools/call":
+                try:
+                    name, args = params.get("name"), params.get("arguments") or {}
+                    tool = next((t for t in TOOLS if t["name"] == name), None)
+                    if tool is None or not isinstance(args, dict) or set(args) - set(tool["inputSchema"]["properties"]):
+                        raise ValueError("Unknown tool or argument")
+                    if name in {"frame", "clip", "video"} and image_guard is None:
+                        # The desktop already runs this policy. Apply the
+                        # same protection when terminal Codex uses our MCP:
+                        # selected observations must not accumulate as large
+                        # inline bitmaps in its durable rollout history.
+                        from backend.codex_image_storage import start_guard
+                        codex_home = Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex")))
+                        image_guard = start_guard(codex_home / "sessions", os.getpid())
+                        atexit.register(image_guard.terminate)
+                    result = {"content": perform(name, args)}
+                except (OSError, ValueError, RuntimeError, KeyError, TimeoutError) as exc:
+                    result = {"isError": True, "content": [{"type": "text", "text": str(exc)}]}
+            else:
+                print(json.dumps({"jsonrpc": "2.0", "id": identity,
+                                  "error": {"code": -32601, "message": "Method not found"}}), flush=True)
+                continue
+            print(json.dumps({"jsonrpc": "2.0", "id": identity, "result": result}, ensure_ascii=False), flush=True)
+        except (ValueError, TypeError):
+            print(json.dumps({"jsonrpc": "2.0", "id": None,
+                              "error": {"code": -32700, "message": "Invalid JSON-RPC message"}}), flush=True)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="25 fps screen/video observations; image data stays in RAM")
+    sub = parser.add_subparsers(dest="command", required=True)
+    for name in ["start", "stop", "status", "serve", "mcp"]:
+        sub.add_parser(name)
+    frame = sub.add_parser("frame")
+    frame.add_argument("--age", type=float, default=0)
+    frame.add_argument("--crop", type=int, nargs=4)
+    frame.add_argument("--region", type=int, nargs=4, help="Windows primary-screen pixel region: X Y WIDTH HEIGHT")
+    clip = sub.add_parser("clip")
+    clip.add_argument("--seconds", type=float, default=2)
+    clip.add_argument("--fps", type=float, default=25)
+    clip.add_argument("--region", type=int, nargs=4, help="Windows primary-screen pixel region: X Y WIDTH HEIGHT")
+    video = sub.add_parser("video")
+    video.add_argument("source")
+    video.add_argument("--start", type=float, default=0)
+    video.add_argument("--seconds", type=float, default=2)
+    video.add_argument("--fps", type=float, default=25)
+    video.add_argument("--detail", action="store_true")
+    args = vars(parser.parse_args())
+    name = args.pop("command")
+    try:
+        if name == "serve":
+            if os.name == "nt":
+                raise RuntimeError("Windows använder fångst på begäran; använd frame eller clip.")
+            native = Path.home()/".local/lib/goldgoblins/gg-eyes-capture"
+            if native.is_file() and Path('/proc/self/exe').resolve() != native.resolve():
+                # Old MCP clients may still launch the previous Python command.
+                # Enter the actual registered executable, with its own identity.
+                os.execv(str(native),[str(native)])
+            from backend.live_vision_capture import serve
+            serve()
+        elif name == "mcp":
+            mcp()
+        else:
+            parts = perform(name, {k: v for k, v in args.items() if v is not None})
+            if any(p["type"] == "image" for p in parts):
+                if os.name == "nt":
+                    # Windows has no tmpfs image paths. Return the MCP content
+                    # envelope over stdout for a tool adapter to display in RAM.
+                    print(json.dumps({"content": parts}, ensure_ascii=False))
+                else:
+                    print(json.dumps(vision.export_parts(parts), ensure_ascii=False))
+            else:
+                for part in parts:
+                    print(part["text"])
+        return 0
+    except (OSError, ValueError, RuntimeError, KeyError, TimeoutError) as exc:
+        print(json.dumps({"error": str(exc)}, ensure_ascii=False))
+        return 1
+
+
+from backend.platform_support import configure_stdio
+configure_stdio()
+
+if __name__ == "__main__":
+    raise SystemExit(main())

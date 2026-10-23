@@ -1,0 +1,161 @@
+{
+  "package_name": "Gold Goblins Content Studio",
+  "version": "1.1.0",
+  "created": "2026-07-28",
+  "package_type": "optimal_rebuild",
+  "source_version": "1.0.0",
+  "approved_contract": true,
+  "instruction_characters": 7592,
+  "instruction_limit": 8000,
+  "knowledge_text_file_count": 7,
+  "reference_image_count": 6,
+  "recommended_knowledge_upload_count": 13,
+  "reference_images": [
+    {
+      "path": "references/REF-01-gravyr-precisionsarbete.png",
+      "role": "gravyr och precisionsarbete",
+      "dimensions_px": [
+        534,
+        268
+      ]
+    },
+    {
+      "path": "references/REF-02-smycke-i-hand.png",
+      "role": "smycke i hand",
+      "dimensions_px": [
+        529,
+        246
+      ]
+    },
+    {
+      "path": "references/REF-03-handarbete-arbetsbank.png",
+      "role": "handarbete vid arbetsbänk",
+      "dimensions_px": [
+        532,
+        256
+      ]
+    },
+    {
+      "path": "references/REF-04-adelstenar-morkgron-sammet.png",
+      "role": "ädelstenar på mörkgrön sammet",
+      "dimensions_px": [
+        1448,
+        1086
+      ]
+    },
+    {
+      "path": "references/REF-05-kedjor-komponenter-verkstad.png",
+      "role": "kedjor och komponenter i verkstad",
+      "dimensions_px": [
+        1086,
+        1448
+      ]
+    },
+    {
+      "path": "references/REF-06-aldre-silverforemal-arbetsyta.png",
+      "role": "äldre silverföremål på arbetsyta",
+      "dimensions_px": [
+        1448,
+        1086
+      ]
+    }
+  ],
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "bytes": 2467,
+      "sha256": "09a82bf06f0b251eb46465a284f28a5e54efabc98df224b2bbf654d33e7d96e4"
+    },
+    {
+      "path": "INSTRUKTIONER.txt",
+      "bytes": 7829,
+      "sha256": "c65f54e3e99df4b13509c409f7f8f048f392230c7a0c814ede9ac05e1246e338"
+    },
+    {
+      "path": "KALLOR.md",
+      "bytes": 3719,
+      "sha256": "984fba2a271dc49368c414b12326280556bfc0369b51483f4d0a8ceb5470f24c"
+    },
+    {
+      "path": "MIGRERING.md",
+      "bytes": 4120,
+      "sha256": "e56ab7f2dd1fa780f7f139c6979c016a59d55e91f69a9920850a518eee2faa75"
+    },
+    {
+      "path": "README.md",
+      "bytes": 8742,
+      "sha256": "b37518fe9287d76b3cb30eac160ec2ca9209c91a3d944d81cc29069053c3596d"
+    },
+    {
+      "path": "TESTSVIT.md",
+      "bytes": 8821,
+      "sha256": "889bd1e88a9de4bddc59fb924470126be534d1f7776545d05a34f0e41550caeb"
+    },
+    {
+      "path": "knowledge/01-gold-goblins-identitet-och-verksamhet.md",
+      "bytes": 3696,
+      "sha256": "bdd525501d96cad923e3658dfab1ed3cd2f79ed7c1c795d15ce3ead33596457c"
+    },
+    {
+      "path": "knowledge/02-visuell-profil-och-studio-look.md",
+      "bytes": 5011,
+      "sha256": "23c5fa5fda5c680f37ae664c95fd5f357b782ca8b79e200bf7103a2127ddf935"
+    },
+    {
+      "path": "knowledge/03-saljbild-konceptbild-och-produktintegritet.md",
+      "bytes": 4317,
+      "sha256": "b515117d77a146e8116f7d829278404c0a5c14420b1fd814d388585c651c5326"
+    },
+    {
+      "path": "knowledge/04-bildfloden-produkter-personer-och-miljoer.md",
+      "bytes": 5307,
+      "sha256": "293f05f7cb6a58a4b106e5fd49bf5573a90ff272af703edbe24fdb5f481ddf7e"
+    },
+    {
+      "path": "knowledge/05-sociala-format-copy-och-mallar.md",
+      "bytes": 4243,
+      "sha256": "fd3d276440ced61e71119bf790ffc5de528cbbaad7ed8fad2e668aaa15e2e2c1"
+    },
+    {
+      "path": "knowledge/06-kort-video-och-produktionsbriefar.md",
+      "bytes": 4110,
+      "sha256": "587eb1e535091823eaf1b6f04681e0f232ef5d5ae8efeed67b0a209b46e86e6f"
+    },
+    {
+      "path": "knowledge/07-visuellt-referensbibliotek.md",
+      "bytes": 9223,
+      "sha256": "42312fbff61ae160cb4cf965e0f12df920c30aba428f9122e63db9b01fc49e4f"
+    },
+    {
+      "path": "references/REF-01-gravyr-precisionsarbete.png",
+      "bytes": 208934,
+      "sha256": "994589e6df02a7cca98c250c5e333544498c4c17fbf65104a93fa180e9bd4f03"
+    },
+    {
+      "path": "references/REF-02-smycke-i-hand.png",
+      "bytes": 191903,
+      "sha256": "d7c6b4fa4b9f1c11f32bf4e3e0b45021b23ff64a112c8e4d0d6d437c5952932e"
+    },
+    {
+      "path": "references/REF-03-handarbete-arbetsbank.png",
+      "bytes": 209984,
+      "sha256": "a6d769f2673d33047475f858f2d56afd3e0d5edb7c02cc63e34da1c8ee197c9f"
+    },
+    {
+      "path": "references/REF-04-adelstenar-morkgron-sammet.png",
+      "bytes": 2951672,
+      "sha256": "dc6d1a3479eae21cffb926f6cc1dc22b5da99c5f73d896900e9611bdc52ae26b"
+    },
+    {
+      "path": "references/REF-05-kedjor-komponenter-verkstad.png",
+      "bytes": 2972172,
+      "sha256": "23e375cd77414deac23f84249f3a69ac96c55a859ff7a906bff0017c748a6ff6"
+    },
+    {
+      "path": "references/REF-06-aldre-silverforemal-arbetsyta.png",
+      "bytes": 2980326,
+      "sha256": "c0ce7eb958b7d847255099d90f1f348740beffe4aeab76a9e358a5ffcafebe66"
+    }
+  ],
+  "manifest_note": "MANIFEST.json och ZIP-filen listas inte med egen checksumma för att undvika cirkulär hashning."
+}

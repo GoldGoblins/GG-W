@@ -1,0 +1,15 @@
+[package]
+name = "gg-engine-client"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+[lib]
+crate-type = ["cdylib", "rlib"]
+[dependencies]
+anyhow = "1"
+serde_json = "1"
+engine-protocol = { path = "../engine-protocol" }
+engine-srp = { path = "../engine-srp" }
+[build-dependencies]
+syn = { version = "2", features = ["full"] }
+quote = "1"

@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "code_gate_hash_matches": {
+      "type": "boolean"
+    },
+    "forbidden_effects": {
+      "const": false
+    },
+    "review_status": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "BLOCKED"
+      ]
+    },
+    "reviewer_actor": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "rights_expansion": {
+      "const": false
+    },
+    "source_hash_matches": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "reviewer_actor",
+    "review_status",
+    "source_hash_matches",
+    "code_gate_hash_matches",
+    "rights_expansion",
+    "forbidden_effects"
+  ],
+  "title": "GG CP6B review control",
+  "type": "object"
+}

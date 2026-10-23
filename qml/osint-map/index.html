@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; script-src 'self' file: blob: 'wasm-unsafe-eval'; worker-src blob:; style-src 'self' file: 'unsafe-inline'; img-src 'self' file: data: blob: https:; connect-src 'self' file: https://tiles.mapterhorn.com https://tiles.openfreemap.org https://nominatim.openstreetmap.org https://router.project-osrm.org; font-src 'self' file: data: https://tiles.openfreemap.org; object-src 'none'; base-uri 'none'">
+<link rel="stylesheet" href="vendor/maplibre-gl.css">
+<link rel="stylesheet" href="map.css">
+<title>OSINT Earth</title>
+</head>
+<body>
+<div id="map" aria-label="Interactive world map"></div>
+<div id="map-credits">© OpenStreetMap · OpenFreeMap · Natural Earth <span id="terrain-credit" hidden> · Mapterhorn terrain</span></div>
+<div id="status" role="status">LOADING WORLD MAP…</div>
+<div id="toolbar">
+  <button id="globe" type="button" aria-pressed="true">3D</button>
+  <button id="flat" type="button" aria-pressed="false">2D</button>
+  <button id="reset" type="button">RESET</button>
+  <button id="nav" type="button" aria-pressed="false">NAV</button>
+  <button id="retry" type="button" hidden>RETRY</button>
+</div>
+<script src="vendor/maplibre-gl.js"></script>
+<script src="navigation.js"></script>
+<script src="map.js"></script>
+</body>
+</html>

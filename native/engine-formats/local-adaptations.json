@@ -1,0 +1,1986 @@
+{
+  "schema": "gg.engine-local-adaptations.v1",
+  "upstream_unchanged": true,
+  "files": {
+    "crates/benilla-bytes/Cargo.toml": {
+      "path": "crates/engine-bytes/Cargo.toml",
+      "original_sha256": "e767260269a837189f87594976d0792678462e4f8649ee8e11dc1eafb86c4e9b",
+      "adapted_sha256": "280833f0af3675957cb097e8b99be193892b5d6aa3a0070819de54c659ba0be9",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-blp/Cargo.toml": {
+      "path": "crates/engine-blp/Cargo.toml",
+      "original_sha256": "014de149f9e71c484d3037bbe2777c422694ed3e25c5ee4a5d07678dcb049802",
+      "adapted_sha256": "29ae1469f47158d4598822017adbe51b5b85c65b833e20318d61c3089fa5257a",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-blp/src/lib.rs": {
+      "path": "crates/engine-blp/src/lib.rs",
+      "original_sha256": "15f840399def579e740df2bfa4ce869b2941afb1e0e09f7cb77811d4631433a5",
+      "adapted_sha256": "6e359684f14bb3038cc377191946302beb79e6d0dca66eab9852ef625ded9609",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-blp/src/bin/blpx.rs": {
+      "path": "crates/engine-blp/src/bin/blpx.rs",
+      "original_sha256": "38075880fec8eb63cb69f8f1397a785af00dbcf4c839cf79d6f91392911b93cd",
+      "adapted_sha256": "5ba87045e0e2b0bc1ec86fc04be56257141a184d528f0c38974cd73d2ed5b1d6",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-m2/Cargo.toml": {
+      "path": "crates/engine-m2/Cargo.toml",
+      "original_sha256": "93bab5a9e01f9652962468c9c8b63a198f567965dc0c148f6aee76f6fa08647a",
+      "adapted_sha256": "8cec3ef4c6e04357d68460f6a8c93340d4b78ae5f2a32afda2ed5ea628b45992",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-m2/examples/dump_attach.rs": {
+      "path": "crates/engine-m2/examples/dump_attach.rs",
+      "original_sha256": "8d74627790222d5ca5a5a42fcef39b423bffbdac610f7c4342ef4785c945ccba",
+      "adapted_sha256": "41613e20f10bfb6ed686ee5fef76bf1ba16bd08012a75366e3abd215dfe7ba6c",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-m2/examples/dump_skin.rs": {
+      "path": "crates/engine-m2/examples/dump_skin.rs",
+      "original_sha256": "94c1c9a74de22523201014f80b21a0b0707077983ed93b8fa8f034d816491b14",
+      "adapted_sha256": "c6c2146d049eafa587615a34a3dc9605923b0395fa8ac42cef168941e99103bf",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-m2/examples/dump_verts.rs": {
+      "path": "crates/engine-m2/examples/dump_verts.rs",
+      "original_sha256": "e173be2ed40025037337f3d5b6a2a900fbeb499bb1b47459d068f041101f62a9",
+      "adapted_sha256": "09ca1ddff18b61b7ee0585b5ef5e4079b602c18803ece393cb09449c4734e782",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-m2/src/lib.rs": {
+      "path": "crates/engine-m2/src/lib.rs",
+      "original_sha256": "d992226ca4609514856102facdcceb70dba81138c9926b6e7f3264e00b2c022e",
+      "adapted_sha256": "cf9b1c0c9f4cd0defba466228afbd001722bcea1e34a35341fa761761d92d672",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-m2/src/skin.rs": {
+      "path": "crates/engine-m2/src/skin.rs",
+      "original_sha256": "e28e1d5f892509dcd464958a951743a06fe129be02556f28b8f1c4bbb0f1a994",
+      "adapted_sha256": "e008107497b1ac93611d2d71a65deeff6bad2d94bcbea767caac194fbfc1618f",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-m2/src/track.rs": {
+      "path": "crates/engine-m2/src/track.rs",
+      "original_sha256": "db5c1fc6457e827e4d14f149fcd60406bbd4031679531dffabba061da7162634",
+      "adapted_sha256": "f60ba65b4b8a9100bda1a69c573fb339c0063a448d2e12477aa8e673c8bea7c8",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-wmo/Cargo.toml": {
+      "path": "crates/engine-wmo/Cargo.toml",
+      "original_sha256": "80f7c2574891055e3fbb975bceed4b3b93759c9cf808b1065145584f5c56eb6b",
+      "adapted_sha256": "8df8e8d4f9d1e91f89b34fd18a8620f9336b1634059b0f8043cd0adcc09d67ca",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-wmo/src/lib.rs": {
+      "path": "crates/engine-wmo/src/lib.rs",
+      "original_sha256": "7aaf738c6192c68eb6b10deeff25e09dbad323e63fd7ac725b7ce2c70b23db63",
+      "adapted_sha256": "2d49afbde6de0782ca7701eb89d0fa1508362589544984bab9f337517c5ba213",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-adt/Cargo.toml": {
+      "path": "crates/engine-adt/Cargo.toml",
+      "original_sha256": "f5fce0d112c004d0f5410efb262ae07d75f29f64dd2c4a0901a2dcec4cf42067",
+      "adapted_sha256": "3ed2a8905ea702b09a70a5fffdc973b6aa8a5ca1a94cd821fb748660aac0a966",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-adt/src/lib.rs": {
+      "path": "crates/engine-adt/src/lib.rs",
+      "original_sha256": "47e052fc64c769aa203afbe6b75d32f3afd9299266b1431dec04f4ff396ebe50",
+      "adapted_sha256": "38417ddbcbba2a9ab0eb14f8a7926a652b65a14f1d326514de86ee357fe8dcfb",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-wdt/Cargo.toml": {
+      "path": "crates/engine-wdt/Cargo.toml",
+      "original_sha256": "10acf9420a5b7430f5b336fd1cf75d01ccc4b4d84fe4f1fe7b1a4753820da064",
+      "adapted_sha256": "5ae7a876481e7ea02504567d6a50fec882068003654769ec923b56a9ce0c57df",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-wdt/src/lib.rs": {
+      "path": "crates/engine-wdt/src/lib.rs",
+      "original_sha256": "39186cd3525edd5cbc3153e10a1c4f8de456e419063754aec8e0fd99bc0ad62f",
+      "adapted_sha256": "69c725bc7ceef009e74076c4c9cc8ae104643c8c7d0b2a7ba38a029e3ff83f1e",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-dbc/Cargo.toml": {
+      "path": "crates/engine-dbc/Cargo.toml",
+      "original_sha256": "341fc6b5c448e4c1c32fc6f74939b3f56837c38168b0fcb5ea3f8d95d49a7540",
+      "adapted_sha256": "1d0f7c23f30aa5195567c8b51eb9c0e0b1177237ef89c54c29eafdc06e99dfe8",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-dbc/src/lib.rs": {
+      "path": "crates/engine-dbc/src/lib.rs",
+      "original_sha256": "59d1d8dab49a1c667ab479012457c30c9dc7eb6eaea231e6d483a07ad8f0a80d",
+      "adapted_sha256": "00d39844619fab3c8547951e2f7ccbcdb20c5620d140191efff70603c57070de",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-mpq/Cargo.toml": {
+      "path": "crates/engine-mpq/Cargo.toml",
+      "original_sha256": "bae19dfb4add57f8fd9f4da70909e6c3fd204cf5999bb0dc92e350b5c563624e",
+      "adapted_sha256": "66790d5f4a6353570418193c6a67a4d46d322d3f54e3a6489b8c7de9a2d7da75",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-mpq/examples/mpqcat.rs": {
+      "path": "crates/engine-mpq/examples/mpqcat.rs",
+      "original_sha256": "91d6997e739ed8319c0a08808678b9d38de0997d90d2b2bb93f0cee65967974f",
+      "adapted_sha256": "34119aac61c58df65226968c346f6f3d34ea3795dbc9ff04d1d1ed9dc19506ae",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-mpq/src/lib.rs": {
+      "path": "crates/engine-mpq/src/lib.rs",
+      "original_sha256": "52e8e5951f9f986185835cc576ffb5ac91096f5e062dfb48d74b80cdb3e16683",
+      "adapted_sha256": "68e06be9405115b001312f83021c0877558a55184005caaa956badb4b656d344",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/Cargo.toml": {
+      "path": "crates/engine-formats-core/Cargo.toml",
+      "original_sha256": "2094188e0ad1ad6254050214cb77fdcc7fa5fe5ff76555be979211240ac1588f",
+      "adapted_sha256": "892736a7b569fa84e540f6704725196bad6485850a5ad81814857eee4ed603ec",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/area_trigger_at.rs": {
+      "path": "crates/engine-formats-core/examples/area_trigger_at.rs",
+      "original_sha256": "6734f34372f9d7ee6d93f2c23d68d3daf16d03593aef82f08b66643319a1f504",
+      "adapted_sha256": "7ae0a66a66d259f2ba6c6263bdf4a7746bdefb4ed13636bbd5589796c028d751",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/batch_alpha.rs": {
+      "path": "crates/engine-formats-core/examples/batch_alpha.rs",
+      "original_sha256": "53c30cfd0e2ffb579ed6809a37cb184ff8b7e2c768e130acee173257906de042",
+      "adapted_sha256": "2513a4b2a261dfa7886e1e1cc365dd00d54d93a580d78352cb90063b9229c542",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/batch_lit.rs": {
+      "path": "crates/engine-formats-core/examples/batch_lit.rs",
+      "original_sha256": "ecc9f9c5045803a1c26ba247a5cbc3f6e07a0aabd5d9a8a0c3aaf6512a4cad39",
+      "adapted_sha256": "6e5409741820320655c8d83bccecb7b9732978b10936638a182c3f2e50f20ea1",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/clutter_cut.rs": {
+      "path": "crates/engine-formats-core/examples/clutter_cut.rs",
+      "original_sha256": "d00bd65df985a5b8b851ce590e1526de81dcd79c1bb467ff32b23a5bd81fc4b9",
+      "adapted_sha256": "8a181469dbc96ddcfdc95c9b3bc92f3ae0edeece0d0245c2f925173cff935c60",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/clutter_size.rs": {
+      "path": "crates/engine-formats-core/examples/clutter_size.rs",
+      "original_sha256": "02a4c14810027e34f058670e0be82907c8286f36429c314df00735b9ba6fd0cb",
+      "adapted_sha256": "9928327af54d4568d470c19cde7e076c082101f16aedc57a7de943476c3a7611",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/clutter_state.rs": {
+      "path": "crates/engine-formats-core/examples/clutter_state.rs",
+      "original_sha256": "bae20c4e3d903171938f0737494c56ece4b24efee6a1a78edf21819902f19ed8",
+      "adapted_sha256": "bb1e8f054d222a44fb8b4285e7638a0830748dfe905a46c25346a4cfa009064d",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/dbc_head.rs": {
+      "path": "crates/engine-formats-core/examples/dbc_head.rs",
+      "original_sha256": "10f04090147fac02647feba4c86731ea0ad4d8236c1e3207a657e66b946ada8a",
+      "adapted_sha256": "93ed6c6ca387fdd466f5c0edec0098f97f2e59536bbb6cf3a21f6a5f2e232712",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/dump_anim_names.rs": {
+      "path": "crates/engine-formats-core/examples/dump_anim_names.rs",
+      "original_sha256": "649172966a6483b9d45ee9b11882d3b3da21cd79125d320098e7932cce91da2a",
+      "adapted_sha256": "2c95b0489a4c2132af4bb169dd2aa5d8335a24518dd2473d6aeea5f590276106",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/dump_bone_keys.rs": {
+      "path": "crates/engine-formats-core/examples/dump_bone_keys.rs",
+      "original_sha256": "d6a60defc186f24447f1e61aec923a4cd2b33694542a477184796899c2b70105",
+      "adapted_sha256": "4fd8130e538fe3d77923d33d6f4a06b8e195926d373e01743123f610691b2dc9",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/dump_emitters.rs": {
+      "path": "crates/engine-formats-core/examples/dump_emitters.rs",
+      "original_sha256": "447fc9b8725c0dad787f682f0ccca3d054464689a3def45f9253f864d8b123ee",
+      "adapted_sha256": "979c69475318b52582fe8708ac265e7af857ed3163b7d9286a6d4a0821293d55",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/dump_file.rs": {
+      "path": "crates/engine-formats-core/examples/dump_file.rs",
+      "original_sha256": "af6d2fcf8b5c8649582be7eced28bf73d9017f94f914c98afa992e1ffeac907f",
+      "adapted_sha256": "4fc62485cf18ac70d687fbfae0f12f4f9f578b9df4d4dd92147e976c08aaf538",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/dump_model_anim.rs": {
+      "path": "crates/engine-formats-core/examples/dump_model_anim.rs",
+      "original_sha256": "0a8719edff4e03b745ad6b1aade868437888905ab90ca02b16d608114b8167c4",
+      "adapted_sha256": "53f10ff047897abad56f5e9ab382f88e3b36040f6b23087faf6bc90aed094776",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/emdump.rs": {
+      "path": "crates/engine-formats-core/examples/emdump.rs",
+      "original_sha256": "73d1857e8a23bdacbf916ba81bf39298a684f43ecbd4608cdd9199d1262f4642",
+      "adapted_sha256": "b7cd1d3e2832044470ee5e66a4b73081c80e337269cddb60768c3977ecbbd1ce",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/eye_burial_anim.rs": {
+      "path": "crates/engine-formats-core/examples/eye_burial_anim.rs",
+      "original_sha256": "eaa1fdc49ff3ef07ba34c02217806a3b62dfa3c93537591e4fa948d23d254153",
+      "adapted_sha256": "f94769a8bf5731456575b064902b3626596b37f129bc7a5f334fabe81b1cb668",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/eye_quad_pass.rs": {
+      "path": "crates/engine-formats-core/examples/eye_quad_pass.rs",
+      "original_sha256": "caf8a61cb939a7680c5dbd51262d1b0a09708af56c390af52f49d3f1c4188448",
+      "adapted_sha256": "6972a1043d3a6a3d76d6240896801e3513ba07543d01b1ad78273c7053316fe3",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/fade_bucket.rs": {
+      "path": "crates/engine-formats-core/examples/fade_bucket.rs",
+      "original_sha256": "4a566efe6e089353a071f85996c928ea2bc0c5d80ead5056c50fded027bb2c30",
+      "adapted_sha256": "72a06bce14d8963ff23f40af08434ae985d6b1fe138975553d81d3e0ddb023ec",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/gseqdump.rs": {
+      "path": "crates/engine-formats-core/examples/gseqdump.rs",
+      "original_sha256": "4091c537a2420d5f1f188cb882f8a8b424fb42f74bbf163c830b0231ba3d2d0f",
+      "adapted_sha256": "a7aef20e0ddbcdb1bde0de853fb78da31780f9e2db8698db0fdae8fc7ff0f0ad",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/impass_here.rs": {
+      "path": "crates/engine-formats-core/examples/impass_here.rs",
+      "original_sha256": "54fc6bafdbdc569662b797a379265cde4ea620676094a4b81ab70eca8585daf0",
+      "adapted_sha256": "b2c351b529f58a9c5462432359aa0e5f450d032f68ba1c72be30cad729f6989c",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/liquid_depth_census.rs": {
+      "path": "crates/engine-formats-core/examples/liquid_depth_census.rs",
+      "original_sha256": "7cc0804ce4a7c186c62e0a313477ba0381a95bb6a04c485b46390a1fabe665d8",
+      "adapted_sha256": "37d413cafb40070449322c6c0f8ee5fab22a2dbd23db502e9755bd2d9d25d9aa",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/list_chain.rs": {
+      "path": "crates/engine-formats-core/examples/list_chain.rs",
+      "original_sha256": "ba0459f41bdf96f17bfe6ba1b1193e3b98cc7be5b11934c3c9185047098f1ca0",
+      "adapted_sha256": "d9ffb95fb0fbeb494ca5511a412483b112d4351b981fca114d8dc7c065d97af2",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/m2_shared_section.rs": {
+      "path": "crates/engine-formats-core/examples/m2_shared_section.rs",
+      "original_sha256": "843131004c97b8aa0b41daf230faaa85bec8e291dcc25490f6162090ff44431e",
+      "adapted_sha256": "5377d5de1ba9d4273eb1563e53d6efa4718d063195242a060a307c612640e737",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/mm_seam_probe.rs": {
+      "path": "crates/engine-formats-core/examples/mm_seam_probe.rs",
+      "original_sha256": "82092c2024b84f878024346c7bcecd9b0ee1edae3515925f89b420219d076340",
+      "adapted_sha256": "f583fa8ed0609a4670a5b90220640f598dc5c06fbc17c01d646d28654d0549ff",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/mm_water_pin.rs": {
+      "path": "crates/engine-formats-core/examples/mm_water_pin.rs",
+      "original_sha256": "f1c74902f658d01974c860b9fa077046fd973c19d528c245b8c3d32be6769d5e",
+      "adapted_sha256": "bf70f6813596039db07298dcda63142358f9ba7e931badca214b45a48fa9fb53",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/order_probe.rs": {
+      "path": "crates/engine-formats-core/examples/order_probe.rs",
+      "original_sha256": "50116a9a025fd2338858779808d09bed81a8b985df8b29cde17a3363c14f0ec3",
+      "adapted_sha256": "c5b6f4d80bcb9b800a16b5ba7ff3a911d120a79c81744fe3f11fa79de381d8eb",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/png_disc.rs": {
+      "path": "crates/engine-formats-core/examples/png_disc.rs",
+      "original_sha256": "6e00c282383e6a81df15878cce96875980af7306810bb5c929053e34bbb6518a",
+      "adapted_sha256": "8f167bf88c2d216a8a5f18f1586a2e6b2a9f0c28aad7bc25969612f43f66a019",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/scan_events.rs": {
+      "path": "crates/engine-formats-core/examples/scan_events.rs",
+      "original_sha256": "0cdedad7a3605ff52c1b5f354013526f2e0473b3bc46c49e31ccb75ce964447e",
+      "adapted_sha256": "53d36f2ba1eeaf06957bc52d5b0b1d566e551da45c08b050786635dcea548ad4",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/seamswing.rs": {
+      "path": "crates/engine-formats-core/examples/seamswing.rs",
+      "original_sha256": "b4dfb2ca4c0200bcaadb645fe7df7dcc96e568840f094c4bf33ca786f6729413",
+      "adapted_sha256": "c8b1f0e3a1cd423e1a6e949e7dadf9e51f342c57fcdf0a3ccff35405acafe6f7",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/spell_interrupt.rs": {
+      "path": "crates/engine-formats-core/examples/spell_interrupt.rs",
+      "original_sha256": "f1219da67371c35c0364a76f26ca92247c65b8c3f654b4e2c3373d63e90ea957",
+      "adapted_sha256": "f6ca4d2906480711a74d9f46431e2a2fb99e612e092d8276f29de2f7646ae28d",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/spell_row.rs": {
+      "path": "crates/engine-formats-core/examples/spell_row.rs",
+      "original_sha256": "4f7ebecb67ee169319227697513108ca2958de164e097e4b7b3c7390113204b7",
+      "adapted_sha256": "2fb0d3891fb4bcfc6c4f991165218c90219d6537a914ca41e43a7fa0c6e96a1d",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/srci_dump.rs": {
+      "path": "crates/engine-formats-core/examples/srci_dump.rs",
+      "original_sha256": "bdeb5f967dd5a407e6acce4ff8d056ff1d4297bdac223e723447cb20c0eb0365",
+      "adapted_sha256": "66f7e86582b05c9939829b04073ff2003110c5ee3e24c10f522f4a3280ae1645",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/surface_here.rs": {
+      "path": "crates/engine-formats-core/examples/surface_here.rs",
+      "original_sha256": "61e39531174a5510988b241796090fa788435d61c0cf6014fe2621e2ac741019",
+      "adapted_sha256": "f7b59c3d867d12d38e26862e73d1435d1cdc249731ef18c24b263f758c581920",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/water_here.rs": {
+      "path": "crates/engine-formats-core/examples/water_here.rs",
+      "original_sha256": "07c6bffbf0048c3b8b5ae3152319c0db0ca89fb04c714aefee8a6cc83310c4e6",
+      "adapted_sha256": "b9d26d520eba494877e3b6e39b1be57b62a85fb27bc3ab86a9f5a6f89e204654",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/what_is_here.rs": {
+      "path": "crates/engine-formats-core/examples/what_is_here.rs",
+      "original_sha256": "9d9030d0f5deabae52b2e7d988aebda234d93b6381bd14ac33fc628bac02f737",
+      "adapted_sha256": "91919684869a361e420bd439b336d6018da89de2bf9953c6292e74fe410f4425",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/where.rs": {
+      "path": "crates/engine-formats-core/examples/where.rs",
+      "original_sha256": "e293dc2fa9b275ef900bf8e520d141aa91afb4f57be0cb5d823ac24c2d65ce30",
+      "adapted_sha256": "3b4b974a28c678805d0dc9bfe4178940c9b21f70c029602d305ad84c111f0a15",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/wmo_antiportal_census.rs": {
+      "path": "crates/engine-formats-core/examples/wmo_antiportal_census.rs",
+      "original_sha256": "85156efe89ee8e9833a5414a0ab7feab3127da8832efe28f82ec7ae9bffdbb6a",
+      "adapted_sha256": "6a27c2d997a9b461c4259f403f80b226ba693cd2b48b7e7151d6d4b042021aef",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/wmo_bsp.rs": {
+      "path": "crates/engine-formats-core/examples/wmo_bsp.rs",
+      "original_sha256": "a13807f7714f09a2aa0fdc0a61f46b1935f1e9ec2a3a043ab2b00faafd7efe9e",
+      "adapted_sha256": "b80944655f89a082af35ceeb4b776fcb438b6b05fed6938ae60cf403446b9f56",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/wmo_chunk_census.rs": {
+      "path": "crates/engine-formats-core/examples/wmo_chunk_census.rs",
+      "original_sha256": "e2661accbf47c35340ab256f3c8baef573a8927b4039c7645f2f51a20f609696",
+      "adapted_sha256": "b969900fca14c05f1313fa017c39a21269c7707be892d1b5740499d155c9f66c",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/wmo_collision_cost.rs": {
+      "path": "crates/engine-formats-core/examples/wmo_collision_cost.rs",
+      "original_sha256": "35833dcc5cec09a6debd9a07ffbda0f8049dd5b678b7dbbd1b6a85817926c8bc",
+      "adapted_sha256": "6b45ee78e6eca0fb3be664970869db4fa001dcfa1c47fc474d61ad24bb4b6d5f",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/wmo_coplanar.rs": {
+      "path": "crates/engine-formats-core/examples/wmo_coplanar.rs",
+      "original_sha256": "927d42dd5fd3c1af2d67629296b9b6d1d8b6d55136dc27176d7944b4e463a35d",
+      "adapted_sha256": "e342c2506be8c93d70e18ea40911228d176a7d5edf30b4edbae3a4d3f2ee83f0",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/wmo_dark_floors.rs": {
+      "path": "crates/engine-formats-core/examples/wmo_dark_floors.rs",
+      "original_sha256": "6b54c8a9a7e89790d032b5cc0f1ff04a4efb59c41f47c4761e07aef62b87e0a6",
+      "adapted_sha256": "21124d6d57622ae1f68e6095177167c387545f497fd00b47103fe8aa9e248702",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/wmo_doubled.rs": {
+      "path": "crates/engine-formats-core/examples/wmo_doubled.rs",
+      "original_sha256": "adbb8a56fef1933a20985ab43ccfeac910e3a8486e72bf014f425589c9cfee60",
+      "adapted_sha256": "ed3b13cfcf5bb42a3d051233b7689ceb043c93e02698af8f8d9a87ee747b8b5e",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/wmo_liquid_arms.rs": {
+      "path": "crates/engine-formats-core/examples/wmo_liquid_arms.rs",
+      "original_sha256": "dc31f0b5e8ccf5f0dd7c44623697678a2f3a830de2623acd06b3b7c2b578c3ef",
+      "adapted_sha256": "0d0ddf6a328a534fd14d2dcbb21ee866199912d16189f709fa0a4891a253379d",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/wmo_liquid_scope.rs": {
+      "path": "crates/engine-formats-core/examples/wmo_liquid_scope.rs",
+      "original_sha256": "a9b794651149070c5de1e1ad3689318c1e68842c8a2c1b090b79d7ec747a45e1",
+      "adapted_sha256": "30b9b3dbd7cc88a53817a5243195e4585237bd40700af0304bbeea0b84eaa95f",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/wmo_mocv.rs": {
+      "path": "crates/engine-formats-core/examples/wmo_mocv.rs",
+      "original_sha256": "5ad6eef07d36439f904ff0c9d94f49d4e6497822c119f1a2e4249aaa2c00cce6",
+      "adapted_sha256": "0f5b30827a95974485be7eadc010d8edecb6a2c998bf101789e57ff82d8a227d",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/examples/wmo_ownerless_pools.rs": {
+      "path": "crates/engine-formats-core/examples/wmo_ownerless_pools.rs",
+      "original_sha256": "755dcc5e4c932fac3c5eb61a750096b5fe073dbdfe314fcecd85f449ad0da848",
+      "adapted_sha256": "f2b7f2aeced36b91dc862c1f959d9f2700695134359fcf8a0b7167108e316a1e",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/anim_data.rs": {
+      "path": "crates/engine-formats-core/src/anim_data.rs",
+      "original_sha256": "76f95f4840c7f868bde5c6b9e35c7e0d745ea160ac665069429c96bfbde32980",
+      "adapted_sha256": "bab6b3fddb2e948dc1fa735bb78a025416a3a082c41aa865a1ecb70faa5817c6",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/area_poi.rs": {
+      "path": "crates/engine-formats-core/src/area_poi.rs",
+      "original_sha256": "e23f41e317bad40b5d2622d92bb817ac0dd5d97c09a90b5df17a5973338cf1d0",
+      "adapted_sha256": "5d9595db7ad9ebcf25f41299b1b1712dcb35bd91d13c133f51a84b1be597c96f",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/area_sound.rs": {
+      "path": "crates/engine-formats-core/src/area_sound.rs",
+      "original_sha256": "bc8f51f785bc42a65fe13067801bc0cbbb6c3fc85ac55f360475ea682a0a1efb",
+      "adapted_sha256": "80f394b15b771c35d8b1315137c07ea6c3114bec53a10d0df6bf927c489a2dcc",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/area_table.rs": {
+      "path": "crates/engine-formats-core/src/area_table.rs",
+      "original_sha256": "399d301056274df0db4dcef83e19878a2d1ab12feb36551c986bea24d50dcd3e",
+      "adapted_sha256": "2941e43b1e406a0f75155a8e8aa19ef8f6971001e1c6d15d0854ea72174e0af3",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/area_trigger.rs": {
+      "path": "crates/engine-formats-core/src/area_trigger.rs",
+      "original_sha256": "daa2ee847c54d48de5c1e20e1e4dc83886b1d29f81f49dbd2c939c5e51cb46a0",
+      "adapted_sha256": "b42e178f736145d75d9e79c34bca1904fc3d3268185b832710660467da4b63d2",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/auction_house.rs": {
+      "path": "crates/engine-formats-core/src/auction_house.rs",
+      "original_sha256": "1e49c2f0f1004bd2cffd6781fd7a5610eb2c12d1d3f3e579979346076f49c5d5",
+      "adapted_sha256": "6d1a7923516adcf94377368de0d5ee5171b6702f61675ec20c1488c5ce015916",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/bank_bag_slot_prices.rs": {
+      "path": "crates/engine-formats-core/src/bank_bag_slot_prices.rs",
+      "original_sha256": "0c82af5e7488cb1fca46e33dee89adadee73876c83aed1d2e4b3747b2e8f1d0e",
+      "adapted_sha256": "be69a7593d24d4c9465102bbcaf99249a12d086216c5b44c93e4905b4f50f2c7",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/bin/benilla-extract/chaincensus.rs": {
+      "path": "crates/engine-formats-core/src/bin/engine-extract/chaincensus.rs",
+      "original_sha256": "4bd186b50b33d7161a9e7546e20547ceb76d8c76322ba8ddb16262fcf5058ca0",
+      "adapted_sha256": "a252eb26edf0afc1167b52361a14da5f4d655307fa0f66b54e0c21a5d76e8a21",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/bin/benilla-extract/charatlas.rs": {
+      "path": "crates/engine-formats-core/src/bin/engine-extract/charatlas.rs",
+      "original_sha256": "55736792314e39bc005648b712e6a3edebe026c968af5e736e987ea43aefac77",
+      "adapted_sha256": "f5b2a7b300b758f806174077940839a6524ac798dcc3d04fba11a5e3149d708f",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/bin/benilla-extract/charprocs.rs": {
+      "path": "crates/engine-formats-core/src/bin/engine-extract/charprocs.rs",
+      "original_sha256": "ce0b737cde93c248557f3be9281e87743032daa4277b20682d8c2da8e8f696e2",
+      "adapted_sha256": "1710dbfe454cb480cb940ffaaf749ae15e77a8469d93771713f5acf4e46f1bbe",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/bin/benilla-extract/glueextent.rs": {
+      "path": "crates/engine-formats-core/src/bin/engine-extract/glueextent.rs",
+      "original_sha256": "2aa9baf9a5a945eb47246f28340143bed8e774ec150fb629561ebccbb8c735f1",
+      "adapted_sha256": "01ece547c1b70e78dcecaf8a5e3edb5d93acad5247dafd330fe64a33595e4309",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/bin/benilla-extract/kitanim.rs": {
+      "path": "crates/engine-formats-core/src/bin/engine-extract/kitanim.rs",
+      "original_sha256": "66792ae1cbcf8e96a56906bfa09892d8f5ec90ff479d6fb5003db287645af04a",
+      "adapted_sha256": "15982a150cb97313ac68b9bff24d694ae5fb36c4293ba75e9b443f4778ff304f",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/bin/benilla-extract/m2dump.rs": {
+      "path": "crates/engine-formats-core/src/bin/engine-extract/m2dump.rs",
+      "original_sha256": "e60a00a50e2f21eb72729f22613a501d8ffe1dd6071895a543e58b1914bade28",
+      "adapted_sha256": "a8953a5b0d391844cb8bbf2e8bb53635434e4e817b572bd42c601905a8144ebb",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/bin/benilla-extract/main.rs": {
+      "path": "crates/engine-formats-core/src/bin/engine-extract/main.rs",
+      "original_sha256": "9ad6c2722a398db3a391b1735199526c8e0465e80e4bf9125c3cd5f5472b7049",
+      "adapted_sha256": "46475c46cbe46d2f5ac9f5fb55e27e03b5f6e325f81db39ab26c879a04b6477c",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/bin/benilla-extract/scan/geometry.rs": {
+      "path": "crates/engine-formats-core/src/bin/engine-extract/scan/geometry.rs",
+      "original_sha256": "1c128ab4675ab9ad7692044d550f7d01e6dc79431671aab9aa379491667b9d7e",
+      "adapted_sha256": "8dd9532b6bad5ffe8ef5e555e8c3be8a1e4bc435e1f27ee473880ef948c3cc0f",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/bin/benilla-extract/scan/lighting.rs": {
+      "path": "crates/engine-formats-core/src/bin/engine-extract/scan/lighting.rs",
+      "original_sha256": "4d3c3532b42b9771a1217c7b89cd9a00a835e0aa4805628e50093eef56fa09d3",
+      "adapted_sha256": "d7abef8a14c6b5550eafb85325566aa5aead5c17d92e6be22479dc1e49bb5d4e",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/bin/benilla-extract/scan/material.rs": {
+      "path": "crates/engine-formats-core/src/bin/engine-extract/scan/material.rs",
+      "original_sha256": "c05d029c1575dc5b0ed7d81c5edf8d5850ede4559a1888ccacdeaf9e1361a70e",
+      "adapted_sha256": "f5a90f87559c32612d5a8bcf974a888381719de504a7adbd953ca1ecaeab3dfe",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/bin/benilla-extract/scan/mod.rs": {
+      "path": "crates/engine-formats-core/src/bin/engine-extract/scan/mod.rs",
+      "original_sha256": "eb2fe2737ed3a47919abe666d1764de6c78fd3086b6ad9c07d21a49e0769d6cb",
+      "adapted_sha256": "11c626a17398b74a859709fdf10180da4d3396ac67262308c6c61a33d1cd80e8",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/bin/benilla-extract/scan/particles.rs": {
+      "path": "crates/engine-formats-core/src/bin/engine-extract/scan/particles.rs",
+      "original_sha256": "cd874463b3e478ddba79ca50a0c7a5f35757506008802199266bb516c1d3bcfa",
+      "adapted_sha256": "eaa9c029d8079ba942313f6592020d9602ae75b8dd84d48a23bf19ac1a633cb9",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/bin/benilla-extract/scan/sequence.rs": {
+      "path": "crates/engine-formats-core/src/bin/engine-extract/scan/sequence.rs",
+      "original_sha256": "f32fe564899f039b5778b5f1b15ff2819ca717db0b080256fa2311d7284f2ee8",
+      "adapted_sha256": "b89c355950b5fa864ea5d577d612ee9b45dc061de7fc0ac050473c9bf3be2ffe",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/bin/benilla-extract/scan/skeleton.rs": {
+      "path": "crates/engine-formats-core/src/bin/engine-extract/scan/skeleton.rs",
+      "original_sha256": "c9135a8c947e8d585940a8ded18ef287146f908e56e91cc5e6a948f70da2fdda",
+      "adapted_sha256": "25a19d5d3da8815b53fc6e05dcf6fd347cca48fe495a1d71fb47deb030822fbf",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/bin/benilla-extract/scan/world.rs": {
+      "path": "crates/engine-formats-core/src/bin/engine-extract/scan/world.rs",
+      "original_sha256": "7de8dbe140feab4f27bee270b299c5a44f596bf67996ad45afa9fbfc190a202b",
+      "adapted_sha256": "45c42ce1933c6837c59258a5b1815abe7c5a1f7d9ce2de2cc9c0537dc348f1b8",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/bin/benilla-extract/shakecensus.rs": {
+      "path": "crates/engine-formats-core/src/bin/engine-extract/shakecensus.rs",
+      "original_sha256": "be9e2b15eb99aa9909a16287a992625537f251785eb6793923ad93b7d68a5ead",
+      "adapted_sha256": "41cd7bb3a9edda5dcd163976a0d958af0240538c87519d3ad89580bb8b010c4a",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/bin/benilla-extract/spellvis.rs": {
+      "path": "crates/engine-formats-core/src/bin/engine-extract/spellvis.rs",
+      "original_sha256": "bb9d70ba62c453e00c98a15f157a5ef626951ae2d89a4be2095662ae043e5eca",
+      "adapted_sha256": "1d0391fccb3a4f62a377e831f8f0bc2d5146040304762cc18b77130d2e3ee124",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/bin/benilla-extract/thudcensus.rs": {
+      "path": "crates/engine-formats-core/src/bin/engine-extract/thudcensus.rs",
+      "original_sha256": "acd6c792734eb523265560d6594e43e06213403f6c3a0935df8f7a3ddba73d76",
+      "adapted_sha256": "f4dd6a656d4ae56ff3ff1fd9482911fce0c7e443ff734004cc532a857941cd3a",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/bin/mpqx.rs": {
+      "path": "crates/engine-formats-core/src/bin/mpqx.rs",
+      "original_sha256": "cb70fefbf4fd8a0838d0254bb7a02066d4a7027ea854388add5c38b83c3f3968",
+      "adapted_sha256": "911a44963063c487d7908becd5c657d2a19fa8d9dfa3ea8d3a3a6d24343e41d5",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/camera_shakes.rs": {
+      "path": "crates/engine-formats-core/src/camera_shakes.rs",
+      "original_sha256": "260f10c8a690dc5c29ef0a2acc00c8266984afc126825a41de0752d549138f92",
+      "adapted_sha256": "eb5242c56d443d755863c122f0b259121fdee63fe063061b4926dee066dc8ef0",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/cfg_categories.rs": {
+      "path": "crates/engine-formats-core/src/cfg_categories.rs",
+      "original_sha256": "490fb0b137a09a514951f75e5ebcf320ebd1cb0b043c09a5cf3a6a0e990009a4",
+      "adapted_sha256": "b68c70d8d57f5682fd2a723addeb528f7024b5ce2447f79491651d162c749922",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/cfg_configs.rs": {
+      "path": "crates/engine-formats-core/src/cfg_configs.rs",
+      "original_sha256": "53acf5ecb88084cf1c5cdcccdb604e4cffdacf65b0b045684556bf5466b1628b",
+      "adapted_sha256": "aabd86b2401124b2ec1240d593b46c99822ce33e57e6d1d45d748ceca6a3d0ec",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/chain.rs": {
+      "path": "crates/engine-formats-core/src/chain.rs",
+      "original_sha256": "7fcfe053ae47a4427399577f35cc7f48665a73b0a262bb05cac6544c5c389eed",
+      "adapted_sha256": "669405db85dd9c0eb104fe3b39ca7bd7baf32657d583d99ef085542239e72a53",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/characters/customization.rs": {
+      "path": "crates/engine-formats-core/src/characters/customization.rs",
+      "original_sha256": "fcfb022f38ac90951d0f4d84fb27a1e7f60039a4eb4bcf451e5df50bc4a3b075",
+      "adapted_sha256": "07f9d09dc6516ed5499a0500320615ac69bc169f77752b024b52e3494b0987a6",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/characters/geosets.rs": {
+      "path": "crates/engine-formats-core/src/characters/geosets.rs",
+      "original_sha256": "596ae6fe058e24d921b6d15342708045a10ef56d836043732f59eb73e6baba4a",
+      "adapted_sha256": "cc1480f91904eb612ed8eb19af6a4c7bb092b660aaddaf50ae157db945e3f4df",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/characters/mod.rs": {
+      "path": "crates/engine-formats-core/src/characters/mod.rs",
+      "original_sha256": "456e661507cb4283dfa7282aa48139afae5c2d1ce12245452e60af5e0eee196d",
+      "adapted_sha256": "501e4dac541533be85f2f03c22675052a00ddf5994bbe897eee01e289aaed3a9",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/characters/sections.rs": {
+      "path": "crates/engine-formats-core/src/characters/sections.rs",
+      "original_sha256": "d87b95255a26e31cd09081c5238711bf697d79e8a2c169c0d4b6f282a110863a",
+      "adapted_sha256": "0b0ad26caaf7a913eee54e20ebe54bb9545605cac05aec4c86b57f542073129c",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/chat_channels.rs": {
+      "path": "crates/engine-formats-core/src/chat_channels.rs",
+      "original_sha256": "aa886d948ca27e709b94039e588b1e3199abd4ce3fe294e048662fe63ac22d32",
+      "adapted_sha256": "80ff37236f72a5af9aa6e6fa563fb54844cc7338c8a65e0c9f6cdbe9f659850e",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/chr_classes.rs": {
+      "path": "crates/engine-formats-core/src/chr_classes.rs",
+      "original_sha256": "fba0da8c26093793dbfa221f4a940a2f0ef31e260fce93ee8672bafcd2bcb512",
+      "adapted_sha256": "1d59e1664d6041707f1537ebe20c4afab867a5812344c3f3de59438382934fc9",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/cinematics.rs": {
+      "path": "crates/engine-formats-core/src/cinematics.rs",
+      "original_sha256": "e5ec95ee20ee1284e32255bca54756af06f183cf0132ac5a8f06ecb16c57e85e",
+      "adapted_sha256": "100aa22e876b40e0a9766104d336956abfda692aab6a985cff8c6d0cea84cbae",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/creature_families.rs": {
+      "path": "crates/engine-formats-core/src/creature_families.rs",
+      "original_sha256": "6f5c2c29b382178ddbce4059a51054be269345943b6ff25d07eda8eb62484a5b",
+      "adapted_sha256": "32aa316055f208102c95c6a2ca6c269a65827f3edcbdb771d22f900dac7141f2",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/creature_sound.rs": {
+      "path": "crates/engine-formats-core/src/creature_sound.rs",
+      "original_sha256": "1d6291fe1281c35f3c3893d351f0f395b1b97556c95db9c7fc08dcd1e0dca6fe",
+      "adapted_sha256": "f888cc80fdea21aeb1b249ec1f1d4b1a321ac349107262d26ba140f4d79958c2",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/creature_types.rs": {
+      "path": "crates/engine-formats-core/src/creature_types.rs",
+      "original_sha256": "cb756d8d4957f4c6bf6cc8d912598c76ffd8ef1b24a24ccb963ac40ec594b3fe",
+      "adapted_sha256": "6c830a3b6b993fd4ce3d0d2191af6256e0e8a25970425c01485f74de5d6dd641",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/creatures.rs": {
+      "path": "crates/engine-formats-core/src/creatures.rs",
+      "original_sha256": "42bf1c6326bc5939fd64858d1cdc0eab373c33be97a410521a164a7367b05db8",
+      "adapted_sha256": "1808016f7fcf2438acfa12f894c9e41409fcdd727e508657b3d49e9eb7f20c8f",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/dbc.rs": {
+      "path": "crates/engine-formats-core/src/dbc.rs",
+      "original_sha256": "e778e696edf8c43fa6d4b1d2aaf22d22e2b14515e28d1aa2b0d406ded5b4c128",
+      "adapted_sha256": "dfda634286d1002bf75b6c71574986afc3b8e315cf6fea87282261f66d54c888",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/death_thud.rs": {
+      "path": "crates/engine-formats-core/src/death_thud.rs",
+      "original_sha256": "796d2f8f906d8e1c31543d20246a9c9f21369233cbca13800188266ee4e9f217",
+      "adapted_sha256": "fb32f25df59ce5ee46c82816fcc51920bccd54a5856df46251097515da833363",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/durability.rs": {
+      "path": "crates/engine-formats-core/src/durability.rs",
+      "original_sha256": "80ecf82c63c47c9d0c03e0afb3d5631f17ef946e68b28693d549035aecba9869",
+      "adapted_sha256": "dfce7ae75f590fa896bd6e0a23283f9794bd36d71ef8fdf0df7eb2cc39713aea",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/elevators.rs": {
+      "path": "crates/engine-formats-core/src/elevators.rs",
+      "original_sha256": "b2f4146e714ec1510aa4b9976fbb1b8bc04043c28f5989224dd7eac77eb8cae9",
+      "adapted_sha256": "e5cb11fee32cd5d99e9ebfde99cfdc4512fcd1eb3c1ee80365c204922bfced7d",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/emit_timing.rs": {
+      "path": "crates/engine-formats-core/src/emit_timing.rs",
+      "original_sha256": "071f7f431fb7808ca4c3f31b7425ef6a56b4edeee3a241d77de5034b0cf66732",
+      "adapted_sha256": "f0c3cf19aea80a1506959c4c932f414d3bd476d9f629cd62fbfaf6d90944be4f",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/emote_text.rs": {
+      "path": "crates/engine-formats-core/src/emote_text.rs",
+      "original_sha256": "652983f4e450969a2bee01d149c5e35c42bfdea86e994e0e3da2977a9c8686b7",
+      "adapted_sha256": "f3bc081582bbc15266147e5382bbb740c28a41b4c801b7434298986dbe1152f3",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/emotes.rs": {
+      "path": "crates/engine-formats-core/src/emotes.rs",
+      "original_sha256": "dee8eca56c95e8ddd9958518c0a6f8f9c5fd7ed06792b6a0f198251aafe8c11a",
+      "adapted_sha256": "9436d09c32db0a5923c7fdf6cccd5f613ea193dc5d80f3ac0cf0f3df04cae782",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/environmental_damage.rs": {
+      "path": "crates/engine-formats-core/src/environmental_damage.rs",
+      "original_sha256": "17682c4a56a69cdda0147436aba9190887475e615b3c3783cd21f67b53a9706f",
+      "adapted_sha256": "2b62de4f1b1d6157637c1186538abc43d3ed644675b63d2407d076811291e8ac",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/exhaustion.rs": {
+      "path": "crates/engine-formats-core/src/exhaustion.rs",
+      "original_sha256": "3c7470e87daf5ea74e3fbd750c61a0ea777b691dbd6d3d8b9964f78336e56c52",
+      "adapted_sha256": "40bf4354d414aef95df3809ee291679f034c3e989845b175d5dd9e55e40a1419",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/factions.rs": {
+      "path": "crates/engine-formats-core/src/factions.rs",
+      "original_sha256": "1307d385309e472b4621834f25597a69dedd3628c42bdc04a302c82a380c3f44",
+      "adapted_sha256": "cad985afae5922634d2f13598d56542aaccaa1b94913f4c331214422a9967f58",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/footsteps.rs": {
+      "path": "crates/engine-formats-core/src/footsteps.rs",
+      "original_sha256": "798d99b9cedd0803e238cfe310e25af6e3086706e404454ced477429dd0f8e60",
+      "adapted_sha256": "7e2652f48aad38a413a372f32ccea0d943e0d1598c143f3f1ca37db213b1355d",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/game_tips.rs": {
+      "path": "crates/engine-formats-core/src/game_tips.rs",
+      "original_sha256": "2aaa6bac6d29dade9e8639abd7abde2ad008159072601b087bf92649873cf187",
+      "adapted_sha256": "c7135fe3287948aca02cfa76c07a4dcc0844b1ce6e7c7995e68ff45e33125b6f",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/gameobjects.rs": {
+      "path": "crates/engine-formats-core/src/gameobjects.rs",
+      "original_sha256": "0bdaa391da537d6dbf44c43e1172c263d0be0d0a340798658f40bafeb2bf0c29",
+      "adapted_sha256": "205f5778fe8b724044b98401a8e701e0e09d67cf129a19a483d831b5ab1dadc6",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/gm_ticket_category.rs": {
+      "path": "crates/engine-formats-core/src/gm_ticket_category.rs",
+      "original_sha256": "69819020d69da01f7678a0ee87afef37a4dc3ffaba02731100c5bda345af97ec",
+      "adapted_sha256": "b337f50c972e7783ad46010981c26a2fee8928d1bc8f89dfc83f8d3b72c1aa3d",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/ground_effects.rs": {
+      "path": "crates/engine-formats-core/src/ground_effects.rs",
+      "original_sha256": "fdc31a4af363db3c3afbb7dac90ce193d7fffd500c908525fead711a5e9995e9",
+      "adapted_sha256": "4500f5a89136f3f034f34f6c59877525e84e85ced51e2f0db4b98aba6d0f970b",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/install.rs": {
+      "path": "crates/engine-formats-core/src/install.rs",
+      "original_sha256": "a3656080d4282194a6ec9b85a6e77bcba2ab9ef88925e10e5cd9fde2558cdce7",
+      "adapted_sha256": "23beb216d6e42b7df973c0ac1c5daf82a0975e5515dc4a96bf3766493dca265d",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/item_random_properties.rs": {
+      "path": "crates/engine-formats-core/src/item_random_properties.rs",
+      "original_sha256": "9678332fbe613c73e864f5ac55da00155df10ecebbeae6009e6affd42062866b",
+      "adapted_sha256": "862fcc28477e1cc3964a933194e436b5923770c417e9c9b1d877fb8375b4014f",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/item_sounds.rs": {
+      "path": "crates/engine-formats-core/src/item_sounds.rs",
+      "original_sha256": "4c0ac7c9e4aa71677aa427184651b1534329d000506c4256be996905bb345256",
+      "adapted_sha256": "fd78880e412b8ac1dc63e31997e46ede02771b2d7333b27d2b319a090195d4b0",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/item_visuals.rs": {
+      "path": "crates/engine-formats-core/src/item_visuals.rs",
+      "original_sha256": "3b3128c0f6f792e05536418858132847d80e2e8e61862160aff954fe217a10d3",
+      "adapted_sha256": "cee515e14679900eccd18d1848e023cb39d91060555ce21195608ec7c33d27c6",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/itembagfamily.rs": {
+      "path": "crates/engine-formats-core/src/itembagfamily.rs",
+      "original_sha256": "61321f20fbd3c024143b5c0809d97a2b4f2b86840cb4520f58eb0a5a5157eb96",
+      "adapted_sha256": "037b04de4be9efd4f338109223dc71a0f698f0ec4bb619e9066d5b4508149008",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/itemclass.rs": {
+      "path": "crates/engine-formats-core/src/itemclass.rs",
+      "original_sha256": "dc53563ec42203b33cb6f67b1c31aa2205f74c0d6c21ea992c547a19c889f9cf",
+      "adapted_sha256": "785cbc3045b56303b2b2dd89d1c74d0923638647d2f7f8a98d457df36e72c061",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/items.rs": {
+      "path": "crates/engine-formats-core/src/items.rs",
+      "original_sha256": "2c9ab14a1d4c631a104c19fa9d0fac091a511ba9152f40aa738f9176aa0d4ac3",
+      "adapted_sha256": "a4e6451f3a7b52eddcd98b66a6d8cf014490b03fd614c9a67b993c36e0d87b8e",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/itemsets.rs": {
+      "path": "crates/engine-formats-core/src/itemsets.rs",
+      "original_sha256": "2d417bdae0600ad1edcb1674aa877cbbbce2b15e333da96fde7c583511da28ff",
+      "adapted_sha256": "8fa7a000c89c0d51c71c941cff20b0f90dfb699ee2a6ad6a70d77db0e3ea5f82",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/itemsubclass.rs": {
+      "path": "crates/engine-formats-core/src/itemsubclass.rs",
+      "original_sha256": "c8b57ad1f3e6822cecb6749f1ac5cabbffbd0a2548d6a08b35569854530233d9",
+      "adapted_sha256": "3808e2d672b63b97dba72dccca0cfca9cc5ff6d1cf58762b7485b6c0244a370b",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/languages.rs": {
+      "path": "crates/engine-formats-core/src/languages.rs",
+      "original_sha256": "55e20c2120515e64249d937aee50a1904fa107f22905280663fd84834a6a9842",
+      "adapted_sha256": "96dfaa60cc7dbb16afa1dd127d273ca2310d6b2150369d8158e4e3ef53a2effa",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/lib.rs": {
+      "path": "crates/engine-formats-core/src/lib.rs",
+      "original_sha256": "157a1a10134003f8fbdf2152288b95126d33999879edf2078274a6e54e0fefb0",
+      "adapted_sha256": "21ac95536c17942c67cbd4f778d6187704bc2a4cf200ac14588ea41bf53d065d",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/light/tables.rs": {
+      "path": "crates/engine-formats-core/src/light/tables.rs",
+      "original_sha256": "0d36a27e90071ecda41bcbd4974ba05938ae602d16c31b1dadf724ff662941f4",
+      "adapted_sha256": "c038b290b86a00fa43630a942e00a671eb25e33cf6881656d917bbfa20836e93",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/light.rs": {
+      "path": "crates/engine-formats-core/src/light.rs",
+      "original_sha256": "701ebaecd1b6f614683d5d3f890f5f8804a0b0d36f59efcf550ed816bd257ef3",
+      "adapted_sha256": "59882b6865a8787f6f0cb7d7e491c5e6540fba838e8d927b9b26c636fa4e8a6d",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/liquid.rs": {
+      "path": "crates/engine-formats-core/src/liquid.rs",
+      "original_sha256": "adced3fef2f81283cde8e0e8ddbe9be51fa65d2fc26a2b7c0c5f326038b917f6",
+      "adapted_sha256": "82c49e55fa163d7af762d4376e2a03a684af060697f182d9d7d74039f4383300",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/loading_screen.rs": {
+      "path": "crates/engine-formats-core/src/loading_screen.rs",
+      "original_sha256": "c61fbcfbc891e4d4f0ab456639a11ead5fc9af5f27641438b77377b808ec5011",
+      "adapted_sha256": "688faa6e390669f00e08d86834a2eb68084aa0f88e8301c33eb682baf836601c",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/lock.rs": {
+      "path": "crates/engine-formats-core/src/lock.rs",
+      "original_sha256": "dc3eb9f635f8b845da36f8f10d81c972f97c3111bd14aa75803bb82fa855208c",
+      "adapted_sha256": "7ed34ec2a3aed1add305389db385fe71bc6b0271bac513be24bffcfe284d306d",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/lock_type.rs": {
+      "path": "crates/engine-formats-core/src/lock_type.rs",
+      "original_sha256": "b9a9462bd7449670a80d172485b92db7e8e22415cad95b97ddd71c15fd805772",
+      "adapted_sha256": "f78c67ff29eb150914713e0846c683e088ad88e3a9f01e3f33f67698a577f25d",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/maps.rs": {
+      "path": "crates/engine-formats-core/src/maps.rs",
+      "original_sha256": "9d3c066755919c392df39ce3b9475aab4a0ad24cd86600497f4deec0f588ff3c",
+      "adapted_sha256": "8136d6bca6011fe61fd03d14800a181e3db4087543e929752fa231095733c382",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/material.rs": {
+      "path": "crates/engine-formats-core/src/material.rs",
+      "original_sha256": "50821b220ef804c792d4e584ca9d47bd6cb427f8f1d859231409aecb5a0b84e6",
+      "adapted_sha256": "9d7af62a2bedbbf17d76a3278cc22b87a42947ec327c8dfe790190f504358bef",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/models/anim.rs": {
+      "path": "crates/engine-formats-core/src/models/anim.rs",
+      "original_sha256": "97529f3bdd4f809e77483d44ab2ef43ab565c61ae5a846f29160a8cc719dcdee",
+      "adapted_sha256": "78f10f161c2282f335ba72a7409d693e6411b7a62a9cdbc57c6e85e9053bde35",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/models/anim_summary.rs": {
+      "path": "crates/engine-formats-core/src/models/anim_summary.rs",
+      "original_sha256": "c9eb5a8087e4c844fb582dcd1705547e91d47a5f67bfeb6b452320b19c64410f",
+      "adapted_sha256": "5197fa74658f85a8f914f0992068580edec166ecc3d15de03348561bcddd73f2",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/models/art_extent.rs": {
+      "path": "crates/engine-formats-core/src/models/art_extent.rs",
+      "original_sha256": "40b1427cb052fdfcf2d1e30183b45bf9809f1cc3b9827fb6fce14f17ba0388ec",
+      "adapted_sha256": "3f11c44577f7ef59f7350e092828b804ef168c628cb5cf7a47b54cb515de2716",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/models/bounds.rs": {
+      "path": "crates/engine-formats-core/src/models/bounds.rs",
+      "original_sha256": "29d20d00ccd810153323fbd7474a3f72793cb62926db3f6664f87e951bf2903b",
+      "adapted_sha256": "b25b31f9bd530627a258c9c60356dc4632a9bab5168d380b5d3ffcfeedbc7d24",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/models/collision.rs": {
+      "path": "crates/engine-formats-core/src/models/collision.rs",
+      "original_sha256": "5a8b63898a1308f9dfd6ab9d2dd9fbdd272ee06c7a4659d38132f2bdd06c6bb6",
+      "adapted_sha256": "7234d5c2613a080000ca5074d5b7eff020be620c96cef33ecc17c04f3b7ee635",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/models/key_anim.rs": {
+      "path": "crates/engine-formats-core/src/models/key_anim.rs",
+      "original_sha256": "1cc8d372aca5d5d2aac7485a795adf41e52306e21ea180242ab4852cc70411b9",
+      "adapted_sha256": "0ad802c45732f8e8c43f58a5b4db0d68418265a17877ff2854dba860932b7be2",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/models/m2_batches.rs": {
+      "path": "crates/engine-formats-core/src/models/m2_batches.rs",
+      "original_sha256": "886d2a2205becdefed4bcbc0709847bc605ad2a0c578b5a926351f34780649d3",
+      "adapted_sha256": "57cf6677504abc131f39bec8c91d21ff5df08c7db620c45addd9f0a524d5ff7b",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/models/mat_anim.rs": {
+      "path": "crates/engine-formats-core/src/models/mat_anim.rs",
+      "original_sha256": "4714dce0452677a187cfda99325d2a53ef43fcabea3e80eed55efe9ffab24c91",
+      "adapted_sha256": "11172ae9421373328b5b8bed883b91f88c3923d8753f2142ca12de559d6f07e9",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/models/mod.rs": {
+      "path": "crates/engine-formats-core/src/models/mod.rs",
+      "original_sha256": "a41b9b0cb407561e23e1c38ecbc764b7903b2e385fc8deb21a6f0faf22055748",
+      "adapted_sha256": "e1c2d0bb334c3deb2b21d2787ca3cb9196ec1a581989c1862f76311a4f512ebe",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/models/records.rs": {
+      "path": "crates/engine-formats-core/src/models/records.rs",
+      "original_sha256": "4d5062b8163280e76dbf6f7e606d3f531a0dbab28044cfa1a929db36048820e0",
+      "adapted_sha256": "00d8bdd618aee540aea93101dc35a7690bf926934a46d1b7cd600525ae06c595",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/models/tex_anim.rs": {
+      "path": "crates/engine-formats-core/src/models/tex_anim.rs",
+      "original_sha256": "97cb0ce51e8082ec2066102cfcc638cb959e2deca681b848f066f289b8117c71",
+      "adapted_sha256": "104d6621deff2dd66539647a7a1c9768543e2c9c4f783c92714dfa807973e6ca",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/models/types.rs": {
+      "path": "crates/engine-formats-core/src/models/types.rs",
+      "original_sha256": "a6fae288326f819e6df5d028ccaa0881b506c8a9b3514edff41c9c9c456b3218",
+      "adapted_sha256": "a3935ed67c991b33182629faedddadfd073429b840219c750545ca676a4558ac",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/models/wmo/group.rs": {
+      "path": "crates/engine-formats-core/src/models/wmo/group.rs",
+      "original_sha256": "61ae7b22a2daf96ed5e157807b636dccdd72f498b3184b6946cea20f704ccc77",
+      "adapted_sha256": "ba0ba96d987d15ab810f8a573cf18d4a265b84c0beab26e2b647f93c267b8a05",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/models/wmo/root.rs": {
+      "path": "crates/engine-formats-core/src/models/wmo/root.rs",
+      "original_sha256": "1525ef2814cf98c6937dbdc9ecbf29f68622372ec42f6042b047aa02dcd84a2b",
+      "adapted_sha256": "011bc0a8a461e6cec31ee6c63b6c49e6ba922058b201c4bf618d74a62adce6a0",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/npc_greeting.rs": {
+      "path": "crates/engine-formats-core/src/npc_greeting.rs",
+      "original_sha256": "3e4a9247df3d9614ca08d3b4894bf33257092f3e959d082baaf323d5dc501b6a",
+      "adapted_sha256": "903eca4e4e3efb36ecfe674d7dd2958514015fb7d3fc2eba1c2b8ad30e56fe15",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/packages.rs": {
+      "path": "crates/engine-formats-core/src/packages.rs",
+      "original_sha256": "563a91c3965964f119022253567a5f981902feb0f29b4252d9665c76d2b3bf4b",
+      "adapted_sha256": "bd83edb8c49c6623218df7cfd9e80f64afbe62948366d8ac35647fd8f5623bf3",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/page_text_material.rs": {
+      "path": "crates/engine-formats-core/src/page_text_material.rs",
+      "original_sha256": "1ece0a0953e6c9c32ff02eff779c87b2d8bf1955485617ecd98db6fdb47cb6e5",
+      "adapted_sha256": "957d6f300debb51961347b91f86fb9d555d2e6ddbc60b90a3e924ff400c658fa",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/particles.rs": {
+      "path": "crates/engine-formats-core/src/particles.rs",
+      "original_sha256": "49eb94afbd284ad178ca1b477ba449494e94c7c4d8b40f4988248c8b49f8921f",
+      "adapted_sha256": "0f63edd9bde971ce1ff43882c6ca319f41f7a614e7ec42b6cb2883a0870daa10",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/pet_stats.rs": {
+      "path": "crates/engine-formats-core/src/pet_stats.rs",
+      "original_sha256": "7b977d57d6683efe15f146e75c0199c7cbdd71a37296549a1d4fb9ce5330af38",
+      "adapted_sha256": "79ab84abbb7f2909a8c5b56b5edffb21a562df24ec6c1ca3e7b7448d04c73966",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/race_creature_type.rs": {
+      "path": "crates/engine-formats-core/src/race_creature_type.rs",
+      "original_sha256": "3fef6401c79f0fb38a972c6fb451e12a1dcdac26e7f9e3da1610a22f4d5fa2c1",
+      "adapted_sha256": "26bf73d2bc4651d7903ebc0a4fe5a189b6a97d9117f71d02dca597e5ec63d5ca",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/race_sound.rs": {
+      "path": "crates/engine-formats-core/src/race_sound.rs",
+      "original_sha256": "e288469bf587ca08c32db4c6bc809989ee1340c1f44ddc04073d5bc7e32a33ae",
+      "adapted_sha256": "ef23754006c3b24e6436bc9a933d42ab2db49a6c7324b4073e2f6bf19d2952b3",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/ribbons.rs": {
+      "path": "crates/engine-formats-core/src/ribbons.rs",
+      "original_sha256": "284bab5286a0a14bc3d726333c7a88949e57dc77046f5f7411103cc026d40b29",
+      "adapted_sha256": "811e31cd307177605f09aed4190e1c73fd5f233c349f281f1eeac05ca1422e0c",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/server_messages.rs": {
+      "path": "crates/engine-formats-core/src/server_messages.rs",
+      "original_sha256": "a94b4b5f6faae9c45790e5e294f174de01823cf7f5522062139467e22f7f4f05",
+      "adapted_sha256": "e26400773bf650d6c2e69c1b6907aac12eb73bdcf0158ebed908aced57d68901",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/sheathe.rs": {
+      "path": "crates/engine-formats-core/src/sheathe.rs",
+      "original_sha256": "34e5f84ea4acb26d26a96d2645a8d5d0b350c4cee5ed3ef365f0b04381a2404c",
+      "adapted_sha256": "8d35c996826088ed163a07419addf574e11675c0d308437b628359b9ecc9cdf0",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/skill_lines/mod.rs": {
+      "path": "crates/engine-formats-core/src/skill_lines/mod.rs",
+      "original_sha256": "1c02c84ddd4828718556407bb2ff29fcb39da3d022b58193de14482a47d3eaa3",
+      "adapted_sha256": "3fc177d13a2b52bb420eff2e1875bfbbce0688317d459dd5ff965c82d7407e33",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/sound_entries.rs": {
+      "path": "crates/engine-formats-core/src/sound_entries.rs",
+      "original_sha256": "962aae753bb4a46311befb9f02210bcfc08041ad4e4b6e44c65479e76ae70d4f",
+      "adapted_sha256": "bed9acd218cca2d478929687352c74cc4593ac34f0c2f67a3bcc5dad3cffd0b3",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/sound_provider.rs": {
+      "path": "crates/engine-formats-core/src/sound_provider.rs",
+      "original_sha256": "268ebf16e2469d656769ec5692379d3a867d37d9e7fac5e2bdcd6bbc212823e3",
+      "adapted_sha256": "7d6c5ca2d5ddc3c0e0d78b69893021972a0bee7483b416aad9d5b27d93b5ac3d",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/sound_water.rs": {
+      "path": "crates/engine-formats-core/src/sound_water.rs",
+      "original_sha256": "e09d7c66fd4091c6325b443b0fb229b494d7399d95d6f68de823b5f419d5cf97",
+      "adapted_sha256": "bbf2e5f5d251cbd39def373896adb13e7c2a2c72078a07453ea5f354d9cf2238",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/spell_focus.rs": {
+      "path": "crates/engine-formats-core/src/spell_focus.rs",
+      "original_sha256": "b4cf261fdab9df5032e55f297698f8527ef313bfa189ac6cc0a6d9fecf234a24",
+      "adapted_sha256": "072c9c31587e26c3367924afb58de37ccf075830fcb604d71013ef508cec6758",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/spell_mechanic.rs": {
+      "path": "crates/engine-formats-core/src/spell_mechanic.rs",
+      "original_sha256": "27267881d3f4a59132bca2fb8a5a873ac21a6098b31063cd1e646929654774e3",
+      "adapted_sha256": "84f61f26e6447e3d80768be6a63edacdaf9663f5d4781db90d4fda7c6bce56b0",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/spell_visual/chain_effects.rs": {
+      "path": "crates/engine-formats-core/src/spell_visual/chain_effects.rs",
+      "original_sha256": "67d175da6265e0c64f9ea7cba361f73522ff67b7166fc98471cc7b2dfaf20db5",
+      "adapted_sha256": "db6b79db764b69a7697d3a67921c0f7a16b8c43a42c9654b07126a977bdcfead",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/spell_visual/mod.rs": {
+      "path": "crates/engine-formats-core/src/spell_visual/mod.rs",
+      "original_sha256": "6f5878734be47ac191d6613890f6bf7edc280e0c828739d8a1f1a5c7c020890e",
+      "adapted_sha256": "9bb3a28f4ffd2141d80d1eef7cfe85ad4980daae7de1346d91022bf8cc9d6674",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/spells/cast_times.rs": {
+      "path": "crates/engine-formats-core/src/spells/cast_times.rs",
+      "original_sha256": "9cd93988576cfd918a8fccd89fecd579e533ffd96795fdd636308194e37130fc",
+      "adapted_sha256": "f6b04c97d94c621af201d0209d5357a7037aa016ab56bb737476d8e567b16e1d",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/spells/dispel_types.rs": {
+      "path": "crates/engine-formats-core/src/spells/dispel_types.rs",
+      "original_sha256": "5e88cc5657b328d7a498bfcae5cda411d98b9201e5bd995da2222f58ff96a7ae",
+      "adapted_sha256": "8387823ec4495685a1af74341c1d5a786f6a3c7cc22a8836240cd9b2c1bfcdaf",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/spells/duration.rs": {
+      "path": "crates/engine-formats-core/src/spells/duration.rs",
+      "original_sha256": "e86fc2f0f75fae80620ebbc903b536354cd0177bdf5341032048a948e2abb203",
+      "adapted_sha256": "92c9e5b2daa718f09b0a18db3a9a87d07f66f8681de74253ee1258d33b12456f",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/spells/forms.rs": {
+      "path": "crates/engine-formats-core/src/spells/forms.rs",
+      "original_sha256": "a74189145e36a82edeffa2c586a5ef21d42c48dd69c10d916eb9b4dd004db391",
+      "adapted_sha256": "ee4b53f1de9a1ec5a59c43a5c03e1e9d758e111fe1afcab58f0d053a4dbec2bc",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/spells/mod.rs": {
+      "path": "crates/engine-formats-core/src/spells/mod.rs",
+      "original_sha256": "ce252a0e06d9b94c1fffe5e848a9dd89c461e43b4c38668fbfdafb24aa6447b7",
+      "adapted_sha256": "2fdb168a6ff5c9d8b19c3aee668d13d46d6722c8080c4ab8fe64e4f8aced553a",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/spells/radius.rs": {
+      "path": "crates/engine-formats-core/src/spells/radius.rs",
+      "original_sha256": "660d770d643c9f8d4bb998d47c534aa3ad988019ba4069a70e4274ca3cc06e3a",
+      "adapted_sha256": "08d5019c6a900064c6e7dd7241d771e96325b889fea06ed498bc5c3a8ba061a0",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/spells/ranges.rs": {
+      "path": "crates/engine-formats-core/src/spells/ranges.rs",
+      "original_sha256": "b7ffeb7b32fa1851fc5c38ec5184841a2f9d13807f38c59555f8df57e6aeb400",
+      "adapted_sha256": "1596a1cdb92c299c629a341a3e3f49f02d96504cfa5182e7f5542fea3b4ab8c0",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/stable_slot_prices.rs": {
+      "path": "crates/engine-formats-core/src/stable_slot_prices.rs",
+      "original_sha256": "bf3785a8371cd5337ddf4ee9c80af84d24cc16cf40d01aaab9b0524f76a72b18",
+      "adapted_sha256": "492981de22371e9d45b44798ced51200ee81eec39f2302050fe2ad340d14be66",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/stationery.rs": {
+      "path": "crates/engine-formats-core/src/stationery.rs",
+      "original_sha256": "e785cacf7f1f016b273094ebca2e856c966c86f1dc77bf006389fedd4814cf5a",
+      "adapted_sha256": "1c491ab0bb76ca081a959d0b9e091722b6112bf5d6e6ef4de693ddebd2bd4aeb",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/talents.rs": {
+      "path": "crates/engine-formats-core/src/talents.rs",
+      "original_sha256": "596c1626c8f4be3af73c28e6904e35ed1ae2ef74ee3a80dcff2b997ada7b4f6d",
+      "adapted_sha256": "b5b52443ead451828d67517f2d71db26abc49376c148db22c8a11785eab70344",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/taxi.rs": {
+      "path": "crates/engine-formats-core/src/taxi.rs",
+      "original_sha256": "9c0889a98e78daf0fab528af14c84d36672b1c24fb5073f9e558e4fdc134c858",
+      "adapted_sha256": "7614229572db5da931eba3573009937fdcbcb8644656b69254e639a964e53754",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/taxi_nodes.rs": {
+      "path": "crates/engine-formats-core/src/taxi_nodes.rs",
+      "original_sha256": "4ad9d87f5fb0fc91c74878e39d4b975ab94e28fdb49dbaa07f1e18ea95c4e206",
+      "adapted_sha256": "7b2ff43d62ecf0676d9fbe87c642a2e128974182269295c72780f0802e23c418",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/taxi_path.rs": {
+      "path": "crates/engine-formats-core/src/taxi_path.rs",
+      "original_sha256": "4846976afdc8bdecc4942a4babc249a84f838662e12511dcecda14330f7fb52d",
+      "adapted_sha256": "69627c82a5db8c9c6b16a998020f5d1d4b16204d5b2461d0621b310e4d6be0d6",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/terrain.rs": {
+      "path": "crates/engine-formats-core/src/terrain.rs",
+      "original_sha256": "546b958ca2872d8ce2ad3fcacedc34f25b4e9f6fa3d0092b0d628c25ba1857c0",
+      "adapted_sha256": "108f3028810cdd37d62733d8d2453eb71ee0c9929c71f7fb0aac0e3967b1f31e",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/text_filter_lists.rs": {
+      "path": "crates/engine-formats-core/src/text_filter_lists.rs",
+      "original_sha256": "b1f90b0a750610066658c07f9b59bcaa05b382fd7e0dda2524df3c6c3d3e172d",
+      "adapted_sha256": "1a764ea0b8f4a9ad26d39e8dbd9b58a888687d0aed36b9b8bd2b698f3b0b38ae",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/unit_blood.rs": {
+      "path": "crates/engine-formats-core/src/unit_blood.rs",
+      "original_sha256": "4533fc0b19a436f42c45b3350500d17948a992fe8181e29a46160f5c77c53fd4",
+      "adapted_sha256": "28c138f5b06912c509d31dce0f8cd76477dc33780a85ed08429f89d86b32ccfa",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/vocal_ui_sounds.rs": {
+      "path": "crates/engine-formats-core/src/vocal_ui_sounds.rs",
+      "original_sha256": "b97e3e6756fadcbbe924f826f4aa75e5f665807edfda09a8441a04b15c9f0ab4",
+      "adapted_sha256": "8e2cc348bc941dbc36349465010cdd477853fd8cb18cfa1116c76e87fbede367",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/wdl.rs": {
+      "path": "crates/engine-formats-core/src/wdl.rs",
+      "original_sha256": "ddb4bc7cdbb7e7a816c7d9ce7b04e40ae5c004720b4870ed62a60b3936c43029",
+      "adapted_sha256": "921a40e0bc9a12f2e2585b1b59bd226f72703701484397a57d2d250001089488",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/weapon_impact.rs": {
+      "path": "crates/engine-formats-core/src/weapon_impact.rs",
+      "original_sha256": "c128a618102f987104fbdd565a1b7ef7c7f8471c72f82a0680c80522bcda6e54",
+      "adapted_sha256": "a93e8960fedc6dbc3c284431a9595f7ac602c3a1d065d771d44b55340ae1c633",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/weapon_swing.rs": {
+      "path": "crates/engine-formats-core/src/weapon_swing.rs",
+      "original_sha256": "e6aac18bcb8ec91b244cf2d252e049bedeb5c32dd0d6577564f423c1e01cdbc0",
+      "adapted_sha256": "c7f4968e506144f288e8e5e8de8487cf70f938dd4a5f526bf51424028c1f7c7e",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/wmo_area.rs": {
+      "path": "crates/engine-formats-core/src/wmo_area.rs",
+      "original_sha256": "d08d795faf25a78431cdcfcb885aa47eb1369ea2af4848c42dffee48f2c784d3",
+      "adapted_sha256": "ea3cec83cbb0931f1a2e1368bdb562568fbfce2c5eba6348cd8c57333630a898",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/world_map_area.rs": {
+      "path": "crates/engine-formats-core/src/world_map_area.rs",
+      "original_sha256": "a8741b1f579d6464280c0a66780a5d6a3797825f5d5173ebd26f1da6edab6d34",
+      "adapted_sha256": "172abac9a4b721be664c6306693257de938df9f1bfc481f54390a01130d09ed5",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/world_map_continent.rs": {
+      "path": "crates/engine-formats-core/src/world_map_continent.rs",
+      "original_sha256": "e09e2f4a7dffab7026136b25a245fc8af137bd4b99d62bed648fa975dfb4296b",
+      "adapted_sha256": "2cab6e87c95d61cc42813e74a1c56c48a209fa64cfa19f43185bfd6ffa69c73a",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/world_map_overlay.rs": {
+      "path": "crates/engine-formats-core/src/world_map_overlay.rs",
+      "original_sha256": "438698cc339c1ef16638869147ef4fe43a69c65da9166d98696aeb99d302b2fb",
+      "adapted_sha256": "3d61efa7794e532598c6f40beaa12f83dcadc4f89ec8b4feb2097aabd8ffedc5",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/src/world_state_ui.rs": {
+      "path": "crates/engine-formats-core/src/world_state_ui.rs",
+      "original_sha256": "83edf1ce0335de56efd6f5ff46f7c2468a2fd434d3627b8442ff18983b3f7124",
+      "adapted_sha256": "900923701e28f33716ce0e7093698492c6f851b1128831c1d3780e97f0521ca2",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/billboards.rs": {
+      "path": "crates/engine-formats-core/tests/billboards.rs",
+      "original_sha256": "8ff9724ea1cdcebe81803c2914ca47d46b517bdc81026b3cffc6fd30003083d2",
+      "adapted_sha256": "2c4394ae51f59dd41b366e6f47ffafc904d85f754b38e9851962a6fd1d6c107b",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/blob_shadow_box.rs": {
+      "path": "crates/engine-formats-core/tests/blob_shadow_box.rs",
+      "original_sha256": "d0361d847ea3e458ab13276e40e603986de091be7de2d95710019750daf90833",
+      "adapted_sha256": "a0dfce6dcee3e6d30b4cd81650d56f9c334ffeba4d73e7cc29cb6723deb08a1b",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/blp_alpha.rs": {
+      "path": "crates/engine-formats-core/tests/blp_alpha.rs",
+      "original_sha256": "350d961390595307d90e215e5a118e425f0925fdb519e042f3e7f47327e0f230",
+      "adapted_sha256": "ffe57f1eaf1db11cdc52f60de9455487543ab7cdde2ddf4cc603b072c5147257",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/camera_swim_pivot_drop.rs": {
+      "path": "crates/engine-formats-core/tests/camera_swim_pivot_drop.rs",
+      "original_sha256": "7da07086382652e48ea2d100572f17e3713a573778ebef071c6fbc5352dfcf07",
+      "adapted_sha256": "ea33617cdba773b444c392680afd402f692fac4e16e8ec528f5fa5a46b2a6808",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/chain.rs": {
+      "path": "crates/engine-formats-core/tests/chain.rs",
+      "original_sha256": "4a8d56abfd815560cd0f29e4d4ad251666c01f286888a942a41442d07a291c8d",
+      "adapted_sha256": "4db52e850bfb4863859bcbf42b4e01bdaa983b0f2f9621fb7ef50a4850341a05",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/chat_bubble_anchor_height.rs": {
+      "path": "crates/engine-formats-core/tests/chat_bubble_anchor_height.rs",
+      "original_sha256": "44f8166ad04dae79a7581ef168c45d6ac738e6854dbf77c50db23841b16467f7",
+      "adapted_sha256": "372daf057e01eef12d427ae11c7b651d17a12c15c60d3d3e43e2077b1ea831ee",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/composite_cost.rs": {
+      "path": "crates/engine-formats-core/tests/composite_cost.rs",
+      "original_sha256": "d2e47e585e9154c8a855adb340cfe7e7a6ec86da621e5d15231288ef20545ae0",
+      "adapted_sha256": "99c7dda744c5b685b6390c7e435f2de13bec30f628052381442b0af85007d23e",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/ground_quad.rs": {
+      "path": "crates/engine-formats-core/tests/ground_quad.rs",
+      "original_sha256": "a6ef0927353414e70dc058a3cb46469d13e75925eec0fa42b59dd0c264fbc935",
+      "adapted_sha256": "c0e7d10712ddb7a7793c4d06c82155ee504f95fa5af1aed30b7788c9b206ee1b",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/helm_vis_wants_a_helm.rs": {
+      "path": "crates/engine-formats-core/tests/helm_vis_wants_a_helm.rs",
+      "original_sha256": "141cd08ef3fbecff8e0327258ee6b2d3cbfddeadb0ecaf2d9eaefbf95bb83216",
+      "adapted_sha256": "534ac0ad90300a918e9e846c314bac97dc00d4bcfb83b9bc27a92d09c9987a16",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/item_icons.rs": {
+      "path": "crates/engine-formats-core/tests/item_icons.rs",
+      "original_sha256": "6097131485892f752c19a977448f274e4d60298755a153e188d8a90e1f6b9f16",
+      "adapted_sha256": "0656ebf66127ab0d6eb74ae99b1c0e830ff3ec2f3f0e207f4a1c70d6f419ab04",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/light_area_blend_order.rs": {
+      "path": "crates/engine-formats-core/tests/light_area_blend_order.rs",
+      "original_sha256": "55d4620d8412df41edb562c2cc29aa6c640be222fdcbe01793df7d1756836fc2",
+      "adapted_sha256": "b0991b088f28efd955b8e6b171db13f7b58d092e27a9c158a4ed24071e5eb028",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/light_no_row_fallback.rs": {
+      "path": "crates/engine-formats-core/tests/light_no_row_fallback.rs",
+      "original_sha256": "85a08d1e2a055f9226ee90e3422d5d3c2a67d60d2b88a2af4ce119dd7a0d678f",
+      "adapted_sha256": "75d23a50903b59a32547ca8c09ebfff017c1f062ceb4f934cfeea68421a65a21",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/light_zero_key_band.rs": {
+      "path": "crates/engine-formats-core/tests/light_zero_key_band.rs",
+      "original_sha256": "8c7900ce0842281397352189f950c389f1111076f580bf55eb318dda0d71a507",
+      "adapted_sha256": "0dc588980ce063fa5d3b60b706f78fbc7ba57e3bea99418153917a3c339047e4",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/m2_anim_events.rs": {
+      "path": "crates/engine-formats-core/tests/m2_anim_events.rs",
+      "original_sha256": "7afc7eb4e88733a8dd0a02d46f60afe6520ad4309fe4d70d63ae05142ea078c1",
+      "adapted_sha256": "48778a5c7b9fd9fef87f1fc76e6deb1fae77990cdc5c438cb95306eed04fef6a",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/m2_authored_box_is_the_animated_extent.rs": {
+      "path": "crates/engine-formats-core/tests/m2_authored_box_is_the_animated_extent.rs",
+      "original_sha256": "87aea6e17feaf810ffa6d95909c7c03317a1c3a574a293fa2747804876d5794b",
+      "adapted_sha256": "e7b525f2477c8763bc3a855d784c18f0c201516e32a82743f02cd4ff5fb08be9",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/m2_billboard.rs": {
+      "path": "crates/engine-formats-core/tests/m2_billboard.rs",
+      "original_sha256": "818e9d6fde20e455c2e29f9ef5223842bf6fcb1d429032fcc60fa08a47dba781",
+      "adapted_sha256": "63915533c63607b0269d466ee83d3c11831dec112bbd653510d1967596150865",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/m2_billboard_card_face.rs": {
+      "path": "crates/engine-formats-core/tests/m2_billboard_card_face.rs",
+      "original_sha256": "31a019cfe66ea2450394e475b645e20d87562a3342b7ea2f9ba3059212fad4a3",
+      "adapted_sha256": "7c1086cb294cb77f563bd1ee50e025cc15189c053d0b20b969a6995a257a4fad",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/m2_bone_spin.rs": {
+      "path": "crates/engine-formats-core/tests/m2_bone_spin.rs",
+      "original_sha256": "237f89a7e408ca874d6d0fec3114cbc30a90527ffa3d8d4f7eb8ceb9f927bc96",
+      "adapted_sha256": "a265de8f1cf7512a08fe5e599e237aa81cb029ab4c32a88015827b6a629e1205",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/m2_cold_breath.rs": {
+      "path": "crates/engine-formats-core/tests/m2_cold_breath.rs",
+      "original_sha256": "d6f7869bfbd183719373e4b92f7ba26e4f62adf44168d201ca951e7899d0006c",
+      "adapted_sha256": "eaefee4c7beb52eef11eea8eea63a3c4c1efbd39abb22a8dba6dcaa28574b8e4",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/m2_color.rs": {
+      "path": "crates/engine-formats-core/tests/m2_color.rs",
+      "original_sha256": "6257d569a7f7f1ddeeefab876b84499188b26dc3359fa1210355ee795031fbea",
+      "adapted_sha256": "28d60cdaca6e8e371beb33e0d306fb6be07c3cab01db859599ea9c770b1e5916",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/m2_emissive.rs": {
+      "path": "crates/engine-formats-core/tests/m2_emissive.rs",
+      "original_sha256": "57206f4507ecee1cd00b60de8b17e171b889515117292733232ca50f0ee317db",
+      "adapted_sha256": "6bd1a916aa3b067a77b7fdcc85550c3cfe239a3926e0aaf01ef1018b68b2ce73",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/m2_entity_mat_anim.rs": {
+      "path": "crates/engine-formats-core/tests/m2_entity_mat_anim.rs",
+      "original_sha256": "360ef1b2151e83028222845c6fb07fb78d40e5f465984d3955fe0cb76de5c98e",
+      "adapted_sha256": "272928cafd953d725d33e62d842b368d1345ad0c5e9353ef52937829177272cc",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/m2_env_map.rs": {
+      "path": "crates/engine-formats-core/tests/m2_env_map.rs",
+      "original_sha256": "8e89c32074712656eb8324a90056e42704eccaf3d1268a14528fc28ee70a529b",
+      "adapted_sha256": "88e0e90d1efe94e3d3cda4d3097d046a740be39349166c8f1a45482a80273ea3",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/m2_global_seq_constant.rs": {
+      "path": "crates/engine-formats-core/tests/m2_global_seq_constant.rs",
+      "original_sha256": "aaf0687e4bc965abbe51d77a90ba7268799731042365de23d23819b30dcf5a42",
+      "adapted_sha256": "b451123890960d51123052190e9b5cd3caa055dc6e24f8b3564b778171b09693",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/m2_go_arm_book.rs": {
+      "path": "crates/engine-formats-core/tests/m2_go_arm_book.rs",
+      "original_sha256": "7c76583ad99effa44225783a19b107c984d8e8905ac48bff10d0db202a99fd16",
+      "adapted_sha256": "78610ad44f45e9f1a95fa43c655874b26a4f428c049859da7cd5aff6216fb3fc",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/m2_go_crate_lid.rs": {
+      "path": "crates/engine-formats-core/tests/m2_go_crate_lid.rs",
+      "original_sha256": "abf59ec4772bbac92b578eaa69b74e0e021848c56711df4d21ffe56712bf319c",
+      "adapted_sha256": "f30453389a6d5a19921f9e4350ba49bf13174912aac88f2b11ff968a81f44325",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/m2_go_rookery_egg.rs": {
+      "path": "crates/engine-formats-core/tests/m2_go_rookery_egg.rs",
+      "original_sha256": "e68729545c3c236377092d5109ac608ecbf32073f8e25e759c62b42c19f532bc",
+      "adapted_sha256": "013bada50a0baa6aaa2d95f4c6e19a9a83b3006e3ef14809e4fa49e89ac38aa8",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/m2_idle_anim.rs": {
+      "path": "crates/engine-formats-core/tests/m2_idle_anim.rs",
+      "original_sha256": "44d67bc75590c12b14e809c116adf3c35240fe9acb953a929bb57e61821b54fc",
+      "adapted_sha256": "18fda916c2ac0eaa17424aba49b90e4458e9f01db214b7b33f63d4a5a0446fc1",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/m2_lights.rs": {
+      "path": "crates/engine-formats-core/tests/m2_lights.rs",
+      "original_sha256": "c15e05b0387cd191657cd3d8ba842805c816949d945ffe3014eb551d8e38e7ba",
+      "adapted_sha256": "0eab80858f3c958a4888de8875ee38c5a38000db3101be7667f4c1bf54de47b1",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/m2_loader_idle_is_stand.rs": {
+      "path": "crates/engine-formats-core/tests/m2_loader_idle_is_stand.rs",
+      "original_sha256": "b8a6142d9a0151a420c9a0bdf4e8f1cf59f432e5f3647fd041d99925a7d9e700",
+      "adapted_sha256": "11e9fcf4becb03bc3b3ca11b56a0fa1278f3b32492fb29868808ef129e2cc1bb",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/m2_playable_animation_lookup.rs": {
+      "path": "crates/engine-formats-core/tests/m2_playable_animation_lookup.rs",
+      "original_sha256": "55b0181c1c78461e0e1c780111afaa064468a7742e500879e67099ad595e0593",
+      "adapted_sha256": "5f8522df69b1e7c89cb54c56074bd75b8775800541928a12cc9af21fd7c11215",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/m2_portrait_camera.rs": {
+      "path": "crates/engine-formats-core/tests/m2_portrait_camera.rs",
+      "original_sha256": "eddad17763bc52d6bb943bc3c82ea33ab59c6d5794cd1a05d085853da388dadb",
+      "adapted_sha256": "343e9c317c73c58112182350b99498ee65787e22e5c082cb535c96d7bcdb789e",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/m2_sequence_bounds.rs": {
+      "path": "crates/engine-formats-core/tests/m2_sequence_bounds.rs",
+      "original_sha256": "ee6a59faa72e29231df1cd5f78bf082c1752f97f3854d3d607b8a1b5ca35dcad",
+      "adapted_sha256": "8c2447a7bad77c1be33ad09834fe45da850e3a67f7c1b80d83dd30daf80fd280",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/m2_shared_section.rs": {
+      "path": "crates/engine-formats-core/tests/m2_shared_section.rs",
+      "original_sha256": "78252ecd321b74a801a78f7f991cbcb69f7133b665b7ecb4ca0a447d6c34e17c",
+      "adapted_sha256": "61ee449566e9b3860f7704a9cdd80897b2d21b6181ffabfee56d0ecda826ef33",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/m2_swipe_claw_trail.rs": {
+      "path": "crates/engine-formats-core/tests/m2_swipe_claw_trail.rs",
+      "original_sha256": "fd9f072dd19f8cdc89f491ea209c66bf87cb3445a76870c1c9dbb23cd57c8af0",
+      "adapted_sha256": "ab60ad3d750fd50b267769379939d01937ff2376c6320ab0182a45038e61f7ae",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/m2_uv_anim_variation.rs": {
+      "path": "crates/engine-formats-core/tests/m2_uv_anim_variation.rs",
+      "original_sha256": "594acafb05f79e81b0b3cd05554d790deae5f3ea8191470232066686def0552f",
+      "adapted_sha256": "16e1d9ae764676707f86d7759f56d117af7173e75a1cf987cff7e641de0c5b3c",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/particle_burst_gate.rs": {
+      "path": "crates/engine-formats-core/tests/particle_burst_gate.rs",
+      "original_sha256": "0fdf6c8ce24e599e3554d6e1958cffefd8cbacfd7b9fcb3e96b6b3949141fdbd",
+      "adapted_sha256": "d090676b46f308243ea6d11054192abe29b804a3ea5d5a0aac4376c6100c9e85",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/particles.rs": {
+      "path": "crates/engine-formats-core/tests/particles.rs",
+      "original_sha256": "2ee280d681d932e96a1302700aaff7e6964b7f7734a2cdd640a09c39768424f3",
+      "adapted_sha256": "e8f64103466ac752ff48f28913c4bb094e3c41b6f15f618be00620079f23490b",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/project_folder.rs": {
+      "path": "crates/engine-formats-core/tests/project_folder.rs",
+      "original_sha256": "f721a50747a1d50cc78d3b7f688b82fa51f0afaa83a3d542ed997abd40905c73",
+      "adapted_sha256": "d965c9f4c0a71a20782e5f5cc6c9e44da640c01e652c1e36e2fa97ec45332ac0",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/quest_tag_names.rs": {
+      "path": "crates/engine-formats-core/tests/quest_tag_names.rs",
+      "original_sha256": "b973357f99169fc8867a4a8fde7ab0ab70900e03e95524bc4d65501ba2e5adba",
+      "adapted_sha256": "55d0e79cba87d0eece3876fd8a93a26bed5b7f1078d2388440d5515156842049",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/ribbons.rs": {
+      "path": "crates/engine-formats-core/tests/ribbons.rs",
+      "original_sha256": "353922a06372e6118924931959cde9e5cf1bd0e141aab29f020eeb58edd016b4",
+      "adapted_sha256": "928b9e304f38dcc8fd3256d22b89cc6c40dd3d0d4e4c02c25d633b3d5d1c3751",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/selection_ring_radius.rs": {
+      "path": "crates/engine-formats-core/tests/selection_ring_radius.rs",
+      "original_sha256": "82a3fe4a54237e5e823b4137f22a411c2f162b2ef6291f3f632e92d1cc5714a3",
+      "adapted_sha256": "e0a1688f196da5c21c87f2fc608eb04648729b7a6e30ceeef1fb97bea78c81d7",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/spell_catalog.rs": {
+      "path": "crates/engine-formats-core/tests/spell_catalog.rs",
+      "original_sha256": "721b84fa1bb227631fc2b9c40a96f0d09f309066cd5f23ddc943ae4a46edd951",
+      "adapted_sha256": "35aec57b473bfea78bdff709aafcaa707011c0478af1dded4d42b127909de4f3",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/transport_speed_profile.rs": {
+      "path": "crates/engine-formats-core/tests/transport_speed_profile.rs",
+      "original_sha256": "3dc8fcdebaa81304ea3f2db32ffe83aa9923bbda3781cb73521612d1218ae8f4",
+      "adapted_sha256": "fbe5a6df6657716bcacfcb0efbf4d50cbcfc7b6c1b72b61fd770ae5c53ba3dcb",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/wmo_chunk_overrun.rs": {
+      "path": "crates/engine-formats-core/tests/wmo_chunk_overrun.rs",
+      "original_sha256": "25f7d23788853f54c39f1ec8db7c79c9f9e09d4e0cdd1e68269713f4f0fc855d",
+      "adapted_sha256": "f5253f3dbf7be8ca0ee2589a196668bf27e06e61b7cd3e657cdab08f279538a9",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/wmo_doorway_fade.rs": {
+      "path": "crates/engine-formats-core/tests/wmo_doorway_fade.rs",
+      "original_sha256": "aa47d6a1ab5ea3f0306ddffe21cc1a460000e42bd5cf075bbcd079e04320b054",
+      "adapted_sha256": "29965eb0124b7a5dbedf92624343d13cee4ac59c04d7a3c15b1892741858e20b",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/wmo_fogs.rs": {
+      "path": "crates/engine-formats-core/tests/wmo_fogs.rs",
+      "original_sha256": "f566d26660d1867383b849e34cd97a09efadda9d0d28fd495a8bbd401fa298d2",
+      "adapted_sha256": "502e2fb93850fd76d576f88e305cd6a7da9bebc8308b2e36ed3e23eef9070c45",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/wmo_lights.rs": {
+      "path": "crates/engine-formats-core/tests/wmo_lights.rs",
+      "original_sha256": "546ce39dce4f5c7c47c6c95b3f7803114dab4cee90de05e9956be6ba02b6098c",
+      "adapted_sha256": "45e3d48b413a39b44ff917a1d451dd51fdb7f89f42dcc85649e454563afa1006",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/wmo_liquid.rs": {
+      "path": "crates/engine-formats-core/tests/wmo_liquid.rs",
+      "original_sha256": "1710ebfb4dda898df34dbaa2cb8fe6b3ec295053aee00492d2c718921da255e9",
+      "adapted_sha256": "fd71fc9ca0868f794fac8a8842123671a8b27ea5d2ae75b3c9d6b816c0095078",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/wmo_mocv_short_tail.rs": {
+      "path": "crates/engine-formats-core/tests/wmo_mocv_short_tail.rs",
+      "original_sha256": "a69d737d692b2931ede4e00b2afe7b94ad83c85dd58a2bdf9adae7a1baa1ccf3",
+      "adapted_sha256": "3060fa4d581739d08106980d30a4efa77f128b4b4cb22e51605be01e4a7eb459",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/wow_data_env.rs": {
+      "path": "crates/engine-formats-core/tests/wow_data_env.rs",
+      "original_sha256": "a3d51f1acd0b2899744d120a4b267c0ddd0da02676dff47e41842beef0c107a6",
+      "adapted_sha256": "3c981825d3835a2a826dbee33d2a28fc2b78ac798eae40c78de637f4035e0670",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-formats/tests/wow_data_none.rs": {
+      "path": "crates/engine-formats-core/tests/wow_data_none.rs",
+      "original_sha256": "788ef0b3627cab33e0633fef8e9f1e6e77635112795576f206b0204757af8b47",
+      "adapted_sha256": "74e966cd3271e1bffbbcc53b6b2a6dc50e237d29d58d6ea74b964b6d63c80f70",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/Cargo.toml": {
+      "path": "crates/engine-protocol/Cargo.toml",
+      "original_sha256": "d40f96455bf8d6d022cdf4361a840c1de91aaf781f98c86cab323f166ddb2b48",
+      "adapted_sha256": "e458246b6f0b9adf8139a2571de62180924f7d971c7e54fa72342bfec2fd145c",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/examples/addon_chat_probe.rs": {
+      "path": "crates/engine-protocol/examples/addon_chat_probe.rs",
+      "original_sha256": "2b59bbb39ecbd558e9a697760e9cafae164c849956732b0352adb9b0007a2978",
+      "adapted_sha256": "85e28b75a9fd6f5526c51c5eb8e725b7ef944a580ebfe1902b7fca2c777bea44",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/examples/cooldown_probe.rs": {
+      "path": "crates/engine-protocol/examples/cooldown_probe.rs",
+      "original_sha256": "be2568ec0b67a36f0fca35ce71b75109a89d4baee63113092d4de28ebe625f26",
+      "adapted_sha256": "c20562e43fb9e904d93a5acd4bdb34f7e3a3bbf5cd6143f69fa48054dfee7f2f",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/examples/faction_probe.rs": {
+      "path": "crates/engine-protocol/examples/faction_probe.rs",
+      "original_sha256": "95c7292dabc3954bff5a9bdac2e55df86f0119c263fa4dc1974793962fdb1f8f",
+      "adapted_sha256": "d8b82f9b2729baedf7c96e65aad140989696571f48701ed202577ce4cbf3f637",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/examples/horde_chat_probe.rs": {
+      "path": "crates/engine-protocol/examples/horde_chat_probe.rs",
+      "original_sha256": "9283bc51f7aeffce56b09626beae2e61b0089d106fde66ebf47a0569f0372fee",
+      "adapted_sha256": "7046f39a10af1aa4562731e03ad0d415051284a416d170324f82a33d9ad8f551",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/examples/login_refusal_probe.rs": {
+      "path": "crates/engine-protocol/examples/login_refusal_probe.rs",
+      "original_sha256": "b3cef39d384d852fcc4bbcec33dbb846bf8002b0a13cc84518aad8cb114aa771",
+      "adapted_sha256": "63ccd3d8b76dc953d87638a75327f2ecddb704145ab2585b314fc6b8fa1b3ca8",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/examples/make_account.rs": {
+      "path": "crates/engine-protocol/examples/make_account.rs",
+      "original_sha256": "9a70db9ad1fe61281f72152f39a7e6c81eb60ab0e36b56aaf9a554ee57c7ab25",
+      "adapted_sha256": "411dcd5461e86fee20c392c22caf104594f33bc07debdd2a0fd03fd82a33c943",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/examples/park_probe.rs": {
+      "path": "crates/engine-protocol/examples/park_probe.rs",
+      "original_sha256": "4e2ab9304b0cd461f26b35a80318f82823219b9aa870b5a32c45b192b4f16c54",
+      "adapted_sha256": "bba9c3fcb4fc5a0dadbf5a321428fe9c2408e97df485a2f2401a8f5aeddcb2d1",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/examples/seed_classes.rs": {
+      "path": "crates/engine-protocol/examples/seed_classes.rs",
+      "original_sha256": "34d2d725f0967732bdca07a77eb2eb4585792835d93c581e8d898d56f31ccba5",
+      "adapted_sha256": "d788cfc222ac1f7ac50de64915cc0dba5e36d736406739df71b39a9df9eb840a",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/examples/srp_encoding_probe.rs": {
+      "path": "crates/engine-protocol/examples/srp_encoding_probe.rs",
+      "original_sha256": "fbb726a5aece4738f141a3d153a6419409c43c66b53acfbeafd7c925d0139c2d",
+      "adapted_sha256": "561c528d5ff5c70ca3728d7f6d36b6378782fa659f66d718ddf732e5178a7a26",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/examples/version_check_probe.rs": {
+      "path": "crates/engine-protocol/examples/version_check_probe.rs",
+      "original_sha256": "5d042600f67ce0baf8fab4c622879621929be5381d93b3de0e112163ce6916f4",
+      "adapted_sha256": "fbc243a55d746517e5eeda7b111794b0eeb5b8977b499d81d1bc4dd76b76feb6",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-auth.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-auth.rs",
+      "original_sha256": "84a286bc427dc93059f19e4f80f309656be114ff61444cda4ea2e8be900714b6",
+      "adapted_sha256": "aff3a6e7aeeb9295088ae3cd2d3a3935945ef0b886d8159ee8538b9a0fd10a16",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/main.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/main.rs",
+      "original_sha256": "ba4fa065a5813170e3300a55f1089b02cc618ada59c2335ad6da1e19ceff12ce",
+      "adapted_sha256": "b0c3e8332e5a2b2f51fa214fe43bbd54a319431ef7d4e26ccc8efc6db2772239",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/attack.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/attack.rs",
+      "original_sha256": "457fc49ff159e9e48a24cd003b4963680f5d19700f1c9f9e78a5e0335af8fb57",
+      "adapted_sha256": "62b1b002e0d116af132b3fcd277ba46126aa16d70068272d1a6f3976da7f903e",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/aura.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/aura.rs",
+      "original_sha256": "fe75eda412a602d92d1b9481803e0ad2e14e877d71513b9dc7997348cfa8c772",
+      "adapted_sha256": "72ee4db0c9d963690f5f72b3aee7193903edb057f436fd29180b1554ed30c266",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/charge.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/charge.rs",
+      "original_sha256": "b1a1eeff8dc41ecd2ca827afbecf478cdedcae1f6af707e2431a84f29a0e5f87",
+      "adapted_sha256": "562543b07ee84386c8eb33f523c420ff9af79cccf851ea9e649cc3a95c082f34",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/death.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/death.rs",
+      "original_sha256": "c994b3bf0346bd80e97e6f4dcceedbb2465e66a85e3864ea5650b02d19035844",
+      "adapted_sha256": "b1f53e7832770edd358ba8a2bf4271e8eb83850516ea53c1544a1dd0a98e254a",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/equip_pack_slot.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/equip_pack_slot.rs",
+      "original_sha256": "ad39c40a00dafb13a0a49882b486c7438b7a9feb0f6779770e398f154de4f394",
+      "adapted_sha256": "84f4635ac14f01175979852466598cc9be1443caee03bdf2eaebc4fce0b5a372",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/giverstatus.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/giverstatus.rs",
+      "original_sha256": "7e7cd201749eaf860d5c6a667b5ebb780466ad11477ae2bb6e4df821ca71bc22",
+      "adapted_sha256": "604409856b57fc8aa7a9f90057ee9e52a5bf8ee047d5103a5afc2f27c14696a9",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/groundfx.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/groundfx.rs",
+      "original_sha256": "504fc07a7c9721a28feda8b21f06fe454baf1a64199c148ce81904848e8034ef",
+      "adapted_sha256": "a05dd622ede05c785e39fe506b05c1497839297229ed9194f580dd02e94f20e3",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/loot.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/loot.rs",
+      "original_sha256": "2bae09726f01c9fcbacb58a2d4373c8c09be76067703b623677d7c7a280c179d",
+      "adapted_sha256": "8f9a863f92d056a10016632f29c6c89a5b27819d301841702fd5ecff5027a48e",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/mod.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/mod.rs",
+      "original_sha256": "1e2a38d6e9da03c40308bf45d26261f0a1adb6897011c438bbc96c37786107d7",
+      "adapted_sha256": "79f66e0bb1d9cc0ed8c786313f9766052ec1c464120798b0ea5738befb50cc2e",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/mount_tele.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/mount_tele.rs",
+      "original_sha256": "41a5c71e955574ae547e175f5149f6d97c6390e7996eb117cb051367feaa5eaf",
+      "adapted_sha256": "6faa12efd7ee133730521dd25adfc3b4927ed5b71d8021b932f93c2424005752",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/open_item.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/open_item.rs",
+      "original_sha256": "752d8b5869bbddd47a5fac7d79e6d899f6664e633f37ab332016bd71baa6724c",
+      "adapted_sha256": "f82752ee13a6a6d506b0239588aaf7a88a1160607462506a207a8cc2c1bf40df",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/query_names.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/query_names.rs",
+      "original_sha256": "3d3cce605ca0c20310567c5c7d0063f2bddc124a123f16e3fbfdccaf9137793f",
+      "adapted_sha256": "21185034f3a2e2ace6db96ffda5b0d71fcee2bc4c164b551c6449081725b39e2",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/quest.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/quest.rs",
+      "original_sha256": "7a0f0eb568d8cb7f638bde5be743ed67bcd113e149b583e49ba60954e0cd7362",
+      "adapted_sha256": "a0df9ef118662ad46ba08b93c6de2740151a9cccd312cf64c648305469311b6a",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/quest_item.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/quest_item.rs",
+      "original_sha256": "9fcd48d9657bc957d5de004b98f356fd8f5f95934fd2d3ec41b1aea18cfa71a0",
+      "adapted_sha256": "fd56fa3cd5e994685a06bebc0c97c3dc7c21f1ced9460ff2f26e0b7815d4bdfe",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/questlog.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/questlog.rs",
+      "original_sha256": "e0cc3c725cf60c911fa3ff6a371248bf89355db0c202e5d3bdf382207b530ae3",
+      "adapted_sha256": "cbbe34b68cbbb0025e49908ab0aad980932223de3145b994369b743610cb8c17",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/questtimer.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/questtimer.rs",
+      "original_sha256": "6d7ae7d5fbaf410ff3b4393e76208765b97e7ccbf5f7fd341234d0b34111ef0a",
+      "adapted_sha256": "f659129ea80ce086fa0e06811e4fc3c836cb97f1fbcf195b959144083f1dfe92",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/self_res.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/self_res.rs",
+      "original_sha256": "d54929eb5ccd7b7f13fe1959198b8f943c79ee249c56d9b21cfd2438690a62c7",
+      "adapted_sha256": "4fdfce657e1e1d385e64c43d213700fa0016634bff0b6ae199a3bf1f2b92e3e5",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/speed.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/speed.rs",
+      "original_sha256": "006224901c1f5dcc27ff8299326673760fed4743e9001f03d1cceea096c3680e",
+      "adapted_sha256": "bc8cb2d7488c445b429c54116c17f6f88d9c8f74a0bf06429ef71716ad4b2abe",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/spells.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/spells.rs",
+      "original_sha256": "06029f19d52bdb3385fea30db76d519560430f280f47a14116d784583d250107",
+      "adapted_sha256": "f4f9cbe40edb0efa3af8b3bb31ab523c9157709c1c878c163f6892483b764d00",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/spirit.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/spirit.rs",
+      "original_sha256": "9dd2c37ce2dd1cb4f123c9b6789ac249c84bc8f359cb3418f3fd4ca1acd7a6b4",
+      "adapted_sha256": "1e01859dac1eb60d485bd4ca5e157dd23d60d50893f94f9298e8a967f47e24ab",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/swap_pack_slots.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/swap_pack_slots.rs",
+      "original_sha256": "8b17c4814ca62484f23da005f06c4c0f2396320a0ee689f9e60d7d5baebb2501",
+      "adapted_sha256": "6514d00f4beaae8959fc87ac8c5cd6315a8aba7eb56256079047c119c05f4d27",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/use_pack_slot.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/use_pack_slot.rs",
+      "original_sha256": "d3e741035b83b1440c21326a771a4064f1fc0a7effe938465e00c34a7e5b79c5",
+      "adapted_sha256": "c01fd1c141e2db6c2c6a6468b357c0f4c591c809a6fbe2726006b35c3b1238db",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/vendor.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/vendor.rs",
+      "original_sha256": "a90e636a5b55b4e9531db637074d39d3172a7564056bf15f7539fdc72fdaccba",
+      "adapted_sha256": "0d1611f69115ab8285c8020a27150ddea55070cb0bc782bd98731716d9fc8be7",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/probes/worldstate.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/probes/worldstate.rs",
+      "original_sha256": "43e76896955bd1b81811ab67993513ef15c3e42d4920d14742b93400b7b300d7",
+      "adapted_sha256": "fae451ffb5fb385f6864b5559378dce7f11e5209a24cd7058486c1877c84a591",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/bin/benilla-world/world.rs": {
+      "path": "crates/engine-protocol/src/bin/engine-world/world.rs",
+      "original_sha256": "9cf159452d2b9b4722ea901051160dde22bceaa52104b2da073a92920ee8db35",
+      "adapted_sha256": "cfa2d781f49449d02bc38ae24dfb2a33b5b16b89d2dcc9f73596dd84d16dc9a0",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/events.rs": {
+      "path": "crates/engine-protocol/src/events.rs",
+      "original_sha256": "69237c6c4aa96048908e7851ca29162f6577af484dfce27f969d1ba8743c4228",
+      "adapted_sha256": "242d0b29cad885b90008e16fb9514be140fd855a920904f4eb5d30a6597d2380",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/lib.rs": {
+      "path": "crates/engine-protocol/src/lib.rs",
+      "original_sha256": "67d50800398b1cb2f2471ed5166328b800159b29351bf989c14f7b1da950bb97",
+      "adapted_sha256": "ae46fa5dcdbac4d55f5c2fc6274fbb7529a1374033180ff6ec19a3261064bfc9",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/messages/chat.rs": {
+      "path": "crates/engine-protocol/src/messages/chat.rs",
+      "original_sha256": "6706fefff93bc556163990de7edc2cd688b6641c62adafc37a8ad1851c44e61b",
+      "adapted_sha256": "e32f6ee74670bd55fc92180feb012026912ebcbb0eb0bee73131ef58af3603fd",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/messages/group.rs": {
+      "path": "crates/engine-protocol/src/messages/group.rs",
+      "original_sha256": "19e084a273a83282f1ba7b779fec1838c4ab674991c5e11b550d3459f872c5f8",
+      "adapted_sha256": "c2abb934a0e8493987f78030a33b73609df43c1f9737018f504d59cc686aebc3",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/messages/opcode.rs": {
+      "path": "crates/engine-protocol/src/messages/opcode.rs",
+      "original_sha256": "38ff530c8b29c8346768b43c3857db78552c5f8f0f8df7e883624b27130e3efb",
+      "adapted_sha256": "6f5d1fb6b30f13c86bd98fa258401f5324c9d71956e45d79f282a324e9619230",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/messages/packet.rs": {
+      "path": "crates/engine-protocol/src/messages/packet.rs",
+      "original_sha256": "917a8947098dec56da95632a0feac8ca7c86a99ecb82ddb2d72a75f5ac8e911e",
+      "adapted_sha256": "ceebc4d6664e1dedb845acc6635981a431bd6cc0ecb3b293d9177a7cce215881",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/messages/roster.rs": {
+      "path": "crates/engine-protocol/src/messages/roster.rs",
+      "original_sha256": "8324019c3f069364ea946c2fe2e11c9586a4ba9cee8da97f78cb5d8832f5c061",
+      "adapted_sha256": "2b06e3e559abc86909beeae8081bc1397a574b07821c1b77cc703154f8375dc9",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/world/mod.rs": {
+      "path": "crates/engine-protocol/src/world/mod.rs",
+      "original_sha256": "7fc87d0c62ccac7943b711df96b440eeb463e1c8efc792bab76c450399b45d2e",
+      "adapted_sha256": "19328e6b62aa48e70461734eda335a1ed7042b78ab474de1590cc0f0e45ed075",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/world/movement.rs": {
+      "path": "crates/engine-protocol/src/world/movement.rs",
+      "original_sha256": "b600af771a8dd6fffca3c9ec37426cb5d33e8fcf45f1471d35a1807e3519cbe4",
+      "adapted_sha256": "3bab5a8d28b58edf9b4d34156cbb86a321590fd8cfc36fd3aae64352d70ac837",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/world/reader.rs": {
+      "path": "crates/engine-protocol/src/world/reader.rs",
+      "original_sha256": "f9a1bb5eb7d20b6204bfdba0ad43078ea83ecde1a2ea2ac6f33cf02e38c2a2de",
+      "adapted_sha256": "0f501e194dabe1420afea17118aa9a663d691df83bb54129219650adca8721cb",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/world/session.rs": {
+      "path": "crates/engine-protocol/src/world/session.rs",
+      "original_sha256": "77d3e2db67b7aadd0de1bd9d0e30c63608ed24e2fdb72dfbc7c7d67bbface96b",
+      "adapted_sha256": "9dd43c14c47b14af5a23a5649bcd4a5c2d09214f9912b6570ac56d91b8515231",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/src/world/writer/mod.rs": {
+      "path": "crates/engine-protocol/src/world/writer/mod.rs",
+      "original_sha256": "d3ceda4f79f7cbbdaf68dbfd1b9555df7ba8af0fcc183a1befacf0474e824936",
+      "adapted_sha256": "3446181181897d14679b569f62faac4c1bb258183f6fdc7ab80ebb5a3a10ef9e",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/auction.rs": {
+      "path": "crates/engine-protocol/tests/auction.rs",
+      "original_sha256": "df8099c8318ecf3033eb869522765a749bda0290b7aa910c32692dbce7c40e34",
+      "adapted_sha256": "3d6cdb88b8755ff396378bc4dff25ca67b5c5854cf384d7fc430db4d104307ab",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/auth.rs": {
+      "path": "crates/engine-protocol/tests/auth.rs",
+      "original_sha256": "5678f966e7b837cb4b0fe17d303b3f0eabdc7ede49ecf56bfee8ac854dc55f95",
+      "adapted_sha256": "20fa9c5401ad4a9ecad56b2658570c7e99f8a664c2c15dbdab2ca9eb2343fd62",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/bank.rs": {
+      "path": "crates/engine-protocol/tests/bank.rs",
+      "original_sha256": "016e926cae4c50da4789f117bff7d2b1aa753a069a0640b7a70ec6333423a50e",
+      "adapted_sha256": "31b00da75bc7ce74bca17def156cdc2307620a31b8e5f170dec562192c5f612b",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/broadcast.rs": {
+      "path": "crates/engine-protocol/tests/broadcast.rs",
+      "original_sha256": "a0a19aaefd9f6597ed16760f29516f5c019d5d083c8ac7820e75a8a59c99ffc8",
+      "adapted_sha256": "8b3730b0445056616fa778ed485e14f3c32ebe8ec50dde966d8fe48c843e8254",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/char_enum.rs": {
+      "path": "crates/engine-protocol/tests/char_enum.rs",
+      "original_sha256": "649a6dabce775bc6de8cf53d8b4b02b9ce4bafbb34ea4146ae50e8aef8795047",
+      "adapted_sha256": "ba487edab67a80d3ddd93ea844bdd22572ec5457b280f982ea645068f5f6dbc3",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/chat.rs": {
+      "path": "crates/engine-protocol/tests/chat.rs",
+      "original_sha256": "4876d05f20217cf862deeaf53983864caa270a99104ed0206a50210735f9471f",
+      "adapted_sha256": "6fe8d7e40240685114705844c3b73676c8af9c5bf42c562f4c60002696a5f92c",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/client.rs": {
+      "path": "crates/engine-protocol/tests/client.rs",
+      "original_sha256": "b51630095f5fd9b8400c6b65bfeb3076ac5a5c326604c51df6e26dda059f8e6d",
+      "adapted_sha256": "31f85cfeac96d6f6eb0c101244e4904980e287fd90ade8e6aad2b99e751ac8a6",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/gossip_vendor.rs": {
+      "path": "crates/engine-protocol/tests/gossip_vendor.rs",
+      "original_sha256": "efc57a5c399b0da82c585e7c165b779d048fae3acff1e8eee072759dbf7677b6",
+      "adapted_sha256": "b3e564e6283edf64351020588c85305b6cd3b281ae08e035ba68e38e29f0e415",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/group.rs": {
+      "path": "crates/engine-protocol/tests/group.rs",
+      "original_sha256": "663bb4bbdf4ce5af5698af4a0d21d4bef79f1fcc10ad9f616bfce61e411c66fd",
+      "adapted_sha256": "3d7e95e904d136ea3f516a51f8aecd526bdc2ae485a96c53767e8ab6d4389115",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/guild.rs": {
+      "path": "crates/engine-protocol/tests/guild.rs",
+      "original_sha256": "a071ca27b00a80401771aa5752824ff913f7717dc1bef15e28a560efb96a4180",
+      "adapted_sha256": "26e391e11daea5ec809bec8d051c8d1cb7975cf9e0cd5ae85f060516297a8ca7",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/handshake.rs": {
+      "path": "crates/engine-protocol/tests/handshake.rs",
+      "original_sha256": "5e4350646eb6e3826662b705bbf031bc44692aa51eea39d68e902a02ba0c829a",
+      "adapted_sha256": "3fae271db5006882412b497feef7986a3acb274b3f84e17270b296cafe19daeb",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/instance.rs": {
+      "path": "crates/engine-protocol/tests/instance.rs",
+      "original_sha256": "3ed13114cde24d2ae74b56c22729b93390ac3f31b4870cd979320af073d35ba4",
+      "adapted_sha256": "70b593fc88f322938bb0ee04d321d8739a0265dee3704871dafb49de88f167f4",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/items.rs": {
+      "path": "crates/engine-protocol/tests/items.rs",
+      "original_sha256": "ce3e387a7d827cbeb531c78e0440f11745da2cdfb7e8aa2dbd12e9c10065c897",
+      "adapted_sha256": "125ee4c92e111fc0e4113804ad662acf22b3cac9b42c8b15150abb2faceb78d3",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/mail.rs": {
+      "path": "crates/engine-protocol/tests/mail.rs",
+      "original_sha256": "dffaf2df1da1510d7a331f7a487e8e1f6981d1cb63c9e8c9ddd362e55380ca0e",
+      "adapted_sha256": "ad90f9565dfa47b9c42ca0e69c7eff267ea2b1d2bd30f4130b8e3eb11e5bf338",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/movement.rs": {
+      "path": "crates/engine-protocol/tests/movement.rs",
+      "original_sha256": "5d30e20b51a6f68f3742286eb9c662b57c8707c9f9342339f42a7e15b4e41bc1",
+      "adapted_sha256": "798beab1f2b4aa221145e6e16f8f51638d7339646ad82b11527a086f4efd76a0",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/petition.rs": {
+      "path": "crates/engine-protocol/tests/petition.rs",
+      "original_sha256": "346a1f58339e0076d062a9453e92be8597834dd9b280baae28bf292dfc25d35a",
+      "adapted_sha256": "2b2695933bff23a4e7e33019d488f196291fb17e7e6f60bd7ef05ecb4ad77228",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/pvp.rs": {
+      "path": "crates/engine-protocol/tests/pvp.rs",
+      "original_sha256": "b635a479198bbe26832a290fa52195b22b6347184ca5253ba1a0765f0f8d800a",
+      "adapted_sha256": "08b821b43f0395aeb13ca0c551c98f7cfbfa624445efafd2b2da043d8a5c4d7e",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/quest_share.rs": {
+      "path": "crates/engine-protocol/tests/quest_share.rs",
+      "original_sha256": "e36e6a740feaf97974bd17cc94e4bb8b72c150098bfbab28aa9195322ca16103",
+      "adapted_sha256": "0507047fa775d18b5d8acc02fa9d9487f67067e048a73be165e35f62c408aff2",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/reputation.rs": {
+      "path": "crates/engine-protocol/tests/reputation.rs",
+      "original_sha256": "46a3356fb2a99e9fe218b248320d6bc27a4ecc6489eca6bc7a97b76d5a2cd1b6",
+      "adapted_sha256": "cc764bf3ac5ebdd54912d2d5a72502092e52c52c5ab6188d29881d84386d5209",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/simple_packets.rs": {
+      "path": "crates/engine-protocol/tests/simple_packets.rs",
+      "original_sha256": "9caa4ba5fd0827a5ca4d6bfadb16cbd21e5ebbd71fab32a89a29b797d9ea489d",
+      "adapted_sha256": "60764b5041fd89b8d7a9ad69b0b573bb6159ef13a21d4395d4d865f55d130af8",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/spells.rs": {
+      "path": "crates/engine-protocol/tests/spells.rs",
+      "original_sha256": "ef116d78faabfdb2d808cb52e0219c24986b35fb0c40256e6567a9bd7b3cd3d0",
+      "adapted_sha256": "b00bbfca24ee777da32057afd5774f40ec5ad20f2bbbcfb0760a1e832ec32a57",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/stable.rs": {
+      "path": "crates/engine-protocol/tests/stable.rs",
+      "original_sha256": "dbe76026bc1d4a1bbbfd66547c8a61ad7336b40acd177bfd604fecfa07a5028d",
+      "adapted_sha256": "41bfb9affbb160019fa3ae19a76f4dc8cc90411550ec03318120b055c94b10cb",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/taxi.rs": {
+      "path": "crates/engine-protocol/tests/taxi.rs",
+      "original_sha256": "7d60067dcf7124e22b1af310a3e778b70907120b9b734525dc6269b55c49da5e",
+      "adapted_sha256": "eae6d87164edac0286a992326d20f9a1ca785071f24303d8f71606a0a48c44f4",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/trainer.rs": {
+      "path": "crates/engine-protocol/tests/trainer.rs",
+      "original_sha256": "f950886dcf506de221d4ba8ec2eee01fb8e334ce9545b72ab38aabf3863c0307",
+      "adapted_sha256": "c3e3521df69321dfe81a179afea349e03dbc6280eb3a070114f924255d571f40",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-protocol/tests/update_object.rs": {
+      "path": "crates/engine-protocol/tests/update_object.rs",
+      "original_sha256": "e9a9f71ed151e9875a2f606f266e7fb7ca8a8d1a7de57088ab372f48886c5a8e",
+      "adapted_sha256": "0f2ce595051fe018679b3e5ed6e67cd85388c33a136baf1a6e52798ce45502cd",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-srp/Cargo.toml": {
+      "path": "crates/engine-srp/Cargo.toml",
+      "original_sha256": "88555f77d2e40f02b302a30bdc09981583e97598bb1328f01ca698ffad7ad341",
+      "adapted_sha256": "43aaa807eb344281de7b63c24d1af79185db1f9e31bcc96fd75267f138cffb23",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-srp/examples/provision_probe.rs": {
+      "path": "crates/engine-srp/examples/provision_probe.rs",
+      "original_sha256": "554a936fe8e0d912261026e2a49557dddc2ddd20401c7e04680fac4f5063afe8",
+      "adapted_sha256": "d9e7525019f0e5ec61ecdd753f0b6171a82e89cb194f7d48d337167442a002f1",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    },
+    "crates/benilla-srp/src/lib.rs": {
+      "path": "crates/engine-srp/src/lib.rs",
+      "original_sha256": "a35d75f969b6de4adc930a20daee1df4bbeb1baaab8881b222a20aa7c68bff83",
+      "adapted_sha256": "5efebdee1305896631d04539feb4512121d07f6bb922cde2b3f93556966930b3",
+      "reason": "GG namespace and file-path adaptation; original source hashes and attribution remain recorded."
+    }
+  }
+}

@@ -1,0 +1,434 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+export LC_ALL=C
+umask 077
+
+VERSION='1.0.0'
+SCRIPT_PATH="$(readlink -f "$0")"
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
+PROJECT_ROOT="$(readlink -f "$SCRIPT_DIR/../..")"
+LOCK_FILE="$PROJECT_ROOT/infrastructure/code-gate/IMAGE.lock"
+
+EXECUTE=0
+TARGET=''
+
+usage()
+{
+    cat <<'EOF'
+Användning:
+  gg-code-gate [--execute] FIL
+
+Foundation-versionen accepterar endast vanliga filer under aktuellt
+GoldGoblins-repository. Källfilen kopieras till en isolerad körkatalog
+och monteras skrivskyddad i en rootless container.
+EOF
+}
+
+fail()
+{
+    printf 'FAIL: %s\n' "$1" >&2
+    exit 1
+}
+
+canonical_image_id()
+{
+    local value="$1"
+
+    value="${value#sha256:}"
+
+    if [[ ! "$value" =~ ^[0-9a-f]{64}$ ]]; then
+        return 1
+    fi
+
+    printf 'sha256:%s' "$value"
+}
+
+while [ "$#" -gt 0 ]
+do
+    case "$1" in
+        --execute)
+            EXECUTE=1
+            shift
+            ;;
+        --help|-h)
+            usage
+            exit 0
+            ;;
+        --)
+            shift
+            break
+            ;;
+        -*)
+            fail "Okänd flagga: $1"
+            ;;
+        *)
+            if [ -n "$TARGET" ]; then
+                fail 'Endast en målfil får anges.'
+            fi
+            TARGET="$1"
+            shift
+            ;;
+    esac
+done
+
+if [ "$#" -gt 0 ]; then
+    fail 'Oväntade argument efter --.'
+fi
+
+if [ -z "$TARGET" ]; then
+    usage >&2
+    fail 'Målfil saknas.'
+fi
+
+if [ ! -f "$LOCK_FILE" ] || [ -L "$LOCK_FILE" ]; then
+    fail "IMAGE.lock saknas eller är symlänk: $LOCK_FILE"
+fi
+
+read_lock_value()
+{
+    local key="$1"
+    local value
+
+    value="$(
+        awk -F= -v wanted="$key" '
+            $1 == wanted {
+                value=substr($0, index($0, "=") + 1)
+                print value
+                count++
+            }
+            END {
+                if (count != 1) {
+                    exit 20
+                }
+            }
+        ' "$LOCK_FILE"
+    )" || fail "Ogiltigt eller dubblerat låsvärde: $key"
+
+    printf '%s' "$value"
+}
+
+IMAGE_REF="$(read_lock_value image_ref)"
+RAW_IMAGE_ID="$(read_lock_value image_id)"
+EXPECTED_TOOL_SHA="$(read_lock_value tool_sha256)"
+EXPECTED_RULES_SHA="$(read_lock_value rules_sha256)"
+
+IMAGE_ID="$(
+    canonical_image_id "$RAW_IMAGE_ID"
+)" || fail 'IMAGE.lock innehåller ogiltigt image_id.'
+
+TOOL_PATH="$PROJECT_ROOT/infrastructure/code-gate/gg-code-gate.py"
+RULES_PATH="$PROJECT_ROOT/infrastructure/code-gate/secret-rules.json"
+
+for required_path in "$TOOL_PATH" "$RULES_PATH"
+do
+    if [ ! -f "$required_path" ] || [ -L "$required_path" ]; then
+        fail "Obligatorisk Code Gate-fil saknas eller är symlänk: $required_path"
+    fi
+done
+
+ACTUAL_TOOL_SHA="$(sha256sum "$TOOL_PATH" | awk '{print $1}')"
+ACTUAL_RULES_SHA="$(sha256sum "$RULES_PATH" | awk '{print $1}')"
+
+if [ "$ACTUAL_TOOL_SHA" != "$EXPECTED_TOOL_SHA" ]; then
+    fail 'gg-code-gate.py avviker från IMAGE.lock.'
+fi
+
+if [ "$ACTUAL_RULES_SHA" != "$EXPECTED_RULES_SHA" ]; then
+    fail 'secret-rules.json avviker från IMAGE.lock.'
+fi
+
+if [ -L "$TARGET" ]; then
+    fail 'Målfilen får inte vara en symlänk.'
+fi
+
+TARGET_REAL="$(readlink -f "$TARGET")"
+
+if [ ! -f "$TARGET_REAL" ]; then
+    fail "Målfilen saknas eller är inte en vanlig fil: $TARGET_REAL"
+fi
+
+set +e
+python3 - "$PROJECT_ROOT" "$TARGET_REAL" <<'PY'
+from __future__ import annotations
+
+import pathlib
+import sys
+
+root = pathlib.Path(sys.argv[1]).resolve(strict=True)
+target = pathlib.Path(sys.argv[2]).resolve(strict=True)
+
+if target == root or root not in target.parents:
+    raise SystemExit(30)
+PY
+PATH_RC="$?"
+set -e
+
+if [ "$PATH_RC" -ne 0 ]; then
+    fail 'Foundation-grinden tillåter endast filer under GoldGoblins-repositoryt.'
+fi
+
+TARGET_SIZE="$(stat -c '%s' "$TARGET_REAL")"
+
+if [ "$TARGET_SIZE" -gt 2097152 ]; then
+    fail 'Målfilen är större än 2 MiB.'
+fi
+
+case "${TARGET_REAL,,}" in
+    *.sh|*.bash)
+        LANGUAGE='bash'
+        ;;
+    *.py)
+        LANGUAGE='python'
+        ;;
+    *.php)
+        LANGUAGE='php'
+        ;;
+    *.json)
+        LANGUAGE='json'
+        ;;
+    *)
+        LANGUAGE='auto'
+        ;;
+esac
+
+RAW_CURRENT_IMAGE_ID="$(
+    podman image inspect \
+        --format '{{.Id}}' \
+        "$IMAGE_REF" \
+        2>/dev/null
+)" || fail "Lokal Code Gate-image saknas: $IMAGE_REF"
+
+CURRENT_IMAGE_ID="$(
+    canonical_image_id "$RAW_CURRENT_IMAGE_ID"
+)" || fail 'Lokal Code Gate-image har ogiltigt image-ID.'
+
+if [ "$CURRENT_IMAGE_ID" != "$IMAGE_ID" ]; then
+    fail 'Lokal Code Gate-image avviker från IMAGE.lock.'
+fi
+
+STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+RUNS_ROOT="$STATE_HOME/goldgoblins/code-gate/runs"
+
+if [ -L "$STATE_HOME" ] || [ -L "$RUNS_ROOT" ]; then
+    fail 'State-sökvägen får inte innehålla den kontrollerade symlänken.'
+fi
+
+mkdir -p "$RUNS_ROOT"
+chmod 0700 "$STATE_HOME/goldgoblins" \
+    "$STATE_HOME/goldgoblins/code-gate" \
+    "$RUNS_ROOT" 2>/dev/null || true
+
+RUN_ID="$(
+    python3 - <<'PY'
+from __future__ import annotations
+
+import secrets
+import time
+
+print(f"{time.time_ns()}-{secrets.token_hex(6)}")
+PY
+)"
+RUN_DIR="$RUNS_ROOT/$RUN_ID"
+INPUT_DIR="$RUN_DIR/input"
+OUTPUT_DIR="$RUN_DIR/output"
+WORK_DIR="$RUN_DIR/work"
+
+mkdir -m 0700 -p "$INPUT_DIR" "$OUTPUT_DIR" "$WORK_DIR"
+
+SOURCE_COPY="$INPUT_DIR/source"
+install -m 0400 -- "$TARGET_REAL" "$SOURCE_COPY"
+
+ORIGINAL_SHA="$(sha256sum "$TARGET_REAL" | awk '{print $1}')"
+COPIED_SHA="$(sha256sum "$SOURCE_COPY" | awk '{print $1}')"
+
+if [ "$ORIGINAL_SHA" != "$COPIED_SHA" ]; then
+    fail 'Källkopians SHA-256 avviker.'
+fi
+
+ORIGINAL_NAME="$(basename "$TARGET_REAL")"
+CONTAINER_NAME="gg-code-gate-$RUN_ID"
+CID_FILE="$RUN_DIR/container.cid"
+INSPECT_FILE="$RUN_DIR/container-inspect.json"
+CONTAINER_CREATED=0
+
+cleanup()
+{
+    local rc="$?"
+
+    trap - EXIT INT TERM
+    set +e
+
+    if [ "$CONTAINER_CREATED" -eq 1 ]; then
+        podman rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
+    fi
+
+    exit "$rc"
+}
+
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+CREATE_ARGS=(
+    podman create
+    --name "$CONTAINER_NAME"
+    --cidfile "$CID_FILE"
+    --pull=never
+    --network=none
+    --no-hosts
+    --read-only
+    --read-only-tmpfs=false
+    --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777
+    --cap-drop=all
+    --security-opt=no-new-privileges
+    --userns=keep-id
+    --user "$(id -u):$(id -g)"
+    --pids-limit=128
+    --memory=512m
+    --memory-swap=512m
+    --cpus=1
+    --ulimit nofile=256:256
+    --hostname=gg-code-gate
+    --label "io.goldgoblins.code-gate.run=$VERSION"
+    --env HOME=/nonexistent
+    --env TMPDIR=/tmp
+    --env PYTHONDONTWRITEBYTECODE=1
+    --env LANG=C.UTF-8
+    --env LC_ALL=C.UTF-8
+    --mount "type=bind,src=$INPUT_DIR,target=/input,ro=true,relabel=private"
+    --mount "type=bind,src=$OUTPUT_DIR,target=/output,rw=true,relabel=private"
+    --mount "type=bind,src=$WORK_DIR,target=/work,rw=true,relabel=private"
+    "$IMAGE_ID"
+    --target /input/source
+    --name "$ORIGINAL_NAME"
+    --language "$LANGUAGE"
+    --output /output/report.json
+)
+
+if [ "$EXECUTE" -eq 1 ]; then
+    CREATE_ARGS+=(--execute)
+fi
+
+"${CREATE_ARGS[@]}" >/dev/null
+CONTAINER_CREATED=1
+
+podman inspect "$CONTAINER_NAME" >"$INSPECT_FILE"
+
+python3 - "$INSPECT_FILE" "$(id -u):$(id -g)" <<'PY'
+from __future__ import annotations
+
+import json
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+expected_user = sys.argv[2]
+data = json.loads(path.read_text(encoding="utf-8"))
+
+if not isinstance(data, list) or len(data) != 1:
+    raise RuntimeError("Inspect-utdata måste innehålla exakt en container")
+
+item = data[0]
+host = item.get("HostConfig") or {}
+config = item.get("Config") or {}
+mounts = item.get("Mounts") or []
+
+if host.get("NetworkMode") != "none":
+    raise RuntimeError("NetworkMode avviker")
+
+if host.get("ReadonlyRootfs") is not True:
+    raise RuntimeError("ReadonlyRootfs är inte true")
+
+if host.get("Privileged") is True:
+    raise RuntimeError("Containern är privileged")
+
+if host.get("CapAdd"):
+    raise RuntimeError("CapAdd får inte vara satt")
+
+security_options = host.get("SecurityOpt") or []
+create_command = config.get("CreateCommand") or item.get("CreateCommand") or []
+security_declared = any(
+    "no-new-privileges" in str(value)
+    for value in security_options
+)
+command_declared = any(
+    "no-new-privileges" in str(value)
+    for value in create_command
+)
+if not security_declared and not command_declared:
+    raise RuntimeError("no-new-privileges saknas i inspect-utdata")
+
+if config.get("User") != expected_user:
+    raise RuntimeError(
+        f"Containeranvändare avviker: {config.get('User')!r}"
+    )
+
+if host.get("PortBindings"):
+    raise RuntimeError("Hostportar är konfigurerade")
+
+expected_mounts = {
+    "/input": False,
+    "/output": True,
+    "/work": True,
+}
+actual_mounts = {}
+
+for mount in mounts:
+    destination = mount.get("Destination")
+    if destination in expected_mounts:
+        actual_mounts[destination] = bool(mount.get("RW"))
+
+if actual_mounts != expected_mounts:
+    raise RuntimeError(
+        f"Mountpolicy avviker: {actual_mounts!r}"
+    )
+PY
+
+podman start "$CONTAINER_NAME" >/dev/null
+TOOL_RC="$(podman wait "$CONTAINER_NAME")"
+podman logs "$CONTAINER_NAME" >"$RUN_DIR/container.log" 2>&1 || true
+podman rm "$CONTAINER_NAME" >/dev/null
+CONTAINER_CREATED=0
+
+REPORT="$OUTPUT_DIR/report.json"
+REPORT_SHA="$OUTPUT_DIR/report.json.sha256"
+
+if [ ! -f "$REPORT" ] || [ ! -f "$REPORT_SHA" ]; then
+    fail 'Code Gate skapade inte fullständig rapport och checksumma.'
+fi
+
+(
+    cd "$OUTPUT_DIR"
+    sha256sum --check "$(basename "$REPORT_SHA")"
+) >/dev/null || fail 'Rapportens checksumma validerar inte.'
+
+REPORT_STATUS="$(jq -r '.status' "$REPORT")"
+
+case "$REPORT_STATUS" in
+    PASS)
+        EXPECTED_RC=0
+        ;;
+    FAIL)
+        EXPECTED_RC=1
+        ;;
+    CONDITIONAL)
+        EXPECTED_RC=2
+        ;;
+    *)
+        fail "Okänd rapportstatus: $REPORT_STATUS"
+        ;;
+esac
+
+if [ "$TOOL_RC" != "$EXPECTED_RC" ]; then
+    fail "Containerkod $TOOL_RC matchar inte rapportstatus $REPORT_STATUS."
+fi
+
+printf 'GG_CODE_GATE_VERSION=%s\n' "$VERSION"
+printf 'GG_CODE_GATE_STATUS=%s\n' "$REPORT_STATUS"
+printf 'GG_CODE_GATE_SOURCE_SHA256=%s\n' "$ORIGINAL_SHA"
+printf 'GG_CODE_GATE_RUN_DIR=%s\n' "$RUN_DIR"
+printf 'GG_CODE_GATE_REPORT=%s\n' "$REPORT"
+printf 'GG_CODE_GATE_REPORT_SHA256=%s\n' \
+    "$(sha256sum "$REPORT" | awk '{print $1}')"
+
+exit "$TOOL_RC"

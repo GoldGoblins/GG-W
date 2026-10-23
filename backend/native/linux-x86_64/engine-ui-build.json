@@ -1,0 +1,8 @@
+{
+  "schema": "gg.engine-ui-build.v1",
+  "abi": 1,
+  "source_sha256": "16b51daf4971a3c168b51137ad8e4b8aa78805b25f6811c3e639ce64db8030a5",
+  "binary_sha256": "55d09ee81c3a89828c06bd796efff050b879d002c79f6118ef217a8ec9d2e450",
+  "binary_bytes": 7085544,
+  "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)"
+}

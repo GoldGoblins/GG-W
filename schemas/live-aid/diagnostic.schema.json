@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gg.live-aid.diagnostic.v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "status",
+    "code",
+    "message",
+    "source",
+    "blocking",
+    "evidence"
+  ],
+  "properties": {
+    "schema": {
+      "const": "gg.live-aid.diagnostic.v1"
+    },
+    "status": {
+      "enum": [
+        "INCOMPLETE",
+        "PASS",
+        "WARNING",
+        "FAIL",
+        "UNKNOWN",
+        "BLOCKED"
+      ]
+    },
+    "code": {
+      "type": "string",
+      "minLength": 1
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1
+    },
+    "line": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "column": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "end_line": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "end_column": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "suggestion": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "blocking": {
+      "type": "boolean"
+    },
+    "evidence": {
+      "type": "array"
+    },
+    "probe": {
+      "type": [
+        "object",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

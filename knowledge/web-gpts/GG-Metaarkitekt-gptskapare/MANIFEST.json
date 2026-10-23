@@ -1,0 +1,82 @@
+{
+  "package_name": "GG Metaarkitekten",
+  "version": "1.1.0",
+  "created": "2026-07-28",
+  "instruction_characters": 6773,
+  "instruction_limit": 8000,
+  "knowledge_file_count": 8,
+  "replacement_package": true,
+  "replacement_files": [
+    "INSTRUKTIONER.txt",
+    "README.md",
+    "TESTSVIT.md",
+    "MANIFEST.json",
+    "knowledge/04-kunskapsarkitektur-och-paketering.md",
+    "knowledge/05-testning-optimering-och-ombyggnad.md",
+    "knowledge/06-kontrakt-mallar-och-exempel.md",
+    "knowledge/07-chatgpt-gpt-plattform-2026-07-28.md",
+    "knowledge/08-godkant-gpt-kontrakt.md"
+  ],
+  "files": [
+    {
+      "path": "INSTRUKTIONER.txt",
+      "bytes": 7002,
+      "sha256": "f51d3b4374ae00eda6bebab9a1519f45341ffa3be035946ea1479674b9e99094"
+    },
+    {
+      "path": "KALLOR.md",
+      "bytes": 2754,
+      "sha256": "a7b00e10580487e741ed2f44ee74c7215625b0a99e41e0acc1538c98a4abe53b"
+    },
+    {
+      "path": "README.md",
+      "bytes": 7336,
+      "sha256": "82a4332a5e5479a38578af2a150c97063ef33b7fa5d90d5d624f2976e2858516"
+    },
+    {
+      "path": "TESTSVIT.md",
+      "bytes": 6700,
+      "sha256": "e6cf7cd5b884ce4e5ec7358339e0610eac1d0b9510c4a078ec97ab501e0b75ca"
+    },
+    {
+      "path": "knowledge/01-identitet-och-grundide.md",
+      "bytes": 5238,
+      "sha256": "d9b2be92981284301bba46f7af0f1f761c2b09bdf07f92bcb587b10ed6b47fb6"
+    },
+    {
+      "path": "knowledge/02-mini-idekompass-och-research.md",
+      "bytes": 5712,
+      "sha256": "b8248c2b194e6d19747f6265bcddfd5e6c704d513a70554df4a7a8f2c79084a9"
+    },
+    {
+      "path": "knowledge/03-gpt-arkitektur-och-instruktionsdesign.md",
+      "bytes": 5090,
+      "sha256": "ecaa5d2e12b2d453f6babbb7a8f0867289a8c3747ced25d8976d7c4bdc1b77a2"
+    },
+    {
+      "path": "knowledge/04-kunskapsarkitektur-och-paketering.md",
+      "bytes": 6141,
+      "sha256": "e1f242dc1eff4d24dbbdbef175c92770afa9635706ebb932df3dfcb7684c9ba5"
+    },
+    {
+      "path": "knowledge/05-testning-optimering-och-ombyggnad.md",
+      "bytes": 6675,
+      "sha256": "b0a7c8ae3f51baa6e0cd71c9ae4c1273f4cd455d3a22993ab456ff8dfb9eb7cc"
+    },
+    {
+      "path": "knowledge/06-kontrakt-mallar-och-exempel.md",
+      "bytes": 7416,
+      "sha256": "019aa77fbc6899bb473aa6f1c2eddbfbd094456a02d37fbcd02e8de9cdec8f97"
+    },
+    {
+      "path": "knowledge/07-chatgpt-gpt-plattform-2026-07-28.md",
+      "bytes": 5208,
+      "sha256": "2fc2cac7c544aea29dc7390d9941e6704c03cd08567fc34cccc6a85a24e4ec49"
+    },
+    {
+      "path": "knowledge/08-godkant-gpt-kontrakt.md",
+      "bytes": 10612,
+      "sha256": "42ba4736e2a4089504f5065f4c79164e909cb97c25ee40fb7faf9178d9e40c2d"
+    }
+  ]
+}

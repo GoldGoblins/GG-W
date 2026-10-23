@@ -1,0 +1,44 @@
+{
+  "schema": "gg.engine-source-port.v1",
+  "repository": "https://github.com/samwhosung/benilla",
+  "commit": "d0d1b5def910fda88388f7be0e81fee903a32b54",
+  "retrieved": "2026-10-08",
+  "local_complete_checkout": "/home/GG/.local/share/goldgoblins/gg-ai-desktop/game-engine/engine-reference-upstream",
+  "source_files": {
+    "crates/benilla-assets/src/spatial_cache.rs": {
+      "sha256": "ca39e22afef25dffe5b59027cb46efc5a0e45e63b4d3f2aac65e1bc2b26e395e",
+      "lines": 241
+    },
+    "crates/benilla-world/src/terrain_stream/window.rs": {
+      "sha256": "ed819c74deccb2f23edb49bb53f846d4c924bfb0a76aef22b6205ac4410cacbe",
+      "lines": 210
+    },
+    "crates/benilla-world/src/exterior_cull.rs": {
+      "sha256": "b9dae8a8e057601de7e0bc1a7f2960c505f2b2e27e354e8750ac3eab573b1e38",
+      "lines": 894
+    }
+  },
+  "license": "MIT",
+  "notice": "backend/licenses/engine-MIT.txt",
+  "scope": "Source-level C++ cache/window port; independent conservative sphere culler and retained-sector range selector. Not a complete client conversion.",
+  "adaptations": [
+    "Metres, X/Z ground plane and double-precision coordinates",
+    "Unclamped signed local grid instead of WoW ADT tile coordinates",
+    "Explicit bounded LRU capacity overrides 30-second dwell",
+    "Camera-independent AABB residency preserves camera rotation and upload pacing",
+    "Generic sphere visibility only; portal/PVS logic is not ported"
+  ],
+  "dependencies": {
+    "upstream_bevy": "0.18.1",
+    "upstream_wgpu": "27",
+    "port": "C++17 standard library; C ABI into existing PySide6/Qt Quick 3D"
+  },
+  "deferred": [
+    "Bevy render graph/WGSL",
+    "M2/ADT/MPQ-specific data adapters",
+    "Full Lua/FrameXML UI",
+    "WoW wire protocol",
+    "Audio engine",
+    "Server-authoritative multiplayer"
+  ]
+}

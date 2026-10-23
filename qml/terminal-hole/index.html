@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="xterm.css">
+  <style>
+    html, body, #term {
+      margin: 0;
+      height: 100%;
+      width: 100%;
+      background: #161616;
+      overflow: hidden;
+    }
+    .xterm, .xterm-viewport {
+      overflow: hidden !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="term"></div>
+  <script src="qwebchannel.js"></script>
+  <script src="xterm.min.js"></script>
+  <script src="addon-fit.js"></script>
+  <script>
+    function b64Bytes(b64) {
+      const bin = atob(b64);
+      const out = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++)
+        out[i] = bin.charCodeAt(i);
+      return out;
+    }
+    const Fit = (window.FitAddon && window.FitAddon.FitAddon)
+      ? window.FitAddon.FitAddon
+      : window.FitAddon;
+    const term = new Terminal({
+      cursorBlink: true,
+      convertEol: false,
+      fontFamily: "monospace",
+      fontSize: 13,
+      allowProposedApi: true,
+      theme: {
+        background: "#161616",
+        foreground: "#d8dee9",
+        cursor: "#d8dee9"
+      }
+    });
+    const fitAddon = Fit ? new Fit() : null;
+    term.open(document.getElementById("term"));
+    if (fitAddon)
+      term.loadAddon(fitAddon);
+    function fit() {
+      try {
+        if (fitAddon)
+          fitAddon.fit();
+      } catch (e) {}
+      if (window._host && window._host.grokTuiResize)
+        window._host.grokTuiResize(term.cols, term.rows);
+    }
+    window.tuiWrite = function (b64) {
+      term.write(b64Bytes(b64));
+    };
+    window.addEventListener("resize", fit);
+    document.addEventListener("click", function () { term.focus(); });
+    new QWebChannel(qt.webChannelTransport, function (ch) {
+      const host = ch.objects.host;
+      window._host = host;
+      host.grokTuiChunk.connect(function (b64) {
+        window.tuiWrite(b64);
+      });
+      term.onData(function (data) {
+        host.grokTuiWrite(data);
+      });
+      term.focus();
+      fit();
+      host.grokTuiReady();
+      setTimeout(fit, 80);
+      setTimeout(fit, 250);
+      setTimeout(fit, 800);
+      if (window.ResizeObserver) {
+        new ResizeObserver(fit).observe(document.getElementById("term"));
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+{
+  "$id": "gg.workbench.local-ai-request.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "mode": {
+      "const": "CHAT"
+    },
+    "prompt": {
+      "maxLength": 32768,
+      "minLength": 1,
+      "type": "string"
+    },
+    "request_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._:-]{1,128}$",
+      "type": "string"
+    },
+    "schema": {
+      "const": "gg.workbench.local-ai-request.v1"
+    }
+  },
+  "required": [
+    "schema",
+    "request_id",
+    "mode",
+    "prompt"
+  ],
+  "title": "GG Workbench Local AI Request v1",
+  "type": "object"
+}
