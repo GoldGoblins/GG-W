@@ -212,6 +212,24 @@ Install and sign in to Codex for GPT TUI or Grok Build for GROK TUI. External
 provider plugins are cataloged in `config/dependencies.json` and installed
 through their respective provider clients.
 
+## Patch notes · 2026-10-23 · integrated window title bar
+
+The desktop title and minimize, maximize/restore and close buttons now share
+the existing GG frame's top legend line, matching its monospace type and dark
+colors. The separate Windows title bar is removed.
+
+Drag the title row to move the window or double-click it to maximize/restore.
+Edges and corners use native system resizing and retain the minimum window
+size. Fullscreen and desktop-shell transitions keep the integrated frame.
+The first restore also handles platforms without a saved normal window size.
+
+Verification: real QML button clicks and move/resize dispatch, window-state
+transitions, desktop settings, five live-terminal resize regressions, full
+Windows desktop startup and core-view loading, plus a rendered header preview.
+
+Restart GG AI Desktop completely after updating; RELOAD only reloads workspace
+surfaces and does not replace the application window or Python backend.
+
 ## Patch notes · 2026-10-12 · GG AI Desktop updates since 2026-09-24
 
 **Chat and desktop.** Shared GROK TUI, GPTUI and FLOW TUI sessions now have

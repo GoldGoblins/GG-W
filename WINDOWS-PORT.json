@@ -20,7 +20,7 @@
     },
     "README.md": {
       "upstream_sha256": "1fa0f62e802aa8e200ac4de9147d20d5777b395dd14ba58299be28e2b9f50eae",
-      "windows_sha256": "7888be726bace000c832adb1e1bac9ab69ba679c12a7ef8066279a20399c2cc4"
+      "windows_sha256": "1766c71cb37260bc31ef21a8c840c70a9e3fe2d6be38ec7c1ce9d55f8d03a06a"
     },
     "backend/app_audio.py": {
       "upstream_sha256": null,
@@ -65,6 +65,10 @@
     "backend/desktop_settings.py": {
       "upstream_sha256": "c3f349b72159aea2f08d5c008b563412778f2c67165d37be39d9a9985ebe5502",
       "windows_sha256": "24c2c852453c8b8d559a92f68481001922a964a4348b38e83b9af90a545554a4"
+    },
+    "backend/desktop_shell.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "26fb7c4845e35452bb462bf94ef32f245e84275de5f06d4341a4f2d900e5f107"
     },
     "backend/game_engine_local_channels.py": {
       "upstream_sha256": "49542e8b89bbf86b52cd128f4acb555986835e48dd2f3bf799f840006bdaada2",
@@ -250,6 +254,10 @@
       "upstream_sha256": null,
       "windows_sha256": "6588d92fe30aabe178bcabbd87c456bfc10b83f193ddd9455466d8558336d0ee"
     },
+    "qml/Main.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "beb32f8bf7876550bbe7e2ff5b4f86ddd6185a62277dc4c6612db020301c7f04"
+    },
     "qml/components/GameEnchantingControls.qml": {
       "upstream_sha256": "cf29cc3e7238cb1ee9429e8a92b36ee0d8a0f00ab398532113882316ce837d0b",
       "windows_sha256": "2988b76d7e96a68f2cefe991a43af10ae68f5ef046d8109569d3fc3d84779d75"
@@ -273,6 +281,10 @@
     "qml/components/GgEngineWeatherMaterial.qml": {
       "upstream_sha256": "ad844057e9c7752ff72e658db6cf4421cd671871b0d81985e1d5811f4ef2b0ca",
       "windows_sha256": "aa6c1fbbb3fd953e03b1c33cea8c0c5c2e9bee27e9f9e872761825df9825a6be"
+    },
+    "qml/components/GgWindowChrome.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "b169192a69a2f19b015bcb48326b17bef9ee827dd6aba83fdfe190b7c8e954d7"
     },
     "qml/components/MediaSurface.qml": {
       "upstream_sha256": null,
@@ -430,6 +442,10 @@
       "upstream_sha256": "e3cb52ea656dccac9a6e6478ebe69dcae14196e85f919a7083d7498e3ea9e237",
       "windows_sha256": "d33eb032794c41a91c76f3e0d90fe007b53ed1f730a8e19a3601f4e467be419c"
     },
+    "tests/test_window_chrome.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "2eb9063be4ba35b71808ff9aaa83c92ab09a1f724054029253b46cabae295e32"
+    },
     "tests/test_windows_blender_live.py": {
       "upstream_sha256": null,
       "windows_sha256": "25b7c9bfd299b9db7ab5ee6b0d3e21128d0a1ace3a57a1fff94f0a436361f549"
@@ -557,7 +573,11 @@
     "tests/test_media_hls.py",
     "tests/test_media_video.py",
     "tests/test_media_video_playback.py",
-    "tools/world/build_app_audio.py"
+    "tools/world/build_app_audio.py",
+    "backend/desktop_shell.py",
+    "qml/Main.qml",
+    "qml/components/GgWindowChrome.qml",
+    "tests/test_window_chrome.py"
   ],
   "installed_tools": {
     "ffmpeg": "9.0.2",
@@ -667,6 +687,18 @@
       "verification": "Real Windows PTY in the offscreen Main.qml shell: native window methods, drag sizes, fullscreen; same process, worker, complete transcript, scroll position and unfinished input"
     },
     "desktop": "Fresh user state, all eleven core views, actual window close and QML cleanup PASS",
+    "integrated_window_chrome": {
+      "behavior": "Title and window controls share the GG frame legend; native move and resize, fullscreen and desktop-shell transitions",
+      "date": "2026-10-23",
+      "limitations": "Window actions and startup verified offscreen; header checked in a rendered preview. Full application restart required.",
+      "result": "PASS",
+      "tests": [
+        "test_window_chrome.py",
+        "test_desktop_settings.py",
+        "test_terminal_window_state.py",
+        "test_windows_desktop.py"
+      ]
+    },
     "media_frequency_display": {
       "date": "2026-10-22",
       "limitations": "No live station retest in the running application; Python backend requires app restart",

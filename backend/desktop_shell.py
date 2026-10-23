@@ -28,17 +28,17 @@ def apply_desktop_shell_window(window: object, enabled: bool) -> None:
         if callable(current_flags):
             try:
                 current = current_flags()
-                for flag in (
-                    Qt.WindowType.FramelessWindowHint,
-                    Qt.WindowType.WindowStaysOnBottomHint,
+                for flag, desired in (
+                    (Qt.WindowType.FramelessWindowHint, True),
+                    (Qt.WindowType.WindowStaysOnBottomHint, on),
                 ):
-                    if bool(current & flag) != on:
-                        set_flag(flag, on)
+                    if bool(current & flag) != desired:
+                        set_flag(flag, desired)
                         changed = True
             except RuntimeError:
                 return
         else:
-            set_flag(Qt.WindowType.FramelessWindowHint, on)
+            set_flag(Qt.WindowType.FramelessWindowHint, True)
             set_flag(Qt.WindowType.WindowStaysOnBottomHint, on)
             changed = True
     screen = None

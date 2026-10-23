@@ -12,10 +12,10 @@
     "gg-skills": 8,
     "gpt-knowledge": 93,
     "installation-and-packaging": 6,
-    "interface": 223,
+    "interface": 224,
     "native-engine": 1188,
     "shared-support": 54,
-    "tests": 361,
+    "tests": 362,
     "tools": 33
   },
   "files": [
@@ -83,24 +83,24 @@
       "path": "README.md",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 87535,
-      "sha256": "7888be726bace000c832adb1e1bac9ab69ba679c12a7ef8066279a20399c2cc4",
+      "bytes": 88491,
+      "sha256": "1766c71cb37260bc31ef21a8c840c70a9e3fe2d6be38ec7c1ce9d55f8d03a06a",
       "mode": "0o600"
     },
     {
       "path": "SOURCE-MANIFEST.json",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 489088,
-      "sha256": "119375bfa5b61a17401a772cc5e8d6397fa996a5593f5f4795b15f1be26d4440",
+      "bytes": 489396,
+      "sha256": "a8c04f461fae3fc96401b8eeba0a748706d37142170739fbc07214ef542a0061",
       "mode": "0o644"
     },
     {
       "path": "WINDOWS-PORT.json",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 50909,
-      "sha256": "26560da88ccdf699d0e23f5553ada498c35f647128b6f0c427d310568fceede1",
+      "bytes": 52266,
+      "sha256": "ffe65d98d5ca49a9799270c289c31b72c45ed145d752a444f5f63508d63896b4",
       "mode": "0o644"
     },
     {
@@ -571,8 +571,8 @@
       "path": "backend/desktop_shell.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 4503,
-      "sha256": "87454ccb2da81c904c52176b3e26a5f528a3d0566a7c0b701451fda215ebedca",
+      "bytes": 4538,
+      "sha256": "26fb7c4845e35452bb462bf94ef32f245e84275de5f06d4341a4f2d900e5f107",
       "mode": "0o644"
     },
     {
@@ -13979,8 +13979,8 @@
       "path": "qml/Main.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 150188,
-      "sha256": "69b0338432568f7488307a71df8b824fdad96ef6340e6f9b55cff00cfad66743",
+      "bytes": 151643,
+      "sha256": "beb32f8bf7876550bbe7e2ff5b4f86ddd6185a62277dc4c6612db020301c7f04",
       "mode": "0o644"
     },
     {
@@ -14493,6 +14493,14 @@
       "kind": "file",
       "bytes": 1260,
       "sha256": "227973726d6cd7676c2fba79e71b0727b77e4a8e7cf730781dfd9d356578477e",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/GgWindowChrome.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 5783,
+      "sha256": "b169192a69a2f19b015bcb48326b17bef9ee827dd6aba83fdfe190b7c8e954d7",
       "mode": "0o644"
     },
     {
@@ -19142,6 +19150,14 @@
       "bytes": 5757,
       "sha256": "9b96fa2eb1ac42f164863b7c225260759f1863ccab9fb49c00127ac93619ef71",
       "mode": "0o600"
+    },
+    {
+      "path": "tests/test_window_chrome.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 5859,
+      "sha256": "2eb9063be4ba35b71808ff9aaa83c92ab09a1f724054029253b46cabae295e32",
+      "mode": "0o644"
     },
     {
       "path": "tests/test_windows_blender_live.py",

@@ -1792,14 +1792,38 @@ ApplicationWindow {
         root.appFullscreen = !root.appFullscreen
     }
 
+    function toggleAppMaximized() {
+        if (root.surfaceHost && root.surfaceHost.prepareWindowModeChange)
+            root.surfaceHost.prepareWindowModeChange()
+        if (root.appFullscreen) {
+            root.appFullscreen = false
+            return
+        }
+        if (root.desktopShell) {
+            root.desktopShell = false
+            return
+        }
+        if (root.visibility === Window.Maximized) {
+            root.showNormal()
+            // A window first shown maximized may have no saved normal size yet.
+            if (root.width < root.minimumWidth)
+                root.width = Math.max(root.minimumWidth, 1280)
+            if (root.height < root.minimumHeight)
+                root.height = Math.max(root.minimumHeight, 800)
+        } else {
+            root.showMaximized()
+        }
+    }
+
     title: "GG AI Desktop · Alpha"
     width: 1280
     height: 800
     minimumWidth: 820
     minimumHeight: 620
-    flags: root.desktopShell && !root.appFullscreen
-        ? (Qt.FramelessWindowHint | Qt.WindowStaysOnBottomHint)
-        : Qt.Window
+    // The frame's legend row supplies the window title and controls in all modes.
+    flags: Qt.Window | Qt.FramelessWindowHint
+        | (root.desktopShell && !root.appFullscreen
+           ? Qt.WindowStaysOnBottomHint : 0)
     visibility: root.appFullscreen
         ? Window.FullScreen
         : (root.desktopShell ? Window.Windowed : Window.Maximized)
@@ -2436,7 +2460,7 @@ ApplicationWindow {
         anchors.rightMargin: 12
         anchors.topMargin: 12
         height: 54
-        leftLegend: "GG AI DESKTOP"
+        leftLegend: "GG AI DESKTOP · ALPHA"
         backgroundColor: root.surface
         borderColor: root.frameBorder
         radius: root.frameRadius
@@ -2713,6 +2737,22 @@ ApplicationWindow {
                 }
             }
         }
+    }
+
+    GgWindowChrome {
+        anchors.fill: parent
+        z: 20000
+        targetWindow: root
+        titleFrame: topBar
+        backgroundColor: root.surface
+        foregroundColor: topBar.leftLegendColor
+        desktopShell: root.desktopShell
+        fullscreen: root.appFullscreen
+        onWindowModeChangeRequested: {
+            if (root.surfaceHost && root.surfaceHost.prepareWindowModeChange)
+                root.surfaceHost.prepareWindowModeChange()
+        }
+        onMaximizeRequested: root.toggleAppMaximized()
     }
 
     Item {
