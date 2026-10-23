@@ -218,6 +218,7 @@ class ChatSurfaceHost(QObject):
     mediaStateChanged = Signal()
     liveVisionStatusChanged = Signal()
     mediaSeekChanged = Signal(float)
+    mediaVideoSourceReady = Signal(int, str, str)
     terminalScrollChanged = Signal(str, int, int, int)
     osintUpdated = Signal(str)
     osintNearbyUpdated = Signal(str)
@@ -1695,7 +1696,8 @@ class ChatSurfaceHost(QObject):
         from backend import blender_contract
 
         try:
-            payload = blender_contract.status_payload()
+            # Windows EXT probes on its worker; never wait on a socket from QML.
+            payload = blender_contract.status_payload(probe=os.name != "nt")
         except Exception as exc:
             return json.dumps(
                 {
@@ -1706,6 +1708,8 @@ class ChatSurfaceHost(QObject):
         embed = self._external_embed
         payload["attached"] = bool(embed is not None and embed.attached())
         payload["running"] = bool(embed is not None and embed.running())
+        if os.name == "nt" and embed is not None:
+            payload["sidecar_up"] = embed.sidecar_up()
         payload["error"] = str(embed.error()) if embed is not None else ""
         return json.dumps(payload, separators=(",", ":"))
 
@@ -2001,6 +2005,22 @@ class ChatSurfaceHost(QObject):
         if changed:
             self.mediaStateChanged.emit()
 
+    @Slot(str, int, int)
+    def mediaResolveVideoSource(self, source: str, attempt: int, ticket: int) -> None:
+        from backend.media_hls import HlsVariantResolver
+        resolver = getattr(self, "_media_hls_resolver", None)
+        if resolver is None:
+            resolver = HlsVariantResolver(self)
+            resolver.sourceReady.connect(self.mediaVideoSourceReady.emit)
+            self._media_hls_resolver = resolver
+        resolver.resolve(source, attempt, ticket)
+
+    @Slot()
+    def mediaCancelVideoSource(self) -> None:
+        resolver = getattr(self, "_media_hls_resolver", None)
+        if resolver is not None:
+            resolver.cancel()
+
     @Slot(float, result=str)
     def mediaSeek(self, seconds: float) -> str:
         payload = media_host.seek(float(seconds))
@@ -2036,6 +2056,21 @@ class ChatSurfaceHost(QObject):
             return self._media_changed(payload)
         except (TypeError, ValueError) as exc:
             return json.dumps({"error": str(exc)})
+
+    @Slot(result=str)
+    def appAudioStatus(self) -> str:
+        from backend.app_audio import service
+        return json.dumps(service().status(), separators=(",", ":"))
+
+    @Slot(int)
+    def appPreviewAudioVolume(self, volume: int) -> None:
+        from backend.app_audio import service
+        service().set_volume(volume, persist=False)
+
+    @Slot(int, result=str)
+    def appSetAudioVolume(self, volume: int) -> str:
+        from backend.app_audio import service
+        return json.dumps(service().set_volume(volume), separators=(",", ":"))
 
     @Slot(str, result=str)
     def mediaSetEqPreset(self, name: str) -> str:
@@ -5030,6 +5065,10 @@ class ChatSurfaceHost(QObject):
         self._qml_rebind_timer.start()
 
     def _qml_reload_safety_barrier(self) -> None:
+        external = getattr(self, "_external_embed", None)
+        if external is not None:
+            external.stop()
+            self._external_embed = None
         self.showStartupChat()
         for identity in list(self._sessions):
             self._close(identity)
@@ -5853,6 +5892,9 @@ class ChatSurfaceHost(QObject):
         if shape:
             root.setProperty("deskShape", shape)
         root.setProperty("deskFromChrome", False)
+        embed = self._external_embed
+        if os.name == "nt" and embed is not None and hasattr(embed, "move_pointer"):
+            embed.move_pointer(x, y, shape)
 
     def _desk_current_cursor(self) -> tuple[int, int]:
         root = self._qml_root
@@ -6225,6 +6267,9 @@ class ChatSurfaceHost(QObject):
         return False
 
     def _desk_send_move(self, x: int, y: int) -> None:
+        embed = self._external_embed
+        if os.name == "nt" and embed is not None and embed.move_pointer(x, y):
+            return
         from PySide6.QtCore import QCoreApplication, QEvent, QPointF, Qt
         from PySide6.QtGui import QMouseEvent
 
@@ -6245,6 +6290,9 @@ class ChatSurfaceHost(QObject):
         )
 
     def _desk_send_click(self, x: int, y: int, button: str) -> None:
+        embed = self._external_embed
+        if os.name == "nt" and embed is not None and embed.click(x, y, button):
+            return
         from PySide6.QtCore import QCoreApplication, QEvent, QPointF, Qt
         from PySide6.QtGui import QMouseEvent
 
@@ -6276,6 +6324,9 @@ class ChatSurfaceHost(QObject):
             )
 
     def _desk_send_key(self, key: str) -> None:
+        embed = self._external_embed
+        if os.name == "nt" and embed is not None and embed.key(key):
+            return
         from PySide6.QtCore import QCoreApplication, QEvent, Qt
         from PySide6.QtGui import QKeyEvent
 
@@ -6314,6 +6365,9 @@ class ChatSurfaceHost(QObject):
             )
 
     def _desk_send_char(self, ch: str) -> None:
+        embed = self._external_embed
+        if os.name == "nt" and embed is not None and embed.char(ch):
+            return
         from PySide6.QtCore import QCoreApplication, QEvent, Qt
         from PySide6.QtGui import QKeyEvent, QKeySequence
 
@@ -6451,6 +6505,10 @@ class ChatSurfaceHost(QObject):
         self._torlink_embed = None
         if torlink is not None:
             torlink.stop()
+        external = self._external_embed
+        self._external_embed = None
+        if external is not None:
+            external.stop()
         draw = self._draw_embed
         self._draw_embed = None
         if draw is not None:

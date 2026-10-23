@@ -20,7 +20,7 @@ from typing import Any
 
 SCHEMA = "gg.ai-desktop.blender-status.v1"
 SIDECAR_HOST = "127.0.0.1"
-SIDECAR_PORT = 19876
+SIDECAR_PORT = int(os.environ.get("GG_BLENDER_SIDECAR_PORT", "19876"))
 SIDECAR_TIMEOUT_S = 2.0
 _SLOW_CMDS = {"inspect": 30.0, "turnaround": 90.0, "deform_rig": 30.0, "clean": 60.0, "exec": 240.0}
 SCREENSHOT_PATH = Path(platform_path("/tmp/gg-blender-view.png"))
@@ -93,21 +93,10 @@ def blender_bin() -> str:
 
 
 def sidecar_reachable() -> bool:
-    try:
-        with socket.create_connection((SIDECAR_HOST, SIDECAR_PORT), SIDECAR_TIMEOUT_S) as sock:
-            sock.settimeout(SIDECAR_TIMEOUT_S)
-            sock.sendall(json.dumps({"cmd": "ping"}).encode("utf-8") + b"\n")
-            raw = sock.makefile("r", encoding="utf-8").readline()
-    except OSError:
-        return False
-    try:
-        payload = json.loads(raw or "{}")
-    except json.JSONDecodeError:
-        return False
-    return bool(payload.get("ok"))
+    return sidecar_call("ping", timeout=SIDECAR_TIMEOUT_S).get("ok") is True
 
 
-def sidecar_call(cmd: str, **fields: Any) -> dict[str, Any]:
+def sidecar_call(cmd: str, *, timeout: float | None = None, **fields: Any) -> dict[str, Any]:
     """Send one JSON command to the live Blender sidecar."""
     wanted = str(cmd or "").strip().lower()
     if not wanted:
@@ -120,16 +109,19 @@ def sidecar_call(cmd: str, **fields: Any) -> dict[str, Any]:
     if len(encoded) > 64 * 1024:
         return {"ok": False, "error": "BLENDER_CMD_TOO_LARGE"}
     try:
-        with socket.create_connection((SIDECAR_HOST, SIDECAR_PORT), SIDECAR_TIMEOUT_S) as sock:
-            sock.settimeout(_SLOW_CMDS.get(wanted, 8.0))
+        deadline = timeout if timeout is not None else _SLOW_CMDS.get(wanted, 8.0)
+        with socket.create_connection((SIDECAR_HOST, SIDECAR_PORT), min(SIDECAR_TIMEOUT_S, deadline)) as sock:
+            sock.settimeout(deadline)
             sock.sendall(encoded + b"\n")
-            raw = sock.makefile("r", encoding="utf-8").readline()
+            raw = sock.makefile("r", encoding="utf-8").readline(2 * 1024 * 1024 + 1)
     except OSError as exc:
         return {
             "ok": False,
             "error": "BLENDER_SIDECAR_UNREACHABLE",
             "detail": type(exc).__name__,
         }
+    if len(raw) > 2 * 1024 * 1024:
+        return {"ok": False, "error": "BLENDER_REPLY_TOO_LARGE"}
     try:
         result = json.loads(raw or "{}")
     except json.JSONDecodeError:
@@ -139,7 +131,7 @@ def sidecar_call(cmd: str, **fields: Any) -> dict[str, Any]:
     return result
 
 
-def status_payload() -> dict[str, Any]:
+def status_payload(*, probe: bool = True) -> dict[str, Any]:
     path = blender_bin()
     return {
         "schema": SCHEMA,
@@ -149,7 +141,7 @@ def status_payload() -> dict[str, Any]:
         "sidecar_script": str(SIDECAR_SCRIPT) if SIDECAR_SCRIPT.is_file() else "",
         "sidecar_host": SIDECAR_HOST,
         "sidecar_port": SIDECAR_PORT,
-        "sidecar_up": sidecar_reachable() if path else False,
+        "sidecar_up": sidecar_reachable() if path and probe else False,
         "screenshot_path": str(SCREENSHOT_PATH),
         "tokens": ["blender"],
         "detail": (

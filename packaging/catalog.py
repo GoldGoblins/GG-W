@@ -64,7 +64,7 @@ def selected_paths(project: Path = PROJECT) -> list[str]:
     selected.update(LINKS)
     selected.update(p.name for p in project.glob("gg-*.cmd") if p.is_file())
     # Only the application's own built Windows ABIs may join a source export.
-    for name in ("gg_world", "gg_presentation", "gg_physics", "gg_engine_ui", "gg_engine_formats", "gg_engine_client", "gg_webview"):
+    for name in ("gg_world", "gg_presentation", "gg_physics", "gg_engine_ui", "gg_engine_formats", "gg_engine_client", "gg_webview", "gg_app_audio"):
         selected.update(p.relative_to(project).as_posix() for p in
                         (project / "backend/native").glob("windows-*/" + name + ".dll") if p.is_file())
     return sorted(p for p in selected if p != CATALOG_NAME and permitted(p))

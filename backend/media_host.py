@@ -91,6 +91,7 @@ _qml_position = 0.0
 _qml_duration = 0.0
 _qml_playing = False
 _qml_buffering = False
+_qml_generation = 0
 _live_json = ""
 _live_payload: dict[str, Any] = {}
 _live_lock = threading.Lock()
@@ -741,12 +742,15 @@ def _play_libretro(item: dict[str, Any]) -> dict[str, Any]:
 
 def _play_qml(item: dict[str, Any]) -> dict[str, Any]:
     global _item, _kind, _backend, _paused, _qml_position, _qml_duration
-    global _qml_playing, _qml_buffering
+    global _qml_playing, _qml_buffering, _qml_generation
     _halt_audio()
     _qml_position = 0.0
     _qml_duration = 0.0
     _qml_playing = False
     _qml_buffering = True
+    # An explicit Play on the same channel must reset an exhausted decoder.
+    # Clock/status updates keep this generation unchanged.
+    _qml_generation += 1
     _paused = False
     _kind = "video"
     _backend = "qml"
@@ -1173,7 +1177,8 @@ def report_player_state(playing: bool, buffering: bool) -> bool:
     changed = (_qml_playing, _qml_buffering) != (next_playing, next_buffering)
     _qml_playing = next_playing
     _qml_buffering = next_buffering
-    publish_live()
+    if changed:
+        publish_live()
     return changed
 
 
@@ -1557,6 +1562,7 @@ def status_payload(live: bool = False, *, pump: bool = False) -> dict[str, Any]:
         "running": playing or paused or bool(_backend) or buffering,
         "player": player,
         "backend": report_backend or player.lower(),
+        "playback_generation": _qml_generation if _backend == "qml" else 0,
         "pid": 0 if live else player_pid(),
         "screen": screen,
         "kind": _kind,

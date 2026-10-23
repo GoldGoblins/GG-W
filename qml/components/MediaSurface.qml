@@ -19,8 +19,16 @@ Item {
     property real _clockStamp: 0
     property bool playerWantsPlay: false
     property int playerRetryCount: 0
-    property real watchdogPosition: -1
-    property int watchdogIdleTicks: 0
+    readonly property int playerRetryLimit: 5
+    property bool playerRetryExhausted: false
+    property bool playerResetting: false
+    property bool playerEnded: false
+    property bool playerResolving: false
+    property int playerResolveTicket: 0
+    property int playerGeneration: -1
+    property real playerStartedAt: 0
+    property real playerLastFrameAt: 0
+    property real playerStableSince: 0
     property bool videoFullscreen: false
     signal nowPlayingChanged(string label)
 
@@ -43,6 +51,9 @@ Item {
     readonly property bool screenOn: String(root.status.screen || "") === "EMBED"
     readonly property var now: root.status.now || {}
     readonly property bool qmlVideo: String(root.status.backend || "") === "qml"
+    readonly property bool liveVideo: root.qmlVideo
+        && (root.now.stream === true || root.now.media === "stream")
+        && /^https?:\/\//i.test(root.lastPlayUrl)
     readonly property bool libretro: String(root.status.backend || "") === "libretro"
     readonly property bool showDisplay:
         root.mode === "TV"
@@ -169,135 +180,232 @@ Item {
         if (!root.surfaceHost || !root.surfaceHost.mediaReportPlayerState)
             return
         var status = holePlayer.mediaStatus
+        var fresh = root.playerLastFrameAt > 0
+            && Date.now() - root.playerLastFrameAt < 3000
+        var playing = root.qmlVideo
+            && root.status.paused !== true
+            && root.playerWantsPlay && !root.playerRetryExhausted
+            && holePlayer.error === MediaPlayer.NoError
+            && holePlayer.playbackState === MediaPlayer.PlayingState
+            && fresh
+        // BufferingMedia can still deliver video. Only show a stall when
+        // frames actually stop, not whenever the network buffer refills.
         var buffering = root.qmlVideo
             && root.status.paused !== true
-            && (
-                status === MediaPlayer.NoMedia
+            && root.playerWantsPlay && !root.playerRetryExhausted
+            && !playing && (
+                playerRetryTimer.running || root.playerResolving
+                || holePlayer.playbackState === MediaPlayer.PlayingState
+                || status === MediaPlayer.LoadedMedia
+                || status === MediaPlayer.NoMedia
                 || status === MediaPlayer.LoadingMedia
                 || status === MediaPlayer.BufferingMedia
                 || status === MediaPlayer.StalledMedia
             )
-        var playing = root.qmlVideo
-            && root.status.paused !== true
-            && holePlayer.playbackState === MediaPlayer.PlayingState
-            && !buffering
         root.surfaceHost.mediaReportPlayerState(playing, buffering)
     }
 
     function schedulePlayerRetry() {
-        if (!root.qmlVideo || root.status.paused === true || !root.lastPlayUrl)
+        if (!root.liveVideo || root.status.paused === true
+            || !root.playerWantsPlay || root.playerResetting || root.playerResolving
+            || root.playerRetryExhausted)
             return
         if (playerRetryTimer.running)
             return
-        playerRetryTimer.interval = Math.min(5000, 700 + root.playerRetryCount * 450)
+        if (root.playerRetryCount >= root.playerRetryLimit) {
+            root.playerRetryExhausted = true
+            root.playerWantsPlay = false
+            root.playerError = "Sändningen är inte tillgänglig. Välj kanalen igen för att försöka på nytt."
+            root.playerResetting = true
+            holePlayer.stop()
+            root.playerResetting = false
+            root.reportPlayerState()
+            return
+        }
+        playerRetryTimer.interval = Math.min(10000, 1000 * Math.pow(2, root.playerRetryCount))
+        root.playerStableSince = 0
+        root.playerError = "Återansluter · " + (root.playerRetryCount + 1) + "/" + root.playerRetryLimit
         playerRetryTimer.start()
-    }
-
-    function resetPlayerWatchdog() {
-        root.watchdogPosition = -1
-        root.watchdogIdleTicks = 0
-    }
-
-    function watchPlayer() {
-        if (!root.qmlVideo || root.status.paused === true || !root.playerWantsPlay) {
-            root.resetPlayerWatchdog()
-            return
-        }
-        var status = holePlayer.mediaStatus
-        if (status === MediaPlayer.StalledMedia
-            || status === MediaPlayer.BufferingMedia) {
-            root.watchdogIdleTicks += 1
-            if (root.watchdogIdleTicks >= 12) {
-                root.watchdogIdleTicks = 0
-                root.schedulePlayerRetry()
-            }
-            return
-        }
-        if (holePlayer.playbackState !== MediaPlayer.PlayingState) {
-            root.resetPlayerWatchdog()
-            return
-        }
-        var position = Number(holePlayer.position || 0)
-        var duration = Number(holePlayer.duration || 0)
-        // Some live feeds expose neither a duration nor a clock.  Do not
-        // restart those merely because their position remains zero.
-        if (position <= 0 && duration <= 0) {
-            root.resetPlayerWatchdog()
-            return
-        }
-        if (root.watchdogPosition >= 0
-            && Math.abs(position - root.watchdogPosition) < 0.5)
-            root.watchdogIdleTicks += 1
-        else
-            root.watchdogIdleTicks = 0
-        root.watchdogPosition = position
-        if (root.watchdogIdleTicks >= 12) {
-            root.watchdogIdleTicks = 0
-            root.schedulePlayerRetry()
-        }
-    }
-
-    function retryPlayer() {
-        if (!root.qmlVideo || root.status.paused === true || !root.lastPlayUrl)
-            return
-        root.playerRetryCount += 1
-        root.resetPlayerWatchdog()
-        var url = root.lastPlayUrl
-        holePlayer.stop()
-        holePlayer.source = ""
-        holePlayer.source = url
-        root.playerWantsPlay = true
         root.reportPlayerState()
     }
 
+    function resetPlayerWatchdog() {
+        root.playerStartedAt = Date.now()
+        root.playerLastFrameAt = 0
+        root.playerStableSince = 0
+    }
+
+    function cancelPlayerResolution() {
+        root.playerResolveTicket += 1
+        if (root.playerResolving && root.surfaceHost && root.surfaceHost.mediaCancelVideoSource)
+            root.surfaceHost.mediaCancelVideoSource()
+        root.playerResolving = false
+    }
+
+    function preparePlayerSource() {
+        if (!root.playerWantsPlay || root.status.paused === true || !root.lastPlayUrl)
+            return
+        if (root.liveVideo && root.surfaceHost && root.surfaceHost.mediaResolveVideoSource) {
+            root.playerResolving = true
+            root.playerResolveTicket += 1
+            root.resetPlayerWatchdog()
+            root.surfaceHost.mediaResolveVideoSource(root.lastPlayUrl,
+                root.playerRetryCount, root.playerResolveTicket)
+            root.reportPlayerState()
+        } else {
+            root.loadPlayerSource(root.lastPlayUrl)
+        }
+    }
+
+    function noteVideoFrame() {
+        if (!root.qmlVideo || root.playerResetting || !root.playerWantsPlay
+            || root.status.paused === true || holePlayer.error !== MediaPlayer.NoError
+            || holePlayer.playbackState !== MediaPlayer.PlayingState)
+            return
+        var stamp = Date.now()
+        var wasWaiting = !root.playerLastFrameAt
+            || stamp - root.playerLastFrameAt >= 3000 || playerRetryTimer.running
+        if (!root.playerStableSince || stamp - root.playerLastFrameAt >= 3000)
+            root.playerStableSince = stamp
+        root.playerLastFrameAt = stamp
+        // A recovered stream must not be torn down by an old retry timer.
+        playerRetryTimer.stop()
+        if (root.playerResolving)
+            root.cancelPlayerResolution()
+        root.playerError = ""
+        // Loading a manifest is not success: replenish the retry budget
+        // only after 30 seconds of continuous decoded video.
+        if (stamp - root.playerStableSince >= 30000)
+            root.playerRetryCount = 0
+        if (wasWaiting)
+            root.reportPlayerState()
+    }
+
+    function watchPlayer() {
+        if (!root.qmlVideo || root.status.paused === true || !root.playerWantsPlay
+            || root.playerResetting || root.playerResolving || playerRetryTimer.running)
+            return
+        root.reportPlayerState()
+        var status = holePlayer.mediaStatus
+        if (status === MediaPlayer.EndOfMedia && !root.liveVideo) {
+            root.playerEnded = true
+            root.playerWantsPlay = false
+            root.reportPlayerState()
+            return
+        }
+        var loading = status === MediaPlayer.LoadingMedia || status === MediaPlayer.NoMedia
+        var idle = Date.now() - (root.playerLastFrameAt || root.playerStartedAt)
+        // Give a slow HLS manifest time to load and short stalls time to
+        // refill. Frames, rather than the media clock, detect frozen video
+        // even on live feeds whose position/duration are always zero.
+        if (holePlayer.error !== MediaPlayer.NoError
+            || status === MediaPlayer.InvalidMedia || status === MediaPlayer.EndOfMedia
+            || idle >= (loading ? 30000 : 15000))
+            root.schedulePlayerRetry()
+    }
+
+    function loadPlayerSource(url) {
+        root.playerResetting = true
+        root.resetPlayerWatchdog()
+        holePlayer.stop()
+        holePlayer.source = ""
+        // Qt 6.10+ supports a socket timeout. Keep Qt's robust buffering
+        // defaults; low-latency streaming deliberately reduces that buffer.
+        if (holePlayer.playbackOptions !== undefined)
+            holePlayer.playbackOptions.networkTimeoutMs = 15000
+        holePlayer.source = url
+        root.playerResetting = false
+        root.playWhenReady()
+        root.reportPlayerState()
+    }
+
+    function playWhenReady() {
+        if (root.playerResetting || !root.qmlVideo || !root.playerWantsPlay
+            || root.playerRetryExhausted || root.status.paused === true)
+            return
+        if ((holePlayer.mediaStatus === MediaPlayer.LoadedMedia
+                || holePlayer.mediaStatus === MediaPlayer.BufferedMedia)
+            && holePlayer.playbackState !== MediaPlayer.PlayingState)
+            holePlayer.play()
+    }
+
+    function retryPlayer() {
+        if (!root.liveVideo || root.status.paused === true || !root.playerWantsPlay
+            || root.playerResetting || root.playerRetryExhausted)
+            return
+        if (holePlayer.error === MediaPlayer.NoError && root.playerLastFrameAt > 0
+            && Date.now() - root.playerLastFrameAt < 3000)
+            return
+        root.playerRetryCount += 1
+        root.preparePlayerSource()
+    }
+
     function syncPlayer() {
-        if (!root.playerReady)
+        if (!root.playerReady || root.playerResetting)
             return
         if (!root.qmlVideo) {
+            root.cancelPlayerResolution()
             root.videoFullscreen = false
             playerRetryTimer.stop()
             root.resetPlayerWatchdog()
             root.playerWantsPlay = false
             root.lastPlayUrl = ""
+            root.playerGeneration = -1
+            root.playerRetryExhausted = false
+            root.playerEnded = false
+            root.playerResetting = true
             holePlayer.stop()
             holePlayer.source = ""
+            root.playerResetting = false
             if (root.mode !== "FETCH")
                 root.playerError = ""
             return
         }
         var url = root.toMediaUrl(String((root.status.now || {}).source || ""))
-        holeAudio.volume = Math.max(0, Math.min(1, Number(root.status.volume || 70) / 100))
-        if (url !== root.lastPlayUrl) {
+        var volume = root.status.volume === undefined ? 70 : Number(root.status.volume)
+        holeAudio.volume = Math.max(0, Math.min(1, volume / 100))
+        var generation = Number(root.status.playback_generation || 0)
+        if (url !== root.lastPlayUrl || generation !== root.playerGeneration) {
             playerRetryTimer.stop()
-            root.resetPlayerWatchdog()
+            root.cancelPlayerResolution()
             root.lastPlayUrl = url
+            root.playerGeneration = generation
             root.playerRetryCount = 0
+            root.playerRetryExhausted = false
+            root.playerEnded = false
             root.playerWantsPlay = root.status.paused !== true && !!url
             root.playerError = ""
+            // A previous channel must not keep sending frames while this
+            // channel's manifest is being resolved.
+            root.playerResetting = true
             holePlayer.stop()
             holePlayer.source = ""
-            holePlayer.source = url
+            root.playerResetting = false
+            root.preparePlayerSource()
             if (root.status.paused === true)
                 holePlayer.pause()
             root.reportPlayerState()
             return
         }
         if (root.status.paused === true) {
+            playerRetryTimer.stop()
+            root.cancelPlayerResolution()
             root.playerWantsPlay = false
             if (holePlayer.playbackState !== MediaPlayer.PausedState)
                 holePlayer.pause()
             root.reportPlayerState()
             return
         }
-        if (!url)
+        if (!url || root.playerRetryExhausted || root.playerEnded || root.playerResolving)
             return
+        if (!root.playerWantsPlay)
+            root.resetPlayerWatchdog()
         root.playerWantsPlay = true
-        if (
-            (holePlayer.mediaStatus === MediaPlayer.LoadedMedia
-                || holePlayer.mediaStatus === MediaPlayer.BufferedMedia)
-            && holePlayer.playbackState !== MediaPlayer.PlayingState
-        )
-            holePlayer.play()
+        if (!String(holePlayer.source)) {
+            root.preparePlayerSource()
+            return
+        }
+        root.playWhenReady()
         root.reportPlayerState()
     }
 
@@ -316,6 +424,12 @@ Item {
     }
 
     onStatusJsonChanged: {
+        // Let status/now/backend bindings settle before touching the decoder.
+        // Reports can synchronously publish another status through Python.
+        Qt.callLater(root.syncStatusPlayer)
+    }
+
+    function syncStatusPlayer() {
         root.rememberCatalog()
         root.syncPlayer()
     }
@@ -326,6 +440,8 @@ Item {
             fullscreenWindow.transientParent = Window.window
         root.syncPlayer()
     }
+
+    Component.onDestruction: root.cancelPlayerResolution()
 
     function reportClock() {
         if (!root.qmlVideo || !root.surfaceHost || !root.surfaceHost.mediaReportClock)
@@ -344,7 +460,7 @@ Item {
     }
 
     Connections {
-        target: root.surfaceHost
+        target: root.surfaceHost || null
         ignoreUnknownSignals: true
         function onMediaStateChanged() {
             if (!root.visible)
@@ -359,6 +475,15 @@ Item {
                 return
             holePlayer.position = Math.max(0, Number(seconds) * 1000)
         }
+        function onMediaVideoSourceReady(ticket, original, selected) {
+            if (!root.playerResolving || ticket !== root.playerResolveTicket
+                || original !== root.lastPlayUrl || !root.qmlVideo || root.status.paused === true)
+                return
+            root.playerResolving = false
+            if (root.playerLastFrameAt > 0 && Date.now() - root.playerLastFrameAt < 3000)
+                return
+            root.loadPlayerSource(selected)
+        }
     }
 
     Timer {
@@ -372,16 +497,23 @@ Item {
 
     Timer {
         id: playerRetryTimer
+        objectName: "mediaVideoRetryTimer"
         repeat: false
         onTriggered: root.retryPlayer()
     }
 
     Timer {
         id: playerWatchdogTimer
+        objectName: "mediaVideoWatchdogTimer"
         interval: 1000
-        running: root.visible && root.qmlVideo && root.playerWantsPlay
+        running: root.qmlVideo && root.playerWantsPlay
         repeat: true
         onTriggered: root.watchPlayer()
+    }
+
+    Connections {
+        target: root.videoFullscreen ? fullscreenVideo.videoSink : holeVideo.videoSink
+        function onVideoFrameChanged() { root.noteVideoFrame() }
     }
 
     onVisibleChanged: {
@@ -749,35 +881,40 @@ Item {
 
                     MediaPlayer {
                         id: holePlayer
+                        objectName: "mediaVideoPlayer"
                         videoOutput: root.videoFullscreen ? fullscreenVideo : holeVideo
                         audioOutput: holeAudio
                         onErrorOccurred: function(error, errorString) {
-                            root.playerError = String(errorString || "VIDEO ERROR")
+                            if (root.playerResetting)
+                                return
+                            // Decoder messages can contain signed stream URLs.
+                            root.playerError = "Kunde inte spela upp sändningen."
                             root.reportPlayerState()
                             root.schedulePlayerRetry()
                         }
                         onMediaStatusChanged: {
-                            root.reportPlayerState()
-                            if (!root.qmlVideo || root.status.paused === true)
+                            if (root.playerResetting || !root.qmlVideo || root.status.paused === true)
                                 return
                             if (
                                 holePlayer.mediaStatus === MediaPlayer.LoadedMedia
                                 || holePlayer.mediaStatus === MediaPlayer.BufferedMedia
                             ) {
-                                root.playerError = ""
-                                root.playerRetryCount = 0
-                                if (root.playerWantsPlay
-                                    && holePlayer.playbackState !== MediaPlayer.PlayingState)
-                                    holePlayer.play()
-                            } else if (holePlayer.mediaStatus === MediaPlayer.StalledMedia) {
-                                root.schedulePlayerRetry()
+                                root.playWhenReady()
                             } else if (holePlayer.mediaStatus === MediaPlayer.InvalidMedia) {
                                 root.schedulePlayerRetry()
                             } else if (holePlayer.mediaStatus === MediaPlayer.EndOfMedia && root.lastPlayUrl) {
-                                root.schedulePlayerRetry()
+                                if (root.liveVideo)
+                                    root.schedulePlayerRetry()
+                                else {
+                                    root.playerEnded = true
+                                    root.playerWantsPlay = false
+                                }
                             }
+                            root.reportPlayerState()
                         }
                         onPlaybackStateChanged: {
+                            if (root.playerResetting)
+                                return
                             root.reportPlayerState()
                             if (root.qmlVideo
                                 && root.playerWantsPlay
@@ -874,11 +1011,7 @@ Item {
                         anchors.top: parent.top
                         anchors.rightMargin: 8
                         anchors.topMargin: root.qmlVideo ? 36 : 8
-                        active: root.qmlVideo && (
-                            holePlayer.mediaStatus === MediaPlayer.LoadingMedia
-                            || holePlayer.mediaStatus === MediaPlayer.BufferingMedia
-                            || holePlayer.mediaStatus === MediaPlayer.StalledMedia
-                        )
+                        active: root.qmlVideo && root.streamBuffering
                         cell: 6
                     }
 

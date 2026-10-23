@@ -1,0 +1,9 @@
+{
+  "schema": "gg.app-audio-build.v1",
+  "abi": 1,
+  "source_sha256": "42a235ef4b487d4245d443f89d094dd00a90e21d870aef1fee80096d7ac3e780",
+  "binary_sha256": "9f49e39d96458b524d827061ad316bfe9ec2e501ec76c0796a8ae646e12543ed",
+  "binary_bytes": 39936,
+  "compiler": "MSVC",
+  "scope": "APPLICATION_PROCESS_TREE_ONLY"
+}

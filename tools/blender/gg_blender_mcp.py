@@ -8,6 +8,7 @@ chat can read the image; they are not inlined (MCP output is size-capped).
 from __future__ import annotations
 
 import json
+import argparse
 import sys
 from pathlib import Path
 from typing import Any
@@ -24,9 +25,10 @@ from backend.blender_contract import (  # noqa: E402
 )
 
 
-PROTOCOL = "2024-11-05"
+PROTOCOL = "2025-06-18"
 SERVER_NAME = "gg-blender"
-SERVER_VERSION = "1.0.0"
+SERVER_VERSION = "1.1.0"
+_legacy_framing = False
 
 
 def _text(payload: Any) -> dict[str, Any]:
@@ -34,7 +36,10 @@ def _text(payload: Any) -> dict[str, Any]:
         body = payload
     else:
         body = json.dumps(payload, indent=2, ensure_ascii=True)
-    return {"content": [{"type": "text", "text": body[:18000]}]}
+    result = {"content": [{"type": "text", "text": body[:18000]}]}
+    if isinstance(payload, dict) and payload.get("ok") is False:
+        result["isError"] = True
+    return result
 
 
 def _error(code: str, message: str) -> dict[str, Any]:
@@ -45,6 +50,24 @@ def _error(code: str, message: str) -> dict[str, Any]:
 
 
 TOOLS = [
+    {
+        "name": "input",
+        "description": "Forward GG AI Desktop's own agent mouse and keyboard events into its visible Blender window.",
+        "inputSchema": {
+            "type": "object", "properties": {
+                "events": {"type": "array", "minItems": 1, "maxItems": 32,
+                           "items": {"type": "object", "properties": {
+                               "action": {"type": "string", "enum": ["MOVE","CLICK","PRESS","RELEASE","KEY","TYPE","HIDE"]},
+                               "x": {"type":"number"}, "y": {"type":"number"},
+                               "button": {"type":"string", "enum":["left","right","middle"]},
+                               "key": {"type":"string"}, "text": {"type":"string"},
+                               "shape": {"type":"string"}, "ctrl": {"type":"boolean"},
+                               "shift": {"type":"boolean"}, "alt": {"type":"boolean"}},
+                               "required":["action"]}},
+                "target_pid": {"type":"integer"},
+            }, "required": ["events"],
+        },
+    },
     {
         "name": "status",
         "description": (
@@ -177,10 +200,17 @@ TOOLS = [
 def _call_tool(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
     wanted = str(name or "").strip()
     args = arguments if isinstance(arguments, dict) else {}
+    tool = next((tool for tool in TOOLS if tool["name"] == wanted), None)
+    if tool is None:
+        return _error("BLENDER_TOOL_UNKNOWN", wanted)
+    if set(args) - set(tool["inputSchema"].get("properties", {})):
+        return _error("BLENDER_ARGUMENT_UNKNOWN", wanted)
     if wanted == "status":
         payload = status_payload()
         payload["bin_ok"] = bool(blender_bin())
         return _text(payload)
+    if wanted == "input":
+        return _text(sidecar_call("input", events=args.get("events"), target_pid=args.get("target_pid")))
     if wanted == "scene":
         return _text(sidecar_call("scene"))
     if wanted == "screenshot":
@@ -235,11 +265,14 @@ def _handle(message: dict[str, Any]) -> dict[str, Any] | None:
     if method.startswith("notifications/"):
         return None
     if method == "initialize":
+        requested = (message.get("params") or {}).get("protocolVersion")
         return {
             "jsonrpc": "2.0",
             "id": msg_id,
             "result": {
-                "protocolVersion": PROTOCOL,
+                "protocolVersion": requested if requested in {
+                    "2024-11-05", "2025-03-26", "2025-06-18", "2025-11-25"
+                } else PROTOCOL,
                 "capabilities": {"tools": {"listChanged": False}},
                 "serverInfo": {"name": SERVER_NAME, "version": SERVER_VERSION},
             },
@@ -262,9 +295,24 @@ def _handle(message: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def _read_message() -> dict[str, Any] | None:
+    global _legacy_framing
+    first = sys.stdin.buffer.readline(1024 * 1024 + 1)
+    if not first:
+        return None
+    if len(first) > 1024 * 1024:
+        raise ValueError("MCP message limit")
+    # Standard MCP stdio is newline-delimited JSON-RPC. Retain the old
+    # Content-Length framing only for existing GG bridge clients.
+    if first.lstrip().startswith((b"{", b"[")):
+        _legacy_framing = False
+        payload = json.loads(first)
+        if not isinstance(payload, dict):
+            raise ValueError("MCP object required")
+        return payload
+    _legacy_framing = True
     headers: dict[str, str] = {}
+    line = first
     while True:
-        line = sys.stdin.buffer.readline()
         if not line:
             return None
         text = line.decode("utf-8")
@@ -273,10 +321,13 @@ def _read_message() -> dict[str, Any] | None:
         if ":" in text:
             key, value = text.split(":", 1)
             headers[key.strip().lower()] = value.strip()
+        line = sys.stdin.buffer.readline(4096)
     try:
         length = int(headers.get("content-length", "0"))
     except ValueError:
         return None
+    if not 0 < length <= 1024 * 1024:
+        raise ValueError("MCP message limit")
     body = sys.stdin.buffer.read(length)
     try:
         payload = json.loads(body.decode("utf-8"))
@@ -287,19 +338,61 @@ def _read_message() -> dict[str, Any] | None:
 
 def _write_message(payload: dict[str, Any]) -> None:
     encoded = json.dumps(payload, ensure_ascii=True).encode("utf-8")
-    header = f"Content-Length: {len(encoded)}\r\n\r\n".encode("ascii")
-    sys.stdout.buffer.write(header + encoded)
+    if _legacy_framing:
+        header = f"Content-Length: {len(encoded)}\r\n\r\n".encode("ascii")
+        sys.stdout.buffer.write(header + encoded)
+    else:
+        sys.stdout.buffer.write(encoded + b"\n")
     sys.stdout.buffer.flush()
 
 
-def main() -> int:
+def serve() -> int:
     while True:
-        message = _read_message()
+        try:
+            message = _read_message()
+        except (ValueError, UnicodeError):
+            _write_message({"jsonrpc": "2.0", "id": None,
+                            "error": {"code": -32700, "message": "Invalid MCP message"}})
+            return 1
         if message is None:
             return 0
         reply = _handle(message)
         if reply is not None:
             _write_message(reply)
+
+
+def main(argv=None) -> int:
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    if not arguments or arguments == ["mcp"]:
+        return serve()
+    parser = argparse.ArgumentParser(description="Control the same Blender GUI hosted in EXT")
+    parser.add_argument("command", choices=[tool["name"] for tool in TOOLS])
+    parser.add_argument("--args", default="{}", help="Tool arguments as a JSON object")
+    parser.add_argument("--code")
+    parser.add_argument("--code-file", type=Path)
+    parser.add_argument("--path")
+    options = parser.parse_args(arguments)
+    try:
+        fields = json.loads(options.args)
+        if not isinstance(fields, dict):
+            raise ValueError("Arguments must be a JSON object")
+        if options.code is not None:
+            fields["code"] = options.code
+        if options.code_file is not None:
+            fields["code"] = options.code_file.read_text(encoding="utf-8")
+        if options.path is not None:
+            fields["path"] = options.path
+        result = _call_tool(options.command, fields)
+        text = result["content"][0]["text"]
+        try:
+            payload = json.loads(text)
+        except ValueError:
+            payload = {"ok": not result.get("isError", False), "detail": text}
+        print(json.dumps(payload, ensure_ascii=True))
+        return 1 if result.get("isError") else 0
+    except (OSError, ValueError, TypeError) as exc:
+        print(json.dumps({"ok": False, "error": type(exc).__name__}))
+        return 1
 
 
 if __name__ == "__main__":

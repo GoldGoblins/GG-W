@@ -33,7 +33,14 @@ Item {
     readonly property bool paused: root.meterPaused
     readonly property string nowTitle: String((root.status.now || {}).title || "")
     readonly property string nowArtist: String((root.status.now || {}).artist || "")
-    readonly property int volume: Number(root.status.volume || 70)
+    property bool masterAudioReady: false
+    property bool appMeterReady: false
+    property bool appAudioActive: false
+    property int masterVolume: 100
+    property int volumePreview: -1
+    readonly property int volume: volumePreview >= 0 ? volumePreview
+        : masterAudioReady ? masterVolume
+        : Number(root.status.volume === undefined ? 70 : root.status.volume)
     readonly property var spectrum: {
         var rows = root.status.spectrum
         if (rows && rows.length !== undefined)
@@ -70,9 +77,12 @@ Item {
     readonly property bool buffering:
         root.status.buffering === true && !root.playing && !root.paused
     readonly property bool liveMeters:
-        root.playing || root.paused || root.buffering
+        root.playing || root.paused || root.buffering || root.appAudioActive
+    readonly property bool meterActive: root.appMeterReady ? root.appAudioActive : root.playing
     readonly property bool hasSpectrum: root.spectrum.length > 0
     readonly property string frameRightLegend: {
+        if (root.appAudioActive && !root.playing)
+            return "LIVE · GG AUDIO"
         var head = root.buffering
             ? "BUFFER · " + root.mode
             : (root.playing ? "LIVE · " + root.mode : root.mode)
@@ -125,20 +135,18 @@ Item {
 
     function refresh() {
         var raw = root.pullLiveRaw()
-        if (!raw)
-            return
-        try {
-            root.applyChrome(JSON.parse(raw))
-        } catch (err) {
-            return
+        if (raw) {
+            try {
+                root.applyChrome(JSON.parse(raw))
+            } catch (err) {
+                return
+            }
         }
-        root.refreshMeters(raw)
+        root.refreshMeters(raw || "{}")
     }
 
     function refreshMeters(raw) {
-        var text = raw || root.pullLiveRaw()
-        if (!text)
-            return
+        var text = raw || root.pullLiveRaw() || "{}"
         var parsed
         try {
             parsed = JSON.parse(text)
@@ -147,6 +155,20 @@ Item {
         }
         root.applyChrome(parsed)
         var spec = parsed.spectrum
+        if (root.surfaceHost && root.surfaceHost.appAudioStatus) {
+            try {
+                var audio = JSON.parse(root.surfaceHost.appAudioStatus() || "{}")
+                root.masterAudioReady = audio.available === true
+                root.appMeterReady = audio.meter_available === true
+                root.appAudioActive = audio.active === true
+                if (audio.volume !== undefined)
+                    root.masterVolume = Number(audio.volume)
+                if (root.appMeterReady)
+                    spec = audio.spectrum || []
+            } catch (err) {
+                root.appAudioActive = false
+            }
+        }
         if (!spec || spec.length === undefined)
             spec = []
         if (spectrumCanvas)
@@ -209,11 +231,26 @@ Item {
         root.refresh()
     }
 
-    function bumpVolume(delta) {
-        if (!root.surfaceHost)
+    function previewVolume(value) {
+        root.volumePreview = Math.max(0, Math.min(100, Math.round(value)))
+        if (root.masterAudioReady && root.surfaceHost && root.surfaceHost.appPreviewAudioVolume) {
+            root.surfaceHost.appPreviewAudioVolume(root.volumePreview)
+            root.refreshMeters()
+        }
+        volumeCommitTimer.restart()
+    }
+
+    function commitVolume() {
+        volumeCommitTimer.stop()
+        if (!root.surfaceHost || root.volumePreview < 0)
             return
-        root.statusJson = root.surfaceHost.mediaSetVolume(root.volume + delta)
-        root.refresh()
+        if (root.masterAudioReady && root.surfaceHost.appSetAudioVolume) {
+            var audio = JSON.parse(root.surfaceHost.appSetAudioVolume(root.volumePreview))
+            root.masterVolume = Number(audio.volume)
+        } else if (root.surfaceHost.mediaSetVolume) {
+            root.applyChrome(JSON.parse(root.surfaceHost.mediaSetVolume(root.volumePreview)))
+        }
+        root.volumePreview = -1
     }
 
     function cycleEq() {
@@ -298,11 +335,18 @@ Item {
     }
 
     Connections {
-        target: root.surfaceHost
+        target: root.surfaceHost || null
         ignoreUnknownSignals: true
         function onMediaStateChanged() {
             root.refresh()
         }
+    }
+
+    Timer {
+        id: volumeCommitTimer
+        interval: 150
+        repeat: false
+        onTriggered: root.commitVolume()
     }
 
     Timer {
@@ -473,20 +517,6 @@ Item {
                                 onClicked: root.stop()
                             }
                         }
-                        Text {
-                            text: "VOL " + String(root.volume)
-                            color: "#c8cdd4"
-                            font.family: "monospace"
-                            font.pixelSize: 12
-                            MouseArea {
-                                anchors.fill: parent
-                                acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: function(event) {
-                                    root.bumpVolume(event.button === Qt.RightButton ? -5 : 5)
-                                }
-                            }
-                        }
                     }
 
                     Row {
@@ -514,7 +544,7 @@ Item {
                                 : (
                                     root.nowTitle.length > 0
                                         ? root.nowTitle
-                                        : "NOW · idle"
+                                        : (root.appAudioActive ? "GG AUDIO" : "NOW · idle")
                                 )
                             color: root.playing || root.buffering
                                 ? "#d8dee9"
@@ -615,7 +645,7 @@ Item {
                             var peakVisible = []
                             for (i = 0; i < cols; i++) {
                                 var target = 0
-                                if (root.playing && rows && i < rows.length)
+                                if (root.meterActive && rows && i < rows.length)
                                     target = Math.min(1, Number(rows[i] || 0))
                                 var cur = Number(shown[i] || 0)
                                 if (target > cur)
@@ -631,7 +661,7 @@ Item {
                                 if (level >= peak) {
                                     peak = level
                                     hold = root.peakHoldTicks
-                                } else if (!root.playing) {
+                                } else if (!root.meterActive) {
                                     hold = 0
                                     peak = Math.max(0, peak - step * 2)
                                 } else if (hold > 0) {
@@ -759,11 +789,13 @@ Item {
                 }
 
                 Column {
+                    id: eqControls
                     width: 132
                     height: parent.height
                     spacing: 4
 
                     Text {
+                        id: eqPresetLabel
                         width: parent.width
                         text: "EQ · " + String(root.status.eq_preset || "Flat")
                         color: "#c8a97e"
@@ -787,7 +819,7 @@ Item {
                         id: eqRow
                         objectName: "utilityEq"
                         width: parent.width
-                        height: 50
+                        height: Math.max(20, eqControls.height - eqPresetLabel.implicitHeight - 26)
                         spacing: 2
 
                         Repeater {
@@ -849,6 +881,41 @@ Item {
                                     )
                                 }
                             }
+                        }
+                    }
+
+                    Row {
+                        objectName: "utilityMasterVolume"
+                        width: parent.width
+                        height: 18
+                        spacing: 4
+
+                        GgSlider {
+                            objectName: "utilityMasterVolumeSlider"
+                            width: 96
+                            height: parent.height
+                            from: 0
+                            to: 100
+                            stepSize: 1
+                            value: root.volume
+                            enabled: root.surfaceHost !== null
+                            Accessible.name: "GG AI Desktop huvudvolym"
+                            onMoved: root.previewVolume(value)
+                            onPressedChanged: {
+                                if (!pressed)
+                                    root.commitVolume()
+                            }
+                        }
+
+                        Text {
+                            objectName: "utilityMasterVolumeValue"
+                            width: 32
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root.volume + "%"
+                            horizontalAlignment: Text.AlignRight
+                            color: "#c8cdd4"
+                            font.family: "monospace"
+                            font.pixelSize: 11
                         }
                     }
 

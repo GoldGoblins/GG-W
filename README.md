@@ -81,12 +81,21 @@ fullscreen, site preferences across process restarts, and the toolbar/dashboard.
 These fixtures do not establish that every advertisement on every live service
 is blocked.
 
-Windows audio updates playback/buffering status directly from Qt. The
-MEDIA / UTILITIES frequency display analyzes that player's decoded PCM into
-120 bands, follows output volume/mute, and clears on pause, stop or stream
-changes. It does not require the Linux PulseAudio monitor or another stream
-connection. `tests/test_media_qt_audio.py` checks real decoded playback and
-the QML frequency display with known bass/treble signals.
+Windows MEDIA / UTILITIES has a shared application volume slider below
+the EQ controls. Its 120-band frequency display follows actual GG audio from
+media playback, games and owned browser/helper processes, even with radio
+stopped. Windows audio sessions provide application-only gain and bounded
+RAM-only PCM capture; other applications and the system volume are unaffected.
+The volume preference is stored in the current user's private app state.
+`tests/test_app_audio.py` verifies process isolation, helper audio, mute,
+persistence and the visible controls; `tests/test_media_qt_audio.py` checks
+decoded playback and frequency analysis.
+
+TV playback selects a multiplexed HLS rendition before opening the decoder,
+preserves separately hosted audio, and can fall back to a lower bitrate after
+an interruption. Short buffer dips recover without restarting; frozen video
+uses decoded-frame monitoring and bounded retries. Local HLS fault tests cover
+server outages, quality fallback, fullscreen, pause and stop.
 
 TMOG's 60 Hz UI reads prepared telemetry instead of querying Windows from
 the render loop. Meter sampling and page inventories use separate bounded
@@ -156,7 +165,20 @@ SITE database/PHP services and the Solana validator
 are not verified Windows features. Podman's presence does not make local AI
 or isolated tools ready: the configured immutable container images and model
 weights must also exist. External application discovery has Windows support;
-native window embedding has not been visually verified. Optional game audio,
+GIMP embedding has not been visually verified. Blender EXT now uses a Windows
+native child window and background connection probes; QML status never waits
+on Blender sockets. The sidecar receives partial requests without blocking its
+viewport, and the existing live scene can be retained when reconnecting.
+`gg-blender.cmd status`, `gg-blender.cmd scene` and
+`gg-blender.cmd exec --code-file script.py` use the same GUI sidecar as the
+newline-delimited MCP server (`gg-blender.cmd mcp`). Existing GG bridge framing
+remains supported. The existing GG agent mouse and keyboard use Blender event simulation and the
+same GG cursor pack over the native child. System pointer movement, system
+keystroke injection and system clipboard access are excluded from this bridge.
+The isolated EXT regression verifies actual gg-desk clicks and keys, MCP/CLI,
+unchanged Windows foreground focus, tab reuse, resizing and safe detachment.
+The visible integration regression is opt-in with `GG_TEST_BLENDER_LIVE=1`.
+Optional game audio,
 FrameXML and authored content are absent from this source export. Game UI
 regression failures and the current verification results are recorded in
 `WINDOWS-PORT.json`.

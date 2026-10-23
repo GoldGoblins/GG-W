@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -67,7 +68,11 @@ def main() -> int:
     kit = PROJECT / "tools/blender/build_gg_village_kit.py"
     if not kit.is_file() or "def build(" not in kit.read_text(encoding="utf-8"):
         raise AssertionError("village kit builder missing")
-    if blender_contract.gui_environment().get("WAYLAND_DISPLAY") != blender_contract.WAYLAND_BLOCK:
+    if os.name == "nt":
+        gui_env = blender_contract.gui_environment()
+        if gui_env.get("QT_QPA_PLATFORM") != "windows" or "WAYLAND_DISPLAY" in gui_env:
+            raise AssertionError("Windows Blender must not inherit Linux display settings")
+    elif blender_contract.gui_environment().get("WAYLAND_DISPLAY") != blender_contract.WAYLAND_BLOCK:
         raise AssertionError("blender client must use X11 under the xcb host")
     main_src = (PROJECT / "main.py").read_text(encoding="utf-8")
     if 'QT_QPA_PLATFORM", "xcb"' not in main_src:
@@ -141,7 +146,7 @@ def main() -> int:
         send({"jsonrpc": "2.0", "method": "notifications/initialized"})
         send({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
         names = {row["name"] for row in read()["result"]["tools"]}
-        if names != {"status", "scene", "screenshot", "exec", "export_glb", "inspect", "turnaround", "deform_rig", "clean"}:
+        if names != {"status", "scene", "screenshot", "exec", "export_glb", "inspect", "turnaround", "deform_rig", "clean", "input"}:
             raise AssertionError("mcp tools " + str(names))
         send(
             {

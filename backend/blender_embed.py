@@ -484,3 +484,9 @@ class BlenderEmbed(QObject):
         child.resize(rect.width(), rect.height())
         if not child.isVisible():
             child.show()
+
+
+# Keep X11's foreign-window path on Linux. Windows must retain Blender's
+# native HWND and perform network/process discovery away from Qt's thread.
+if os.name == "nt":
+    from backend.windows_blender_embed import WindowsBlenderEmbed as BlenderEmbed

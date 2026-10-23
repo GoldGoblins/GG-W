@@ -3,6 +3,8 @@
   "files": [
     ".gitattributes",
     ".gitignore",
+    "gg-blender",
+    "tools/blender/gg_blender_virtual_input.py",
     "GAME_ENGINE_ARCHITECTURE.md",
     "OMNI-GPT-PROFILES.md",
     "README.md",

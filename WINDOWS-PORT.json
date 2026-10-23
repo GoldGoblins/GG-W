@@ -6,6 +6,10 @@
     "windows_skill_aliases": "directory junctions"
   },
   "changed_files": {
+    ".gitattributes": {
+      "upstream_sha256": null,
+      "windows_sha256": "2677ddae44940b1a1aa829193cdffbe7007f1913d6074ef27a5fe7a44e4f939e"
+    },
     ".gitignore": {
       "upstream_sha256": "896eba722218efe496fd165022f6347ad5f4b6b6cfc6d9036cc0fb247bacb40f",
       "windows_sha256": "534658bfc9cb9221fd6a32ba4944f8239049c5ab30083d8887607acea68241c6"
@@ -16,15 +20,23 @@
     },
     "README.md": {
       "upstream_sha256": "1fa0f62e802aa8e200ac4de9147d20d5777b395dd14ba58299be28e2b9f50eae",
-      "windows_sha256": "b3d7b33d9206f31802d7f53ab9c7a0daca35b70dd53ef821c8c289320c65a7ee"
+      "windows_sha256": "7888be726bace000c832adb1e1bac9ab69ba679c12a7ef8066279a20399c2cc4"
+    },
+    "backend/app_audio.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "074a2c9aa75c5da710cd01f742e4b957ce6ba5b0a8663a856addb305f355e2aa"
     },
     "backend/application_paths.py": {
       "upstream_sha256": "20ec0345b0b2415f2586b8e08a1df58efba42b8e818dfd45345f601a5d56a2c1",
       "windows_sha256": "695b433dab6b1d1458260c27dd09f460aa9dc557d15861d9d967dde5fa11684c"
     },
+    "backend/blender_contract.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "2f89a6a61d11a3bff2adc0691036c246079f0315bf0e0ac7c515973d555de4b5"
+    },
     "backend/blender_embed.py": {
       "upstream_sha256": "6736ab4f0a6c0e92ebceb8f063f7c8e26b987e419f0d9d271825f6c4cb5bd52f",
-      "windows_sha256": "2be42de71bf8ba82b9844fc860cfda014868ae2b9d3d8372e2313fe0e9e1e388"
+      "windows_sha256": "822bf68785a0aba2dd6596f41ab0aa5afabd43d576596dc4afa45816f82d2253"
     },
     "backend/blender_reference_workflow.py": {
       "upstream_sha256": "2b369f5a34850529b355161b7be4000a537cbe42de9a6745595793ce1de45303",
@@ -32,7 +44,7 @@
     },
     "backend/chat_surface_host.py": {
       "upstream_sha256": "51ddab5617c74e707efdcd1f0ea11ae0a753f920051fdf00cfdea1e9ecfafa0f",
-      "windows_sha256": "1482dc9bc062a2737247d05d18fd42054ad76d5231d14105dea56effc849bde9"
+      "windows_sha256": "b5f8ed396eb5b746e132a885f15a02942aee585831db1d5081412941e944a00e"
     },
     "backend/codex_image_storage.py": {
       "upstream_sha256": "4ba52652bc8898c0f998a81085076ca3a69d7578ad564b7e6080439636dbfa5c",
@@ -98,9 +110,13 @@
       "upstream_sha256": "241341e32215abb43812af09f6ab169a72c53cb78905ea3deb7e0d908f168016",
       "windows_sha256": "09af1be7307a3b94b8c858ec21ac7fa5dafe04d032a42bb644b3dec520ba84e7"
     },
+    "backend/media_hls.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "5bb024b9ceb6f762854a6e8979ef16615583197cfcc06b0dc5381191607fcec0"
+    },
     "backend/media_host.py": {
       "upstream_sha256": null,
-      "windows_sha256": "59558ac72d277571c6196b7b7544fe2349839e52d7acb3dc721a7ed9dd2a5b86"
+      "windows_sha256": "0262b8668b24066c64b051ccd8f6660dcf78b038264f7c0ef69559d39d73e64c"
     },
     "backend/media_qt_audio.py": {
       "upstream_sha256": null,
@@ -109,6 +125,18 @@
     "backend/media_reconnect.py": {
       "upstream_sha256": null,
       "windows_sha256": "6296ad03a3131f7d80eb119b6ee93e094f37191f8d18fa77747c67fd25532af0"
+    },
+    "backend/native/windows-x86_64/gg_webview.dll": {
+      "upstream_sha256": null,
+      "windows_sha256": "f33d41b73ff42a43460a136529250235c4886828f18ba2428d60e0c046552bb6"
+    },
+    "backend/native/windows-x86_64/webview-build.json": {
+      "upstream_sha256": null,
+      "windows_sha256": "0a024e28de29f78a1a47718bca247c1cd8cae17928da62867ba5384cee892851"
+    },
+    "backend/native_webview.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "b5caab2014d2aad76bf61c1c5aa89056ed080e13e854d4dded5204f8a7fd7eee"
     },
     "backend/platform_files.py": {
       "upstream_sha256": null,
@@ -142,6 +170,14 @@
       "upstream_sha256": "3207a819b4e0eb6fc09f1acbeaafc5d44e7c20ceabb6f346a66da2c2d10939e4",
       "windows_sha256": "0355cb7d12122362a8871fbd503f848b2eb3dbd7e026c0d0c9e80dec1229a05a"
     },
+    "backend/windows_blender_embed.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "232eed3a206175657c3656739859672825884b35bcbc6432c6dcfa5c16cd5024"
+    },
+    "backend/windows_input.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "a3cb089443f82f5166f393e2ab095bf269232098619855112c5a42c563735aa5"
+    },
     "backend/windows_pty.py": {
       "upstream_sha256": null,
       "windows_sha256": "da3115d29c54a0bc09d365767980cea3924e896c9399e5a54886c298402fcedb"
@@ -153,6 +189,26 @@
     "backend/windows_vision.py": {
       "upstream_sha256": null,
       "windows_sha256": "4ec543c1bce3c4c5dff4ac2c88aa68ec28530f4f24564f983d14ec992e69925f"
+    },
+    "backend/windows_webview.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "77ad6987eaa0ded94695da9b50e4c032288a9d30ed16ea77464081fa7691cbb6"
+    },
+    "backend/windows_windows.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "a5495871c110f921d991933abeceddd55541f444d296915096efa2ac952a49cb"
+    },
+    "config/dependencies.json": {
+      "upstream_sha256": null,
+      "windows_sha256": "fccf171a69b6dd5246242852485cc842caa5a09cbaac496c0dc005ccb79ad3d3"
+    },
+    "gg-blender": {
+      "upstream_sha256": null,
+      "windows_sha256": "a93af0785a37267027164222d9d0028daecde4b53b68cbe435193f22075b2b5f"
+    },
+    "gg-blender.cmd": {
+      "upstream_sha256": null,
+      "windows_sha256": "6d6856e3f9b3a1e4e6cf7caf6c267ff85c5bf159e058bdab07ac08223a279635"
     },
     "gg-eyes": {
       "upstream_sha256": null,
@@ -166,9 +222,33 @@
       "upstream_sha256": "905990b7b4ca4ded093c13d91e003b7bdc99fa97d3fcf7022cab0bd343043e07",
       "windows_sha256": "8bbbad84cbb0a7108519ef0db1b8ada2e4fafa602c03b6f05b8192431d286e9b"
     },
+    "native/audio/gg_app_audio.cpp": {
+      "upstream_sha256": null,
+      "windows_sha256": "42a235ef4b487d4245d443f89d094dd00a90e21d870aef1fee80096d7ac3e780"
+    },
+    "native/webview/MICROSOFT-LICENSE.txt": {
+      "upstream_sha256": null,
+      "windows_sha256": "0af8f1b807512aae39c2ac1aa4d0cae65cabecb6fd554b8439a5162a0d6eca55"
+    },
+    "native/webview/MICROSOFT-NOTICE.txt": {
+      "upstream_sha256": null,
+      "windows_sha256": "106423785c5b7eba0a8e61d1837f2132e9c828e20ad530f565d981c1df60dd90"
+    },
+    "native/webview/README.md": {
+      "upstream_sha256": null,
+      "windows_sha256": "6a25814f668058909d0a89ea90f116629aeb64436d9e1c97fabd140fff6631fe"
+    },
+    "native/webview/gg_webview.cpp": {
+      "upstream_sha256": null,
+      "windows_sha256": "336eb13ef0d0310eb27469698b086cb412ee1d2bfabe779aa8ca5a088d1544c0"
+    },
     "packaging/catalog.py": {
       "upstream_sha256": "860caed283b4b25325f85528f66dc4c2dbbb669afdb0989280cced144687c185",
-      "windows_sha256": "ee554b83debc7904de7ac93dd9126c05b6d981cd6c936296e9e76b6b1f061595"
+      "windows_sha256": "ae34ff877657f094cce5af1f58f09db9adc83142b3be762f3b53052f886e43f8"
+    },
+    "packaging/source-base.json": {
+      "upstream_sha256": null,
+      "windows_sha256": "6588d92fe30aabe178bcabbd87c456bfc10b83f193ddd9455466d8558336d0ee"
     },
     "qml/components/GameEnchantingControls.qml": {
       "upstream_sha256": "cf29cc3e7238cb1ee9429e8a92b36ee0d8a0f00ab398532113882316ce837d0b",
@@ -196,7 +276,7 @@
     },
     "qml/components/MediaSurface.qml": {
       "upstream_sha256": null,
-      "windows_sha256": "aa57863fa8444fa00ed8833e4cf8e58158821e77d4fac4d989aecb84a3cd3466"
+      "windows_sha256": "9dae5489450b9308d1f5595f5a2fff7e2ab35c29289b9cbe5edb034a145f68c4"
     },
     "qml/components/TmogSurface.qml": {
       "upstream_sha256": "5fa5e25d13465aa6201fa91caa90b7bf85a33666d82ff9ed09c77b43874c5a63",
@@ -204,7 +284,19 @@
     },
     "qml/components/UtilitySurface.qml": {
       "upstream_sha256": null,
-      "windows_sha256": "d5b1eb64794441a30f38fbf20c642404e8f89ad3147f9bd0d0510c555c7763ea"
+      "windows_sha256": "823f26f26c9197fd317ecf67290ce3137ca691180a1959bb988fc88430c904b8"
+    },
+    "qml/components/WebPane.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "6f59e14bb2b172b0b8f059b59e0596a841edd0d719389c05e4781ae6af32c176"
+    },
+    "qml/components/WindowsFilteredWebView.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "98798f15b2e950aa83ce02c4fe268eacb618f65c2706a0b9135b6da33fa1e984"
+    },
+    "qml/components/WorkspaceSurface.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "e0dd79f4ae82c372094554e12e41956e572f7d5ecb777b8ef39fe69471e9fe44"
     },
     "qml/components/engine/FlailPhysics.js": {
       "upstream_sha256": null,
@@ -242,9 +334,25 @@
       "upstream_sha256": "6f9be0d9073b57b79d111221b6a4320230890606704a1e77a89dae953e7155d3",
       "windows_sha256": "913dc265b83a99edd0b95050e1d6363fbff534c9d247eba3b2ee2a2fbb837187"
     },
+    "tests/test_app_audio.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "7c8b111bd54262e3863700b22fe385eabe15d39db79d45d3d928570dcd0759c3"
+    },
     "tests/test_application_bundle.py": {
       "upstream_sha256": "72a24bda3aa8669ab19dc3614abeaba681f97a7c8dc9455457b08154c8b3223b",
       "windows_sha256": "4b83cf2f719df1423cd72e06e2dd89030c2ae5380c61fe33765715baedbe113d"
+    },
+    "tests/test_blender_agent_input.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "888e13b5e8be77e504177b3ee00f88113e805c37562dccff6a5a21766fb43431"
+    },
+    "tests/test_blender_contract.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "53c2891d47fefabd462b03f2203f0782f396bf7fa65028a28b5a542db82bdf6e"
+    },
+    "tests/test_blender_windows.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "ad588ce199759394efaadce56700d43a79d1ce61caa000a300f283066af4a4f5"
     },
     "tests/test_chat_surface_host.py": {
       "upstream_sha256": "2bc60fc146ce9d35affd7e24a7b742c5e171f5f9453df6153a458161ffd34ba6",
@@ -290,6 +398,10 @@
       "upstream_sha256": "a8a4cd0e5d87b61384317c4c4721e06899cac9aaea5ab11d7b2507200857698c",
       "windows_sha256": "b4daadf619ac68aada8dcb3e99fa1e9cf262e732b5448ca776134802aebf1b6e"
     },
+    "tests/test_media_hls.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "337499dfd48194c999fdcab1c97b9fed880d397ece1d37fa3471dbccfc352826"
+    },
     "tests/test_media_qt_audio.py": {
       "upstream_sha256": null,
       "windows_sha256": "7a23d8b597faa56e7a981e54119deb4c3ffd4e4d5597b2b05ae372cd60d85f32"
@@ -298,13 +410,29 @@
       "upstream_sha256": null,
       "windows_sha256": "7a88044b96358ee81d9bf5c4757b2d6da3bb4af701f81fa33c43b04532c865d0"
     },
+    "tests/test_media_video.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "d682f639833bc5cc3c5f572400cb33bf824e2fc42b6b8e4418b68a6f875bc7f7"
+    },
+    "tests/test_media_video_playback.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "9a3270b53dcc95c8b436c4dc1780291f9bf966a841438a25d5880ba274a07240"
+    },
     "tests/test_tmog_visual_damping.py": {
       "upstream_sha256": null,
       "windows_sha256": "e024db54f870aeee0a8b319fb3b1d6cb516dc6646db7a0f19e8cd14ea443f757"
     },
+    "tests/test_web_content_blocker.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "632f10b382ce6bafd20b5099ece3127954a2fc626c812bbafc42c82f6645e15a"
+    },
     "tests/test_web_operator.py": {
       "upstream_sha256": "e3cb52ea656dccac9a6e6478ebe69dcae14196e85f919a7083d7498e3ea9e237",
       "windows_sha256": "d33eb032794c41a91c76f3e0d90fe007b53ed1f730a8e19a3601f4e467be419c"
+    },
+    "tests/test_windows_blender_live.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "25b7c9bfd299b9db7ab5ee6b0d3e21128d0a1ace3a57a1fff94f0a436361f549"
     },
     "tests/test_windows_platform.py": {
       "upstream_sha256": null,
@@ -314,73 +442,29 @@
       "upstream_sha256": null,
       "windows_sha256": "cd448e05f7f61502ec5fa300a638cef33c5735692256d1cfbdb00b9b0f13a3e1"
     },
-    "backend/native_webview.py": {
+    "tests/test_windows_webview.py": {
       "upstream_sha256": null,
-      "windows_sha256": "b5caab2014d2aad76bf61c1c5aa89056ed080e13e854d4dded5204f8a7fd7eee"
+      "windows_sha256": "b8151ed47151311ac1786b8084eefbaa3d19326ff82950b8dfb01b5ce447b740"
     },
-    "backend/windows_webview.py": {
+    "tools/blender/gg_blender_mcp.py": {
       "upstream_sha256": null,
-      "windows_sha256": "77ad6987eaa0ded94695da9b50e4c032288a9d30ed16ea77464081fa7691cbb6"
+      "windows_sha256": "69a42e5aec82ad305098cc28e1a58ac260f2bf56761441ca90e71668158a5cb9"
     },
-    "native/webview/gg_webview.cpp": {
+    "tools/blender/gg_blender_sidecar.py": {
       "upstream_sha256": null,
-      "windows_sha256": "336eb13ef0d0310eb27469698b086cb412ee1d2bfabe779aa8ca5a088d1544c0"
+      "windows_sha256": "6dda38e069db33369c01f88e0b77957bf421ebe59f24b3a438bca4b5adcee2c1"
     },
-    "native/webview/README.md": {
+    "tools/blender/gg_blender_virtual_input.py": {
       "upstream_sha256": null,
-      "windows_sha256": "6a25814f668058909d0a89ea90f116629aeb64436d9e1c97fabd140fff6631fe"
-    },
-    "native/webview/MICROSOFT-LICENSE.txt": {
-      "upstream_sha256": null,
-      "windows_sha256": "0af8f1b807512aae39c2ac1aa4d0cae65cabecb6fd554b8439a5162a0d6eca55"
-    },
-    "native/webview/MICROSOFT-NOTICE.txt": {
-      "upstream_sha256": null,
-      "windows_sha256": "106423785c5b7eba0a8e61d1837f2132e9c828e20ad530f565d981c1df60dd90"
-    },
-    "backend/native/windows-x86_64/gg_webview.dll": {
-      "upstream_sha256": null,
-      "windows_sha256": "f33d41b73ff42a43460a136529250235c4886828f18ba2428d60e0c046552bb6"
-    },
-    "backend/native/windows-x86_64/webview-build.json": {
-      "upstream_sha256": null,
-      "windows_sha256": "0a024e28de29f78a1a47718bca247c1cd8cae17928da62867ba5384cee892851"
-    },
-    "qml/components/WebPane.qml": {
-      "upstream_sha256": null,
-      "windows_sha256": "6f59e14bb2b172b0b8f059b59e0596a841edd0d719389c05e4781ae6af32c176"
-    },
-    "qml/components/WindowsFilteredWebView.qml": {
-      "upstream_sha256": null,
-      "windows_sha256": "98798f15b2e950aa83ce02c4fe268eacb618f65c2706a0b9135b6da33fa1e984"
-    },
-    "qml/components/WorkspaceSurface.qml": {
-      "upstream_sha256": null,
-      "windows_sha256": "e0dd79f4ae82c372094554e12e41956e572f7d5ecb777b8ef39fe69471e9fe44"
+      "windows_sha256": "9a984e1427a89e6b6d86bad95c8ba2e487f0c1c55172e01b1112b20974af131a"
     },
     "tools/install_web_filter.py": {
       "upstream_sha256": null,
       "windows_sha256": "796dbce552131a5042f7ca034896f1b48d2a81d2e1931137dbae2aa2df4304f4"
     },
-    "tests/test_web_content_blocker.py": {
+    "tools/world/build_app_audio.py": {
       "upstream_sha256": null,
-      "windows_sha256": "632f10b382ce6bafd20b5099ece3127954a2fc626c812bbafc42c82f6645e15a"
-    },
-    "tests/test_windows_webview.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "b8151ed47151311ac1786b8084eefbaa3d19326ff82950b8dfb01b5ce447b740"
-    },
-    "config/dependencies.json": {
-      "upstream_sha256": null,
-      "windows_sha256": "fccf171a69b6dd5246242852485cc842caa5a09cbaac496c0dc005ccb79ad3d3"
-    },
-    "packaging/source-base.json": {
-      "upstream_sha256": null,
-      "windows_sha256": "fa0692444869ee572959479933b05f331c4d2257bc72ec5c4b5f34bfee1a6d95"
-    },
-    ".gitattributes": {
-      "upstream_sha256": null,
-      "windows_sha256": "2677ddae44940b1a1aa829193cdffbe7007f1913d6074ef27a5fe7a44e4f939e"
+      "windows_sha256": "7b7b9ed669f99eb2bb73c0d86376061394c2da15df4d478acc114c0a51533d0e"
     }
   },
   "container_runtime": {
@@ -393,6 +477,7 @@
     "rootless": true,
     "running": true
   },
+  "distribution": "Separate Windows repository; original Linux repository retained",
   "frozen_model_runner_sha256": "1d32863be1886e737969b765b1d87744654253abc6b3074fc1dc93087e86d232",
   "implementation_files": [
     "README.md",
@@ -450,7 +535,29 @@
     "tests/test_windows_vision.py",
     "tests/test_windows_webview.py",
     "tools/install_web_filter.py",
-    "tools/world/build_windows_native.py"
+    "tools/world/build_windows_native.py",
+    "backend/blender_contract.py",
+    "backend/blender_embed.py",
+    "backend/windows_blender_embed.py",
+    "backend/windows_windows.py",
+    "backend/windows_input.py",
+    "tools/blender/gg_blender_mcp.py",
+    "tools/blender/gg_blender_sidecar.py",
+    "gg-blender",
+    "gg-blender.cmd",
+    "tests/test_blender_contract.py",
+    "tests/test_blender_windows.py",
+    "tests/test_windows_blender_live.py",
+    "tools/blender/gg_blender_virtual_input.py",
+    "tests/test_blender_agent_input.py",
+    "backend/app_audio.py",
+    "backend/media_hls.py",
+    "native/audio/gg_app_audio.cpp",
+    "tests/test_app_audio.py",
+    "tests/test_media_hls.py",
+    "tests/test_media_video.py",
+    "tests/test_media_video_playback.py",
+    "tools/world/build_app_audio.py"
   ],
   "installed_tools": {
     "ffmpeg": "9.0.2",
@@ -519,6 +626,38 @@
   "upstream_commit": "a378aafc265f050cf4a0b3e39a5b1c85d96b2264",
   "upstream_repo": "https://github.com/GoldGoblins/GG",
   "verification": {
+    "application_audio": {
+      "includes": [
+        "shared volume",
+        "helper-process capture",
+        "other-process isolation",
+        "volume persistence",
+        "Utilities controls"
+      ],
+      "result": "PASS",
+      "scope": "APPLICATION_PROCESS_TREE_ONLY",
+      "tests": 4
+    },
+    "blender_ext": {
+      "date": "2026-10-23",
+      "input": "Existing GG desktop-operator agent mouse and keyboard; bounded sidecar event bridge and the existing GG cursor pack over Blender",
+      "live_gui_regression": {
+        "cli": "PASS",
+        "detach_preserves_blender": "PASS",
+        "gg_agent_mouse_keyboard": "PASS",
+        "max_ui_gap_ms": 89.8,
+        "mcp_stdio": "PASS",
+        "partial_client": "PASS",
+        "resize": "PASS",
+        "same_process_after_tab_switch": "PASS",
+        "user_focus_preserved": "PASS"
+      },
+      "non_visual_regressions": 11,
+      "remaining": "Restart the already running desktop to replace its previously loaded Windows system-input bridge; no more mutating gg-desk commands sent to that old bridge",
+      "scene_recovery": "Original scene preserved in private recovery copies; orphaned original process closed; live Blender restarted with event simulation enabled",
+      "status": "VERIFIED_ISOLATED_FINAL_DESKTOP_RESTART_REQUIRED",
+      "system_devices": "No system cursor movement, system keystroke injection, focus activation or clipboard access in the input bridge"
+    },
     "chat_window_resize": {
       "behavior": "Both live chat grids retain their measured initial terminal size before PTY startup",
       "cause": "Native maximize/restore and pane resize bypassed the temporary fullscreen guard",
@@ -912,6 +1051,20 @@
         "image_ring_bytes": 820419
       }
     },
+    "tv_playback": {
+      "includes": [
+        "HLS selection",
+        "server outage recovery",
+        "quality fallback"
+      ],
+      "live_channels": [
+        "SVT1 HD",
+        "Al Jazeera English"
+      ],
+      "live_seconds_each": 185,
+      "result": "PASS",
+      "targeted_tests": 35
+    },
     "unit_test_totals": {
       "errors": 0,
       "failures": 4,
@@ -925,6 +1078,37 @@
       "fix": "Observe the document location in the existing native bridge; update workspace address and currentHref without assigning a navigation URL",
       "result": "PASS",
       "validation": "Real workspace field typed with Qt key events; pushState, replaceState, fragments, back/forward, ordinary navigation and HTTP redirects; video document timeOrigin preserved"
+    },
+    "web_content_blocking": {
+      "controls": [
+        "Per-site filtering switch in WEB address row",
+        "Original uBO dashboard in a WEB tab",
+        "Per-site preference retained across process restart"
+      ],
+      "date": "2026-10-23",
+      "host": "Small native GG WebView2 host enables extensions; existing Qt WebView remains the fallback for installations without filtering",
+      "limits": "Local fixtures do not establish effectiveness against every live service. The running desktop requires restart. Future Manifest V2 availability depends on Microsoft.",
+      "provider": "Original, unmodified uBlock Origin Chromium 1.75.0",
+      "runtime": "Microsoft Edge WebView2 155.0.4283.62",
+      "startup": "Asynchronous uBO startup readiness before first navigation; no silent unfiltered fallback on startup error",
+      "tests": {
+        "test_web_content_blocker": 3,
+        "test_web_operator": 7,
+        "test_windows_webview": 1
+      },
+      "verified": [
+        "Original upstream extension bytes retained",
+        "Actual network ad-script blocking with essential scripts preserved",
+        "Cosmetic hiding through uBO",
+        "Actual uBO set-constant scriptlet execution",
+        "H.264/AAC progressive video and Media Source streaming",
+        "Fullscreen entry and exit with video still decoding",
+        "Address/history/cookies/new tabs and native captures",
+        "Toolbar clicks and original dashboard navigation",
+        "Site switch and process restart persistence",
+        "Real Windows keyboard input returns to chat after repeated browser/chat clicks; video keeps playing and player shortcuts work after clicking back"
+      ],
+      "visual": "Windows RAM capture inspected the actual Swedish uBO dashboard and WEB controls in an isolated test window"
     },
     "web_video": {
       "cause": "Installed Qt WebEngine build rejects H.264/AAC and their Media Source MIME types",
@@ -1001,37 +1185,6 @@
         "largest_gap_ms": 45,
         "main_app_responding_after_capture": true
       }
-    },
-    "web_content_blocking": {
-      "date": "2026-10-23",
-      "provider": "Original, unmodified uBlock Origin Chromium 1.75.0",
-      "runtime": "Microsoft Edge WebView2 155.0.4283.62",
-      "host": "Small native GG WebView2 host enables extensions; existing Qt WebView remains the fallback for installations without filtering",
-      "startup": "Asynchronous uBO startup readiness before first navigation; no silent unfiltered fallback on startup error",
-      "controls": [
-        "Per-site filtering switch in WEB address row",
-        "Original uBO dashboard in a WEB tab",
-        "Per-site preference retained across process restart"
-      ],
-      "tests": {
-        "test_web_content_blocker": 3,
-        "test_windows_webview": 1,
-        "test_web_operator": 7
-      },
-      "verified": [
-        "Original upstream extension bytes retained",
-        "Actual network ad-script blocking with essential scripts preserved",
-        "Cosmetic hiding through uBO",
-        "Actual uBO set-constant scriptlet execution",
-        "H.264/AAC progressive video and Media Source streaming",
-        "Fullscreen entry and exit with video still decoding",
-        "Address/history/cookies/new tabs and native captures",
-        "Toolbar clicks and original dashboard navigation",
-        "Site switch and process restart persistence",
-        "Real Windows keyboard input returns to chat after repeated browser/chat clicks; video keeps playing and player shortcuts work after clicking back"
-      ],
-      "visual": "Windows RAM capture inspected the actual Swedish uBO dashboard and WEB controls in an isolated test window",
-      "limits": "Local fixtures do not establish effectiveness against every live service. The running desktop requires restart. Future Manifest V2 availability depends on Microsoft."
     }
   },
   "verification_before_2026_10_21": {
@@ -1081,6 +1234,5 @@
     "path": ".venv-windows",
     "reason": "Qt 6.12.0 nullable QObject slot crash reproduced locally; 6.11.2 passes"
   },
-  "windows_repository": "https://github.com/GoldGoblins/GG-W",
-  "distribution": "Separate Windows repository; original Linux repository retained"
+  "windows_repository": "https://github.com/GoldGoblins/GG-W"
 }

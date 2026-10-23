@@ -9,9 +9,12 @@ from __future__ import annotations
 
 import io
 import json
+import os
 import socket
 import sys
 import traceback
+import tempfile
+import time
 from contextlib import redirect_stdout
 from pathlib import Path
 
@@ -19,11 +22,12 @@ import bpy
 
 
 HOST = "127.0.0.1"
-PORT = 19876
+PORT = int(os.environ.get("GG_BLENDER_SIDECAR_PORT", "19876"))
 MAX_CODE = 48 * 1024
-SCREENSHOT_DEFAULT = Path("/tmp/gg-blender-view.png")
+SCREENSHOT_DEFAULT = Path(tempfile.gettempdir()) / "gg-blender-view.png"
 
 _SERVER: socket.socket | None = None
+_CLIENTS: dict = {}
 
 
 def _hide_splash() -> None:
@@ -137,7 +141,15 @@ def _export_glb(path_value: str) -> dict:
 def _handle(request: dict) -> dict:
     cmd = str(request.get("cmd") or "").strip().lower()
     if cmd in {"ping", "status"}:
-        return _ok(blender=bpy.app.version_string, port=PORT)
+        return _ok(blender=bpy.app.version_string, port=PORT, pid=os.getpid(),
+                   background=bpy.app.background, windows=len(bpy.context.window_manager.windows), protocol=3,
+                   agent_input=bool(bpy.app.use_event_simulate))
+    if cmd == "input":
+        folder = str(Path(__file__).resolve().parent)
+        if folder not in sys.path:
+            sys.path.insert(0, folder)
+        import gg_blender_virtual_input
+        return gg_blender_virtual_input.dispatch(bpy, request)
     if cmd == "scene":
         return _scene_info()
     if cmd == "exec":
@@ -186,37 +198,59 @@ def _pump() -> float:
     if _SERVER is None:
         _SERVER = _bind()
         return 0.4
-    try:
-        conn, _addr = _SERVER.accept()
-    except BlockingIOError:
-        return 0.05
-    except OSError:
-        _SERVER = None
-        return 0.4
-    try:
-        conn.settimeout(2.0)
-        raw = conn.makefile("r", encoding="utf-8").readline()
+    # Never readline/sendall on Blender's UI timer. Partial or idle clients
+    # retain a bounded buffer and yield immediately to the viewport.
+    for _ in range(4):
         try:
-            request = json.loads(raw or "{}")
-        except json.JSONDecodeError:
-            request = {}
-        if not isinstance(request, dict):
-            request = {}
-        reply = _handle(request)
-        conn.sendall((json.dumps(reply) + "\n").encode("utf-8"))
-    except Exception as exc:
-        try:
-            conn.sendall(
-                (json.dumps(_err("BLENDER_SIDECAR_FAULT", detail=type(exc).__name__)) + "\n").encode("utf-8")
-            )
+            conn, _addr = _SERVER.accept()
+        except BlockingIOError:
+            break
         except OSError:
-            pass
-    finally:
-        try:
+            _SERVER = None
+            return 0.4
+        if len(_CLIENTS) >= 8:
             conn.close()
+            continue
+        conn.setblocking(False)
+        _CLIENTS[conn] = {"input": bytearray(), "output": None,
+                          "deadline": time.monotonic() + 2}
+    for conn, state in list(_CLIENTS.items()):
+        close = False
+        try:
+            if time.monotonic() >= state["deadline"]:
+                close = True
+            elif state["output"] is not None:
+                sent = conn.send(state["output"][:65536])
+                state["output"] = state["output"][sent:]
+                close = not state["output"]
+            else:
+                chunk = conn.recv(65536)
+                if not chunk:
+                    close = True
+                else:
+                    state["input"].extend(chunk)
+                    if len(state["input"]) > 64 * 1024 + 1:
+                        close = True
+                    elif b"\n" in state["input"]:
+                        try:
+                            request = json.loads(state["input"].split(b"\n", 1)[0])
+                            reply = _handle(request) if isinstance(request, dict) else _err("BLENDER_REQUEST_INVALID")
+                        except Exception as exc:
+                            reply = _err("BLENDER_SIDECAR_FAULT", detail=type(exc).__name__)
+                        encoded = (json.dumps(reply) + "\n").encode("utf-8")
+                        if len(encoded) > 2 * 1024 * 1024:
+                            encoded = (json.dumps(_err("BLENDER_REPLY_TOO_LARGE")) + "\n").encode()
+                        state["output"] = encoded
+                        state["input"].clear()
+                        state["deadline"] = time.monotonic() + 2
+        except BlockingIOError:
+            continue
         except OSError:
-            pass
-    return 0.05
+            close = True
+        if close:
+            _CLIENTS.pop(conn, None)
+            conn.close()
+    return 0.025
 
 
 def register() -> None:

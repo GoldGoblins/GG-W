@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+"""CLI and stdio MCP for the Blender GUI hosted in EXT."""
+from pathlib import Path
+import sys
+
+ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT))
+from backend.platform_support import configure_stdio
+configure_stdio()
+from tools.blender.gg_blender_mcp import main
+
+if __name__ == "__main__":
+    raise SystemExit(main())

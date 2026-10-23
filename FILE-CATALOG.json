@@ -4,19 +4,19 @@
   "source_root": ".",
   "dependency_catalog": "config/dependencies.json",
   "categories": {
-    "application-code": 418,
+    "application-code": 424,
     "configuration": 4,
     "contracts": 5,
     "documentation": 1,
-    "entrypoints-and-guidance": 32,
+    "entrypoints-and-guidance": 34,
     "gg-skills": 8,
     "gpt-knowledge": 93,
     "installation-and-packaging": 6,
     "interface": 223,
-    "native-engine": 1187,
+    "native-engine": 1188,
     "shared-support": 54,
-    "tests": 354,
-    "tools": 31
+    "tests": 361,
+    "tools": 33
   },
   "files": [
     {
@@ -83,24 +83,24 @@
       "path": "README.md",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 86014,
-      "sha256": "b3d7b33d9206f31802d7f53ab9c7a0daca35b70dd53ef821c8c289320c65a7ee",
+      "bytes": 87535,
+      "sha256": "7888be726bace000c832adb1e1bac9ab69ba679c12a7ef8066279a20399c2cc4",
       "mode": "0o600"
     },
     {
       "path": "SOURCE-MANIFEST.json",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 483723,
-      "sha256": "8d49ed76d92faed7967b245bbcd687d7072c8c00c93e7ee42b05627f2c0db104",
+      "bytes": 489088,
+      "sha256": "119375bfa5b61a17401a772cc5e8d6397fa996a5593f5f4795b15f1be26d4440",
       "mode": "0o644"
     },
     {
       "path": "WINDOWS-PORT.json",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 44737,
-      "sha256": "a07df34c94ac28546dcd1028f39ab63b97fcca8495b3f30fb78de8f5dff5efaf",
+      "bytes": 50909,
+      "sha256": "26560da88ccdf699d0e23f5553ada498c35f647128b6f0c427d310568fceede1",
       "mode": "0o644"
     },
     {
@@ -168,6 +168,14 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/app_audio.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 7273,
+      "sha256": "074a2c9aa75c5da710cd01f742e4b957ce6ba5b0a8663a856addb305f355e2aa",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/application_paths.py",
       "category": "application-code",
       "kind": "file",
@@ -219,16 +227,16 @@
       "path": "backend/blender_contract.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 5684,
-      "sha256": "38ac0ddb84d72bf9cf373951370f26762f611370fc76df6bb5b990450fff26b5",
+      "bytes": 5596,
+      "sha256": "2f89a6a61d11a3bff2adc0691036c246079f0315bf0e0ac7c515973d555de4b5",
       "mode": "0o644"
     },
     {
       "path": "backend/blender_embed.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 15752,
-      "sha256": "2be42de71bf8ba82b9844fc860cfda014868ae2b9d3d8372e2313fe0e9e1e388",
+      "bytes": 16004,
+      "sha256": "822bf68785a0aba2dd6596f41ab0aa5afabd43d576596dc4afa45816f82d2253",
       "mode": "0o644"
     },
     {
@@ -291,8 +299,8 @@
       "path": "backend/chat_surface_host.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 249920,
-      "sha256": "1482dc9bc062a2737247d05d18fd42054ad76d5231d14105dea56effc849bde9",
+      "bytes": 252378,
+      "sha256": "b5f8ed396eb5b746e132a885f15a02942aee585831db1d5081412941e944a00e",
       "mode": "0o600"
     },
     {
@@ -2688,11 +2696,19 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/media_hls.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 4677,
+      "sha256": "5bb024b9ceb6f762854a6e8979ef16615583197cfcc06b0dc5381191607fcec0",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/media_host.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 49798,
-      "sha256": "59558ac72d277571c6196b7b7544fe2349839e52d7acb3dc721a7ed9dd2a5b86",
+      "bytes": 50091,
+      "sha256": "0262b8668b24066c64b051ccd8f6660dcf78b038264f7c0ef69559d39d73e64c",
       "mode": "0o644"
     },
     {
@@ -2840,6 +2856,14 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/native/windows-x86_64/app-audio-build.json",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 326,
+      "sha256": "e48b7bb6e689a097ee6d72f232f7e52a859dbcac39435d7ef371d60a28526982",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/native/windows-x86_64/build.json",
       "category": "application-code",
       "kind": "file",
@@ -2869,6 +2893,14 @@
       "kind": "file",
       "bytes": 311,
       "sha256": "26af70c31d1ad73b53291d9a04a21fd86da24ec5575a835a2062fd2746d17eb4",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/native/windows-x86_64/gg_app_audio.dll",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 39936,
+      "sha256": "9f49e39d96458b524d827061ad316bfe9ec2e501ec76c0796a8ae646e12543ed",
       "mode": "0o644"
     },
     {
@@ -3384,6 +3416,22 @@
       "mode": "0o600"
     },
     {
+      "path": "backend/windows_blender_embed.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 13884,
+      "sha256": "232eed3a206175657c3656739859672825884b35bcbc6432c6dcfa5c16cd5024",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/windows_input.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 4143,
+      "sha256": "a3cb089443f82f5166f393e2ab095bf269232098619855112c5a42c563735aa5",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/windows_pty.py",
       "category": "application-code",
       "kind": "file",
@@ -3419,8 +3467,8 @@
       "path": "backend/windows_windows.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 1727,
-      "sha256": "f72f5ac318417c6be3a3a2ec74b4f89e4f3089b912b6d6adebbeb4d2c91fc5dc",
+      "bytes": 2500,
+      "sha256": "a5495871c110f921d991933abeceddd55541f444d296915096efa2ac952a49cb",
       "mode": "0o644"
     },
     {
@@ -3485,6 +3533,22 @@
       "kind": "file",
       "bytes": 365875,
       "sha256": "1c3695c087a73f4b80049c8262640f170f278cec11a972af1392cefc7f559269",
+      "mode": "0o644"
+    },
+    {
+      "path": "gg-blender",
+      "category": "entrypoints-and-guidance",
+      "kind": "file",
+      "bytes": 362,
+      "sha256": "a93af0785a37267027164222d9d0028daecde4b53b68cbe435193f22075b2b5f",
+      "mode": "0o755"
+    },
+    {
+      "path": "gg-blender.cmd",
+      "category": "entrypoints-and-guidance",
+      "kind": "file",
+      "bytes": 312,
+      "sha256": "6d6856e3f9b3a1e4e6cf7caf6c267ff85c5bf159e058bdab07ac08223a279635",
       "mode": "0o644"
     },
     {
@@ -4357,6 +4421,14 @@
       "kind": "file",
       "bytes": 395033,
       "sha256": "8bbbad84cbb0a7108519ef0db1b8ada2e4fafa602c03b6f05b8192431d286e9b",
+      "mode": "0o644"
+    },
+    {
+      "path": "native/audio/gg_app_audio.cpp",
+      "category": "native-engine",
+      "kind": "file",
+      "bytes": 15284,
+      "sha256": "42a235ef4b487d4245d443f89d094dd00a90e21d870aef1fee80096d7ac3e780",
       "mode": "0o644"
     },
     {
@@ -13859,8 +13931,8 @@
       "path": "packaging/catalog.py",
       "category": "installation-and-packaging",
       "kind": "file",
-      "bytes": 8569,
-      "sha256": "ee554b83debc7904de7ac93dd9126c05b6d981cd6c936296e9e76b6b1f061595",
+      "bytes": 8585,
+      "sha256": "ae34ff877657f094cce5af1f58f09db9adc83142b3be762f3b53052f886e43f8",
       "mode": "0o755"
     },
     {
@@ -13899,8 +13971,8 @@
       "path": "packaging/source-base.json",
       "category": "installation-and-packaging",
       "kind": "file",
-      "bytes": 120097,
-      "sha256": "fa0692444869ee572959479933b05f331c4d2257bc72ec5c4b5f34bfee1a6d95",
+      "bytes": 120166,
+      "sha256": "6588d92fe30aabe178bcabbd87c456bfc10b83f193ddd9455466d8558336d0ee",
       "mode": "0o644"
     },
     {
@@ -14507,8 +14579,8 @@
       "path": "qml/components/MediaSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 37315,
-      "sha256": "aa57863fa8444fa00ed8833e4cf8e58158821e77d4fac4d989aecb84a3cd3466",
+      "bytes": 43847,
+      "sha256": "9dae5489450b9308d1f5595f5a2fff7e2ab35c29289b9cbe5edb034a145f68c4",
       "mode": "0o644"
     },
     {
@@ -14739,8 +14811,8 @@
       "path": "qml/components/UtilitySurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 36318,
-      "sha256": "d5b1eb64794441a30f38fbf20c642404e8f89ad3147f9bd0d0510c555c7763ea",
+      "bytes": 39290,
+      "sha256": "823f26f26c9197fd317ecf67290ce3137ca691180a1959bb988fc88430c904b8",
       "mode": "0o644"
     },
     {
@@ -16352,6 +16424,14 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_app_audio.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11259,
+      "sha256": "7c8b111bd54262e3863700b22fe385eabe15d39db79d45d3d928570dcd0759c3",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_application_bundle.py",
       "category": "tests",
       "kind": "file",
@@ -16376,11 +16456,19 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_blender_agent_input.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 4230,
+      "sha256": "888e13b5e8be77e504177b3ee00f88113e805c37562dccff6a5a21766fb43431",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_blender_contract.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 7164,
-      "sha256": "880859642a10430c26df58a22ace85d1531a21593b451c4d7658517b793cb6cd",
+      "bytes": 7442,
+      "sha256": "53c2891d47fefabd462b03f2203f0782f396bf7fa65028a28b5a542db82bdf6e",
       "mode": "0o644"
     },
     {
@@ -16405,6 +16493,14 @@
       "kind": "file",
       "bytes": 12256,
       "sha256": "3bf745ff643f940a9f8a6659474f01bfdb2d86f783838e749875e49ae69f8445",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_blender_windows.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 4287,
+      "sha256": "ad588ce199759394efaadce56700d43a79d1ce61caa000a300f283066af4a4f5",
       "mode": "0o644"
     },
     {
@@ -18536,6 +18632,14 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_media_hls.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 6173,
+      "sha256": "337499dfd48194c999fdcab1c97b9fed880d397ece1d37fa3471dbccfc352826",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_media_qt_audio.py",
       "category": "tests",
       "kind": "file",
@@ -18549,6 +18653,22 @@
       "kind": "file",
       "bytes": 10731,
       "sha256": "7a88044b96358ee81d9bf5c4757b2d6da3bb4af701f81fa33c43b04532c865d0",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_media_video.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 17297,
+      "sha256": "d682f639833bc5cc3c5f572400cb33bf824e2fc42b6b8e4418b68a6f875bc7f7",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_media_video_playback.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 10756,
+      "sha256": "9a3270b53dcc95c8b436c4dc1780291f9bf966a841438a25d5880ba274a07240",
       "mode": "0o644"
     },
     {
@@ -19024,6 +19144,14 @@
       "mode": "0o600"
     },
     {
+      "path": "tests/test_windows_blender_live.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11848,
+      "sha256": "25b7c9bfd299b9db7ab5ee6b0d3e21128d0a1ace3a57a1fff94f0a436361f549",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_windows_desktop.py",
       "category": "tests",
       "kind": "file",
@@ -19131,8 +19259,8 @@
       "path": "tools/blender/gg_blender_mcp.py",
       "category": "tools",
       "kind": "file",
-      "bytes": 11253,
-      "sha256": "8cbea1cefb65bf5b63d80a70ebd048ba5e9527a0203a08618e56031bfb403018",
+      "bytes": 15634,
+      "sha256": "69a42e5aec82ad305098cc28e1a58ac260f2bf56761441ca90e71668158a5cb9",
       "mode": "0o755"
     },
     {
@@ -19155,8 +19283,16 @@
       "path": "tools/blender/gg_blender_sidecar.py",
       "category": "tools",
       "kind": "file",
-      "bytes": 7394,
-      "sha256": "200ec2376a1f2ab21c9ab89a9ccfa43de2bd3727bbdc5d5cca47053fc2343bc1",
+      "bytes": 9345,
+      "sha256": "6dda38e069db33369c01f88e0b77957bf421ebe59f24b3a438bca4b5adcee2c1",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/blender/gg_blender_virtual_input.py",
+      "category": "tools",
+      "kind": "file",
+      "bytes": 10256,
+      "sha256": "9a984e1427a89e6b6d86bad95c8ba2e487f0c1c55172e01b1112b20974af131a",
       "mode": "0o644"
     },
     {
@@ -19276,6 +19412,14 @@
       "category": "tools",
       "kind": "symlink",
       "target": "../../skills/gg-live-eyes"
+    },
+    {
+      "path": "tools/world/build_app_audio.py",
+      "category": "tools",
+      "kind": "file",
+      "bytes": 2436,
+      "sha256": "7b7b9ed669f99eb2bb73c0d86376061394c2da15df4d478acc114c0a51533d0e",
+      "mode": "0o644"
     },
     {
       "path": "tools/world/build_engine_client.py",
