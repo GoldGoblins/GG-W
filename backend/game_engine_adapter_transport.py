@@ -4,6 +4,9 @@ import json,os,queue,subprocess,threading,time,weakref
 from backend.platform_process import background_options
 from backend.platform_support import terminate_process_tree
 MAX_MESSAGE=16*1024*1024
+
+class NativeWorkerFatalError(RuntimeError):
+    """The native state is no longer reusable, even when a reply was received."""
 def stop_worker(process):
     if process.poll() is None:
         if os.name=='nt':terminate_process_tree(process.pid,force=True)
@@ -67,7 +70,13 @@ class BoundedWorker:
             if isinstance(line,Exception):self.close();raise line
             try:answer=json.loads(line)
             except (ValueError,UnicodeError):self.close();raise RuntimeError('Invalid native worker response') from None
-            if not answer['ok']:raise ValueError(answer.get('error','Native worker error'))
+            if not isinstance(answer,dict) or not isinstance(answer.get('ok'),bool):
+                self.close();raise NativeWorkerFatalError('Invalid native worker response')
+            if not answer['ok']:
+                message=str(answer.get('error','Native worker error'))
+                if answer.get('fatal') is True or message=='native asset decoder panic':
+                    self.close();raise NativeWorkerFatalError(message)
+                raise ValueError(message)
             return answer.get('result')
     def _timeout(self,message='Native worker exceeded its time budget'):
         self.close();raise TimeoutError(message)

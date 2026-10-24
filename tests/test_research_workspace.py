@@ -29,7 +29,7 @@ class Bridge(QObject):
 
 
 def main():
-    faulthandler.dump_traceback_later(25, exit=True)
+    faulthandler.dump_traceback_later(45, exit=True)
     QtWebEngineQuick.initialize()
     app = QGuiApplication.instance() or QGuiApplication([])
     errors = []
@@ -120,19 +120,43 @@ Window {{
             if (research_lab.TOOLS_ROOT / "rea/node_modules/rea-agents/scripts/rea.mjs").is_file():
                 research.setProperty("page", "REVERSE")
                 assert QMetaObject.invokeMethod(reverse, "startAnalysis")
-                deadline = time.monotonic() + 10
-                while reverse.property("busy") and time.monotonic() < deadline:
-                    app.processEvents()
-                    time.sleep(0.01)
-                assert reverse.property("jobState") == "COMPLETE", reverse.property("notice")
-                report = json.loads(reverse.property("reportJson"))
-                assert report["provenance"] == "LOCAL_ENGINE_STATIC_OBSERVATION"
-                assert not (research_jobs._dir(reverse.property("jobId")) / "scratch").exists()
-                assert QMetaObject.invokeMethod(reverse, "restoreLastReport")
-                assert json.loads(reverse.property("reportJson"))["report_id"] == report["report_id"]
-                reverse.findChild(QObject, "reverseFindingTitle").setProperty("text", "Engine renderer observation")
-                assert QMetaObject.invokeMethod(reverse, "saveFinding")
-                assert len(research_desk.snapshot()["evidence"]) == 2
+                job_id = reverse.property("jobId")
+                heartbeats = []
+                heartbeat = QTimer()
+                heartbeat.setInterval(25)
+                heartbeat.timeout.connect(lambda: heartbeats.append(time.monotonic()))
+                heartbeat.start()
+                try:
+                    deadline = time.monotonic() + min(30, research_jobs.TIMEOUT)
+                    while reverse.property("busy") and time.monotonic() < deadline:
+                        app.processEvents()
+                        time.sleep(0.01)
+                    assert reverse.property("jobState") == "COMPLETE", reverse.property("notice")
+                    assert len(heartbeats) >= 2, 'Analysis blocked the Qt event loop'
+                    report = json.loads(reverse.property("reportJson"))
+                    assert report["provenance"] == "LOCAL_ENGINE_STATIC_OBSERVATION"
+                    assert not (research_jobs._dir(job_id) / "scratch").exists()
+                    assert QMetaObject.invokeMethod(reverse, "restoreLastReport")
+                    assert json.loads(reverse.property("reportJson"))["report_id"] == report["report_id"]
+                    reverse.findChild(QObject, "reverseFindingTitle").setProperty("text", "Engine renderer observation")
+                    assert QMetaObject.invokeMethod(reverse, "saveFinding")
+                    assert len(research_desk.snapshot()["evidence"]) == 2
+                finally:
+                    heartbeat.stop()
+                    # Failed assertions must not leave the supervised worker
+                    # holding Windows files while TemporaryDirectory removes it.
+                    if job_id:
+                        state = research_jobs.status(job_id, False)
+                        if state.get("status") in research_jobs.BUSY:
+                            research_jobs.cancel(job_id)
+                        deadline = time.monotonic() + 3
+                        while research_jobs._alive(state) and time.monotonic() < deadline:
+                            app.processEvents()
+                            time.sleep(.02)
+                            state = research_jobs.status(job_id, False)
+                        if research_jobs._alive(state):
+                            from backend.platform_support import terminate_process_tree
+                            terminate_process_tree(state["worker_pid"], force=True)
 
             research.setProperty("page", "MEMORY")
             methods = research_desk.snapshot()["methods"]

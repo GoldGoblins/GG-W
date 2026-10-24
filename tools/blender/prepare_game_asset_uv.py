@@ -11,12 +11,18 @@ from pathlib import Path
 
 import bpy
 
+# This is a factory-scene child, separate from the user's live Blender EXT.
+# Enforce memory/CPU limits before importing or decoding selected model data.
+sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
+from backend.native_worker_limits import apply as apply_worker_limits
+
 
 def progress(stage, percent):
     print("GGUV " + json.dumps({"stage": stage, "percent": percent}), flush=True)
 
 
 def prepare(source, destination):
+    apply_worker_limits(2*1024*1024*1024)
     progress("Läser modell och befintliga material", 5)
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.gltf(filepath=str(source))

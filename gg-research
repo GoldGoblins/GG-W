@@ -17,10 +17,10 @@ def main():
     sub.add_parser('tools')
     sub.add_parser('history')
     sub.add_parser('self-test')
-    for name in ['analyze', 'search', 'function', 'decompile', 'xrefs']:
+    for name in ['analyze', 'search', 'function', 'decompile', 'xrefs', 'php_analyze']:
         s = sub.add_parser(name)
         s.add_argument('path')
-        if name != 'analyze':
+        if name not in {'analyze', 'php_analyze'}:
             s.add_argument('query')
         s.add_argument('--wait', action='store_true')
     for name in ['status', 'cancel']:

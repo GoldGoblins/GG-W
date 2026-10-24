@@ -33,7 +33,6 @@ def main():
     from PySide6.QtGui import QGuiApplication
     from PySide6.QtQml import QQmlApplicationEngine
     from PySide6.QtQuick import QQuickWindow
-    import game_client_main
     app = QGuiApplication([])
     engine = QQmlApplicationEngine()
     samples, captures, screenshots, failures = [], [], {}, []
@@ -123,11 +122,17 @@ Window { id:win; width:800; height:600; visible:true; title:"GG asset scene meas
                 stage = profile.STAGES[state["stage"]]
                 # Capture into a temporary file, then use the owned-store quota.
                 temporary_image = Path(temporary) / (stage + ".png")
-                capture = game_client_main.capture_window_async(window, temporary_image)
+                # The distributable desktop has no game_client_main module.
+                # This is our generated scene, captured asynchronously by Qt.
+                capture = window.contentItem().grabToImage()
+                if capture is None:
+                    failures.append("QT_PROFILE_SCREENSHOT_FAILED")
+                    app.quit()
+                    return
                 captures.append(capture)
 
                 def captured():
-                    if not temporary_image.exists():
+                    if not capture.saveToFile(str(temporary_image)) or not temporary_image.exists():
                         failures.append("QT_PROFILE_SCREENSHOT_FAILED")
                         app.quit()
                         return
@@ -143,6 +148,12 @@ Window { id:win; width:800; height:600; visible:true; title:"GG asset scene meas
             app.quit()
         QTimer.singleShot(55000, timeout)
         app.exec()
+        render_timer.stop()
+        timer.stop()
+        window.close()
+        # Release the QML scene before its application and render infrastructure.
+        from shiboken6 import delete
+        delete(engine)
     if failures:
         raise ValueError(failures[0])
     result = profile.record(args.plan, samples, screenshots)

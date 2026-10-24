@@ -69,6 +69,9 @@ def _structure(code):
 
 
 def syntax_gate(code: str) -> dict:
+    if os.name == 'nt':
+        from backend.game_workflow_compiler import syntax
+        return syntax(code)
     compiler, sandbox, limiter = (shutil.which(name) for name in ("gcc", "bwrap", "prlimit"))
     if not all((compiler, sandbox, limiter)):
         return {"state": "UNKNOWN", "reason": "SANDBOX_OR_C_COMPILER_UNAVAILABLE"}

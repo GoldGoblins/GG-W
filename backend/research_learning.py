@@ -8,6 +8,8 @@ import json
 import subprocess
 import tempfile
 import time
+import os
+from backend.platform_process import background_options
 
 from backend import research_desk, research_jobs
 
@@ -27,18 +29,13 @@ def verify_method(method_id: str) -> dict:
         row = db.execute('SELECT status,proof FROM methods WHERE id=?', (method_id,)).fetchone()
     if row is None:
         return {'status': 'METHOD_NOT_FOUND'}
-    try:
-        proof = json.loads(row['proof']) if str(row['proof']).startswith('{') else {}
-    except ValueError:
-        proof = {}
-    if not isinstance(proof, dict):
-        proof = {}
-    tested = row['status'] == 'VERIFIED' and proof.get('test_schema') == 'gg.research-known-answer.v1'
+    tested = research_desk.method_test(method_id) is not None
     return {'status': 'TESTED_WORKFLOW' if tested else 'INDEPENDENT_TEST_REQUIRED',
             'detail': 'Verification applies to the recorded fixture and workflow.' if tested else
                       'Define an independent test for this conclusion; a successful analysis alone is insufficient.'}
 
 
+@research_desk.atomic_operation
 def _record(name: str, trigger: str, steps: list[str], state: dict, checks: dict) -> dict:
     report = state['report']
     proof = {'test_schema': 'gg.research-known-answer.v1', 'checks': checks,
@@ -50,17 +47,43 @@ def _record(name: str, trigger: str, steps: list[str], state: dict, checks: dict
         'kind': 'ENGINE_VERIFICATION', 'source_url': 'gg-research:self-test', 'provenance': 'KNOWN_ANSWER_TEST',
         'confidence': 1.0, 'details': {'checks': checks, 'source_id': source['source_id'], 'engine': report['engine'],
                                     'scope': proof['scope']}})
-    command = 'python3 projects/gg-ai-desktop/gg-research ' + report['operation'] + ' TARGET'
+    command = ('gg-research.cmd ' if os.name == 'nt' else 'python3 gg-research ') + report['operation'] + ' TARGET'
     if report['operation'] != 'analyze':
         command += ' FUNCTION'
     command += ' --wait'
-    method = research_desk.add_method({'name': name, 'trigger': trigger + ' undersök analysera bibliotek binär funktion kod',
+    method = research_desk._record_tested_method({'name': name, 'trigger': trigger + ' undersök analysera bibliotek binär funktion kod',
         'steps': [steps[0], command, *steps[1:]],
-        'proof': json.dumps(proof), 'source_id': source['source_id'], 'status': 'VERIFIED'})
+        'proof': json.dumps(proof), 'source_id': source['source_id']}, proof)
+    research_desk.retain_finding(evidence['evidence_id'], source['source_id'], report)
     with research_desk._LOCK, research_desk._db() as db:
         db.execute("UPDATE methods SET status='RETIRED' WHERE name=? AND id<>?", (name, method['method_id']))
     return {'name': name, 'method_id': method['method_id'], 'evidence_id': evidence['evidence_id'],
             'checks': checks, 'status': 'PASS'}
+
+
+def build_native_fixture(root: Path, marker: Path) -> Path:
+    """Compile only our fixed known-answer source, never a selected user file."""
+    source = root / 'fixture.c'
+    if os.name == 'nt':
+        from backend.platform_build import build_environment, build_tool
+        env = build_environment()
+        source.write_text('#include <windows.h>\n'
+            '__declspec(dllexport) __declspec(noinline) int gg_stack_next(int value) { return value + 7; }\n'
+            ' __declspec(dllexport) int main(void) { HANDLE f=CreateFileW(L' + json.dumps(str(marker)) +
+            ',GENERIC_WRITE,0,0,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,0); '
+            'if(f!=INVALID_HANDLE_VALUE) CloseHandle(f); return gg_stack_next(0); }\n', encoding='utf-8')
+        binary = root / 'fixture.exe'
+        subprocess.run([build_tool('cl.exe', env), '/nologo', '/Od', '/Ob0', '/GS-', '/Zl',
+            str(source), '/Fo' + str(root / 'fixture.obj'), '/Fe' + str(binary),
+            '/link', '/NODEFAULTLIB', '/ENTRY:main', '/SUBSYSTEM:CONSOLE', 'kernel32.lib'],
+            cwd=root, env=env, capture_output=True, check=True, timeout=30, **background_options())
+        return binary
+    source.write_text('#include <stdio.h>\n__attribute__((noinline)) int gg_stack_next(int value) { return value + 7; }\n'
+        'int main(void) { FILE *f=fopen(' + json.dumps(str(marker)) + ',"w"); if(f) fclose(f); return gg_stack_next(0); }\n', encoding='utf-8')
+    binary = root / 'fixture'
+    subprocess.run(['gcc', '-O0', '-g', '-fno-inline', '-o', str(binary), str(source)],
+                   check=True, timeout=20, capture_output=True)
+    return binary
 
 
 def self_test() -> dict:
@@ -75,12 +98,7 @@ def self_test() -> dict:
         (js / 'main.js').write_text("import { ggStackNext } from './math.js';\nimport fs from 'node:fs';\n" +
             f"fs.writeFileSync({json.dumps(str(marker))}, 'executed');\n" +
             'export function ggPortfolio(value) { return ggStackNext(value); }\n')
-        native_source = root / 'fixture.c'
-        native_source.write_text('#include <stdio.h>\n__attribute__((noinline)) int gg_stack_next(int value) { return value + 7; }\n' +
-            'int main(void) { FILE *f=fopen(' + json.dumps(str(marker)) + ',"w"); if(f) fclose(f); return gg_stack_next(0); }\n')
-        binary = root / 'fixture'
-        subprocess.run(['gcc', '-O0', '-g', '-fno-inline', '-o', str(binary), str(native_source)],
-                       check=True, timeout=20, capture_output=True)
+        binary = build_native_fixture(root, marker)
         cases = [('JavaScript dependency inspection', js, 'analyze', '', ['ggStackNext', 'ggPortfolio', 'math.js'],
                   ['Select an explicit JavaScript project.', 'Run local REA application analysis.',
                    'Inspect source locations, imports and exports.', 'Test behavioral claims independently.']),
@@ -111,7 +129,7 @@ def self_test() -> dict:
             if operation == 'decompile':
                 import re
                 pseudocode = state['report']['content'].get('normalized_result')
-                checks['known_arithmetic_present'] = isinstance(pseudocode, str) and bool(re.search(r'return\s+value\s*\+\s*7\s*;', pseudocode))
+                checks['known_arithmetic_present'] = isinstance(pseudocode, str) and bool(re.search(r'return\s+(?:value|param_1)\s*\+\s*(?:7|0x7)\s*;', pseudocode))
             if operation == 'function':
                 normalized = state['report']['content'].get('normalized_result') or {}
                 checks['known_function_body_present'] = normalized.get('procedure', {}).get('name') == 'gg_stack_next' and bool(normalized.get('procedure', {}).get('body', {}).get('available'))

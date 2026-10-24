@@ -14,12 +14,14 @@ def main() -> int:
     import tempfile
     from backend import web_surface
 
-    saved_root = web_surface.SITE_ROOT
-    web_surface.SITE_ROOT = Path(tempfile.mkdtemp(prefix="gg-site-test-")) / "site"
-    try:
-        return _run(web_surface)
-    finally:
-        web_surface.SITE_ROOT = saved_root
+    saved_root, saved_profile = web_surface.SITE_ROOT, web_surface.PROFILE_ROOT
+    with tempfile.TemporaryDirectory(prefix='gg-site-test-') as temporary:
+        web_surface.SITE_ROOT = Path(temporary) / 'site'
+        web_surface.PROFILE_ROOT = Path(temporary) / 'web-profile'
+        try:
+            return _run(web_surface)
+        finally:
+            web_surface.SITE_ROOT, web_surface.PROFILE_ROOT = saved_root, saved_profile
 
 
 def _run(web_surface) -> int:

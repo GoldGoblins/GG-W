@@ -26,6 +26,8 @@ def main() -> int:
     host.setWidth(800)
     host.setHeight(400)
     grid = TerminalGrid(host)
+    copy_commands: list[str] = []
+    grid.dataProduced.connect(copy_commands.append)
     grid.setWidth(800)
     grid.setHeight(400)
     grid.feed_text("\x1b[2J\x1b[Hhello")
@@ -69,8 +71,14 @@ def main() -> int:
     grid._selection_anchor = None
     grid._selection_cursor = None
     grid._selection_moved = False
-    if grid._map_key(copy_event) != "":
-        raise AssertionError("Ctrl+C without selection lost terminal interrupt")
+    if grid._map_key(copy_event) != "":
+        raise AssertionError("Ctrl+C without selection still maps to a CLI interrupt")
+    grid.keyPressEvent(copy_event)
+    grid.keyPressEvent(copy_event)
+    if copy_commands:
+        raise AssertionError("copy sent input to the CLI instead of staying local")
+    if clipboard.text() != "hello":
+        raise AssertionError("copy without selection replaced the existing clipboard")
 
     grid._vt.feed("old-session\n")
     grid._view_offset = 4

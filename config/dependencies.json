@@ -74,6 +74,42 @@
       "required_for": "external audio and video playback"
     }
   ],
+  "research_engines": {
+    "installer": "tools/install_research_engines.py",
+    "scope": "Optional per-user tools; no system PATH or MCP registration changes",
+    "ghidra": {
+      "version": "12.1.4",
+      "source": "https://github.com/NationalSecurityAgency/ghidra/releases/tag/Ghidra_12.1.4_build"
+    },
+    "rea-agents": {
+      "version": "6.0.0",
+      "source": "https://github.com/morluto/rea",
+      "package": "https://registry.npmjs.org/rea-agents/6.0.0"
+    },
+    "windows_jdk": {
+      "version": "25.0.4.1",
+      "provider": "Eclipse Temurin",
+      "source": "https://github.com/adoptium/temurin25-binaries/releases/tag/jdk-25.0.4.1%2B1"
+    }
+  },
+  "site_runtime": {
+    "platform": "Windows x64",
+    "installer": "tools/install_site_runtime.py",
+    "verification": "tools/verify_site_runtime.py",
+    "scope": "Optional per-user PHP/MariaDB; no global PATH changes or Windows service registration",
+    "php": {
+      "version": "8.5.12",
+      "build": "VS17 x64 Non Thread Safe",
+      "source": "https://www.php.net/downloads.php?os=windows&version=8.5",
+      "archive": "https://downloads.php.net/~windows/releases/archives/php-8.5.12-nts-Win32-vs17-x64.zip"
+    },
+    "mariadb": {
+      "version": "12.3.3",
+      "source": "https://archive.mariadb.org/mariadb-12.3.3/winx64-packages/",
+      "archive": "https://archive.mariadb.org/mariadb-12.3.3/winx64-packages/mariadb-12.3.3-winx64.zip"
+    },
+    "authentication": "Current-user Windows Credential Manager; administrator secret is never written to application files or process arguments"
+  },
   "bundled_gg_skills": [
     "gg-blender-reference-workflow",
     "gg-live-eyes",

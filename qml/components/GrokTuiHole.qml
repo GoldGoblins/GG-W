@@ -18,6 +18,7 @@ FocusScope {
     property int scrollMaximum: 0
     property int scrollPage: 1
     property string noticeText: ""
+    property string clipboardNoticeText: ""
     readonly property bool restoringChat: Boolean(root.surfaceHost
         && root.surfaceHost.startupChatRestoring
         && root.surfaceHost.startupChatTerminal === root.terminalId)
@@ -117,6 +118,16 @@ FocusScope {
         }
     }
 
+    Connections {
+        target: root.surfaceHost
+        // A QML reload may precede the backend restart after an update.
+        ignoreUnknownSignals: true
+        function onChatClipboardNotice(id, text) {
+            if (id === root.terminalId)
+                root.clipboardNoticeText = String(text || "")
+        }
+    }
+
     Item {
         objectName: "grokTuiPrompt"
         anchors.left: parent.left
@@ -182,6 +193,36 @@ FocusScope {
             font.pixelSize: 12
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
+        }
+    }
+
+    Rectangle {
+        objectName: "chatClipboardNotice"
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: 8
+        anchors.rightMargin: 8
+        anchors.bottomMargin: 72
+        height: clipboardNoticeLabel.implicitHeight + 16
+        z: 1200
+        visible: root.clipboardNoticeText.length > 0
+        color: "#30251b"
+        border.color: "#c8a97e"
+        border.width: 1
+        radius: 3
+
+        Text {
+            id: clipboardNoticeLabel
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.margins: 8
+            text: root.clipboardNoticeText
+            color: "#f0e5d7"
+            font.family: "monospace"
+            font.pixelSize: 12
+            wrapMode: Text.Wrap
         }
     }
 

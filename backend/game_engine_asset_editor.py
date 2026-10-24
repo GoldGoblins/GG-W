@@ -6,8 +6,6 @@ are decoded on selection, never by the simulation or its frame transport.
 """
 from __future__ import annotations
 
-from backend.application_paths import HOME
-
 import base64
 import copy
 import hashlib
@@ -15,6 +13,7 @@ import json
 import math
 import os
 import struct
+import uuid
 from collections import OrderedDict
 from pathlib import Path
 from urllib.parse import unquote, urlparse
@@ -27,6 +26,9 @@ from PySide6.QtQuick import QQuickImageProvider
 from backend import game_engine_assets as assets
 from backend import game_engine_items as items
 from backend import game_asset_resources as resources
+from backend.platform_support import local_file_path
+from backend.platform_files import atomic_replace, is_link, secure_open, NOFOLLOW
+from backend.image_admission import decode_image
 
 SCHEMA = "gg.game-engine.asset-editor.v1"
 STATE_ROOT = Path(os.environ.get("XDG_STATE_HOME", str(Path.home()/".local/state"))) / "goldgoblins/gg-ai-desktop/game-editor"
@@ -42,12 +44,46 @@ GENERATED_ROOT = STATE_ROOT / "generated"
 MAX_GENERATED_BYTES = 64 * 1024 * 1024
 
 
+def _discard_uv_file(path):
+    """Remove only our direct generated file, including long Windows paths."""
+    path=Path(path).absolute()
+    if path.parent.resolve()!=GENERATED_ROOT.resolve() or is_link(path):
+        raise ValueError('UV_OUTPUT_OUTSIDE_ROOT')
+    value=str(path)
+    if os.name=='nt' and not value.startswith('\\\\?\\'):
+        value='\\\\?\\UNC\\'+value[2:] if value.startswith('\\\\') else '\\\\?\\'+value
+    Path(value).unlink(missing_ok=True)
+
+
+def _resource_identity(path):
+    """Windows ctime is creation time; use the real NTFS change timestamp."""
+    info=path.stat();changed=info.st_ctime_ns
+    if os.name=='nt':
+        import ctypes
+        import msvcrt
+        from ctypes import wintypes as w
+        class BasicInfo(ctypes.Structure):
+            _fields_=[('created',ctypes.c_longlong),('accessed',ctypes.c_longlong),
+                      ('written',ctypes.c_longlong),('changed',ctypes.c_longlong),('attributes',w.DWORD)]
+        kernel=ctypes.WinDLL('kernel32',use_last_error=True)
+        query=kernel.GetFileInformationByHandleEx
+        query.argtypes=[w.HANDLE,ctypes.c_int,ctypes.c_void_p,w.DWORD];query.restype=w.BOOL
+        with os.fdopen(secure_open(path,os.O_RDONLY|NOFOLLOW),'rb') as handle:
+            basic=BasicInfo()
+            if not query(msvcrt.get_osfhandle(handle.fileno()),0,ctypes.byref(basic),ctypes.sizeof(basic)):
+                raise ctypes.WinError(ctypes.get_last_error())
+            info=os.fstat(handle.fileno());changed=basic.changed
+    return (str(path),info.st_size,info.st_mtime_ns,changed)
+
+
 def local_path(raw):
     value = str(raw or "")
     parsed = urlparse(value)
-    if parsed.scheme and (parsed.scheme != "file" or parsed.netloc not in ("", "localhost")):
+    # A Windows drive letter is a path, not a URL scheme.
+    is_path = Path(value).is_absolute() and not value.lower().startswith('file:')
+    if not is_path and parsed.scheme and (parsed.scheme != "file" or parsed.netloc not in ("", "localhost") or parsed.query or parsed.fragment):
         raise ValueError("Välj en lokal asset ur biblioteket.")
-    path = Path(unquote(parsed.path) if parsed.scheme else value)
+    path = local_file_path(value) if not is_path and parsed.scheme else Path(value)
     if not path.is_absolute():
         path = assets.PROJECT_ROOT / "qml" / path if value.startswith("assets/") else assets.ASSET_ROOT / path
     path = path.resolve()
@@ -319,8 +355,7 @@ class AssetEditor:
         return self.document["edits"].setdefault(key, {"source":self.selected.get("original_source",self.selected["source"]), "materials":{}})
 
     def resource_stamp(self, path):
-        info = path.stat()
-        source_stamp = (path.as_uri(), info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+        source_stamp = _resource_identity(path)
         cached = self.detail_references.get(path.as_uri())
         if cached is None or cached[0] != source_stamp:
             references = []
@@ -338,8 +373,7 @@ class AssetEditor:
         stamps = []
         for uri in cached[1]:
             candidate = resources.reference(path, uri, model_root(path), assets.MAX_REFERENCED_BYTES)
-            stat = candidate.stat()
-            stamps.append((str(candidate), stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns))
+            stamps.append(_resource_identity(candidate))
         return source_stamp + tuple(stamps)
 
     def detail(self, source):
@@ -440,10 +474,12 @@ class AssetEditor:
                 data = resources.data_uri(uri, assets.MAX_SOURCE_BYTES)
             else:
                 _, data = resources.read_reference(path, uri, model_root(path), assets.MAX_SOURCE_BYTES)
-        image = QImage.fromData(data)
-        if image.isNull() or max(image.width(),image.height()) > MAX_TEXTURE_SIZE:
-            raise ValueError("Texturen kunde inte öppnas eller är större än 4096 pixlar.")
-        return image.convertToFormat(QImage.Format.Format_RGBA8888)
+        try:
+            return decode_image(data,max_encoded_bytes=assets.MAX_SOURCE_BYTES,
+                                max_dimension=MAX_TEXTURE_SIZE,
+                                max_decoded_bytes=MAX_TEXTURE_SIZE*MAX_TEXTURE_SIZE*4)
+        except ValueError as exc:
+            raise ValueError("Texturen kunde inte öppnas eller överskrider bildens storleksgräns.") from exc
 
     def _settings(self, identity, source):
         # A library edit supplies defaults. Object edits override individual
@@ -750,6 +786,54 @@ class AssetEditor:
                 material_rows.append({"index":index,"ordinal":ordinal,"name":material["name"],"values":values})
         return {"ok":True,"materials":material_rows}
 
+    def _install_uv_artifact(self, staged, target, old_detail, selected, original, expected_revision):
+        """Prepare all fallible state before making a generated model visible."""
+        staged,target=Path(staged),Path(target)
+        for path in (staged,target):
+            if path.parent.resolve()!=GENERATED_ROOT.resolve() or is_link(path):
+                raise ValueError('UV_OUTPUT_OUTSIDE_ROOT')
+        if self.revision!=expected_revision:
+            raise ValueError("Scenen ändrades under UV-arbetet. Försök igen från den aktuella scenen.")
+        doc,raw,error=assets._read_json_document(staged)
+        if error or not isinstance(doc,dict):
+            raise ValueError("UV-atlasens modell kunde inte läsas.")
+        # The trusted exporter produces a self-contained static GLB. Do not
+        # publish external resources, a replacement rig or animation tracks.
+        sections=[doc.get(section,[]) for section in ('buffers','images')]
+        if any(not isinstance(rows,list) or any(not isinstance(row,dict) for row in rows) for rows in sections):
+            raise ValueError("UV-atlasens resursdata är felaktiga.")
+        if doc.get('skins') or doc.get('animations') or any(row.get('uri') for rows in sections for row in rows):
+            raise ValueError("UV-atlasen måste vara en fristående statisk GLB.")
+        binding=assets._validate_document(staged,raw,doc,target.stem)
+        if binding.get('status')!='READY':
+            raise ValueError("Den förberedda modellen kunde inte laddas.")
+        detail=self.detail(staged.as_uri())
+        used=sum(p.stat().st_size for p in GENERATED_ROOT.glob('*.glb')
+                 if p not in (staged,target) and not is_link(p))
+        if used+len(raw)>MAX_GENERATED_BYTES:
+            raise ValueError("Atlasen överskrider lagringsgränsen på 64 MiB.")
+        if selected['key'] not in self.document['edits'] and len(self.document['edits'])>=MAX_EDITS:
+            raise ValueError("Scenens gräns för redigeringar är nådd.")
+        binding['source']=target.as_uri()
+        binding['relative_source']='assets/'+target.name
+        document=copy.deepcopy(self.document)
+        edit=document['edits'].setdefault(selected['key'],{'source':original,'materials':{}})
+        by_name={m['name']:edit.get('materials',{}).get(str(m['index']),{}) for m in old_detail.get('materials',[])}
+        edit['materials']={str(m['index']):by_name[m['name']] for m in detail['materials'] if by_name.get(m['name'])}
+        edit.update(model_source=target.as_uri(),model_binding=binding)
+        selection=copy.deepcopy(self.selected)
+        if selection.get('key')==selected['key']:selection['source']=target.as_uri()
+        revision=self.revision+1;document['revision']=revision
+        undo=(self.undo+[copy.deepcopy(self.document)])[-MAX_UNDO:]
+        message="UV-atlasen är klar. Modellens form och befintliga färger är bevarade."
+        # No callbacks, parsers or native work run between publication and the
+        # prepared assignments. A failed rename leaves the prior scene intact.
+        if staged!=target:atomic_replace(staged,target)
+        self.document=document;self.undo=undo;self.redo=[];self.selected=selection
+        self.revision=revision;self.notice=message;self.images=OrderedDict()
+        self.runtime._render_snapshot_signature=None
+        self.uv_progress={'busy':False,'percent':100,'stage':message}
+
     def prepare_uv(self):
         if self.uv_job is not None:
             raise ValueError("En UV-atlas förbereds redan.")
@@ -764,37 +848,25 @@ class AssetEditor:
         settings = self._settings(self.selected.get("identity",""),source.as_uri())
         if any(m.get("strokes") for m in settings.get("materials",{}).values()):
             raise ValueError("Förbered UV före målning. Befintliga penseldrag måste behålla sin UV-layout.")
-        blender = Path(str(HOME / 'blender-5.2.2-linux-x64/blender'))
-        if not blender.is_file():
-            raise ValueError("Blender behövs för att packa UV-atlasen.")
         GENERATED_ROOT.mkdir(parents=True,exist_ok=True)
-        token = hashlib.sha256(b"paint-atlas-v1"+source.read_bytes()).hexdigest()[:24]
+        token = hashlib.sha256(b"paint-atlas-v2"+source.read_bytes()+repr(self.resource_stamp(source)).encode()).hexdigest()[:24]
         target = GENERATED_ROOT/(token+".glb")
         selected = copy.deepcopy(self.selected)
         original = selected.get("original_source",source.as_uri())
-        def install():
-            doc,raw,error = assets._read_json_document(target)
-            if error:
-                raise ValueError("UV-atlasens modell kunde inte läsas.")
-            binding = assets._validate_document(target,raw,doc,target.stem)
-            if binding.get("status")!="READY":
-                raise ValueError("Den förberedda modellen kunde inte laddas.")
-            if selected["key"] not in self.document["edits"] and len(self.document["edits"])>=MAX_EDITS:
-                raise ValueError("Scenens gräns för redigeringar är nådd.")
-            self._checkpoint()
-            edit=self.document["edits"].setdefault(selected["key"],{"source":original,"materials":{}})
-            by_name={m["name"]:edit.get("materials",{}).get(str(m["index"]),{}) for m in old_detail.get("materials",[])}
-            edit["materials"]={str(m["index"]):by_name[m["name"]] for m in self.detail(target.as_uri())["materials"] if by_name.get(m["name"])}
-            edit.update(model_source=target.as_uri(),model_binding=binding)
-            if self.selected.get("key")==selected["key"]:
-                self.selected["source"]=target.as_uri()
-            self._changed("UV-atlasen är klar. Modellens form och befintliga färger är bevarade.")
-            self.uv_progress={"busy":False,"percent":100,"stage":self.notice}
+        expected_revision=self.revision
         if target.is_file():
-            install(); return
+            try:
+                self._install_uv_artifact(target,target,old_detail,selected,original,expected_revision)
+                return
+            except (ValueError,OSError,KeyError,IndexError,TypeError,RuntimeError):
+                _discard_uv_file(target)
+        from backend.blender_contract import blender_bin
+        blender=blender_bin()
+        if not blender or not Path(blender).is_file():
+            raise ValueError("Blender behövs för att packa UV-atlasen.")
         if sum(p.stat().st_size for p in GENERATED_ROOT.glob("*.glb"))>=MAX_GENERATED_BYTES:
             raise ValueError("UV-atlasernas lagringsgräns på 64 MiB är nådd.")
-        pending = target.with_suffix(".pending.glb")
+        pending = target.with_name(target.stem+'.'+uuid.uuid4().hex+'.pending.glb')
         process=QProcess(self.parent); self.uv_job=process
         self.uv_progress={"busy":True,"percent":0,"stage":"Startar UV-förberedelse"}
         stream=bytearray()
@@ -810,17 +882,16 @@ class AssetEditor:
             if len(stream)>8192:stream.clear()
         timer=QTimer(process);timer.setSingleShot(True)
         def finished(code, status):
+            if self.uv_job is not process:return
             timer.stop();read_progress();self.uv_job=None
             try:
                 if code!=0 or not pending.is_file() or self.uv_progress.get("error"):
                     raise ValueError(self.uv_progress.get("error","UV-förberedelsen kunde inte slutföras."))
-                if sum(p.stat().st_size for p in GENERATED_ROOT.glob("*.glb"))>MAX_GENERATED_BYTES:
-                    raise ValueError("Atlasen överskrider lagringsgränsen på 64 MiB.")
-                pending.replace(target);install()
-            except (ValueError,OSError,KeyError,IndexError) as exc:
+                self._install_uv_artifact(pending,target,old_detail,selected,original,expected_revision)
+            except (ValueError,OSError,KeyError,IndexError,TypeError,RuntimeError) as exc:
                 self.uv_progress={"busy":False,"error":str(exc),"stage":str(exc)}
             finally:
-                pending.unlink(missing_ok=True);process.deleteLater()
+                _discard_uv_file(pending);process.deleteLater()
         def timeout():
             self.uv_progress["error"]="UV-förberedelsen tog för lång tid och avbröts."
             process.kill()

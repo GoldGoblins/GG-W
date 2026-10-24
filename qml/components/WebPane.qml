@@ -110,6 +110,15 @@ Item {
     property int _typeIndex: 0
     property bool _typeReset: true
     property var _scriptOnce: null
+    property int _opEpoch: 0
+    property int _documentEpoch: 0
+    property string _opDocumentToken: ""
+    property string _opDocumentHref: ""
+    property bool _allowNavigation: false
+    property bool _typingInFlight: false
+    property var _opEngine: null
+    property string _pageSession: String(Date.now()) + "-" + String(Math.random())
+    property bool _mutationSubmitted: false
     property string lastGrab: ""
     property string _stageHtml: "<!DOCTYPE html><html lang=\"sv\"><head><meta charset=\"utf-8\"><title>GG WEB stage</title><style>body{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#121212;color:#e6e6e6;margin:2rem}button,input,select{font:16px monospace;padding:.4rem .7rem;margin:.4rem 0}a{color:#c8a97e}.tall{height:900px}.page{display:none}.page.on{display:block}</style></head><body><section id=\"home\" class=\"page on\"><h1>Visible WEB stage</h1><p>Local fixture. No network.</p><form id=\"f\"><input id=\"q\" placeholder=\"type here\"><p><button id=\"go\" type=\"submit\">Go</button></p></form><p id=\"out\"></p><p><label><input id=\"agree\" type=\"checkbox\"> I agree</label></p><p><select id=\"city\"><option value=\"\">City</option><option value=\"lidkoping\">Lidkoping</option><option value=\"skara\">Skara</option></select></p><p><a id=\"link\" href=\"#bottom\">Scroll link</a></p><p><a id=\"next\" href=\"#two\">Next page</a></p><p><a id=\"blank\" href=\"#two\" target=\"_blank\">Open page two in new tab</a></p><div class=\"tall\"></div><p id=\"bottom\">bottom</p></section><section id=\"two\" class=\"page\"><h1>Page two</h1><p id=\"p2\">Second page.</p><p><a id=\"home\" href=\"#home\">Back home</a></p></section><script>function show(){var h=location.hash||\"#home\";document.querySelectorAll(\".page\").forEach(function(p){p.classList.remove(\"on\")});var el=document.querySelector(h===\"#two\"?\"#two\":\"#home\");if(el)el.classList.add(\"on\");}show();window.addEventListener(\"hashchange\",show);document.getElementById(\"f\").addEventListener(\"submit\",function(e){e.preventDefault();document.getElementById(\"out\").textContent=\"clicked: \"+document.getElementById(\"q\").value;});</script></body></html>"
 
@@ -208,6 +217,7 @@ Item {
     function takeView(view) {
         if (!view)
             return
+        root.cancelOperator("", "ENGINE_CHANGED")
         root.adoptedEngine = view
         root.engineArmed = false
         view.parent = engineHost
@@ -230,7 +240,12 @@ Item {
     }
 
     function handleEngineLoad(status, view) {
+        if (view && view !== root.liveEngine())
+            return
         if (status === WebEngineView.LoadStartedStatus) {
+            root._documentEpoch += 1
+            if (root.operatorBusy && !root._allowNavigation)
+                root.cancelOperator("", "DOCUMENT_CHANGED")
             if (root._abortingLoad) {
                 pageLoadWatch.stop()
                 return
@@ -274,6 +289,42 @@ Item {
             engine.stop()
     }
 
+    function cancelLoadWait() {
+        root._loadDone = null
+        loadWaitTimer.stop()
+    }
+
+    function cancelOperator(commandId, reason) {
+        if (!root.operatorBusy)
+            return
+        if (commandId && String(root._opCmd.command_id || "") !== String(commandId))
+            return
+        root._finish(false, reason || "OPERATOR_CANCELLED", root.currentHref(), "", "", [])
+    }
+
+    function _expired() {
+        return Number(root._opCmd.expires_at || 0) > 0
+            && Date.now() / 1000 >= Number(root._opCmd.expires_at)
+    }
+
+    function _guard(done, allowDocumentChange) {
+        var epoch = root._opEpoch
+        var documentEpoch = root._documentEpoch
+        return function(value) {
+            if (!root.operatorBusy || epoch !== root._opEpoch)
+                return
+            if (root._expired()) {
+                root.cancelOperator("", "OPERATOR_TIMEOUT")
+                return
+            }
+            if (!allowDocumentChange && documentEpoch !== root._documentEpoch) {
+                root.cancelOperator("", "DOCUMENT_CHANGED")
+                return
+            }
+            done(value)
+        }
+    }
+
     function abortStuckLoad() {
         if (root._abortingLoad)
             return
@@ -304,37 +355,107 @@ Item {
         }
     }
 
-    function runPageScript(script, done) {
+    function runPageScript(script, done, allowDocumentChange, mutating) {
+        var guarded = root._guard(done, allowDocumentChange === true)
         function once(raw) {
             if (root._scriptOnce !== once)
                 return
             root._scriptOnce = null
             scriptWatch.stop()
-            done(raw)
+            var parsed = root._parse(raw)
+            if (["DOCUMENT_CHANGED", "OPERATION_REPLACED", "OPERATOR_TIMEOUT"].indexOf(parsed.reason) >= 0) {
+                root.cancelOperator("", parsed.reason)
+                return
+            }
+            guarded(raw)
         }
         root._scriptOnce = once
         scriptWatch.restart()
-        var engine = root.liveEngine()
+        var engine = root._opEngine
         if (!engine || !engine.runJavaScript) {
             once("")
             return
         }
+        if (root._opDocumentToken.length > 0)
+            script = "(function(){if(" + Number(root._opCmd.expires_at || 0)
+                + ">0&&Date.now()/1000>=" + Number(root._opCmd.expires_at || 0)
+                + ")return JSON.stringify({ok:false,reason:'OPERATOR_TIMEOUT'});"
+                + "if(document.__ggOperatorIdentity!=="
+                + JSON.stringify(root._opDocumentToken)
+                + "||String(location.href)!==" + JSON.stringify(root._opDocumentHref)
+                + ")return JSON.stringify({ok:false,reason:'DOCUMENT_CHANGED'});"
+                + "var s=document.__ggOperatorSessions&&document.__ggOperatorSessions["
+                + JSON.stringify(root._pageSession) + "];if(!s||s.current!==" + root._opEpoch
+                + "||s.retiredThrough>=" + root._opEpoch
+                + ")return JSON.stringify({ok:false,reason:'OPERATION_REPLACED'});return ("
+                + script + ");})()"
+        if (mutating === true)
+            root._mutationSubmitted = true
         engine.runJavaScript(script, once)
     }
 
     function playOperator(cmd, done) {
         if (root.operatorBusy) {
-            root._opQueue.push({ "cmd": cmd, "done": done })
+            if (typeof done === "function")
+                done({ok: false, reason: "OPERATOR_BUSY", url: root.currentHref()})
             return
         }
+        root._opEpoch += 1
         root._opCmd = cmd || {}
+        root._opEngine = root.liveEngine()
+        root._mutationSubmitted = false
         root._opDone = done
         root.operatorBusy = true
+        root._opDocumentToken = ""
+        root._opDocumentHref = ""
+        root._allowNavigation = false
+        root.lastGrab = ""
+        if (root._expired()) {
+            root.cancelOperator("", "OPERATOR_TIMEOUT")
+            return
+        }
+        var remaining = Number(root._opCmd.expires_at || 0) * 1000 - Date.now()
+        busyWatch.interval = remaining > 0 ? Math.max(1, Math.min(180000, remaining)) : 12000
+        busyWatch.restart()
         root.agentActive = true
         root.adoptDeskPosition()
         var action = String(root._opCmd.action || "")
         root.operatorLabel = "GROK · " + action
         root._primeShape(action)
+        if (["WAIT", "RELOAD", "BACK", "FORWARD"].indexOf(action) >= 0) {
+            root._dispatchOperator()
+            return
+        }
+        // Capture the actual Document identity before locating or mutating.
+        // Every later script checks it inside the page, including scripts
+        // queued just before the browser begins a new navigation.
+        root.runPageScript("(function(){if(" + Number(root._opCmd.expires_at || 0)
+            + ">0&&Date.now()/1000>=" + Number(root._opCmd.expires_at || 0)
+            + ")return JSON.stringify({ok:false,reason:'OPERATOR_TIMEOUT'});"
+            + "var a=document.__ggOperatorSessions;if(!a){a=Object.create(null);"
+            + "Object.defineProperty(document,'__ggOperatorSessions',{value:a});}"
+            + "var s=a[" + JSON.stringify(root._pageSession) + "]||(a["
+            + JSON.stringify(root._pageSession) + "]={retiredThrough:0,current:0});"
+            + "if(s.retiredThrough>=" + root._opEpoch
+            + "||s.current>" + root._opEpoch
+            + ")return JSON.stringify({ok:false,reason:'OPERATION_REPLACED'});s.current=" + root._opEpoch + ";"
+            + "if(!document.__ggOperatorIdentity)"
+            + "Object.defineProperty(document,'__ggOperatorIdentity',{value:"
+            + "String(Date.now())+'-'+String(Math.random()),configurable:false});"
+            + "return JSON.stringify({token:String(document.__ggOperatorIdentity),href:String(location.href)});})()", function(raw) {
+                var identity = root._parse(raw)
+                if (!identity.token || !identity.href) {
+                    root.cancelOperator("", "SCRIPT_TIMEOUT")
+                    return
+                }
+                root._opDocumentToken = String(identity.token)
+                root._opDocumentHref = String(identity.href)
+                root._dispatchOperator()
+            })
+    }
+
+    function _dispatchOperator() {
+        var action = String(root._opCmd.action || "")
         if (action === "SNAPSHOT") {
             root._moveCursorTo(root.width / 2, Math.max(56, root.height / 3), function() {
                 root._snapshot()
@@ -342,16 +463,19 @@ Item {
             return
         }
         if (action === "RELOAD") {
+            root._allowNavigation = true
             root.reload()
             root._finish(true, "RELOADED", root.currentHref(), "", "", [])
             return
         }
         if (action === "BACK") {
+            root._allowNavigation = true
             root.goBack()
             root._finish(true, "BACK", root.currentHref(), "", "", [])
             return
         }
         if (action === "FORWARD") {
+            root._allowNavigation = true
             root.goForward()
             root._finish(true, "FORWARD", root.currentHref(), "", "", [])
             return
@@ -393,6 +517,8 @@ Item {
     }
 
     function waitLoad(done) {
+        if (root.operatorBusy)
+            done = root._guard(done, true)
         root.agentShape = "wait"
         root._loadDone = done
         root._needLoading = root.loadState !== "LOADING"
@@ -453,11 +579,34 @@ Item {
     }
 
     function _finish(ok, reason, url, title, text, links) {
+        if (!root.operatorBusy)
+            return
+        var fn = root._opDone
+        root._opDone = null
+        var retiredEpoch = root._opEpoch
+        var engine = root._opEngine
+        var uncertain = !ok && root._mutationSubmitted
+        // Retire even a probe that has not executed yet. Monotonic retirement
+        // prevents a late old probe from reinstalling its operation after B.
+        if (engine && engine.runJavaScript)
+            engine.runJavaScript("(function(){var a=document.__ggOperatorSessions;"
+                + "if(!a){a=Object.create(null);Object.defineProperty(document,'__ggOperatorSessions',{value:a});}"
+                + "var s=a[" + JSON.stringify(root._pageSession) + "]||(a["
+                + JSON.stringify(root._pageSession) + "]={retiredThrough:0,current:0});"
+                + "s.retiredThrough=Math.max(s.retiredThrough," + retiredEpoch + ");"
+                + "if(s.current===" + retiredEpoch + ")s.current=0;})()", function() {})
+        root._opEpoch += 1
+        root._scriptOnce = null
+        scriptWatch.stop()
+        grabWait.stop()
+        grabWait._done = null
+        moveAnim.doneFn = null
         moveAnim.stop()
         typeTimer.stop()
         loadWaitTimer.stop()
-        var fn = root._opDone
-        root._opDone = null
+        root._typingInFlight = false
+        root._typeText = ""
+        root._typeSelector = ""
         root._loadDone = null
         root.operatorBusy = false
         if (ok)
@@ -485,17 +634,14 @@ Item {
                 "text": text || "",
                 "links": links || [],
                 "image": root.lastGrab || ""
+                , "completion_uncertain": uncertain
             })
         }
-        if (root._opQueue && root._opQueue.length > 0) {
-            var next = root._opQueue.shift()
-            Qt.callLater(function() {
-                root.playOperator(next.cmd, next.done)
-            })
-        }
+        root._opQueue = []
     }
 
     function _grabView(done) {
+        done = root._guard(done, false)
         var engine = root.liveEngine()
         if (engine && engine.update)
             engine.update()
@@ -507,6 +653,7 @@ Item {
     }
 
     function _grabViewNow(done) {
+        done = root._guard(done, false)
         var win = Window.window
         if (root.useNativeBrowser && win && win.surfaceHost && win.surfaceHost.webCapturePane) {
             var point = root.mapToItem(win.contentItem, 0, 0)
@@ -523,17 +670,18 @@ Item {
             done("")
             return
         }
-        target.grabToImage(function(result) {
-            var path = "/home/GG/.local/state/goldgoblins/gg-ai-desktop/web-operator/view.png"
+        target.grabToImage(root._guard(function(result) {
+            var host = win && win.surfaceHost ? win.surfaceHost : null
+            var path = host && host.webOperatorViewPath ? String(host.webOperatorViewPath()) : ""
             var ok = false
             try {
-                ok = result.saveToFile(path)
+                ok = path.length > 0 && result.saveToFile(path)
             } catch (err) {
                 ok = false
             }
             root.lastGrab = ok ? path : ""
             done(root.lastGrab)
-        })
+        }, false))
     }
 
     function _snapshot() {
@@ -542,8 +690,8 @@ Item {
             root.runPageScript(script, function(raw) {
                 var parsed = root._parse(raw)
                 root._finish(
-                    true,
-                    "SNAPSHOT",
+                    Boolean(parsed.url),
+                    parsed.url ? "SNAPSHOT" : "SCRIPT_TIMEOUT",
                     String(parsed.url || root.currentHref()),
                     String(parsed.title || ""),
                     String(parsed.text || ""),
@@ -559,8 +707,8 @@ Item {
             var parsed = root._parse(raw)
             root.operatorLabel = "GROK · STAGE"
             root._finish(
-                parsed.ok !== false,
-                parsed.ok === false ? "STAGE_FAIL" : "STAGED",
+                parsed.ok === true,
+                parsed.ok === true ? "STAGED" : "STAGE_FAIL",
                 String(parsed.url || root.currentHref()),
                 String(parsed.title || "GG WEB stage"),
                 "local visible WEB rehearsal",
@@ -690,6 +838,7 @@ Item {
     function _select(selector, hit) {
         var wanted = String(root._opCmd.text || "")
         var script = "(function(){" + root._elFindJs(selector) + ";if(!el)return JSON.stringify({ok:false,reason:'MISS'});var want=" + JSON.stringify(wanted) + ";var ok=false;if(el.tagName==='SELECT'){var i;for(i=0;i<el.options.length;i++){var o=el.options[i];if(o.value===want||(o.text||'').trim()===want){el.selectedIndex=i;ok=true;break;}}if(!ok&&want){el.value=want;ok=true;}el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));return JSON.stringify({ok:ok,reason:ok?'SELECTED':'MISS',url:location.href,title:document.title,text:el.value});}el.value=want;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));return JSON.stringify({ok:true,reason:'SELECTED',url:location.href,title:document.title,text:want});})()"
+        root._allowNavigation = true
         root.runPageScript(script, function(raw) {
             var parsed = root._parse(raw)
             root._finish(
@@ -700,7 +849,7 @@ Item {
                 String(parsed.text || wanted),
                 []
             )
-        })
+        }, true, true)
     }
 
     function _click(selector, hit) {
@@ -709,7 +858,8 @@ Item {
         var aux = String(root._opCmd.text || "") === "aux"
         var script = aux
             ? "(function(){" + root._elFindJs(selector) + ";if(!el)return JSON.stringify({ok:false,reason:'MISS'});var href=el.href||el.getAttribute('href')||'';el.dispatchEvent(new MouseEvent('auxclick',{bubbles:true,cancelable:true,button:1,which:2,buttons:4,clientX:" + hit.x + ",clientY:" + hit.y + "}));el.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,button:1,which:2,clientX:" + hit.x + ",clientY:" + hit.y + "}));return JSON.stringify({ok:true,reason:'MIDDLE',url:href,title:document.title});})()"
-            : "(function(){" + root._elFindJs(selector) + ";if(!el)return JSON.stringify({ok:false,reason:'MISS'});var r=el.getBoundingClientRect();var x=r.left+r.width/2,y=r.top+r.height/2;var opts={bubbles:true,cancelable:true,view:window,clientX:x,clientY:y,button:0,buttons:1};el.dispatchEvent(new MouseEvent('mousedown',opts));el.dispatchEvent(new MouseEvent('mouseup',Object.assign({},opts,{buttons:0})));el.dispatchEvent(new MouseEvent('click',Object.assign({},opts,{buttons:0})));if(typeof el.click==='function')el.click();return JSON.stringify({ok:true,reason:'CLICKED',url:location.href,title:document.title});})()"
+            : "(function(){" + root._elFindJs(selector) + ";if(!el)return JSON.stringify({ok:false,reason:'MISS'});var r=el.getBoundingClientRect();var x=r.left+r.width/2,y=r.top+r.height/2;var opts={bubbles:true,cancelable:true,view:window,clientX:x,clientY:y,button:0,buttons:1};el.dispatchEvent(new MouseEvent('mousedown',opts));el.dispatchEvent(new MouseEvent('mouseup',Object.assign({},opts,{buttons:0})));if(typeof el.click==='function')el.click();else el.dispatchEvent(new MouseEvent('click',Object.assign({},opts,{buttons:0})));return JSON.stringify({ok:true,reason:'CLICKED',url:location.href,title:document.title});})()"
+        root._allowNavigation = true
         root.runPageScript(script, function(raw) {
             var parsed = root._parse(raw)
             function doneClick() {
@@ -726,7 +876,7 @@ Item {
                 root.waitLoad(function() { doneClick() })
             else
                 doneClick()
-        })
+        }, true, true)
     }
 
     function _key() {
@@ -753,6 +903,7 @@ Item {
         }
         function fire() {
             var script = "(function(){" + (selector ? root._elFindJs(selector) + ";if(!el)return JSON.stringify({ok:false,reason:'MISS'});" : "var el=document.activeElement;") + "if(el&&el.focus)el.focus();var t=el||document.body;var key=" + JSON.stringify(key) + ";var code=" + JSON.stringify(spec[1]) + ";var kc=" + spec[0] + ";['keydown','keypress','keyup'].forEach(function(type){t.dispatchEvent(new KeyboardEvent(type,{key:key,code:code,keyCode:kc,which:kc,bubbles:true,cancelable:true}));});if(key==='Enter'){if(t.form){if(t.form.requestSubmit)t.form.requestSubmit();else t.form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));}else if(t.click&&(t.tagName==='BUTTON'||t.type==='submit'))t.click();}return JSON.stringify({ok:true,reason:'KEYED',url:location.href,title:document.title,key:key});})()"
+            root._allowNavigation = true
             root.runPageScript(script, function(raw) {
                 var parsed = root._parse(raw)
                 function doneKey() {
@@ -769,7 +920,7 @@ Item {
                     root.waitLoad(function() { doneKey() })
                 else
                     doneKey()
-            })
+            }, true, true)
         }
         if (selector.length > 0) {
             root._locate(selector, function(hit) {
@@ -800,6 +951,9 @@ Item {
     }
 
     function _typeTick() {
+        if (!root.operatorBusy || root._typingInFlight)
+            return
+        root._typingInFlight = true
         if (root._typeIndex >= root._typeText.length) {
             typeTimer.stop()
             var script = "(function(){" + root._elFindJs(root._typeSelector) + ";if(!el)return JSON.stringify({ok:false,reason:'MISS'});el.dispatchEvent(new Event('change',{bubbles:true}));return JSON.stringify({ok:true,url:location.href,title:document.title,text:String(el.value||'')});})()"
@@ -813,13 +967,13 @@ Item {
                     String(parsed.text || root._typeText),
                     []
                 )
-            })
+            }, false, true)
             return
         }
-        var ch = root._typeText.charAt(root._typeIndex)
+        var ch = root._typeText.slice(root._typeIndex, root._typeIndex + 4)
         var reset = root._typeReset
         root._typeReset = false
-        root._typeIndex += 1
+        root._typeIndex += ch.length
         root.operatorLabel = "GROK · TYPE · " + root._typeIndex + "/" + root._typeText.length
         var script = "(function(){" + root._elFindJs(root._typeSelector) + ";if(!el)return JSON.stringify({ok:false,reason:'MISS'});var typ=String(el.type||'').toLowerCase();if(typ==='password')return JSON.stringify({ok:false,reason:'PASSWORD'});el.focus();if(" + (reset ? "true" : "false") + ")el.value='';el.value=String(el.value||'')+" + JSON.stringify(ch) + ";el.dispatchEvent(new Event('input',{bubbles:true}));return JSON.stringify({ok:true});})()"
         root.runPageScript(script, function(raw) {
@@ -827,8 +981,11 @@ Item {
             if (parsed.ok !== true) {
                 typeTimer.stop()
                 root._finish(false, String(parsed.reason || "FAIL"), root.currentHref(), "", "", [])
+            } else {
+                root._typingInFlight = false
+                typeTimer.restart()
             }
-        })
+        }, false, true)
     }
 
     function _elFindJs(selector) {
@@ -852,6 +1009,7 @@ Item {
     }
 
     function _moveCursorTo(x, y, done) {
+        done = root._guard(done, false)
         var nx = Math.max(4, Math.min(root.width - 8, Number(x)))
         var ny = Math.max(4, Math.min(root.height - 8, Number(y)))
         var dist = Math.sqrt(
@@ -893,6 +1051,11 @@ Item {
     onAgentYChanged: root.syncDesk()
     onAgentCursorShapeChanged: root.syncDesk()
     onReloadNonceChanged: root.reload()
+    onVisibleChanged: {
+        if (!root.visible)
+            root.cancelOperator("", "PANE_HIDDEN")
+    }
+    Component.onDestruction: root.cancelOperator("", "PANE_DESTROYED")
     onLoadStateChanged: {
         if (root._needLoading && root.loadState === "LOADING")
             root._needLoading = false
@@ -1204,7 +1367,7 @@ Item {
     Timer {
         id: typeTimer
         interval: 32
-        repeat: true
+        repeat: false
         onTriggered: root._typeTick()
     }
 

@@ -38,6 +38,7 @@ from backend.mini_vt import (
     rgb_of,
 )
 from backend.chat_restore import normalized_display_text
+from backend.chat_clipboard import read_paste
 _COLOR_CACHE: dict[tuple[int, int, int], QColor] = {}
 
 
@@ -158,6 +159,7 @@ class TerminalGrid(QQuickPaintedItem):
     # Keeping them on separate signals prevents device/status replies (for
     # example cursor reports) from being mistaken for typed text.
     dataProduced = Signal(str)
+    pasteError = Signal(str)
     terminalReplyProduced = Signal(str)
     resized = Signal(int, int)
     # offset, maximum offset, visible page height.  The QML host uses this
@@ -169,8 +171,10 @@ class TerminalGrid(QQuickPaintedItem):
     _reset = Signal()
 
     def __init__(self, parent: QQuickItem | None = None, *,
-                 retain_session_size: bool = False) -> None:
+                 retain_session_size: bool = False,
+                 paste_image_paths: bool = False) -> None:
         super().__init__(parent)
+        self._paste_image_paths = paste_image_paths
         self._vt = MiniVt(24, 80)
         self._decoder = codecs.getincrementaldecoder("utf-8")("replace")
         self._font = QFont("monospace")
@@ -942,14 +946,11 @@ class TerminalGrid(QQuickPaintedItem):
             event.key() == Qt.Key.Key_C
             and mods & Qt.KeyboardModifier.ControlModifier
         ):
-            if self._copy_selection():
-                event.accept()
-                return
-            if mods & Qt.KeyboardModifier.ShiftModifier:
-                # Preserve the terminal convention for Ctrl+Shift+C when
-                # there is no local selection.
-                event.accept()
-                return
+            # This is a desktop chat surface. Copy must never fall through
+            # to the CLI's Ctrl+C interrupt/exit when there is no selection.
+            self._copy_selection()
+            event.accept()
+            return
         mapped = self._map_key(event)
         if mapped is None:
             super().keyPressEvent(event)
@@ -1118,18 +1119,10 @@ class TerminalGrid(QQuickPaintedItem):
         return clip.text() or ""
 
     def _clipboard_payload(self) -> str:
-        clip = QGuiApplication.clipboard()
-        if clip is None:
-            return ""
-        text = clip.text() or ""
-        if text:
-            return text
-        mime = clip.mimeData()
-        if mime is not None and mime.hasImage():
-            # Preserve Codex's native image-paste shortcut when the clipboard
-            # has no text representation.
-            return "\x16"
-        return ""
+        payload, error = read_paste(image_paths=self._paste_image_paths)
+        # An empty error clears feedback from the previous paste attempt.
+        self.pasteError.emit(error)
+        return payload
 
     def _emit_paste(self, text: str) -> None:
         payload = text.replace("\n", "\r")
@@ -1146,23 +1139,15 @@ class TerminalGrid(QQuickPaintedItem):
         shift = bool(mods & Qt.KeyboardModifier.ShiftModifier)
         if key == Qt.Key.Key_Shift or key == Qt.Key.Key_Control or key == Qt.Key.Key_Alt:
             return ""
-        if key == Qt.Key.Key_Insert and shift:
-            paste = self._clipboard_text()
-            if paste:
-                self._emit_paste(paste)
-            return ""
-        # Treat both Ctrl+Shift+V (terminal convention) and plain Ctrl+V as
-        # text paste.  Forwarding Ctrl+V to Codex makes it invoke image paste,
-        # which produces the misleading "Failed to paste image" error when
-        # the clipboard contains ordinary text or no image at all.
-        if ctrl and key == Qt.Key.Key_V:
+        # Text and image attachment paths both use the CLI's paste handling.
+        if (key == Qt.Key.Key_Insert and shift) or (ctrl and key == Qt.Key.Key_V):
             paste = self._clipboard_payload()
             if paste:
-                if paste == "\x16":
+                if paste == "\x16" and not self._paste_image_paths:
                     return paste
                 self._emit_paste(paste)
             return ""
-        if ctrl and shift and key == Qt.Key.Key_C:
+        if ctrl and key == Qt.Key.Key_C:
             return ""
         arrows = {
             Qt.Key.Key_Up: ("A", "OA"),

@@ -38,23 +38,37 @@ Item {
     property string profilePlan: ""
     onTargetPathChanged: root.profilePlan = ""
     onProfileLodPathChanged: root.profilePlan = ""
-    readonly property bool busy: jobState === "QUEUED" || jobState === "RUNNING"
+    readonly property bool busy: jobState === "QUEUED" || jobState === "RUNNING" || jobState === "CANCELLING"
     readonly property var result: { try { return JSON.parse(root.resultJson) } catch (e) { return {} } }
+    readonly property var contextFunction: (root.result.context || {}).function || ({})
     signal analysisRequested(string path)
 
     function request(op, payload) {
-        if (!root.surfaceHost || !root.surfaceHost.researchCommand) return {}
-        try { return JSON.parse(String(root.surfaceHost.researchCommand(JSON.stringify({op:op, payload:payload || {}})))) }
+        if (!root.surfaceHost || !root.surfaceHost.researchCommand) return {status:"ERROR", reason:"Research Desk is connecting."}
+        try {
+            var result = JSON.parse(String(root.surfaceHost.researchCommand(JSON.stringify({op:op, payload:payload || {}}))))
+            if (!result || typeof result !== "object") throw new Error("Missing result")
+            return result
+        }
         catch (e) { return {status:"ERROR", reason:"Desktop bridge unavailable"} }
     }
     function run(operation, parameters) {
+        if (root.busy) return false
         var response = root.request("game_start", {operation:operation, arguments:parameters})
         root.activeOperation = operation
         root.jobState = String(response.status || "ERROR")
-        root.notice = String(response.reason || "Working on the selected local data…")
-        if (response.job_id) root.jobId = String(response.job_id)
+        root.notice = String(response.detail || response.reason || response.error || response.status || "No job returned")
+        root.jobId = String(response.job_id || "")
+        if (root.busy && !root.jobId) {
+            root.jobState = "ERROR"
+            root.notice = "The workflow service did not return a job. Your inputs are retained."
+            return false
+        }
+        if (root.busy) root.resultJson = "{}"
+        return root.busy
     }
     function poll() {
+        if (!root.jobId) return
         var response = root.request("game_status", {job_id:root.jobId})
         root.jobState = String(response.status || "ERROR")
         if (response.result) {
@@ -68,7 +82,21 @@ Item {
             if (root.activeOperation === "scout_batch") root.indexCursor = String(response.result.cursor || "")
             if (root.activeOperation === "scout_batch_cancel") root.indexCursor = ""
             if (root.activeOperation === "asset_profile" && response.result.packet_path) root.profilePlan = response.result.packet_path
-        } else if (response.reason) root.notice = String(response.reason)
+        } else root.notice = String(response.detail || response.reason || response.error || response.phase || response.status || "No job status returned")
+    }
+    function cancelWorkflow() {
+        if (!root.busy || !root.jobId) return false
+        var response = root.request("game_cancel", {job_id:root.jobId})
+        if (response.status === "COMPLETE") root.poll()
+        else {
+            root.jobState = String(response.status || "ERROR")
+            root.notice = response.status === "CANCELLED" ? "Workflow cancelled." : String(response.detail || response.reason || response.error || response.status || "Cancellation failed")
+            if (root.jobState === "RUNNING" || root.jobState === "QUEUED") {
+                root.jobState = "CANCELLING"
+                root.notice = "Cancelling workflow…"
+            }
+        }
+        return root.jobState === "CANCELLED" || root.jobState === "CANCELLING"
     }
     function useLastAnalysis() {
         var history = root.request("lab_history", {}).jobs || []
@@ -118,11 +146,7 @@ Item {
             Text { text:"GAME WORKFLOWS"; color:"#d8dee9"; font.family:"monospace"; font.bold:true; font.pixelSize:14 }
             ComboBox { id:stagePicker; objectName:"gameWorkflowStage"; model:["Scout assets", "Function context", "Review candidate", "Author routes", "Rig trial", "Scene profile"]
                 currentIndex:root.stage; onActivated:root.stage = currentIndex; Layout.fillWidth:true; Layout.minimumWidth:0 }
-            GgButton { text:"CANCEL"; enabled:root.busy; onClicked:{
-                var r = root.request("game_cancel", {job_id:root.jobId})
-                if (r.status === "COMPLETE") root.poll()
-                else { root.jobState = String(r.status); root.notice = r.status === "CANCELLED" ? "Workflow cancelled." : String(r.reason || r.status) }
-            } }
+            GgButton { objectName:"gameCancelWorkflow"; text:"CANCEL"; enabled:root.busy && root.jobState !== "CANCELLING"; onClicked:root.cancelWorkflow() }
         }
         Text { Layout.fillWidth:true; text:root.stage === 0 ? "Discover → search → inspect → collect evidence. Use the same steps for any game."
                 : root.stage === 1 ? "Collect pseudocode, references, types and available IR around one function. Keep missing evidence explicit."
@@ -297,11 +321,11 @@ Item {
                         source:root.result.image || ""; fillMode:Image.PreserveAspectFit; asynchronous:true }
                     Basic.TextArea { visible:!!root.result.packet_path; width:parent.width; text:String(root.result.packet_path || ""); textFormat:TextEdit.PlainText; readOnly:true; selectByMouse:true;
                         color:"#8db89a"; font.family:"monospace"; font.pixelSize:11; wrapMode:TextArea.WrapAnywhere; background:Rectangle { color:"#121212" } }
-                    Text { visible:!!root.result.context; width:parent.width; text:root.result.context ? String(root.result.context.provenance) + "\n" + String(root.result.context.function.name || root.result.context.function.address) : "";
+                    Text { visible:!!root.result.context; width:parent.width; text:root.result.context ? String(root.result.context.provenance || "") + "\n" + String(root.contextFunction.name || root.contextFunction.address || "No function available") : "";
                         color:"#c8a97e"; font.family:"monospace"; font.pixelSize:12; textFormat:Text.PlainText; wrapMode:Text.WordWrap }
-                    Basic.TextArea { visible:!!root.result.context; width:parent.width; text:root.result.context ? String(root.result.context.function.pseudocode || "No pseudocode available in this evidence.") : ""; textFormat:TextEdit.PlainText;
+                    Basic.TextArea { visible:!!root.result.context; width:parent.width; text:root.result.context ? String(root.contextFunction.pseudocode || "No pseudocode available in this evidence.") : ""; textFormat:TextEdit.PlainText;
                         readOnly:true; selectByMouse:true; color:"#d8dee9"; font.family:"monospace"; font.pixelSize:12; wrapMode:TextArea.Wrap; background:Rectangle { color:"#121212" } }
-                    Text { visible:!!root.result.gates; width:parent.width; text:root.result.gates ? Object.keys(root.result.gates).map(function(key) { return key + ": " + root.result.gates[key].state }).join("\n") : "";
+                    Text { visible:!!root.result.gates; width:parent.width; text:root.result.gates ? Object.keys(root.result.gates).map(function(key) { return key + ": " + String((root.result.gates[key] || {}).state || "UNKNOWN") }).join("\n") : "";
                         color:"#c8a97e"; font.family:"monospace"; font.pixelSize:11; textFormat:Text.PlainText; wrapMode:Text.WordWrap }
                     Text { visible:!!root.result.oracle; width:parent.width; text:root.result.oracle ? (root.result.oracle.valid ? "Independent graph check passed. " : "Graph check failed. ") + (root.result.oracle.warnings || []).join("\n") + "\nEngine behavior has not been tested." : "";
                         color:"#8db89a"; font.family:"monospace"; font.pixelSize:11; textFormat:Text.PlainText; wrapMode:Text.WordWrap }

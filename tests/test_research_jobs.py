@@ -5,6 +5,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+import shutil
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -34,7 +35,16 @@ class ResearchJobsTests(unittest.TestCase):
         (project / 'credentials.json').write_text('private')
         (project / 'node_modules').mkdir()
         (project / 'node_modules/private.js').write_text('private')
-        (project / 'link.js').symlink_to(project / '.env')
+        (project / '.private').mkdir()
+        (project / '.private/session.js').write_text('private')
+        if os.name == 'nt':
+            from backend.application_paths import expose_directory
+            private = self.root / 'private'
+            private.mkdir()
+            (private / 'leak.js').write_text('private')
+            expose_directory(project / 'linked', private)
+        else:
+            (project / 'link.js').symlink_to(project / '.env')
         target, _, kind, size = jobs._snapshot(project, self.folder() / 'scratch')
         self.assertEqual(kind, 'JAVASCRIPT PROJECT')
         self.assertEqual([p.name for p in target.iterdir()], ['main.js'])
@@ -137,13 +147,22 @@ class ResearchJobsTests(unittest.TestCase):
             self.assertEqual(jobs.status(value)['status'], 'ERROR')
         folder = self.folder()
         (folder / 'state.json').unlink()
-        (folder / 'state.json').symlink_to(self.root / 'private')
+        if os.name == 'nt':
+            # A directory record is invalid too; NTFS junctions below test the
+            # unprivileged Windows equivalent of a linked job directory.
+            (folder / 'state.json').mkdir()
+        else:
+            (folder / 'state.json').symlink_to(self.root / 'private')
         self.assertEqual(jobs.status(folder.name)['status'], 'ERROR')
         outside = self.root / 'outside'
         (outside / 'scratch').mkdir(parents=True)
         marker = outside / 'scratch/retained'
         marker.write_text('retain')
-        (jobs.ROOT / ('b' * 32)).symlink_to(outside, target_is_directory=True)
+        if os.name == 'nt':
+            from backend.application_paths import expose_directory
+            expose_directory(jobs.ROOT / ('b' * 32), outside)
+        else:
+            (jobs.ROOT / ('b' * 32)).symlink_to(outside, target_is_directory=True)
         jobs._cleanup()
         self.assertTrue(marker.exists())
 
@@ -166,19 +185,78 @@ class ResearchJobsTests(unittest.TestCase):
         self.assertIn('\n  return value + 7;', clean)
         self.assertNotIn('private-value', clean)
 
+    def test_cancel_before_terminal_publication_discards_completed_report(self):
+        source = self.root / 'fixture.js'
+        source.write_text('export const known = 7;')
+        folder = self.folder()
+        (folder / 'scratch').rmdir()
+        jobs._write(folder / 'state.json', {'job_id': folder.name, 'status': 'QUEUED',
+            'target': str(source), 'operation': 'analyze', 'query': ''})
+        original_write = jobs._write
+
+        def cancel_after_report(path, value):
+            original_write(path, value)
+            if path.name == 'report.json':
+                (folder / 'cancel').touch()
+
+        with patch.object(jobs, 'apply_windows_worker_limits'), patch.object(jobs, '_write', side_effect=cancel_after_report), \
+             patch.object(jobs, '_snapshot', return_value=(source, '0' * 64, 'JAVASCRIPT PROJECT', source.stat().st_size)), \
+             patch.object(jobs, '_sandbox', return_value=['trusted-test-provider']), \
+             patch.object(jobs, '_run', return_value=(0, b'{"normalized_result":{"known":7}}', b'')):
+            jobs.worker(folder.name)
+        self.assertEqual(jobs.status(folder.name)['status'], 'CANCELLED')
+        self.assertFalse((folder / 'report.json').exists())
+
+    def test_cancel_after_completion_keeps_terminal_result(self):
+        folder = self.folder()
+        jobs._write(folder / 'state.json', {'job_id': folder.name, 'status': 'COMPLETE'})
+        self.assertEqual(jobs.cancel(folder.name)['status'], 'COMPLETE')
+        self.assertFalse((folder / 'cancel').exists())
+
+    def test_scratch_accounting_does_not_follow_linked_directories(self):
+        folder = self.folder()
+        (folder / 'scratch/local').write_bytes(b'12345')
+        outside = self.root / 'outside-budget'
+        outside.mkdir()
+        (outside / 'large').write_bytes(b'x' * 100)
+        linked = folder / 'scratch/linked'
+        if os.name == 'nt':
+            from backend.application_paths import expose_directory
+            expose_directory(linked, outside)
+        else:
+            linked.symlink_to(outside, target_is_directory=True)
+        with patch.object(jobs, 'MAX_SCRATCH', 50):
+            self.assertEqual(jobs._scratch_size(folder / 'scratch'), 5)
+
+    @unittest.skipUnless(os.name == 'nt', 'Windows extended paths')
+    def test_cleanup_removes_long_ghidra_cache_paths(self):
+        folder = self.folder()
+        deep = folder / 'scratch'
+        for index in range(12):
+            deep = deep / ('compiled-cache-segment-' + str(index))
+        extended = Path('\\\\?\\' + str(deep.resolve()))
+        extended.mkdir(parents=True)
+        (extended / 'bundle.class').write_bytes(b'fixture')
+        jobs._remove_scratch(folder)
+        self.assertFalse((folder / 'scratch').exists())
+
     def test_actual_sandbox_hides_host_files_environment_and_blocks_tool_writes(self):
         entry = lab.TOOLS_ROOT / 'rea/node_modules/rea-agents/scripts/rea.mjs'
         entry.parent.mkdir(parents=True)
         (entry.parents[1] / 'package.json').write_text('{"version":"6.0.0"}')
         private = self.root / 'host-private'
         private.write_text('synthetic fixture only')
+        write_target = str(lab.TOOLS_ROOT / 'unwanted-write') if os.name == 'nt' else '/tools/unwanted-write'
         entry.write_text("import fs from 'node:fs';\nlet immutable=false;\n" +
-            "try { fs.writeFileSync('/tools/unwanted-write', 'test'); } catch(e) { immutable=true; }\n" +
+            "try { fs.writeFileSync(" + json.dumps(write_target) + ", 'test'); } catch(e) { immutable=true; }\n" +
             "console.log(JSON.stringify({host_file:fs.existsSync(" + json.dumps(str(private)) + ")," +
             "inherited_env:Boolean(process.env.GG_SYNTHETIC_TEST_VALUE),tools_immutable:immutable}));")
         folder = self.folder()
         target = folder / 'scratch/target'
         target.mkdir()
+        if os.name == 'nt':
+            (lab.TOOLS_ROOT / 'runtime').mkdir()
+            shutil.copyfile(shutil.which('node'), lab.TOOLS_ROOT / 'runtime/node.exe')
         command = jobs._sandbox(folder / 'scratch', target, 'JAVASCRIPT PROJECT', 'analyze', '')
         with patch.dict(os.environ, {'GG_SYNTHETIC_TEST_VALUE': 'synthetic-fixture'}):
             code, output, _ = jobs._run(command, folder)

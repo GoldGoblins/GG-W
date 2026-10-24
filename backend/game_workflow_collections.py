@@ -10,6 +10,7 @@ import time
 import uuid
 
 from backend import game_workflow_common as common, game_workflow_scout as scout
+from backend.platform_files import is_link
 
 MAX_ENTRIES = 65_536
 MAX_BATCH_FILES = 256
@@ -31,12 +32,13 @@ def manifest(raw, recursive=True, partition=0, partitions=1):
         scanned += len(dirs) + len(names)
         if scanned > MAX_ENTRIES or time.monotonic() - began > 10:
             raise ValueError("COLLECTION_PLANNING_LIMIT")
-        dirs[:] = sorted(d for d in dirs if not d.startswith(".") and d not in scout.SKIP_DIRS and not (Path(directory) / d).is_symlink())
+        dirs[:] = sorted(d for d in dirs if not d.startswith(".") and d not in scout.SKIP_DIRS
+                         and not is_link(Path(directory) / d))
         if not recursive:
             dirs[:] = []
         for name in names:
             path = Path(directory) / name
-            if path.is_symlink() or not path.is_file() or name.startswith(".") or re.search(r"(?i)secret|credential|private.key|service.account", name):
+            if is_link(path) or not path.is_file() or name.startswith(".") or re.search(r"(?i)secret|credential|private.key|service.account", name):
                 continue
             relative = path.relative_to(root).as_posix()
             if int(common.digest(relative.encode())[:8], 16) % partitions == partition:

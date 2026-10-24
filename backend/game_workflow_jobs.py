@@ -21,6 +21,7 @@ import uuid
 from backend import game_workflow_common as common, game_workflows
 from backend.platform_support import host_environment, terminate_process_tree
 from backend.platform_process import background_options, process_arguments, apply_windows_worker_limits
+from backend.platform_files import is_link
 
 PROJECT = Path(__file__).resolve().parents[1]
 TIMEOUT = 60
@@ -32,7 +33,7 @@ def _folder(job_id: str):
     if not re.fullmatch(r"[0-9a-f]{32}", str(job_id)):
         raise ValueError("INVALID_WORKFLOW_JOB")
     path = common.ROOT / "jobs" / job_id
-    if path.is_symlink():
+    if is_link(path):
         raise ValueError("INVALID_WORKFLOW_JOB")
     return path
 
@@ -61,9 +62,23 @@ def status(job_id: str):
                 state.update(status="ERROR", reason="WORKFLOW_TIMEOUT")
                 common.write_json(folder / "state.json", state)
             elif not _alive(state) and time.time() - state["created"] > 3:
-                state.update(status="ERROR", reason="WORKFLOW_WORKER_STOPPED")
-                common.write_json(folder / "state.json", state)
-        if state["status"] == "COMPLETE":
+                # The worker may have finished between our first state read
+                # and the process check. Never overwrite its terminal result.
+                _, latest, _ = common.read_json(folder / "state.json")
+                state = latest
+                if state['status'] in BUSY:
+                    if (folder / 'result.json').is_file():
+                        # The result is atomically persisted before the final
+                        # status. Recover that committed outcome after a crash
+                        # or a process-exit observation in this short window.
+                        _, result, _ = common.read_json(folder / 'result.json')
+                        state.update(status='ERROR' if result.get('status') == 'ERROR' else 'COMPLETE')
+                        if state['status'] == 'ERROR':
+                            state['reason'] = result.get('reason', 'WORKFLOW_OPERATION_FAILED')
+                    else:
+                        state.update(status="ERROR", reason="WORKFLOW_WORKER_STOPPED")
+                    common.write_json(folder / "state.json", state)
+        if state["status"] == "COMPLETE" or (state["status"] == "ERROR" and (folder / 'result.json').is_file()):
             _, result, _ = common.read_json(folder / "result.json")
             state["result"] = result
         return state
@@ -92,12 +107,16 @@ def start(operation: str, payload: dict):
         root.mkdir(parents=True, exist_ok=True, mode=0o700)
         with (root / ".admission").open("a") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
-            folders = sorted((p for p in root.iterdir() if p.is_dir() and not p.is_symlink() and re.fullmatch(r"[0-9a-f]{32}", p.name)), key=lambda p: p.stat().st_mtime, reverse=True)
+            folders = sorted((p for p in root.iterdir() if p.is_dir() and not is_link(p)
+                              and re.fullmatch(r"[0-9a-f]{32}", p.name)),
+                             key=lambda p: p.stat().st_mtime, reverse=True)
             for folder in folders:
                 if status(folder.name).get("status") in BUSY:
                     raise ValueError("GAME_WORKFLOW_ALREADY_RUNNING")
             import shutil
             for folder in folders[MAX_JOBS - 1:]:
+                if not folder.resolve().is_relative_to(root.resolve()):
+                    raise ValueError('INVALID_WORKFLOW_JOB')
                 shutil.rmtree(folder)
             job_id = uuid.uuid4().hex
             folder = _folder(job_id)
@@ -150,7 +169,10 @@ def _worker(job_id):
     try:
         result = game_workflows.execute(request["operation"], request["payload"])
         common.write_json(folder / "result.json", result)
-        state.update(status="COMPLETE")
+        if result.get('status') == 'ERROR':
+            state.update(status='ERROR', reason=result.get('reason', 'WORKFLOW_OPERATION_FAILED'))
+        else:
+            state.update(status="COMPLETE")
     except Exception as exc:
         state.update(status="ERROR", reason=type(exc).__name__)
     finally:

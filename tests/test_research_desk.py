@@ -40,7 +40,7 @@ with tempfile.TemporaryDirectory() as directory:
                 "verify": True,
             }
         )
-        assert skill["status"] == "WEB_SKILL_VERIFIED"
+        assert skill["status"] == "WEB_SKILL_STRUCTURE_CHECKED"
         preview = research_desk.sql_preview("WITH x AS (SELECT * FROM sources) SELECT * FROM x")
         assert preview["executed"] is False
         assert preview["ctes"] == ["x"]

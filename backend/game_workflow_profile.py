@@ -11,6 +11,7 @@ import sys
 
 from backend import game_engine_assets as runtime, game_workflow_common as common
 from backend import game_workflow_formats as formats, game_workflow_dependencies as deps
+from backend.platform_process import run_bounded
 
 SCHEMA = "gg.game-workflow.scene-profile.v1"
 STAGES = ("FULL", "VISIBILITY", "LOD")
@@ -128,15 +129,21 @@ def measure(raw, samples=24):
     # Bound software-driver worker count; keep the real graphics API visible.
     env["LP_NUM_THREADS"] = "2"
     try:
-        child = subprocess.run([sys.executable, "-B", str(project / "tools/research/profile_game_asset_scene.py"),
-                                str(common.local_path(raw)), "--store", str(common.ROOT), "--samples", str(samples)],
-                               cwd=project, env=env, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=56)
+        returncode, output, errors, trigger = run_bounded(
+            [sys.executable, "-B", str(project / "tools/research/profile_game_asset_scene.py"),
+             str(common.local_path(raw)), "--store", str(common.ROOT), "--samples", str(samples)],
+            cwd=project, env=env, timeout=56, max_output_bytes=65536)
     except subprocess.TimeoutExpired as exc:
         raise TimeoutError("QT_SCENE_MEASUREMENT_TIMEOUT") from exc
-    if child.returncode or len(child.stdout) > 65536:
-        raise ValueError("QT_SCENE_MEASUREMENT_FAILED" + (":" + child.stderr.splitlines()[-1][:200] if child.stderr.strip() else ""))
+    if trigger == 'TIMEOUT':
+        raise TimeoutError('QT_SCENE_MEASUREMENT_TIMEOUT')
+    if trigger != 'NONE':
+        raise ValueError('QT_SCENE_MEASUREMENT_' + trigger)
+    if returncode:
+        diagnostic = errors.decode('utf-8', 'replace').strip().splitlines()
+        raise ValueError("QT_SCENE_MEASUREMENT_FAILED" + (":" + diagnostic[-1][:200] if diagnostic else ""))
     try:
-        metadata = json.loads(child.stdout)
+        metadata = json.loads(output)
         path, value, _ = common.read_json(metadata["packet_path"])
     except (ValueError, KeyError) as exc:
         raise ValueError("INVALID_SCENE_MEASUREMENT_OUTPUT") from exc

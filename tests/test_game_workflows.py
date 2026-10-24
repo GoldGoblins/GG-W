@@ -134,6 +134,7 @@ class WorkflowTests(unittest.TestCase):
                 scout.index(str(self.assets))
         self.assertEqual([row["relative"] for row in scout.search()["hits"]], ["a.bin"])
 
+    @unittest.skipIf(os.name == 'nt', 'Windows junction boundaries are covered by test_windows_game_workflows')
     def test_symlink_and_root_boundaries(self):
         outside = self.root / "outside.png"
         outside.write_bytes(png())

@@ -7,6 +7,7 @@ import stat
 from urllib.parse import unquote, unquote_to_bytes, urlparse
 
 from backend import game_workflow_common as common
+from backend.platform_files import is_link
 
 
 def reference(path: Path, uri: str, root: Path, limit: int) -> Path:
@@ -23,7 +24,7 @@ def reference(path: Path, uri: str, root: Path, limit: int) -> Path:
         raise ValueError("RESOURCE_OUTSIDE_SELECTED_ROOT")
     # Refuse symlink components, even when their current target is inside root.
     for part in (candidate, *candidate.parents):
-        if part.is_symlink():
+        if is_link(part):
             raise ValueError("RESOURCE_SYMLINK_NOT_SUPPORTED")
         if part == root:
             break

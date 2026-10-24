@@ -28,6 +28,9 @@ import re
 import sqlite3
 import threading
 import time
+import uuid
+import math
+from functools import wraps
 from typing import Any, Iterator
 
 
@@ -51,6 +54,8 @@ ROOT = Path(
 )
 DB_NAME = "research-desk.sqlite3"
 _LOCK = threading.RLock()
+_TRANSACTION = threading.local()
+MAX_FINDING_STORAGE = 32 * 1024 * 1024
 
 _SECRET_RE = re.compile(
     r"(?i)(password|passwd|lösenord|secret|token|api[_-]?key|authorization)"
@@ -115,6 +120,12 @@ def _json(value: Any) -> str:
 @contextmanager
 def _db(root: Path | None = None) -> Iterator[sqlite3.Connection]:
     target_root = Path(root or ROOT)
+    active = getattr(_TRANSACTION, 'connection', None)
+    if active is not None:
+        if target_root.resolve() != _TRANSACTION.root:
+            raise ValueError('RESEARCH_TRANSACTION_TARGET_CHANGED')
+        yield active
+        return
     target_root.mkdir(parents=True, exist_ok=True, mode=0o700)
     connection = sqlite3.connect(
         str(target_root / DB_NAME), timeout=5.0, check_same_thread=False
@@ -210,8 +221,19 @@ def _db(root: Path | None = None) -> Iterator[sqlite3.Connection]:
         CREATE INDEX IF NOT EXISTS tasks_updated ON tasks(updated_at DESC);
         CREATE INDEX IF NOT EXISTS evidence_created ON evidence(created_at DESC);
         CREATE INDEX IF NOT EXISTS events_created ON events(created_at DESC);
+        CREATE TABLE IF NOT EXISTS method_tests (
+            method_id TEXT PRIMARY KEY, method_digest TEXT NOT NULL,
+            proof_json TEXT NOT NULL, tested_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS finding_snapshots (
+            finding_id TEXT PRIMARY KEY, source_id TEXT NOT NULL,
+            content_sha256 TEXT NOT NULL, content_json TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        );
         """
     )
+    _TRANSACTION.connection = connection
+    _TRANSACTION.root = target_root.resolve()
     try:
         yield connection
         connection.commit()
@@ -219,7 +241,79 @@ def _db(root: Path | None = None) -> Iterator[sqlite3.Connection]:
         connection.rollback()
         raise
     finally:
+        _TRANSACTION.connection = None
+        _TRANSACTION.root = None
         connection.close()
+
+
+def atomic_operation(function):
+    """One user operation commits together, including nested index helpers."""
+    @wraps(function)
+    def atomic(*args, **kwargs):
+        with _LOCK, _db():
+            return function(*args, **kwargs)
+    return atomic
+
+
+def retain_finding(finding_id: str, source_id: str, report: dict) -> None:
+    """Keep the bounded, already-redacted report instead of only its excerpt."""
+    content = _json(report)
+    size = len(content.encode('utf-8'))
+    if size > 2 * 1024 * 1024:
+        raise ValueError('FINDING_TOO_LARGE')
+    with _LOCK, _db() as db:
+        used = db.execute('SELECT COALESCE(SUM(length(CAST(content_json AS BLOB))),0) FROM finding_snapshots WHERE finding_id<>?', (finding_id,)).fetchone()[0]
+        if used + size > MAX_FINDING_STORAGE:
+            raise ValueError('FINDING_STORAGE_LIMIT')
+        db.execute('INSERT OR REPLACE INTO finding_snapshots VALUES(?,?,?,?,?)',
+                   (finding_id, source_id, _sha(content), content, _now()))
+
+
+def finding_snapshot(finding_id: str) -> dict | None:
+    with _LOCK, _db() as db:
+        row = db.execute('SELECT * FROM finding_snapshots WHERE finding_id=?', (finding_id,)).fetchone()
+    if row is None or _sha(row['content_json']) != row['content_sha256']:
+        return None
+    return json.loads(row['content_json'])
+
+
+def _method_digest(row) -> str:
+    return _sha(_json([row[key] for key in ('id', 'name', 'trigger_text', 'steps_json', 'source_id', 'proof')]))
+
+
+@atomic_operation
+def _record_tested_method(payload: dict, proof: dict) -> dict:
+    checks = proof.get('checks')
+    if (proof.get('test_schema') != 'gg.research-known-answer.v1' or
+            not isinstance(checks, dict) or not checks or
+            not all(value is True for value in checks.values()) or
+            not proof.get('scope') or not proof.get('engine')):
+        raise ValueError('PASSING_INDEPENDENT_TEST_REQUIRED')
+    result = add_method({**payload, 'status': 'PROPOSED'})
+    with _db() as db:
+        row = db.execute('SELECT * FROM methods WHERE id=?', (result['method_id'],)).fetchone()
+        db.execute('INSERT OR REPLACE INTO method_tests VALUES(?,?,?,?)',
+                   (row['id'], _method_digest(row), _json(proof), _now()))
+        db.execute("UPDATE methods SET status='VERIFIED' WHERE id=?", (row['id'],))
+    return {**result, 'method_status': 'VERIFIED'}
+
+
+def method_test(method_id: str) -> dict | None:
+    with _LOCK, _db() as db:
+        row = db.execute('SELECT * FROM methods WHERE id=?', (method_id,)).fetchone()
+        test = db.execute('SELECT * FROM method_tests WHERE method_id=?', (method_id,)).fetchone()
+    if row is None or test is None or row['status'] != 'VERIFIED' or _method_digest(row) != test['method_digest']:
+        return None
+    try:
+        proof = json.loads(test['proof_json'])
+    except (ValueError, TypeError):
+        return None
+    if not isinstance(proof, dict):
+        return None
+    checks = proof.get('checks')
+    if proof.get('test_schema') != 'gg.research-known-answer.v1' or not isinstance(checks, dict) or not checks or not all(v is True for v in checks.values()):
+        return None
+    return proof
 
 
 def _ensure_default_project(connection: sqlite3.Connection) -> str:
@@ -268,9 +362,21 @@ def snapshot() -> dict[str, Any]:
         projects = _rows(connection, "projects", 32)
         tasks = _rows(connection, "tasks", 96)
         evidence = _rows(connection, "evidence", 96)
+        saved_findings = {row[0] for row in connection.execute('SELECT finding_id FROM finding_snapshots')}
+        for card in evidence:
+            card['has_snapshot'] = card['id'] in saved_findings
         sources = _rows(connection, "sources", 96)
         methods = _rows(connection, "methods", 96)
         skills = _rows(connection, "skills", 64)
+        for method in methods:
+            tested = method_test(method['id']) is not None
+            if method['status'] == 'VERIFIED' and not tested:
+                method['status'] = 'PROPOSED'
+            method['verification_level'] = 'FIXTURE_TESTED' if tested else 'INDEPENDENT_TEST_REQUIRED'
+        for skill in skills:
+            if skill['status'] == 'VERIFIED':
+                skill['status'] = 'STRUCTURE_CHECKED'
+            skill['verification_level'] = 'STRUCTURE_ONLY'
         runs = _rows(connection, "runs", 64)
         events = _rows(connection, "events", 128)
         event_count = int(connection.execute("SELECT COUNT(*) FROM events").fetchone()[0])
@@ -421,7 +527,7 @@ def add_method(payload: dict[str, Any] | None = None) -> dict[str, Any]:
     proof = _scrub(data.get("proof") or "", 800)
     source_id = _scrub(data.get("source_id") or "", 120)
     status = str(data.get("status") or "PROPOSED").upper()
-    if status not in {"PROPOSED", "VERIFIED", "RETIRED"}:
+    if status not in {"PROPOSED", "RETIRED"}:
         status = "PROPOSED"
     method_id = _id("method", name + "\n" + trigger + "\n" + _json(steps))
     with _LOCK, _db() as connection:
@@ -429,6 +535,7 @@ def add_method(payload: dict[str, Any] | None = None) -> dict[str, Any]:
             "INSERT OR REPLACE INTO methods VALUES(?,?,?,?,?,?,?,?,?)",
             (method_id, name, trigger, _json(steps), proof, source_id, status, 0, _now()),
         )
+        connection.execute('DELETE FROM method_tests WHERE method_id=?', (method_id,))
     return {"schema": SCHEMA, "status": "METHOD_RECORDED", "method_id": method_id, "method_status": status}
 
 
@@ -440,6 +547,10 @@ def match_methods(query: str, limit: int = 6) -> list[dict[str, Any]]:
     for row in rows:
         if row.get("status") == "RETIRED":
             continue
+        tested = method_test(row['id']) is not None
+        if row['status'] == 'VERIFIED' and not tested:
+            row['status'] = 'PROPOSED'
+        row['verification_level'] = 'FIXTURE_TESTED' if tested else 'INDEPENDENT_TEST_REQUIRED'
         hay = _tokens(str(row.get("name") or "") + " " + str(row.get("trigger_text") or "") + " " + str(row.get("steps_json") or ""))
         score = len(wanted & hay)
         if score:
@@ -468,14 +579,14 @@ def add_web_skill(payload: dict[str, Any] | None = None) -> dict[str, Any]:
     parameters = [_scrub(item, 64) for item in parameters[:24]]
     source_id = _scrub(data.get("source_id") or "", 120)
     checks = _skill_checks(script, template)
-    status = "VERIFIED" if bool(data.get("verify")) and checks["pass"] else "DRAFT"
+    status = "STRUCTURE_CHECKED" if bool(data.get("verify")) and checks["pass"] else "DRAFT"
     skill_id = _id("web-skill", name + "\n" + template + "\n" + script)
     with _LOCK, _db() as connection:
         connection.execute(
             "INSERT OR REPLACE INTO skills VALUES(?,?,?,?,?,?,?,?,?)",
             (skill_id, name, template, script, _json(parameters), status, _json(checks), source_id, _now()),
         )
-    return {"schema": SCHEMA, "status": "WEB_SKILL_VERIFIED" if status == "VERIFIED" else "WEB_SKILL_DRAFT", "skill_id": skill_id, "checks": checks, "execution": "NOT_EXECUTED"}
+    return {"schema": SCHEMA, "status": "WEB_SKILL_STRUCTURE_CHECKED" if status == "STRUCTURE_CHECKED" else "WEB_SKILL_DRAFT", "skill_id": skill_id, "checks": checks, "execution": "NOT_EXECUTED", "verification_level": "STRUCTURE_ONLY"}
 
 
 def verify_web_skill(skill_id: str) -> dict[str, Any]:
@@ -484,9 +595,9 @@ def verify_web_skill(skill_id: str) -> dict[str, Any]:
         if row is None:
             return {"schema": SCHEMA, "status": "SKILL_NOT_FOUND", "skill_id": skill_id}
         checks = _skill_checks(str(row["script"]), str(row["template"]))
-        status = "VERIFIED" if checks["pass"] else "DRAFT"
+        status = "STRUCTURE_CHECKED" if checks["pass"] else "DRAFT"
         connection.execute("UPDATE skills SET status=?, checks_json=? WHERE id=?", (status, _json(checks), row["id"]))
-    return {"schema": SCHEMA, "status": "WEB_SKILL_VERIFIED" if status == "VERIFIED" else "WEB_SKILL_REJECTED", "skill_id": skill_id, "checks": checks, "execution": "NOT_EXECUTED"}
+    return {"schema": SCHEMA, "status": "WEB_SKILL_STRUCTURE_CHECKED" if status == "STRUCTURE_CHECKED" else "WEB_SKILL_REJECTED", "skill_id": skill_id, "checks": checks, "execution": "NOT_EXECUTED", "verification_level": "STRUCTURE_ONLY"}
 
 
 def sql_preview(sql: str) -> dict[str, Any]:
@@ -537,7 +648,7 @@ def sql_preview(sql: str) -> dict[str, Any]:
 
 
 def start_run(task_id: str = "", eval_name: str = "WORKBENCH") -> dict[str, Any]:
-    run_id = _id("run", str(task_id) + "\n" + str(eval_name) + "\n" + _now())
+    run_id = 'run-' + uuid.uuid4().hex[:24]
     with _LOCK, _db() as connection:
         connection.execute("INSERT INTO runs VALUES(?,?,?,?,?,?,?,?)", (run_id, _scrub(task_id, 120), _scrub(eval_name, 120), "RUNNING", _now(), "", None, "{}"))
     return {"schema": SCHEMA, "status": "RUN_STARTED", "run_id": run_id}
@@ -561,9 +672,11 @@ def finish_run(run_id: str, status: str = "PASS", score: float | None = None, me
     safe_metrics = metrics if isinstance(metrics, dict) else {}
     safe_metrics = {str(key)[:48]: _scrub(value, 300) for key, value in list(safe_metrics.items())[:32]}
     try:
-        score_value = None if score is None else max(0.0, min(1.0, float(score)))
+        score_value = None if score is None else float(score)
     except (TypeError, ValueError):
-        score_value = None
+        return {'schema': SCHEMA, 'status': 'ERROR', 'reason': 'SCORE_MUST_BE_BETWEEN_ZERO_AND_ONE'}
+    if score_value is not None and (isinstance(score, bool) or not math.isfinite(score_value) or not 0 <= score_value <= 1):
+        return {'schema': SCHEMA, 'status': 'ERROR', 'reason': 'SCORE_MUST_BE_BETWEEN_ZERO_AND_ONE'}
     with _LOCK, _db() as connection:
         cursor = connection.execute("UPDATE runs SET status=?, finished_at=?, score=?, metrics_json=? WHERE id=?", (safe_status, _now(), score_value, _json(safe_metrics), str(run_id or "")))
         if cursor.rowcount != 1:

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from backend.application_paths import STATE_ROOT
-from backend.platform_files import secure_open, NOFOLLOW, CLOEXEC, NONBLOCK, sync_directory
+from backend.platform_files import secure_open, NOFOLLOW, CLOEXEC, NONBLOCK, sync_directory, is_link, atomic_replace
 
 import hashlib
 import json
@@ -12,6 +12,7 @@ from pathlib import Path
 import stat
 import tempfile
 from urllib.parse import unquote, urlparse
+from backend.platform_support import local_file_path
 
 ROOT = Path(os.environ.get("GG_GAME_WORKFLOWS_ROOT", str(STATE_ROOT / 'game-workflows')))
 MAX_FILE = 32 * 1024 * 1024
@@ -25,13 +26,15 @@ def local_path(raw: str, *, directory: bool = False) -> Path:
         parsed = urlparse(value)
         if parsed.netloc not in ("", "localhost") or parsed.query or parsed.fragment:
             raise ValueError("LOCAL_PATH_REQUIRED")
-        value = unquote(parsed.path)
+        value = str(local_file_path(value))
     elif "://" in value:
         raise ValueError("LOCAL_PATH_REQUIRED")
+    if os.name == 'nt' and value.startswith(('\\\\', '//')):
+        raise ValueError('LOCAL_PATH_REQUIRED')
     if not value or "\0" in value:
         raise ValueError("SELECT_LOCAL_PATH")
     path = Path(value).expanduser()
-    if path.is_symlink():
+    if is_link(path):
         raise ValueError("SYMLINK_NOT_SUPPORTED")
     path = path.resolve(strict=True)
     if directory and not path.is_dir():
@@ -123,7 +126,7 @@ def write_bytes(path: Path, data: bytes, *, limit: int = MAX_FILE) -> Path:
             stream.write(data)
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(temporary, path)
+        atomic_replace(temporary, path)
     finally:
         if os.path.exists(temporary):
             os.unlink(temporary)

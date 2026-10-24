@@ -104,7 +104,11 @@ class Improvements(unittest.TestCase):
     def test_symlink_parent_reference_and_cumulative_buffer_budget(self):
         self.enterContext(patch.object(assets, "ASSET_ROOT", self.library))
         self.file("shared/data.bin", b"abcd")
-        (self.library / "alias").symlink_to(self.library / "shared", target_is_directory=True)
+        if os.name=='nt':
+            from backend.application_paths import expose_directory
+            expose_directory(self.library / 'alias',self.library / 'shared')
+        else:
+            (self.library / "alias").symlink_to(self.library / "shared", target_is_directory=True)
         path = self.file("model.gltf", {"buffers": [{"uri": "alias/data.bin", "byteLength": 4}]})
         with self.assertRaisesRegex(ValueError, "SYMLINK"):
             editor.read_model(path)

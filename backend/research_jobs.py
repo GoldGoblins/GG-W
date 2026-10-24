@@ -1,7 +1,7 @@
 """Explicit, bounded static REA jobs shared by the Research UI and command line.
 
 Each job uses a disposable read-only target snapshot inside a network-isolated
-bubblewrap sandbox. No target code, arbitrary command or user script is run.
+AppContainer on Windows or bubblewrap on Linux. No target code or user script runs.
 Only scrubbed reports survive; scratch and provider projects are removed.
 """
 from __future__ import annotations
@@ -22,6 +22,12 @@ import subprocess
 import sys
 import time
 import uuid
+import threading
+import stat
+
+from backend.platform_process import background_options, process_arguments, run_bounded, apply_windows_worker_limits
+from backend.platform_support import host_environment, terminate_process_tree
+from backend.platform_files import is_link, atomic_replace
 
 from backend import research_lab as lab
 
@@ -34,7 +40,7 @@ MAX_SCRATCH = 256 * 1024 * 1024
 MAX_OUTPUT = 4 * 1024 * 1024
 MAX_JOBS = 16
 MAX_HISTORY_BYTES = 32 * 1024 * 1024
-OPERATIONS = {'analyze', 'search', 'function', 'decompile', 'xrefs'}
+OPERATIONS = {'analyze', 'search', 'function', 'decompile', 'xrefs', 'php_analyze'}
 BUSY = {'QUEUED', 'RUNNING'}
 SOURCE_SUFFIXES = {'.js', '.mjs', '.cjs', '.ts', '.tsx', '.jsx', '.json'}
 SKIP_DIRS = {'.git', 'node_modules', '__pycache__', '.cache', '.config', '.ssh', '.aws', '.codex', '.local'}
@@ -44,22 +50,75 @@ def _dir(job_id: str) -> Path:
     if not re.fullmatch(r'[0-9a-f]{32}', str(job_id)):
         raise ValueError('INVALID_JOB')
     path = ROOT / job_id
-    if path.is_symlink():
+    if is_link(path):
         raise ValueError('INVALID_JOB')
     return path
 
 
 def _write(path: Path, value: dict):
     temp = path.with_suffix('.new')
-    temp.write_text(json.dumps(value, ensure_ascii=False, allow_nan=False))
+    temp.write_text(json.dumps(value, ensure_ascii=False, allow_nan=False), encoding='utf-8')
     temp.chmod(0o600)
-    temp.replace(path)
+    atomic_replace(temp, path)
+
+
+def _remove_scratch(folder: Path):
+    scratch = folder / 'scratch'
+    if not scratch.exists():
+        return
+    resolved = scratch.resolve()
+    if is_link(scratch) or not resolved.is_relative_to(folder.resolve()) or resolved == folder.resolve():
+        raise ValueError('INVALID_SCRATCH_PATH')
+    target = str(resolved)
+    if os.name == 'nt' and not target.startswith('\\\\?\\'):
+        target = '\\\\?\\' + target
+    deadline = time.monotonic() + 2
+    while True:
+        try:
+            shutil.rmtree(target)
+            return
+        except FileNotFoundError:
+            return
+        except OSError:
+            if time.monotonic() >= deadline:
+                raise ValueError('SCRATCH_CLEANUP_FAILED')
+            time.sleep(.04)
+
+
+def _scratch_size(scratch: Path) -> int:
+    """Use directory metadata; tolerate files disappearing during tool work."""
+    total = 0
+    pending = [scratch]
+    entries_seen = 0
+    while pending:
+        directory = pending.pop()
+        try:
+            with os.scandir(directory) as entries:
+                for entry in entries:
+                    entries_seen += 1
+                    if entries_seen > 50000:
+                        raise ValueError('SCRATCH_FILE_LIMIT')
+                    try:
+                        info = entry.stat(follow_symlinks=False)
+                    except (FileNotFoundError, NotADirectoryError):
+                        continue
+                    if stat.S_ISLNK(info.st_mode) or getattr(info, 'st_file_attributes', 0) & 0x400:
+                        continue
+                    if stat.S_ISDIR(info.st_mode):
+                        pending.append(Path(entry.path))
+                    elif stat.S_ISREG(info.st_mode):
+                        total += info.st_size
+                        if total > MAX_SCRATCH:
+                            raise ValueError('SCRATCH_LIMIT')
+        except (FileNotFoundError, NotADirectoryError):
+            continue
+    return total
 
 
 def _read(path: Path) -> dict:
     if path.is_symlink() or path.stat().st_size > lab.MAX_REPORT_BYTES + 16384:
         raise ValueError('INVALID_JOB_RECORD')
-    value = json.loads(path.read_text())
+    value = json.loads(path.read_text(encoding='utf-8'))
     if not isinstance(value, dict):
         raise ValueError('INVALID_JOB_RECORD')
     return value
@@ -70,8 +129,8 @@ def _alive(state: dict) -> bool:
     if not pid:
         return state.get('status') == 'QUEUED' and time.time() - state.get('created_epoch', 0) < 20
     try:
-        cmd = Path(f'/proc/{pid}/cmdline').read_bytes().split(b'\0')
-        return b'backend.research_jobs' in cmd and str(state['job_id']).encode() in cmd
+        cmd = process_arguments(pid)
+        return 'backend.research_jobs' in cmd and str(state['job_id']) in cmd
     except OSError:
         return False
 
@@ -80,10 +139,18 @@ def status(job_id: str, include_report: bool = True) -> dict:
     try:
         folder = _dir(job_id)
         state = _read(folder / 'state.json')
+        if not state.get('worker_pid') and (folder / 'worker.pid').is_file():
+            state['worker_pid'] = int((folder / 'worker.pid').read_text(encoding='ascii'))
         if state['status'] in BUSY and not _alive(state):
-            state.update(status='ERROR', reason='WORKER_STOPPED', finished_at=lab.research_desk._now())
-            _write(folder / 'state.json', state)
-            shutil.rmtree(folder / 'scratch', ignore_errors=True)
+            # The worker can finish between reading state and checking its PID.
+            latest = _read(folder / 'state.json')
+            if latest['status'] not in BUSY:
+                state = latest
+            elif time.time() - latest.get('created_epoch', 0) > 3:
+                state = latest
+                state.update(status='ERROR', reason='WORKER_STOPPED', finished_at=lab.research_desk._now())
+                _write(folder / 'state.json', state)
+                _remove_scratch(folder)
         if include_report and state['status'] == 'COMPLETE':
             state['report'] = _read(folder / 'report.json')
         return state
@@ -93,7 +160,7 @@ def status(job_id: str, include_report: bool = True) -> dict:
 
 def history() -> dict:
     ROOT.mkdir(parents=True, exist_ok=True, mode=0o700)
-    jobs = [status(p.name, False) for p in ROOT.iterdir() if not p.is_symlink() and p.is_dir() and re.fullmatch(r'[0-9a-f]{32}', p.name)]
+    jobs = [status(p.name, False) for p in ROOT.iterdir() if not is_link(p) and p.is_dir() and re.fullmatch(r'[0-9a-f]{32}', p.name)]
     jobs.sort(key=lambda j: j.get('created_epoch', 0), reverse=True)
     return {'schema': SCHEMA, 'status': 'READY', 'jobs': jobs[:MAX_JOBS],
             'limits': {'concurrent_jobs': 1, 'seconds': TIMEOUT, 'scratch_bytes': MAX_SCRATCH,
@@ -102,7 +169,7 @@ def history() -> dict:
 
 def _cleanup():
     # Include overflow records, rather than only the public bounded history.
-    folders = sorted((p for p in ROOT.iterdir() if not p.is_symlink() and p.is_dir() and re.fullmatch(r'[0-9a-f]{32}', p.name)),
+    folders = sorted((p for p in ROOT.iterdir() if not is_link(p) and p.is_dir() and re.fullmatch(r'[0-9a-f]{32}', p.name)),
                      key=lambda p: p.stat().st_mtime, reverse=True)
     total = 0
     for index, folder in enumerate(folders):
@@ -122,22 +189,27 @@ def start(raw: str, operation: str = 'analyze', query: str = '') -> dict:
         if operation not in OPERATIONS:
             raise ValueError('UNSUPPORTED_OPERATION')
         query = str(query).strip()
-        if operation != 'analyze' and (not query or len(query) > 160 or query.startswith('-') or '\0' in query):
+        if operation not in {'analyze', 'php_analyze'} and (not query or len(query) > 160 or query.startswith('-') or '\0' in query):
             raise ValueError('QUERY_REQUIRED')
         path = lab._path(raw)
+        php_source = path.suffix.lower() == '.php' or operation == 'php_analyze'
+        if php_source and operation == 'decompile':
+            raise ValueError('PHP_SOURCE_IS_NOT_DECOMPILED')
+        if operation == 'php_analyze' and not path.is_dir() and path.suffix.lower() != '.php':
+            raise ValueError('SELECT_PHP_FILE_OR_PROJECT')
         if not path.is_dir():
             if not path.is_file():
                 raise ValueError('REGULAR_FILE_OR_PROJECT_REQUIRED')
             if path.stat().st_size > lab.MAX_ARTIFACT_BYTES:
                 raise ValueError('FILE_TOO_LARGE')
-        elif operation != 'analyze':
+        elif operation not in {'analyze', 'php_analyze'}:
             raise ValueError('PROJECT_SUPPORTS_ANALYZE_ONLY')
         elif path == Path.home() or path in Path.home().parents or str(path) in {'/usr', '/etc', '/var', '/tmp'}:
             raise ValueError('SELECT_A_SPECIFIC_PROJECT')
-        if not shutil.which('bwrap'):
+        if not php_source and os.name != 'nt' and not shutil.which('bwrap'):
             raise ValueError('SANDBOX_UNAVAILABLE')
         tools = lab.tool_inventory()['engines']
-        if not any(t['name'] == 'REA' and t['state'] != 'NOT_INSTALLED' for t in tools):
+        if not php_source and not any(t['name'] == 'REA' and t['state'] != 'NOT_INSTALLED' for t in tools):
             raise ValueError('REA_NOT_INSTALLED')
         ROOT.mkdir(parents=True, exist_ok=True, mode=0o700)
         with (ROOT / '.admission').open('a') as lock:
@@ -149,15 +221,16 @@ def start(raw: str, operation: str = 'analyze', query: str = '') -> dict:
             folder = _dir(job_id)
             folder.mkdir(mode=0o700)
             state = {'schema': SCHEMA, 'job_id': job_id, 'status': 'QUEUED', 'operation': operation,
-                     'query': query, 'target': str(path), 'created_epoch': time.time(),
+                     'query': query, 'target': str(path), 'source_adapter': 'PHP_LEXICAL' if php_source else '', 'created_epoch': time.time(),
                      'created_at': lab.research_desk._now(), 'worker_pid': 0, 'phase': 'Preparing local snapshot'}
             _write(folder / 'state.json', state)
-            env = {'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8', 'PYTHONPATH': str(PROJECT),
+            env = host_environment({'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8', 'PYTHONPATH': str(PROJECT),
                    'GG_RESEARCH_JOBS_ROOT': str(ROOT), 'GG_RESEARCH_DESK_ROOT': str(lab.research_desk.ROOT),
-                   'GG_RESEARCH_TOOLS_ROOT': str(lab.TOOLS_ROOT)}
-            proc = subprocess.Popen([sys.executable, '-m', 'backend.research_jobs', '--worker', job_id],
+                   'GG_RESEARCH_TOOLS_ROOT': str(lab.TOOLS_ROOT), 'PYTHONUTF8': '1', 'PYTHONDONTWRITEBYTECODE': '1'})
+            proc = subprocess.Popen([sys.executable, '-X', 'utf8', '-B', '-m', 'backend.research_jobs', '--worker', job_id],
                                     cwd=PROJECT, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                                    stderr=subprocess.DEVNULL, start_new_session=True)
+                                    stderr=subprocess.DEVNULL, **background_options())
+            threading.Thread(target=proc.wait, daemon=True, name='gg-research-worker-reaper').start()
             # Worker owns subsequent state updates. PID lives in a separate file,
             # so admission cannot overwrite a fast completion with QUEUED.
             (folder / 'worker.pid').write_text(str(proc.pid))
@@ -171,7 +244,13 @@ def cancel(job_id: str) -> dict:
     state = status(job_id, False)
     if state.get('status') not in BUSY:
         return state
-    (_dir(job_id) / 'cancel').touch(mode=0o600)
+    folder = _dir(job_id)
+    with (folder / '.publication').open('a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        state = _read(folder / 'state.json')
+        if state.get('status') not in BUSY:
+            return state
+        (folder / 'cancel').touch(mode=0o600)
     return {'schema': SCHEMA, 'job_id': job_id, 'status': 'CANCELLING'}
 
 
@@ -191,7 +270,9 @@ def _snapshot(path: Path, scratch: Path) -> tuple[Path, str, str, int]:
             scanned += len(dirs) + len(names)
             if scanned > 20000 or time.monotonic() - began > 15:
                 raise ValueError('PROJECT_SCAN_LIMIT')
-            dirs[:] = sorted(d for d in dirs if d not in SKIP_DIRS and not (Path(directory) / d).is_symlink())
+            dirs[:] = sorted(d for d in dirs if not d.startswith('.') and d.casefold() not in {s.casefold() for s in SKIP_DIRS}
+                             and not (Path(directory) / d).is_symlink()
+                             and not (os.name == 'nt' and (Path(directory) / d).is_junction()))
             for name in sorted(names):
                 p = Path(directory) / name
                 if p.suffix.lower() not in SOURCE_SUFFIXES or p.is_symlink() or name.startswith('.'):
@@ -236,6 +317,59 @@ def _snapshot(path: Path, scratch: Path) -> tuple[Path, str, str, int]:
     return target, hashlib.sha256(data).hexdigest(), kind, len(data)
 
 
+def _snapshot_php(path: Path, scratch: Path, cancelled=None):
+    from backend import php_source_analysis as php
+    target = scratch / 'target'
+    target.mkdir()
+    digest = hashlib.sha256()
+    total = 0
+    count = 0
+    began = time.monotonic()
+    candidates = [path] if path.is_file() else None
+    scanned = 0
+    def selected():
+        nonlocal scanned
+        if candidates is not None:
+            yield from candidates
+            return
+        for directory, dirs, names in os.walk(path, followlinks=False):
+            scanned += len(dirs) + len(names)
+            if scanned > 20000 or time.monotonic() - began > 15:
+                raise ValueError('PROJECT_SCAN_LIMIT')
+            if cancelled and cancelled():
+                raise ValueError('CANCELLED')
+            dirs[:] = sorted(d for d in dirs if not d.startswith('.') and d not in SKIP_DIRS and d not in {'vendor', 'node_modules'}
+                and not (Path(directory) / d).is_symlink() and not (os.name == 'nt' and (Path(directory) / d).is_junction()))
+            for name in sorted(names):
+                if name.lower().endswith('.php') and not name.startswith('.') and not re.search(r'(?i)wp-config|credentials|secrets|private.key|service.account', name):
+                    yield Path(directory) / name
+    root = path.parent if path.is_file() else path
+    for source in selected():
+        if cancelled and cancelled():
+            raise ValueError('CANCELLED')
+        if source.is_symlink() or not source.resolve().is_relative_to(root):
+            raise ValueError('PROJECT_TARGET_CHANGED')
+        _, data = lab._read(str(source), php.MAX_FILE_BYTES)
+        count += 1
+        total += len(data)
+        if count > php.MAX_FILES or total > php.MAX_PROJECT_BYTES:
+            raise ValueError('PHP_PROJECT_SIZE_LIMIT')
+        if b'PRIVATE KEY-----' in data:
+            raise ValueError('PRIVATE_KEY_MATERIAL_NOT_ANALYZED')
+        relative = source.relative_to(root)
+        digest.update(relative.as_posix().encode() + b'\0' + hashlib.sha256(data).digest())
+        destination = target / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(data)
+    if not count:
+        raise ValueError('NO_PHP_PROJECT_FILES')
+    return target, digest.hexdigest(), 'PHP SOURCE PROJECT', total
+
+
+class _WindowsSandboxCommand(list):
+    """Only commands constructed here may reach the isolated native runner."""
+
+
 def _sandbox(scratch: Path, target: Path, kind: str, operation: str, query: str) -> list[str]:
     rea = lab.TOOLS_ROOT / 'rea/node_modules/rea-agents/scripts/rea.mjs'
     if not rea.is_file():
@@ -244,7 +378,8 @@ def _sandbox(scratch: Path, target: Path, kind: str, operation: str, query: str)
         raise ValueError('REA_VERSION_CHANGED')
     ghidra = lab.TOOLS_ROOT / 'ghidra'
     native = kind != 'JAVASCRIPT PROJECT' and kind != 'ASAR CANDIDATE'
-    if native and not (ghidra / 'support/analyzeHeadless').is_file():
+    launcher = 'support/analyzeHeadless.bat' if os.name == 'nt' else 'support/analyzeHeadless'
+    if native and not (ghidra / launcher).is_file():
         raise ValueError('GHIDRA_NOT_INSTALLED')
     if native:
         properties = (ghidra / 'Ghidra/application.properties').read_text()
@@ -254,6 +389,21 @@ def _sandbox(scratch: Path, target: Path, kind: str, operation: str, query: str)
         raise ValueError('PROJECT_SUPPORTS_ANALYZE_ONLY')
     for directory in ['home', 'tmp']:
         (scratch / directory).mkdir()
+    if os.name == 'nt':
+        node = lab.TOOLS_ROOT / 'runtime/node.exe'
+        if not node.is_file():
+            raise ValueError('RESEARCH_NODE_RUNTIME_NOT_INSTALLED')
+        if native and not (lab.TOOLS_ROOT / 'jdk/bin/javac.exe').is_file():
+            raise ValueError('RESEARCH_JDK_NOT_INSTALLED')
+        if native:
+            from backend.windows_research_ghidra import command as ghidra_command
+            argv, report_path = ghidra_command(lab.TOOLS_ROOT, scratch, target, operation, query)
+            command = _WindowsSandboxCommand(argv)
+            command.report_path = report_path
+            return command
+        command = _WindowsSandboxCommand([str(node), '--preserve-symlinks', '--preserve-symlinks-main', str(rea)])
+        command.extend(_provider_arguments(str(target), native, operation, query))
+        return command
     sandbox_target = '/input/' + target.name
     node = Path(shutil.which('node') or str(HOME / '.local/bin/node')).resolve()
     local_jdk = lab.TOOLS_ROOT / 'jdk'
@@ -277,6 +427,11 @@ def _sandbox(scratch: Path, target: Path, kind: str, operation: str, query: str)
                '--setenv', 'NODE_OPTIONS', '--max-old-space-size=512',
                '/usr/bin/prlimit', '--cpu=180', '--fsize=67108864', '--nofile=512', '--',
                '/runtime/node', '/tools/rea/node_modules/rea-agents/scripts/rea.mjs']
+    return command + _provider_arguments(sandbox_target, native, operation, query)
+
+
+def _provider_arguments(sandbox_target, native, operation, query):
+    command = []
     if native:
         command += [operation, sandbox_target]
         if operation != 'analyze':
@@ -301,6 +456,10 @@ def _sandbox(scratch: Path, target: Path, kind: str, operation: str, query: str)
 def _stop(proc):
     if proc.poll() is not None:
         return
+    if os.name == 'nt':
+        terminate_process_tree(proc.pid, force=True)
+        proc.wait(timeout=3)
+        return
     try:
         os.killpg(proc.pid, signal.SIGTERM)
         proc.wait(timeout=2)
@@ -312,6 +471,8 @@ def _stop(proc):
 
 
 def _run(command: list[str], folder: Path) -> tuple[int, bytes, bytes]:
+    if os.name == 'nt':
+        return _run_windows(command, folder)
     proc = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                             start_new_session=True, env={'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8'})
     buffers = [bytearray(), bytearray()]
@@ -328,7 +489,7 @@ def _run(command: list[str], folder: Path) -> tuple[int, bytes, bytes]:
             if time.monotonic() - began > TIMEOUT:
                 raise ValueError('TIME_LIMIT')
             if time.monotonic() - checked > 1:
-                size = sum(p.stat().st_size for p in (folder / 'scratch').rglob('*') if p.is_file() and not p.is_symlink())
+                size = _scratch_size(folder / 'scratch')
                 checked = time.monotonic()
                 if size > MAX_SCRATCH:
                     raise ValueError('SCRATCH_LIMIT')
@@ -348,12 +509,48 @@ def _run(command: list[str], folder: Path) -> tuple[int, bytes, bytes]:
         proc.stderr.close()
 
 
+def _run_windows(command, folder):
+    scratch = folder / 'scratch'
+    checked = [0.0]
+
+    def cancelled():
+        if (folder / 'cancel').exists():
+            return True
+        if time.monotonic() - checked[0] > 0.5:
+            checked[0] = time.monotonic()
+            _scratch_size(scratch)
+        return False
+
+    if isinstance(command, _WindowsSandboxCommand):
+        from backend.windows_research_sandbox import run
+        code, out, err, trigger = run(command, scratch=scratch, tools=lab.TOOLS_ROOT,
+                                    timeout=TIMEOUT, max_output_bytes=MAX_OUTPUT, cancelled=cancelled)
+    else:
+        # Internal process-limit tests use synthetic Python children; production
+        # analysis always supplies the typed command from _sandbox above.
+        code, out, err, trigger = run_bounded(command, timeout=TIMEOUT,
+                                            max_output_bytes=MAX_OUTPUT, cancelled=cancelled)
+    if trigger != 'NONE':
+        raise ValueError({'TIMEOUT': 'TIME_LIMIT'}.get(trigger, trigger))
+    report_path = getattr(command, 'report_path', None)
+    if report_path is not None:
+        if code != 0 or not report_path.is_file():
+            messages = [line for line in (out + b'\n' + err).splitlines()
+                        if b'ERROR' in line or b'Exception:' in line or b'Caused by:' in line]
+            diagnostic = b'\n'.join(messages[-8:]) or (err + out)[-1200:]
+            return code or 1, b'', diagnostic
+        _, out = lab._read(str(report_path), MAX_OUTPUT)
+    return code, out, err
+
+
 def worker(job_id: str):
     os.umask(0o077)
     folder = _dir(job_id)
     state = _read(folder / 'state.json')
     scratch = folder / 'scratch'
     try:
+        if os.name == 'nt':
+            apply_windows_worker_limits(memory_bytes=2 * 1024 * 1024 * 1024, cpu_seconds=240)
         with (ROOT / '.worker').open('a') as lock:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             state.update(status='RUNNING', worker_pid=os.getpid(), phase='Preparing local snapshot')
@@ -361,11 +558,19 @@ def worker(job_id: str):
             if (folder / 'cancel').exists():
                 raise ValueError('CANCELLED')
             scratch.mkdir(mode=0o700)
-            target, digest, kind, size = _snapshot(Path(state['target']), scratch)
-            command = _sandbox(scratch, target, kind, state['operation'], state['query'])
-            state.update(phase='Analyzing with REA / Ghidra' if kind not in {'JAVASCRIPT PROJECT', 'ASAR CANDIDATE'} else 'Analyzing JavaScript application')
+            php_source = state.get('source_adapter') == 'PHP_LEXICAL'
+            cancelled = lambda: (folder / 'cancel').exists()
+            target, digest, kind, size = (_snapshot_php(Path(state['target']), scratch, cancelled) if php_source
+                                         else _snapshot(Path(state['target']), scratch))
+            state.update(phase='Reviewing PHP source syntax' if php_source else 'Analyzing with Ghidra' if kind not in {'JAVASCRIPT PROJECT', 'ASAR CANDIDATE'} else 'Analyzing JavaScript application')
             _write(folder / 'state.json', state)
-            code, output, errors = _run(command, folder)
+            if php_source:
+                from backend import php_source_analysis as php
+                content = php.analyze(target, state['operation'], state['query'], cancelled=cancelled)
+                code, output, errors = 0, json.dumps(content).encode('utf-8'), b''
+            else:
+                command = _sandbox(scratch, target, kind, state['operation'], state['query'])
+                code, output, errors = _run(command, folder)
             if code:
                 state['diagnostic'] = lab._redact_text(errors.decode('utf-8', 'replace'), 1200)
                 # Preserve REA's structured error, without exposing raw output.
@@ -381,7 +586,7 @@ def worker(job_id: str):
                 state['engine_error'] = content
                 raise ValueError('ENGINE_FAILED')
             report = {'schema': lab.SCHEMA, 'report_id': job_id, 'status': 'ANALYZED',
-                      'engine': 'REA / Ghidra' if kind not in {'JAVASCRIPT PROJECT', 'ASAR CANDIDATE'} else 'REA',
+                      'engine': 'PHP source review' if php_source else 'Ghidra' if kind not in {'JAVASCRIPT PROJECT', 'ASAR CANDIDATE'} else 'REA',
                       'provenance': 'LOCAL_ENGINE_STATIC_OBSERVATION', 'observed_at': lab.research_desk._now(),
                       'name': Path(state['target']).name, 'path': state['target'], 'bytes': size,
                       'format': kind, 'artifact_sha256': digest, 'strings': [], 'operation': state['operation'],
@@ -392,17 +597,36 @@ def worker(job_id: str):
                                  'JavaScript graph view: first 128 nodes / edges and 4 observations per node; not the full graph.',
                                  'Report collections and long strings are bounded and sensitive values redacted; provider limitations remain in the content.'],
                       'content': content, 'summary': f"{state['operation']} · {kind} · local static analysis"}
+            if php_source:
+                report['facts'] = ['The selected PHP snapshot was tokenized by the built-in bounded source reviewer.',
+                                   'The target was never executed; no PHP interpreter, includes or network requests are used.']
+                report['limits'] = php.LIMITATIONS + ['Project snapshots omit vendor, hidden/configuration and credential-named files.']
             if len(json.dumps(report).encode()) > lab.MAX_REPORT_BYTES:
                 raise ValueError('REPORT_LIMIT')
             _write(folder / 'report.json', report)
             state.update(status='COMPLETE', phase='Report ready')
     except Exception as exc:
         reason = str(exc) if isinstance(exc, ValueError) else type(exc).__name__
+        frame = exc.__traceback__
+        while frame and frame.tb_next:
+            frame = frame.tb_next
+        state['failure_location'] = Path(frame.tb_frame.f_code.co_filename).name + ':' + str(frame.tb_lineno) if frame else ''
+        state['failure_phase'] = state.get('phase', '')
+        if isinstance(exc, OSError):
+            state['os_error'] = getattr(exc, 'winerror', None) or exc.errno
         state.update(status='CANCELLED' if reason == 'CANCELLED' else 'ERROR', reason=reason, phase='Stopped')
     finally:
-        shutil.rmtree(scratch, ignore_errors=True)
+        try:
+            _remove_scratch(folder)
+        except ValueError as exc:
+            state.update(status='ERROR', reason=str(exc), phase='Stopped')
         state['finished_at'] = lab.research_desk._now()
-        _write(folder / 'state.json', state)
+        with (folder / '.publication').open('a') as publication:
+            fcntl.flock(publication, fcntl.LOCK_EX)
+            if state.get('status') == 'COMPLETE' and (folder / 'cancel').exists():
+                state.update(status='CANCELLED', reason='CANCELLED', phase='Stopped')
+                (folder / 'report.json').unlink(missing_ok=True)
+            _write(folder / 'state.json', state)
 
 
 if __name__ == '__main__':

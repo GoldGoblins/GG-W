@@ -205,11 +205,13 @@ class ChatSurfaceHost(QObject):
     chatTerminalOutput = Signal(str, str)
     chatTerminalExit = Signal(str, int)
     chatTerminalNotice = Signal(str, str)
+    chatClipboardNotice = Signal(str, str)
     chatTerminalFocusRequested = Signal(str)
     grokTuiChunk = Signal(str)
     grokWalletChanged = Signal(str)
     gptWalletChanged = Signal(str)
     webOperatorCommand = Signal(str)
+    webOperatorCancelled = Signal(str, str)
     chatSessionsChanged = Signal(str)
     qmlLiveReload = Signal()
     workspaceFileChanged = Signal(str, str, str)
@@ -239,6 +241,7 @@ class ChatSurfaceHost(QObject):
         self._sessions: dict[str, dict[str, Any]] = {}
         self._preview: QProcess | None = None
         self._preview_origin = ""
+        self._site_preview_fingerprint = ''
         self._qml_root: QObject | None = None
         self._tui_embed: object | None = None
         self._tui_grid: object | None = None
@@ -326,6 +329,9 @@ class ChatSurfaceHost(QObject):
         self._live_vision_timer.start()
         self._qml_watch: QFileSystemWatcher | None = None
         self._web_op_watch: QFileSystemWatcher | None = None
+        self._web_op_timer = QTimer(self)
+        self._web_op_timer.setInterval(100)
+        self._web_op_timer.timeout.connect(self._poll_web_operator)
         self._desk_op_watch: QFileSystemWatcher | None = None
         self._desk_job: dict[str, Any] | None = None
         self._desk_observation_seq = 0
@@ -554,11 +560,13 @@ class ChatSurfaceHost(QObject):
             grid = None
         if grid is None or getattr(grid, "_thread", None) is None:
             from backend.terminal_grid import TerminalGrid
-            grid = TerminalGrid(hole, retain_session_size=True)
+            grid = TerminalGrid(hole, retain_session_size=True, paste_image_paths=True)
             self._gpt_grid = grid
             grid.hide_replay(self._startup_chat_restoring
                              and self._startup_chat_terminal == "ws.tui.gpt")
             grid.dataProduced.connect(self.gptTuiWrite)
+            grid.pasteError.connect(
+                lambda message: self.chatClipboardNotice.emit("ws.tui.gpt", message))
             grid.terminalReplyProduced.connect(self.gptTuiTerminalReply)
             grid.scrollMetricsChanged.connect(
                 lambda offset, maximum, page: self.terminalScrollChanged.emit(
@@ -1179,6 +1187,8 @@ class ChatSurfaceHost(QObject):
         grid.hide_replay(self._startup_chat_restoring
                          and self._startup_chat_terminal == GROK_TUI_TERMINAL_ID)
         grid.dataProduced.connect(self.grokTuiWrite)
+        grid.pasteError.connect(
+            lambda message: self.chatClipboardNotice.emit(GROK_TUI_TERMINAL_ID, message))
         grid.terminalReplyProduced.connect(self.grokTuiTerminalReply)
         grid.scrollMetricsChanged.connect(
             lambda offset, maximum, page: self.terminalScrollChanged.emit(
@@ -1506,6 +1516,8 @@ class ChatSurfaceHost(QObject):
             elif op == "lab_save":
                 result = research_lab.save_finding(str(payload.get("report_id") or ""), str(payload.get("title") or ""),
                     str(payload.get("claim") or ""), str(payload.get("lesson") or ""))
+            elif op == "lab_saved_report":
+                result = research_lab.load_finding(str(payload.get('evidence_id') or ''))
             elif op == "lab_references":
                 result = research_lab.seed_references()
             elif op in {"game_tools", "game_start", "game_status", "game_cancel"}:
@@ -1579,7 +1591,8 @@ class ChatSurfaceHost(QObject):
             else:
                 result = {"schema": research_desk.SCHEMA, "status": "UNKNOWN_COMMAND"}
         except Exception as exc:
-            result = {"schema": research_desk.SCHEMA, "status": "ERROR", "error": type(exc).__name__}
+            reason = str(exc) if isinstance(exc, ValueError) and re.fullmatch(r'[A-Z][A-Z0-9_]{1,100}', str(exc)) else type(exc).__name__
+            result = {"schema": research_desk.SCHEMA, "status": "ERROR", "error": type(exc).__name__, "reason": reason}
         return json.dumps(result, ensure_ascii=False, separators=(",", ":"))
 
     @Slot(str, result=bool)
@@ -2540,6 +2553,18 @@ class ChatSurfaceHost(QObject):
             return json.dumps(qip_lab.inspect_file(path), separators=(",", ":"))
         except Exception as exc:
             return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+
+    @Slot(str, str, result=str)
+    def qipStart(self, path: str, input_text: str) -> str:
+        return json.dumps(qip_lab.start(path, input_text), separators=(',', ':'))
+
+    @Slot(str, result=str)
+    def qipStatus(self, job_id: str) -> str:
+        return json.dumps(qip_lab.job_status(job_id), separators=(',', ':'))
+
+    @Slot(str, result=str)
+    def qipCancel(self, job_id: str) -> str:
+        return json.dumps(qip_lab.cancel(job_id), separators=(',', ':'))
 
     @Slot(str, str, result=str)
     def qipRun(self, path: str, input_text: str) -> str:
@@ -4278,7 +4303,12 @@ class ChatSurfaceHost(QObject):
         from PySide6.QtCore import QCoreApplication
 
         existing = str(self._preview_origin or "").strip()
-        if existing.startswith("http://127.0.0.1:"):
+        kind = web_surface.preview_kind()
+        current_identity = web_surface.php_runtime_identity() if kind == 'PHP' else ''
+        active_preview = getattr(self, '_preview', None)
+        if (existing.startswith("http://127.0.0.1:") and active_preview is not None
+                and active_preview.state() == QProcess.ProcessState.Running
+                and getattr(self, '_site_preview_fingerprint', '') == current_identity):
             hostport = existing.split("://", 1)[-1].rstrip("/").split("/", 1)[0]
             port_s = hostport.split(":")[-1]
             try:
@@ -4290,16 +4320,18 @@ class ChatSurfaceHost(QObject):
 
                 try:
                     with _socket.create_connection(("127.0.0.1", port_n), 0.2):
-                        from backend.site_database import rewrite_preview_origin
-
-                        rewrite_preview_origin(existing)
-                        return existing.rstrip("/") + "/\n" + web_surface.preview_kind()
+                        if kind == 'PHP' and (web_surface.SITE_ROOT / 'wp-config.php').is_file():
+                            from backend.site_database import rewrite_preview_origin
+                            if not rewrite_preview_origin(existing).startswith('PASS'):
+                                self.stopSitePreview()
+                                return ''
+                        return existing.rstrip("/") + "/\n" + kind
                 except OSError:
                     pass
         self.stopSitePreview()
         web_surface.ensure_site_root()
         kind = web_surface.preview_kind()
-        if kind == "PHP":
+        if kind == "PHP" and (web_surface.SITE_ROOT / 'wp-config.php').is_file():
             from backend.site_database import start_mysqld
 
             started = start_mysqld()
@@ -4311,6 +4343,13 @@ class ChatSurfaceHost(QObject):
         process.setProgram(argv[0])
         process.setArguments(argv[1:])
         process.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
+        if kind == 'PHP':
+            from PySide6.QtCore import QProcessEnvironment
+            from backend.site_runtime_setup import php_environment
+            environment = QProcessEnvironment()
+            for name, value in php_environment(argv[0]).items():
+                environment.insert(name, value)
+            process.setProcessEnvironment(environment)
         process.start()
         if not process.waitForStarted(8000 if kind == "PHP" else 2000):
             process.deleteLater()
@@ -4340,12 +4379,26 @@ class ChatSurfaceHost(QObject):
             process.deleteLater()
             return ""
         origin = web_surface.preview_origin(port)
-        if web_surface.preview_kind() == "PHP":
+        if kind == 'PHP' and (web_surface.SITE_ROOT / 'wp-config.php').is_file():
             from backend.site_database import rewrite_preview_origin
 
-            rewrite_preview_origin(origin)
+            if not rewrite_preview_origin(origin).startswith('PASS'):
+                process.kill()
+                process.waitForFinished(400)
+                process.deleteLater()
+                return ''
         self._preview = process
         self._preview_origin = origin
+        self._site_preview_fingerprint = web_surface.php_runtime_identity() if kind == 'PHP' else ''
+        def preview_finished(*_args):
+            if self._preview is process:
+                self._preview = None
+                self._preview_origin = ''
+                self._site_preview_fingerprint = ''
+                process.deleteLater()
+        process.finished.connect(preview_finished)
+        # Drain rather than accumulate server response/log data in QProcess.
+        process.readyReadStandardOutput.connect(lambda: process.readAllStandardOutput())
         return origin + "\n" + web_surface.preview_kind()
 
     @Slot(result=bool)
@@ -4353,6 +4406,7 @@ class ChatSurfaceHost(QObject):
         process = self._preview
         self._preview = None
         self._preview_origin = ""
+        self._site_preview_fingerprint = ''
         if process is None:
             return True
         process.terminate()
@@ -4368,29 +4422,52 @@ class ChatSurfaceHost(QObject):
 
     @Slot(str, result=str)
     def importSiteSql(self, path: str) -> str:
-        from PySide6.QtCore import QCoreApplication
-
         from backend.site_database import import_sql_dump
-
-        def progress(phase: str, current: int, total: int, extra: str) -> None:
-            self.siteImportProgress.emit(phase, current, total, extra)
-            app = QCoreApplication.instance()
-            if app is not None:
-                app.processEvents()
-
-        return import_sql_dump(path, progress=progress)
+        return import_sql_dump(path, progress=self.siteImportProgress.emit)
 
     @Slot(str, result=str)
     def importSite(self, path: str) -> str:
-        from PySide6.QtCore import QCoreApplication
+        return web_surface.import_site_tree(path, progress=self.siteImportProgress.emit)
 
-        def progress(phase: str, current: int, total: int, extra: str) -> None:
-            self.siteImportProgress.emit(phase, current, total, extra)
-            app = QCoreApplication.instance()
-            if app is not None:
-                app.processEvents()
+    @Slot(str, str, result=str)
+    def siteStart(self, kind: str, path: str) -> str:
+        from backend import site_jobs
+        if site_jobs.status().get('state') in site_jobs.BUSY:
+            return json.dumps({'state': 'ERROR', 'reason': 'SITE_JOB_ALREADY_RUNNING'})
+        if str(kind).upper() in {'TREE', 'SQL'}:
+            self.stopSitePreview()
+        result = site_jobs.start(kind, path)
+        if result.get('job_id'):
+            self.siteImportProgress.emit('JOB_STARTED', 0, 0, json.dumps(result))
+        return json.dumps(result)
 
-        return web_surface.import_site_tree(path, progress=progress)
+    @Slot(str, result=str)
+    def siteStatus(self, job_id: str) -> str:
+        from backend import site_jobs
+        result = site_jobs.status(job_id)
+        if result.get('health'):
+            health = dict(result['health'])
+            started = getattr(self, '_site_preview_fingerprint', '')
+            health['restart_required'] = bool(self._preview_origin and started and
+                health.get('fingerprint') and started != health['fingerprint'])
+            health['preview_running'] = bool(self._preview_origin)
+            result['health'] = health
+        return json.dumps(result)
+
+    @Slot(str, result=str)
+    def siteCancel(self, job_id: str) -> str:
+        from backend import site_jobs
+        return json.dumps(site_jobs.cancel(job_id))
+
+    @Slot(result=str)
+    def siteHealth(self) -> str:
+        from backend import site_jobs
+        return json.dumps(site_jobs.cached_health())
+
+    @Slot(str, result=str)
+    def sitePhpVersionAssessment(self, version: str) -> str:
+        return json.dumps({**web_surface.php_version_assessment(version), 'source': 'PASTED_VERSION',
+                           'running_server_verified': False})
 
     @Slot(result=str)
     def loadDesktopSettings(self) -> str:
@@ -5184,9 +5261,13 @@ class ChatSurfaceHost(QObject):
                 continue
             if key in self._imported_zips:
                 continue
-            result = self.importSite(str(path))
-            self._imported_zips.add(key)
-            self.siteImportProgress.emit("DROP", 1, 1, result)
+            from backend import site_jobs
+            if site_jobs.status().get('state') in site_jobs.BUSY:
+                return
+            result = json.loads(self.siteStart('TREE', str(path)))
+            if result.get('job_id'):
+                self._imported_zips.add(key)
+                return
 
     def _on_live_dir(self, directory: str) -> None:
         folder = Path(directory)
@@ -5482,24 +5563,20 @@ class ChatSurfaceHost(QObject):
 
     @Slot(str, result=bool)
     def pasteChatTerminal(self, terminal_id: str) -> bool:
-        from PySide6.QtGui import QGuiApplication
+        from backend.chat_clipboard import read_paste
 
-        clip = QGuiApplication.clipboard()
-        text = clip.text() if clip is not None else ""
-        if not text and clip is not None:
-            mime = clip.mimeData()
-            if mime is not None and mime.hasImage():
-                # Codex handles image paste itself when it receives Ctrl+V.
-                return self._write_chat_terminal(
-                    terminal_id,
-                    "\x16",
-                    user_input=True,
-                )
-        if not text:
+        payload, error = read_paste(image_paths=str(terminal_id or "").strip() != GROK_TUI_TERMINAL_ID)
+        self.chatClipboardNotice.emit(terminal_id, error)
+        if error:
             return False
+        if not payload:
+            return False
+        payload = payload.replace("\n", "\r")
+        if payload != "\x16" and str(terminal_id or "").strip() in {"ws.tui.gpt", GROK_TUI_TERMINAL_ID}:
+            payload = "\x1b[200~" + payload + "\x1b[201~"
         return self._write_chat_terminal(
             terminal_id,
-            str(text).replace("\n", "\r"),
+            payload,
             user_input=True,
         )
 
@@ -5521,6 +5598,7 @@ class ChatSurfaceHost(QObject):
         from backend import web_operator
 
         web_operator.ensure_root()
+        self._web_op_timer.start()
         if self._fs is None:
             self.watchDesktopWorkspace()
         watcher = self._fs
@@ -5555,8 +5633,12 @@ class ChatSurfaceHost(QObject):
 
     def _poll_web_operator(self) -> None:
         web_operator = self._reload_web_operator()
-
-        command = web_operator.take_command()
+        try:
+            command = web_operator.take_command()
+            for notice in web_operator.take_cancellations():
+                self.webOperatorCancelled.emit(notice["command_id"], notice["reason"])
+        except (OSError, web_operator.WebOperatorError):
+            return
         if command is None:
             return
         self.webOperatorCommand.emit(
@@ -6406,7 +6488,15 @@ class ChatSurfaceHost(QObject):
             return
         if not isinstance(value, dict):
             return
-        web_operator.write_result(value)
+        try:
+            web_operator.write_result(value)
+        except (OSError, web_operator.WebOperatorError):
+            return
+
+    @Slot(result=str)
+    def webOperatorViewPath(self) -> str:
+        web_operator = self._reload_web_operator()
+        return str(web_operator.ensure_root() / web_operator.VIEW_NAME)
 
     def _emit_wallet(self) -> None:
         payload = grok_wallet_snapshot(
@@ -6467,6 +6557,9 @@ class ChatSurfaceHost(QObject):
             self.chatSessionsChanged.emit(listing)
 
     def shutdown(self) -> None:
+        from backend import site_jobs
+        site_jobs.cancel()
+        self._web_op_timer.stop()
         self._tmog_sampler.close()
         self._startup_chat_timer.stop()
         self._startup_chat_restoring = False
@@ -6489,6 +6582,8 @@ class ChatSurfaceHost(QObject):
         self._qml_rebind_timer.stop()
         self._qml_reload_safety_barrier()
         self.stopSitePreview()
+        from backend.site_database import stop_mysqld
+        stop_mysqld(timeout=3.0, only_started=True)
         embed = self._tui_embed
         self._tui_embed = None
         if embed is not None:

@@ -3,9 +3,12 @@ from backend.platform_support import runtime_root
 from backend.platform_files import secure_open, NOFOLLOW
 
 import argparse
+from contextlib import contextmanager, closing
 import json
+import math
 import os
 import re
+import sqlite3
 import sys
 import time
 import uuid
@@ -19,6 +22,8 @@ if str(_PROJECT) not in sys.path:
 
 from backend import task_scoped_action_grant
 from backend import web_surface
+from backend.platform_support import file_locks
+from backend.platform_files import atomic_replace, is_link
 
 
 SCHEMA_COMMAND = "gg.web-operator-command.v1"
@@ -50,6 +55,13 @@ ROOT = _runtime_operator_root()
 COMMAND_NAME = "command.json"
 ACTIVE_NAME = "command.active.json"
 RESULT_NAME = "result.json"
+CANCEL_NAME = "cancelled.json"
+HISTORY_NAME = "lifecycle.json"
+RECEIPTS_NAME = "receipts.sqlite"
+# Preserve the identity across the host's source reload, but never across an
+# application restart. A claimed effect from a previous host is not replayed.
+_HOST_SESSION = globals().get("_HOST_SESSION") or uuid.uuid4().hex
+_MAX_RECORD_BYTES = 131072
 
 ACTIONS = (
     "OPEN",
@@ -187,6 +199,166 @@ def _write_exclusive(path: Path, data: bytes) -> None:
         os.fsync(handle.fileno())
 
 
+@contextmanager
+def _transport_lock():
+    ensure_root()
+    fd = secure_open(ROOT / ".transport.lock", os.O_RDWR | os.O_CREAT | NOFOLLOW, 0o600)
+    with os.fdopen(fd, "r+b") as handle:
+        file_locks.flock(handle, file_locks.LOCK_EX)
+        try:
+            yield
+        finally:
+            file_locks.flock(handle, file_locks.LOCK_UN)
+
+
+def _read_record(path: Path):
+    if is_link(path):
+        raise WebOperatorError("TRANSPORT_LINK_FORBIDDEN")
+    try:
+        fd = secure_open(path, os.O_RDONLY | NOFOLLOW)
+    except FileNotFoundError:
+        return None
+    with os.fdopen(fd, "rb") as handle:
+        raw = handle.read(_MAX_RECORD_BYTES + 1)
+    if len(raw) > _MAX_RECORD_BYTES:
+        raise WebOperatorError("TRANSPORT_RECORD_TOO_LARGE")
+    try:
+        return json.loads(raw)
+    except (ValueError, UnicodeError) as exc:
+        raise WebOperatorError("TRANSPORT_RECORD_INVALID") from exc
+
+
+def _replace_record(path: Path, value) -> None:
+    if is_link(path):
+        raise WebOperatorError("TRANSPORT_LINK_FORBIDDEN")
+    temporary = ROOT / (".record-" + uuid.uuid4().hex)
+    try:
+        _write_exclusive(temporary, _canonical(value))
+        atomic_replace(temporary, path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def _history_locked():
+    rows = _read_record(ROOT / HISTORY_NAME) or []
+    return rows[-63:] if isinstance(rows, list) else []
+
+
+def _receipt_locked(command_id, state=None):
+    """Permanent consumed IDs, separate from the bounded display history.
+
+    Only an opaque command ID and state are retained, never command text or
+    authorization. Trimming visible history cannot make an effect replayable.
+    """
+    path = ROOT / RECEIPTS_NAME
+    if is_link(path):
+        raise WebOperatorError("TRANSPORT_LINK_FORBIDDEN")
+    if not path.exists():
+        fd = secure_open(path, os.O_RDWR | os.O_CREAT | os.O_EXCL | NOFOLLOW, 0o600)
+        os.close(fd)
+    with closing(sqlite3.connect(path, timeout=1.0)) as db:
+        db.execute("CREATE TABLE IF NOT EXISTS consumed(command_id TEXT PRIMARY KEY,state TEXT NOT NULL)")
+        previous = db.execute("SELECT state FROM consumed WHERE command_id=?", (command_id,)).fetchone()
+        if state is not None:
+            db.execute("INSERT INTO consumed VALUES(?,?) ON CONFLICT(command_id) DO UPDATE SET state=excluded.state",
+                       (command_id, state))
+        db.commit()
+        return previous[0] if previous else None
+
+
+def _command_record_locked(name):
+    path = ROOT / name
+    try:
+        raw = _read_record(path)
+        if raw is not None:
+            validate_command(raw)
+        return raw
+    except WebOperatorError:
+        # A legacy/externally interrupted publication may be partial. Never
+        # execute it or retain an invalid record as a permanent busy state.
+        if is_link(path):
+            raise
+        path.unlink(missing_ok=True)
+        _replace_record(ROOT / RESULT_NAME, {
+            "schema": SCHEMA_RESULT, "command_id": "", "ok": False,
+            "reason_code": "TRANSPORT_RECORD_INVALID", "transport_state": "INTERRUPTED",
+            "completion_uncertain": name == ACTIVE_NAME})
+        return None
+
+
+def _terminal_locked(command, state, reason, *, notify=False, result=None):
+    command_id = command["command_id"]
+    rows = _history_locked()
+    previous_state = _receipt_locked(command_id)
+    if previous_state and previous_state != "CLAIMED":
+        # A crash may have occurred between recording the tombstone and
+        # publishing the result. Complete cleanup without replaying the effect.
+        stored = _read_record(ROOT / RESULT_NAME)
+        if not isinstance(stored, dict) or stored.get("command_id") != command_id:
+            _replace_record(ROOT / RESULT_NAME, {
+                **make_result(command, ok=False, reason_code="OPERATOR_INTERRUPTED"),
+                "transport_state": "INTERRUPTED"})
+        for name in (COMMAND_NAME, ACTIVE_NAME):
+            path = ROOT / name
+            record = _read_record(path)
+            if isinstance(record, dict) and record.get("command_id") == command_id:
+                path.unlink(missing_ok=True)
+        return False
+    _receipt_locked(command_id, state)
+    rows.append({"command_id": command_id, "state": state, "finished_at": time.time()})
+    # Persist the tombstone before publishing completion or clearing a claim.
+    # Recovery never runs a command whose completion was already recorded.
+    _replace_record(ROOT / HISTORY_NAME, rows)
+    if notify:
+        notices = _read_record(ROOT / CANCEL_NAME) or []
+        if not isinstance(notices, list):
+            notices = []
+        notices.append({"command_id": command_id, "reason": reason})
+        _replace_record(ROOT / CANCEL_NAME, notices[-64:])
+    active = _read_record(ROOT / ACTIVE_NAME)
+    uncertain = (isinstance(active, dict) and active.get("command_id") == command_id
+                 and command.get("action") not in {"SNAPSHOT", "WAIT", "MOVE"})
+    value = result if result is not None else make_result(command, ok=False, reason_code=reason,
+                                                         completion_uncertain=uncertain)
+    value = {**value, "transport_state": state}
+    _replace_record(ROOT / RESULT_NAME, value)
+    for name in (COMMAND_NAME, ACTIVE_NAME):
+        path = ROOT / name
+        record = _read_record(path)
+        if isinstance(record, dict) and record.get("command_id") == command_id:
+            path.unlink(missing_ok=True)
+    return True
+
+
+def _expire_locked():
+    for name in (ACTIVE_NAME, COMMAND_NAME):
+        raw = _command_record_locked(name)
+        if not isinstance(raw, dict):
+            continue
+        command = validate_command(raw)
+        if command["expires_at"] and command["expires_at"] <= time.time():
+            _terminal_locked(command, "EXPIRED", "OPERATOR_TIMEOUT", notify=True)
+
+
+def take_cancellations() -> list[dict[str, str]]:
+    with _transport_lock():
+        rows = _read_record(ROOT / CANCEL_NAME) or []
+        (ROOT / CANCEL_NAME).unlink(missing_ok=True)
+        return [row for row in rows if isinstance(row, dict)
+                and isinstance(row.get("command_id"), str)
+                and isinstance(row.get("reason"), str)][:64] if isinstance(rows, list) else []
+
+
+def cancel(command_id: str, reason: str = "OPERATOR_CANCELLED") -> bool:
+    """Cancel only the matching pending/claimed effect, never a later command."""
+    with _transport_lock():
+        for name in (ACTIVE_NAME, COMMAND_NAME):
+            raw = _read_record(ROOT / name)
+            if isinstance(raw, dict) and raw.get("command_id") == command_id:
+                return _terminal_locked(validate_command(raw), "CANCELLED", reason, notify=True)
+    return False
+
+
 def _host(url: str) -> str:
     value = str(url or "").strip()
     if value and "://" not in value and not value.startswith("about:"):
@@ -279,6 +451,9 @@ def validate_command(value: Any) -> dict[str, Any]:
     if action == "SELECT" and not text:
         raise WebOperatorError("TEXT_REQUIRED")
     risk = risk_class_for(action, url)
+    expires_at = value.get("expires_at", 0)
+    if isinstance(expires_at, bool) or not isinstance(expires_at, (int, float)) or not math.isfinite(expires_at) or expires_at < 0:
+        raise WebOperatorError("COMMAND_DEADLINE_INVALID")
     if action == "TAB_NEW" and (url or selector.strip()):
         risk = "YELLOW"
     authorization = _validate_task_scoped_authorization(
@@ -303,6 +478,7 @@ def validate_command(value: Any) -> dict[str, Any]:
         "risk_class": risk,
         **authority,
         "visible_cursor": True,
+        "expires_at": float(expires_at),
     }
 
 
@@ -352,10 +528,8 @@ def make_result(
     text: str = "",
     links: list[Any] | None = None,
     image: str = "",
+    completion_uncertain: bool = False,
 ) -> dict[str, Any]:
-    view = ROOT / VIEW_NAME
-    if not image and view.is_file():
-        image = str(view)
     authority = _authority_fields(command)
     return {
         "schema": SCHEMA_RESULT,
@@ -364,90 +538,86 @@ def make_result(
         "reason_code": str(reason_code),
         "risk_class": command.get("risk_class") or "GREEN",
         "action": command.get("action"),
-        "url": url,
-        "title": title,
+        "url": url[:4096],
+        "title": title[:400],
         "text": text[:8000],
-        "links": list(links or [])[:40],
-        "image": image,
+        "links": [{"t": str(row.get("t") or "")[:160], "h": str(row.get("h") or "")[:2000]}
+                  for row in list(links or [])[:40] if isinstance(row, dict)],
+        "image": image[:4096],
         **authority,
         "visible_web_tab": True,
         "visible_cursor": True,
+        "completion_uncertain": bool(completion_uncertain),
     }
 
 
-def take_command() -> dict[str, Any] | None:
-    ensure_root()
-    path = ROOT / COMMAND_NAME
-    active = ROOT / ACTIVE_NAME
-    if active.is_file():
-        try:
-            return validate_command(json.loads(active.read_text(encoding="utf-8")))
-        except (OSError, json.JSONDecodeError, WebOperatorError):
-            try:
-                active.unlink()
-            except OSError:
-                pass
+def take_command(*, owner: str | None = None) -> dict[str, Any] | None:
+    owner = owner or _HOST_SESSION
+    with _transport_lock():
+        _expire_locked()
+        active = _command_record_locked(ACTIVE_NAME)
+        if isinstance(active, dict):
+            receipt = _receipt_locked(str(active.get("command_id") or ""))
+            if active.get("transport_owner") != owner or receipt not in (None, "CLAIMED"):
+                _terminal_locked(validate_command(active), "INTERRUPTED", "OPERATOR_INTERRUPTED", notify=True)
             return None
-    if not path.is_file() or path.is_symlink():
-        return None
-    try:
-        raw = path.read_text(encoding="utf-8")
-        command = validate_command(json.loads(raw))
-    except (OSError, json.JSONDecodeError, WebOperatorError):
-        try:
-            path.unlink()
-        except OSError:
-            pass
-        return None
-    if (
-        command.get("risk_class") == "RED"
-        and command.get("task_scoped_authorization") is None
-    ):
-        try:
-            path.unlink()
-        except OSError:
-            pass
-        write_result(
-            make_result(
-                command,
-                ok=False,
-                reason_code="TASK_SCOPED_AUTHORIZATION_REQUIRED",
-            )
-        )
-        return None
-    try:
-        os.replace(path, active)
-    except OSError:
-        return None
-    return command
+        path = ROOT / COMMAND_NAME
+        raw = _command_record_locked(COMMAND_NAME)
+        if raw is None:
+            return None
+        command = validate_command(raw)
+        if _receipt_locked(command["command_id"]):
+            _terminal_locked(command, "INTERRUPTED", "OPERATOR_INTERRUPTED", notify=True)
+            return None
+        if command.get("risk_class") == "RED" and command.get("task_scoped_authorization") is None:
+            _terminal_locked(command, "REJECTED", "TASK_SCOPED_AUTHORIZATION_REQUIRED")
+            return None
+        if not command["expires_at"]:
+            command["expires_at"] = time.time() + 120
+        claimed = {**command, "transport_state": "CLAIMED", "transport_owner": owner}
+        _receipt_locked(command["command_id"], "CLAIMED")
+        _replace_record(ROOT / ACTIVE_NAME, claimed)
+        path.unlink(missing_ok=True)
+        return command
 
 
-def write_result(result: dict[str, Any]) -> None:
-    ensure_root()
-    payload = _canonical(result)
-    target = ROOT / RESULT_NAME
-    if target.exists() or target.is_symlink():
-        target.unlink()
-    _write_exclusive(target, payload)
-    active = ROOT / ACTIVE_NAME
-    if active.exists():
-        try:
-            active.unlink()
-        except OSError:
-            pass
+def write_result(result: dict[str, Any]) -> bool:
+    if not isinstance(result, dict) or result.get("schema") != SCHEMA_RESULT:
+        return False
+    with _transport_lock():
+        _expire_locked()
+        raw = _read_record(ROOT / ACTIVE_NAME)
+        if not isinstance(raw, dict) or raw.get("command_id") != result.get("command_id"):
+            return False
+        command = validate_command(raw)
+        # Authority and action fields come from the claimed command, not a
+        # page/QML result. Only bounded observations cross back from the view.
+        safe = make_result(command, ok=result.get("ok") is True,
+            reason_code=str(result.get("reason_code") or "FAIL")[:80],
+            url=str(result.get("url") or "")[:4096], title=str(result.get("title") or "")[:400],
+            text=str(result.get("text") or ""),
+            links=result.get("links") if isinstance(result.get("links"), list) else [],
+            image=str(result.get("image") or "")[:4096],
+            completion_uncertain=result.get("completion_uncertain") is True)
+        return _terminal_locked(command, "COMPLETED", safe["reason_code"], result=safe)
 
 
 def submit(command: dict[str, Any], *, timeout: float = 25.0) -> dict[str, Any]:
     validated = validate_command(command)
-    ensure_root()
+    if isinstance(timeout, bool) or not math.isfinite(timeout) or not 0 < timeout <= 180:
+        raise WebOperatorError("OPERATOR_TIMEOUT_INVALID")
+    validated["expires_at"] = time.time() + timeout
     command_path = ROOT / COMMAND_NAME
     result_path = ROOT / RESULT_NAME
-    if command_path.exists() or (ROOT / ACTIVE_NAME).exists():
-        raise WebOperatorError("OPERATOR_BUSY")
-    if result_path.exists():
-        result_path.unlink()
-    _write_exclusive(command_path, _canonical(validated))
-    deadline = time.monotonic() + max(1.0, timeout)
+    with _transport_lock():
+        _expire_locked()
+        if command_path.exists() or (ROOT / ACTIVE_NAME).exists():
+            raise WebOperatorError("OPERATOR_BUSY")
+        if _receipt_locked(validated["command_id"]):
+            raise WebOperatorError("COMMAND_ALREADY_FINISHED")
+        result_path.unlink(missing_ok=True)
+        _replace_record(command_path, {**validated, "transport_state": "PENDING"})
+    deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         if result_path.is_file():
             try:
@@ -456,24 +626,10 @@ def submit(command: dict[str, Any], *, timeout: float = 25.0) -> dict[str, Any]:
                 time.sleep(0.05)
                 continue
             if value.get("command_id") == validated["command_id"]:
-                if (
-                    value.get("reason_code") == "OPERATOR_BUSY"
-                    and time.monotonic() + 0.5 < deadline
-                ):
-                    time.sleep(0.4)
-                    if command_path.exists() or (ROOT / ACTIVE_NAME).exists():
-                        continue
-                    try:
-                        result_path.unlink()
-                    except OSError:
-                        pass
-                    try:
-                        _write_exclusive(command_path, _canonical(validated))
-                    except WebOperatorError:
-                        continue
-                    continue
                 return value
         time.sleep(0.05)
+    with _transport_lock():
+        _expire_locked()
     raise WebOperatorError("OPERATOR_TIMEOUT")
 
 

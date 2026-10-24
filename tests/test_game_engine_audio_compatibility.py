@@ -1,5 +1,6 @@
 """Audio behaviour across limiter blocks, reverb sends, fades and bounded streams."""
 from pathlib import Path
+from contextlib import ExitStack
 import array,math,os,sys,tempfile,time,unittest,wave
 PROJECT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(PROJECT))
 from backend.game_engine_native_presentation import Audio
@@ -7,7 +8,13 @@ from backend.game_engine_audio_stream import AudioFileStream,MusicStreams
 def floats(data):a=array.array('f');a.frombytes(data);return a
 def energy(data):return sum(x*x for x in floats(data))
 class AudioCompatibility(unittest.TestCase):
-    def setUp(self):self.audio=Audio();self.audio.gain(1,1,1,1,True)
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory(prefix='gg-audio-compatibility-');self.addCleanup(self.temp.cleanup)
+        self.music_path=Path(self.temp.name)/'music.wav'
+        with wave.open(str(self.music_path),'wb') as writer:
+            writer.setnchannels(2);writer.setsampwidth(2);writer.setframerate(48000)
+            writer.writeframes(array.array('h',(round(math.sin(i*.04)*10000) for i in range(48000))).tobytes())
+        self.audio=Audio();self.audio.gain(1,1,1,1,True)
     def tearDown(self):self.audio.close()
     def test_lookahead_priming_and_block_invariance(self):
         def run(blocks):
@@ -55,7 +62,7 @@ class AudioCompatibility(unittest.TestCase):
                 self.assertGreaterEqual(self.audio.stream_free(0),0)
             finally:stream.close()
     def test_rapid_crossfade_and_stop_cancel_pending(self):
-        path=PROJECT/'qml/game/audio/music.wav';music=MusicStreams(self.audio)
+        path=self.music_path;music=MusicStreams(self.audio)
         try:
             music.play(path);music.play(path);music.play(path)
             self.assertIn('lua',music.pending)
@@ -67,11 +74,11 @@ class AudioCompatibility(unittest.TestCase):
         finally:music.close()
     def test_stream_manager_close_stops_owned_voices_preserves_same_bus_sound(self):
         music=MusicStreams(self.audio);self.audio.clip(0,[.3]*100,48000);unrelated=self.audio.play(0,bus=1,loop=True)
-        music.play(PROJECT/'qml/game/audio/music.wav');self.assertEqual(self.audio.voices(),2)
+        music.play(self.music_path);self.assertEqual(self.audio.voices(),2)
         music.close();self.assertEqual(self.audio.voices(),1);self.assertTrue(self.audio.voice_active(unrelated))
 
     def test_crossfade_waits_for_actual_native_voice_release(self):
-        path=PROJECT/'qml/game/audio/music.wav';music=MusicStreams(self.audio)
+        path=self.music_path;music=MusicStreams(self.audio)
         try:
             music.play(path);music.play(path);music.play(path)
             music.pump();self.assertIn('lua',music.pending)
@@ -101,13 +108,15 @@ class AudioCompatibility(unittest.TestCase):
     def test_six_concurrent_decoders_remain_bounded_and_deliver_audio(self):
         streams=[]
         try:
-            with tempfile.TemporaryDirectory(prefix='gg-six-decoders-') as tmp:
+            with tempfile.TemporaryDirectory(prefix='gg-six-decoders-') as tmp, ExitStack() as lifetime:
+                lifetime.callback(streams.clear)
                 path=Path(tmp)/'stereo.wav'
                 with wave.open(str(path),'wb') as source:
                     source.setnchannels(2);source.setsampwidth(2);source.setframerate(48000)
                     source.writeframes(array.array('h',[8192,-8192]*48000).tobytes())
                 for identity in range(6):
                     stream=AudioFileStream(self.audio,identity,path,gain=.15)
+                    lifetime.callback(stream.close)
                     streams.append(stream);self.audio.pause(stream.voice)
                 # Decode concurrently under actual ring/pipe backpressure before
                 # consuming PCM. Rendering empty rings races decoder startup and

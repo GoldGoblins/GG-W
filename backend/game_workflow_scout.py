@@ -16,6 +16,7 @@ import time
 
 from backend import game_workflow_common as common, game_workflow_formats as formats
 from backend import game_workflow_dependencies as dependencies
+from backend.platform_files import is_link
 
 MAX_FILES = 2048
 MAX_CATALOG = 8192
@@ -152,10 +153,11 @@ def index(raw: str, game: str = "") -> dict:
         scanned += len(dirs) + len(names)
         if scanned > MAX_SCAN or time.monotonic() - began > 30:
             raise ValueError("ASSET_SCAN_LIMIT_PREVIOUS_CATALOG_PRESERVED")
-        dirs[:] = sorted(d for d in dirs if not d.startswith(".") and d not in SKIP_DIRS and not (Path(directory) / d).is_symlink())
+        dirs[:] = sorted(d for d in dirs if not d.startswith(".") and d not in SKIP_DIRS
+                         and not is_link(Path(directory) / d))
         for name in sorted(names):
             path = Path(directory) / name
-            if path.is_symlink() or name.startswith(".") or re.search(r"(?i)secret|credential|private.key|service.account", name):
+            if is_link(path) or name.startswith(".") or re.search(r"(?i)secret|credential|private.key|service.account", name):
                 continue
             relative = path.relative_to(root).as_posix()
             if len(entries) >= MAX_FILES:

@@ -11,6 +11,9 @@ Item {
     property var surfaceHost: null
     property string modulePath: ""
     property string reportJson: "{}"
+    property string jobId: ""
+    property string jobState: ""
+    property string notice: ""
 
     readonly property var report: {
         try {
@@ -22,30 +25,100 @@ Item {
     readonly property var inspection: root.report.inspection || root.report
     readonly property bool loaded: String(root.inspection.name || "").length > 0
     readonly property bool ready: String(root.inspection.state || "") === "READY"
-    readonly property bool running: String(root.report.state || "") === "RUNNING"
+    readonly property bool running: jobState === "RUNNING" || jobState === "QUEUED" || jobState === "CANCELLING"
+
+    function parseResponse(raw) {
+        try {
+            var result = JSON.parse(String(raw || "{}"))
+            if (!result || typeof result !== "object" || (!result.state && !result.status))
+                throw new Error("Missing state")
+            return result
+        } catch (error) {
+            return {state: "ERROR", reason: "Invalid response from the WASM service. Your input is retained."}
+        }
+    }
+
+    function applyResult(result) {
+        root.jobState = String(result.state || result.status || "ERROR")
+        root.notice = String(result.reason || result.error || result.detail || root.jobState)
+        if (!result.inspection && root.loaded) result.inspection = root.inspection
+        root.reportJson = JSON.stringify(result)
+    }
 
     function inspectFile(raw) {
         var value = String(raw || "")
-        if (!value.length || !root.surfaceHost || !root.surfaceHost.qipInspect)
-            return
+        if (root.running) return false
+        if (!value.length || !root.surfaceHost || !root.surfaceHost.qipInspect) {
+            root.notice = "WASM Lab is connecting. Your input is retained."
+            return false
+        }
+        var result = root.parseResponse(root.surfaceHost.qipInspect(value))
+        root.notice = String(result.reason || result.state || result.status || "")
+        if (result.state === "ERROR" || result.error) {
+            root.jobState = "ERROR"
+            if (root.loaded) root.notice += " Previous module retained."
+            return false
+        }
         root.modulePath = value
-        root.reportJson = root.surfaceHost.qipInspect(value)
+        root.reportJson = JSON.stringify(result)
+        root.jobId = ""
+        root.jobState = ""
+        return true
     }
 
     function runModule() {
-        if (!root.modulePath.length || !root.surfaceHost || !root.surfaceHost.qipRun)
-            return
-        root.reportJson = root.surfaceHost.qipRun(
-            root.modulePath,
-            inputArea.text
-        )
+        if (root.running) return false
+        if (!root.modulePath.length || !root.surfaceHost || !root.ready) return false
+        if (root.surfaceHost.qipStart && root.surfaceHost.qipStatus) {
+            var result = root.parseResponse(root.surfaceHost.qipStart(root.modulePath, inputArea.text))
+            root.jobId = String(result.job_id || "")
+            root.jobState = String(result.state || result.status || "ERROR")
+            root.notice = String(result.reason || result.detail || root.jobState)
+            if (root.running && !root.jobId) {
+                root.jobState = "ERROR"
+                root.notice = "The WASM service did not return a job. Your input is retained."
+                return false
+            }
+            if (!root.running) root.applyResult(result)
+            return root.running
+        }
+        if (!root.surfaceHost.qipRun) { root.notice = "WASM runtime is connecting."; return false }
+        root.applyResult(root.parseResponse(root.surfaceHost.qipRun(root.modulePath, inputArea.text)))
+        return root.jobState === "DONE"
+    }
+
+    function pollModule() {
+        if (!root.jobId || !root.surfaceHost || !root.surfaceHost.qipStatus) return
+        var result = root.parseResponse(root.surfaceHost.qipStatus(root.jobId))
+        var state = String(result.state || result.status || "ERROR")
+        if (state === "RUNNING" || state === "QUEUED" || state === "CANCELLING") {
+            root.jobState = state
+            root.notice = String(result.reason || result.detail || state)
+        } else root.applyResult(result)
+    }
+
+    function cancelModule() {
+        if (!root.running || !root.jobId || !root.surfaceHost || !root.surfaceHost.qipCancel) return false
+        var result = root.parseResponse(root.surfaceHost.qipCancel(root.jobId))
+        var state = String(result.state || result.status || "ERROR")
+        if (state === "CANCELLING" || state === "RUNNING" || state === "QUEUED") {
+            root.jobState = "CANCELLING"
+            root.notice = "Cancelling WASM render…"
+        } else root.applyResult(result)
+        return true
     }
 
     function clearModule() {
+        if (root.running) return false
         root.modulePath = ""
         root.reportJson = "{}"
+        root.jobId = ""
+        root.jobState = ""
+        root.notice = ""
         inputArea.text = ""
     }
+
+    Timer { interval: 150; repeat: true; running: root.running; onTriggered: root.pollModule() }
 
     function exportText() {
         var rows = root.inspection.exports || []
@@ -121,22 +194,32 @@ Item {
 
             GgButton {
                 text: "OPEN .WASM"
+                enabled: !root.running
                 onClicked: wasmDialog.open()
             }
             GgButton {
                 text: "RUN RENDER"
-                enabled: root.ready
+                objectName: "qipRunRender"
+                enabled: root.ready && !root.running
                 onClicked: root.runModule()
             }
             GgButton {
+                objectName: "qipCancelRender"
+                text: "CANCEL"
+                visible: !!root.surfaceHost && !!root.surfaceHost.qipCancel
+                enabled: root.running && root.jobState !== "CANCELLING"
+                onClicked: root.cancelModule()
+            }
+            GgButton {
                 text: "RESET"
+                enabled: !root.running
                 onClicked: root.clearModule()
             }
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: String(root.report.state || root.inspection.state || "IDLE")
+                text: String(root.jobState || root.report.state || root.inspection.state || "IDLE")
                     .toUpperCase()
-                color: root.stateColor(root.report.state || root.inspection.state)
+                color: root.stateColor(root.jobState || root.report.state || root.inspection.state)
                 font.family: "monospace"
                 font.pixelSize: 12
             }
@@ -161,10 +244,20 @@ Item {
                 spacing: 8
 
                 Text {
-                    text: "QIP COMPONENT DEBUGGER · NATIVE PREVIEW"
+                    text: "QIP COMPONENT · LOCAL WASM"
                     color: "#d8dee9"
                     font.family: "monospace"
                     font.pixelSize: 16
+                }
+                Text {
+                    width: labColumn.width
+                    visible: root.notice.length > 0
+                    text: root.notice
+                    textFormat: Text.PlainText
+                    color: root.stateColor(root.jobState)
+                    font.family: "monospace"
+                    font.pixelSize: 12
+                    wrapMode: Text.WordWrap
                 }
                 Text {
                     width: labColumn.width
@@ -219,7 +312,7 @@ Item {
                     width: labColumn.width
                     visible: String(root.inspection.reason || root.report.reason || "").length > 0
                     text: "BOUNDARY · " + String(root.inspection.reason || root.report.reason || "")
-                    color: root.stateColor(root.inspection.state || root.report.state)
+                    color: root.stateColor(root.report.state || root.inspection.state)
                     font.family: "monospace"
                     font.pixelSize: 12
                     wrapMode: Text.WordWrap
@@ -233,6 +326,7 @@ Item {
                 }
                 TextArea {
                     id: inputArea
+                    objectName: "qipInput"
                     width: labColumn.width
                     height: 84
                     placeholderText: "text sent to the QIP render export"
@@ -244,6 +338,7 @@ Item {
                     font.pixelSize: 12
                     wrapMode: TextArea.Wrap
                     selectByMouse: true
+                    readOnly: root.running
                     padding: 8
                     background: Rectangle {
                         color: "#121212"
@@ -283,8 +378,8 @@ Item {
                 }
                 Text {
                     width: labColumn.width
-                    text: "STEPPER · next slice: instruction trace, stack and memory map."
-                        + " This preview already enforces the local QIP boundary."
+                    text: "Render uses the local QIP ABI. The inspection above shows"
+                        + " the module exports, memory limits and supported inputs."
                     color: "#7f8994"
                     font.family: "monospace"
                     font.pixelSize: 11

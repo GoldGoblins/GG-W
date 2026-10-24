@@ -4,7 +4,7 @@
   "source_root": ".",
   "dependency_catalog": "config/dependencies.json",
   "categories": {
-    "application-code": 424,
+    "application-code": 436,
     "configuration": 4,
     "contracts": 5,
     "documentation": 1,
@@ -15,8 +15,8 @@
     "interface": 224,
     "native-engine": 1188,
     "shared-support": 54,
-    "tests": 362,
-    "tools": 33
+    "tests": 381,
+    "tools": 35
   },
   "files": [
     {
@@ -83,24 +83,24 @@
       "path": "README.md",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 88491,
-      "sha256": "1766c71cb37260bc31ef21a8c840c70a9e3fe2d6be38ec7c1ce9d55f8d03a06a",
+      "bytes": 96731,
+      "sha256": "05e2d326dfe1e661f353c0ccd1defb242a89e2580c8837242cdc4cedf4c48909",
       "mode": "0o600"
     },
     {
       "path": "SOURCE-MANIFEST.json",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 489396,
-      "sha256": "a8c04f461fae3fc96401b8eeba0a748706d37142170739fbc07214ef542a0061",
+      "bytes": 497931,
+      "sha256": "420c8ec6a0e4da6a6fe8c4146b8eb3d3dd6e2a1687918f21b96a8e90341634f2",
       "mode": "0o644"
     },
     {
       "path": "WINDOWS-PORT.json",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 52266,
-      "sha256": "ffe65d98d5ca49a9799270c289c31b72c45ed145d752a444f5f63508d63896b4",
+      "bytes": 79424,
+      "sha256": "a6a86dbde28caa4acffbd6dea76164ad1932e7317dc843ba726979381e9d34ad",
       "mode": "0o644"
     },
     {
@@ -264,6 +264,14 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/chat_clipboard.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 2559,
+      "sha256": "e74d6f43477e093e085bac4539f3f268ce11f5340d439d87012b77766437fb89",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/chat_context_compiler.py",
       "category": "application-code",
       "kind": "file",
@@ -299,8 +307,8 @@
       "path": "backend/chat_surface_host.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 252378,
-      "sha256": "b5f8ed396eb5b746e132a885f15a02942aee585831db1d5081412941e944a00e",
+      "bytes": 257477,
+      "sha256": "0762432f52886d044151f16bbdde3001eb555d8992f3ab51f5fd277f3483b385",
       "mode": "0o600"
     },
     {
@@ -619,8 +627,8 @@
       "path": "backend/game_asset_resources.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 2233,
-      "sha256": "fb41a28d4c30afc2182810b3be41b3742a11bf1c39ca6f48714fec40d6523a82",
+      "bytes": 2272,
+      "sha256": "4cde025bddc9f7fae7f8ed149aed9e41edcc4d8936817c81a861bce1bd3cff6d",
       "mode": "0o644"
     },
     {
@@ -675,8 +683,8 @@
       "path": "backend/game_engine_adapter_asset_worker.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 2395,
-      "sha256": "80a7f483af27f2794f792adae832aa64c059247ab046dcfddd26a260b9baf525",
+      "bytes": 3154,
+      "sha256": "7a1d81b57bc76edfb675e4d8c9e286c1850f9697fdcd3a680eb8153f20f2f314",
       "mode": "0o644"
     },
     {
@@ -1307,8 +1315,8 @@
       "path": "backend/game_engine_adapter_transport.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 4655,
-      "sha256": "dc99b98184cc9922be844d9ad878ebe972608f8fa0039f63fafe490c864882ee",
+      "bytes": 5173,
+      "sha256": "327a4b42895a9ebd8b2da908293d1b5fac074cc4e5e3eac17c112546d0c69862",
       "mode": "0o644"
     },
     {
@@ -1419,8 +1427,8 @@
       "path": "backend/game_engine_asset_editor.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 60910,
-      "sha256": "0c35dd1a13716e79bd36745b07151e7dfb97cde98a5dcd6498a55c5b57d6ec54",
+      "bytes": 65211,
+      "sha256": "53a3bf62fe295fb9d8dc999ce2716766cf871677c7f6468d102295a84186a465",
       "mode": "0o644"
     },
     {
@@ -1435,8 +1443,8 @@
       "path": "backend/game_engine_assets.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 73454,
-      "sha256": "45b8d8424911d4b948045e1ce325960f28f3ae26dd4240a5a62bd9c2ce2ce090",
+      "bytes": 73602,
+      "sha256": "122e6591d3044c73a9a77d8a193bb7e4846881dcda9b9a89479fd949c644fd65",
       "mode": "0o644"
     },
     {
@@ -1459,8 +1467,16 @@
       "path": "backend/game_engine_audio_stream.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 9314,
-      "sha256": "5685617cb07a7560c390d4ff0eb21e10cf8c4ab595c6553d659eb94d2874bab4",
+      "bytes": 10591,
+      "sha256": "157cb41aeecff05dd39567dabbef2af81430436017af6ccd41eafc0e5114bf86",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/game_engine_audio_worker.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 1122,
+      "sha256": "332a94ff5163b9d972061f4f5dba38a86e9532710b216286e76747c208e35b5f",
       "mode": "0o644"
     },
     {
@@ -2123,16 +2139,24 @@
       "path": "backend/game_workflow_collections.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 10410,
-      "sha256": "a3924508a2b5bca2b418ee8b1b62f1df19bcc2ee9d4d7ca48f765f58d94a038a",
+      "bytes": 10468,
+      "sha256": "d6382eeb3b834d10b2d8f8ff8d1321ba80d744d5bb2931539d4b02e40dbe4559",
       "mode": "0o644"
     },
     {
       "path": "backend/game_workflow_common.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 6387,
-      "sha256": "ae40ada6acda0088a59fa0838d018573cd62f1031f487c4d473c9d9461d0496a",
+      "bytes": 6581,
+      "sha256": "816516d0559e7b493d5f720356abe3276ef66eca2a70170f0da9c747ff1eb0c0",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/game_workflow_compiler.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 4401,
+      "sha256": "f79605b3b787b6e4cc36f0c7b87114b25d601bf1f7043fad5d94bb497250adf6",
       "mode": "0o644"
     },
     {
@@ -2179,8 +2203,8 @@
       "path": "backend/game_workflow_jobs.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 8340,
-      "sha256": "e6e4278759b03ff4b56f78d2311103b20deb4863ba4e89f5e4efb072aebe3b42",
+      "bytes": 9766,
+      "sha256": "eca9730e0116b056d6446f88c4b6203252605d3f36c02984a67ee1cfa9b9c4c9",
       "mode": "0o644"
     },
     {
@@ -2195,8 +2219,8 @@
       "path": "backend/game_workflow_profile.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 8822,
-      "sha256": "bb4cdfe745360ac40617aa42a23dd241c741940182bbe056bfd0960d51a911d8",
+      "bytes": 9023,
+      "sha256": "e9f472d72fb11f8afbb51af7866c968f47308de87b486fc771947b2ac1f40d12",
       "mode": "0o644"
     },
     {
@@ -2211,16 +2235,16 @@
       "path": "backend/game_workflow_scout.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 19767,
-      "sha256": "498048158a2351006de57a0e95d86bbff2695b26b6b20b7b840fdfddfad14ad2",
+      "bytes": 19825,
+      "sha256": "cfed98c88c80d7a1a64f6222bd36df5f7a4e95c2672c3f1fb559f9305602af01",
       "mode": "0o644"
     },
     {
       "path": "backend/game_workflow_verify.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 9022,
-      "sha256": "f6fdac92b81478703fa4e26211afe3aa564dd6a5703b01f244a6b7c15909ad3b",
+      "bytes": 9132,
+      "sha256": "0b53bbb298fe5bc4973ab78fee5cd3cd5235be71558d7281ad0bf19df098c132",
       "mode": "0o644"
     },
     {
@@ -2301,6 +2325,14 @@
       "kind": "file",
       "bytes": 6060,
       "sha256": "86e5a9c2c6a8cb610d69be14932ec5e1571671c56cb5ed0281ec4bad6bade747",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/image_admission.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 1618,
+      "sha256": "082d5021f91fe6b18eb25af068cb2d321101ed28b847aabc895e2cabc4754ac7",
       "mode": "0o644"
     },
     {
@@ -3104,6 +3136,22 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/php_config_literals.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 6533,
+      "sha256": "609234e288723430008c591639dcfa3d00f9f9476863732dd18d11242388ec76",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/php_source_analysis.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 9822,
+      "sha256": "38a7c1bc6b0c44e99fcb43a46e9c40c8aae1bf4a3a8887155b07b2d4377a143f",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/platform_build.py",
       "category": "application-code",
       "kind": "file",
@@ -3115,8 +3163,8 @@
       "path": "backend/platform_files.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 13419,
-      "sha256": "cd3e13a076013042e1a2a26c81611930a2f9346c2ee800906690317e3e5d74c7",
+      "bytes": 13821,
+      "sha256": "1f0e031d0c1500a7d31d258f2d896f062271e796530f94944378b1c708196766",
       "mode": "0o644"
     },
     {
@@ -3147,40 +3195,40 @@
       "path": "backend/qip_lab.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 17434,
-      "sha256": "51b6b19039fdf493dc92fffab149525d83fac6b8b570da077365e416e16437ad",
+      "bytes": 22020,
+      "sha256": "e504f9464aebface822d8d22eea8bdb067c8246e9d4464c19a8845ffb4ebf21d",
       "mode": "0o644"
     },
     {
       "path": "backend/research_desk.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 25082,
-      "sha256": "44b5559e4d0875fd0b7e1a257f7675351056a2969170e7ad181d1269b6afe452",
+      "bytes": 30598,
+      "sha256": "f36ec3007c45217b7f948fde778f6bbf6d7a8a14306ab365e0b4383384a0f78c",
       "mode": "0o644"
     },
     {
       "path": "backend/research_jobs.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 20717,
-      "sha256": "cf75f9ec488b6ae0137ec3d50f5aaafca9590469d578dffcca50130271f4fc2a",
+      "bytes": 31814,
+      "sha256": "7019c3d2a8a2d381d2452f5b431792ec8d81e507c1ab0a01c452be46081ca89b",
       "mode": "0o644"
     },
     {
       "path": "backend/research_lab.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 14917,
-      "sha256": "e5031760d39b6f3b8bd656e3f5c81fb03214f21aa989ac33acce9703eda9b387",
+      "bytes": 17376,
+      "sha256": "b56e3b1cb8ffc8dc2154a0e2dc3748b0246a0e51811b811ecdb924a2ea8d9630",
       "mode": "0o644"
     },
     {
       "path": "backend/research_learning.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 8720,
-      "sha256": "a3c36840f67f3d8cbb07ca87bf60d682c3263e45340375d202755eb7a4a0b10c",
+      "bytes": 9897,
+      "sha256": "d65936244446608e84c858c182c76373c6e1e1d6cb78610c22f89dd1b27769e8",
       "mode": "0o644"
     },
     {
@@ -3267,9 +3315,25 @@
       "path": "backend/site_database.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 6195,
-      "sha256": "00ba7e024ae533cf2838d0c2c00afc9ad6cf1fbc0efcd5d6771d2ab262b4795a",
+      "bytes": 26495,
+      "sha256": "08f2a5be2262bd42209384714f038491b387b36b0b7d67ff152bd39b54520b46",
       "mode": "0o600"
+    },
+    {
+      "path": "backend/site_database_vault.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 6231,
+      "sha256": "b8333e6033077af258ea96e828037ec1662d8738e5946d66a3b76819fdde5942",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/site_jobs.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 3584,
+      "sha256": "603f37a1372f1e3832296f578fa5e77a2a7ffa22e5034930c0bb21a158b7b315",
+      "mode": "0o644"
     },
     {
       "path": "backend/site_php_router.php",
@@ -3286,6 +3350,14 @@
       "bytes": 2361,
       "sha256": "a87288c719119cf23b4ccddf9dc4b0cc7026c556f106137d4466eb360f9398f4",
       "mode": "0o600"
+    },
+    {
+      "path": "backend/site_runtime_setup.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 14673,
+      "sha256": "c4676607533e30e717dd8728826ad794d4f041c34e40909d867a8867ed1300d5",
+      "mode": "0o644"
     },
     {
       "path": "backend/solver_router.py",
@@ -3331,8 +3403,8 @@
       "path": "backend/terminal_grid.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 46201,
-      "sha256": "89320846863a2053ab3adcb597cf068d082a9a52180e7ad86216301d9fd30c7f",
+      "bytes": 45755,
+      "sha256": "2870ca52d97c9c71b78ea4843368853d16f8978e143daefbed9198bd6bbbe6a1",
       "mode": "0o644"
     },
     {
@@ -3403,16 +3475,16 @@
       "path": "backend/web_operator.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 21996,
-      "sha256": "7670490db98c90dea17eb6178bb527fa39e08266ba77c7fb4eb21fa65ebfa01f",
+      "bytes": 30397,
+      "sha256": "f19a09971a22518709705b918608a7ff3fb92c9aaa4a4b2d6f89cb648e3d5c86",
       "mode": "0o644"
     },
     {
       "path": "backend/web_surface.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 15365,
-      "sha256": "0355cb7d12122362a8871fbd503f848b2eb3dbd7e026c0d0c9e80dec1229a05a",
+      "bytes": 33702,
+      "sha256": "0506da8b45d24df3b4ef126291946d954dd28a38e0dfc98ea9a2534a55ba2a99",
       "mode": "0o600"
     },
     {
@@ -3437,6 +3509,30 @@
       "kind": "file",
       "bytes": 2565,
       "sha256": "da3115d29c54a0bc09d365767980cea3924e896c9399e5a54886c298402fcedb",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/windows_research_ghidra.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 8662,
+      "sha256": "215161840ec29855d3bc980534f6230c9adc5d0c182fd10b43d49178faca3cc8",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/windows_research_sandbox.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 31320,
+      "sha256": "a80996f7bd0a23713406a0422f91640209ac48f5959b987fdfa89dcfa405f509",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/windows_research_setup.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 10224,
+      "sha256": "0e10742b3ac3b9b2bce933279f6b97e87e4bccbcdc8cb05ebdbcace706f85908",
       "mode": "0o644"
     },
     {
@@ -3507,8 +3603,8 @@
       "path": "config/dependencies.json",
       "category": "configuration",
       "kind": "file",
-      "bytes": 11615,
-      "sha256": "fccf171a69b6dd5246242852485cc842caa5a09cbaac496c0dc005ccb79ad3d3",
+      "bytes": 13233,
+      "sha256": "da151120933daea7b03055e17268599cafee012357a70748cc710616a9d20a87",
       "mode": "0o644"
     },
     {
@@ -3619,8 +3715,8 @@
       "path": "gg-research",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 2508,
-      "sha256": "1fc77607830d1493384ff0bb02d3a62ee81ca431b8941d111e2c5d017f4f27db",
+      "bytes": 2544,
+      "sha256": "af82ab084551aba099840a0887af2addc790a0f0b9e8b870f989ee931cc107c6",
       "mode": "0o755"
     },
     {
@@ -13931,8 +14027,8 @@
       "path": "packaging/catalog.py",
       "category": "installation-and-packaging",
       "kind": "file",
-      "bytes": 8585,
-      "sha256": "ae34ff877657f094cce5af1f58f09db9adc83142b3be762f3b53052f886e43f8",
+      "bytes": 8650,
+      "sha256": "edc799f1371e57c7893f9ca606c605a9b4eade9de90326658c1fb1ac6c962e94",
       "mode": "0o755"
     },
     {
@@ -14507,8 +14603,8 @@
       "path": "qml/components/GrokTuiHole.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 9380,
-      "sha256": "289aed7f42c9021993ef0b1e8a8932a943a2642e5d86e6d25fcc3c31779436ce",
+      "bytes": 10647,
+      "sha256": "5e6b8fcc728adced09e896130476b387059e5c78419e7015412497391370c7b6",
       "mode": "0o600"
     },
     {
@@ -14627,8 +14723,8 @@
       "path": "qml/components/QipSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 11022,
-      "sha256": "79d07e6c9e66df1e610ad597aee605f6dd4f398bbcc285f33e08682069baa020",
+      "bytes": 15521,
+      "sha256": "3089b82b6144e0faa8e0485fbc032503087078bc009a799e142e031fdb915ac9",
       "mode": "0o644"
     },
     {
@@ -14643,24 +14739,24 @@
       "path": "qml/components/ResearchGamesSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 24689,
-      "sha256": "f9b8ac6d673e74fc7824aa08e9e3ff5f3239ef4778acc0ddb89f2f81ee56fa3d",
+      "bytes": 26040,
+      "sha256": "55536abb7c8050eed87c4533f9ced35904a5d553f9442318bac3e064d8b26838",
       "mode": "0o644"
     },
     {
       "path": "qml/components/ResearchReverseSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 17895,
-      "sha256": "b2d0749912cb7b1e8262c4a59a68ec9c11b97ec666260f25581eb658cc083b60",
+      "bytes": 23263,
+      "sha256": "592883ac10d86af1dc198c2657b975e65692912e503e074156bc294bdd702f29",
       "mode": "0o644"
     },
     {
       "path": "qml/components/ResearchSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 24641,
-      "sha256": "3ecea1f1ffe44cbe87cf44cff1c3068a3d57a84cf7af13e492f4c8a96a2a0d9d",
+      "bytes": 34278,
+      "sha256": "1e8bd54a257fd699478451ab9b6d3856884a32a30813c2f35425c8ba447991bb",
       "mode": "0o644"
     },
     {
@@ -14875,8 +14971,8 @@
       "path": "qml/components/WebPane.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 47877,
-      "sha256": "6f59e14bb2b172b0b8f059b59e0596a841edd0d719389c05e4781ae6af32c176",
+      "bytes": 55769,
+      "sha256": "c0472c48b1a67e545002f9e6e23b0bfb0e03f2f06bc3d6364871b735216a1004",
       "mode": "0o600"
     },
     {
@@ -14915,8 +15011,8 @@
       "path": "qml/components/WorkspaceSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 156284,
-      "sha256": "e0dd79f4ae82c372094554e12e41956e572f7d5ecb777b8ef39fe69471e9fe44",
+      "bytes": 169249,
+      "sha256": "a7926f291f34d1e4e729405d6e8cf6c06a8facffaa3a760b37a6d7eba28ad19b",
       "mode": "0o644"
     },
     {
@@ -16448,6 +16544,14 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_asset_failure_recovery.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 14227,
+      "sha256": "f865ae7cea9e612e57cc0803110dd8006f7ae5880651bc442fdd5a7fae5a1a86",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_autonomy_contract.py",
       "category": "tests",
       "kind": "file",
@@ -16526,6 +16630,14 @@
       "bytes": 5269,
       "sha256": "b9c09d881acbe2f340ac289d90f677a0aec6d7a5119a391d706670cac2da7dca",
       "mode": "0o600"
+    },
+    {
+      "path": "tests/test_chat_clipboard.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 13299,
+      "sha256": "19c64caf20330e9707eba8468afece8f2744605012824d6b5ada78c7944f1c79",
+      "mode": "0o644"
     },
     {
       "path": "tests/test_chat_context_compiler.py",
@@ -16859,8 +16971,8 @@
       "path": "tests/test_game_asset_workflow_improvements.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 22193,
-      "sha256": "25211ca4032e72cc59473c41370425262f6047d5fb5b8585693c120c39e942dc",
+      "bytes": 22381,
+      "sha256": "9779f691e7f7015649e43cd558a7d1c8975a80876fb80edee17babad36a88e77",
       "mode": "0o644"
     },
     {
@@ -16907,8 +17019,8 @@
       "path": "tests/test_game_engine_adapter_archives.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 11283,
-      "sha256": "845da526e0b6d07daf4f8cf11cdf48487cbae5c80726fc76af9ea11e6e26506d",
+      "bytes": 11670,
+      "sha256": "d0454b9ea659a79dbc6a628f2cad1433c04c2907549bf6ca5644aedb90357cc5",
       "mode": "0o644"
     },
     {
@@ -17723,8 +17835,8 @@
       "path": "tests/test_game_engine_audio_compatibility.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 9436,
-      "sha256": "110b89915f65c2edd388f4abbaa78fd6f253e7ef0066c305439206e59205ad55",
+      "bytes": 9977,
+      "sha256": "e18ade2204804e87ddee733f2d0f97586a954cf7610cbae4cd51dd6b82d3d9ff",
       "mode": "0o644"
     },
     {
@@ -18467,8 +18579,8 @@
       "path": "tests/test_game_workflows.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 24671,
-      "sha256": "45d913b4eaef8b44d4aec3b2d78a4328c0abf017de1f583e5f16e3f70fadd499",
+      "bytes": 24783,
+      "sha256": "8268a03162b13478039d2dcf3f9d9779040f2028099b5b73d9aca1dc29cf7452",
       "mode": "0o644"
     },
     {
@@ -18483,8 +18595,8 @@
       "path": "tests/test_game_workflows_engine.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 1822,
-      "sha256": "80144b2508f4117ff2ead2a91e336130a2d685bd641a95067d05f24d8c5d3495",
+      "bytes": 2683,
+      "sha256": "c6e89a9350a8c2b944328ac4c2c5589dbe58f388e346139d27d3a37f24ef89fc",
       "mode": "0o644"
     },
     {
@@ -18816,6 +18928,22 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_php_source_analysis.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 8023,
+      "sha256": "75c81667f5c852d8fe18a44fe21273b800f37876ce2e6a42bafb8aad3630d99a",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_php_source_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 5315,
+      "sha256": "3127298ba1dc764208b457f5a734340b4115344a6bb8c4535aa940f87683e14c",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_polymarket_research.py",
       "category": "tests",
       "kind": "file",
@@ -18864,43 +18992,59 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_qip_runtime_limits.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 6002,
+      "sha256": "0f45b98c55820251f8f977f0487ef12a3bd0662bfec71377fedc663849b0f1ca",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_research_desk.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 2008,
-      "sha256": "03cad6dc36cee1f331bd30bbd6045a36bb0a78ae9d4ea3bf79e14e2fb4fe7603",
+      "bytes": 2017,
+      "sha256": "7d1428e5f8fe9c5921e38d0e9b68b9151bf548ad57d23338c5be7bc0e39fb628",
       "mode": "0o644"
     },
     {
       "path": "tests/test_research_engine_operations.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 2749,
-      "sha256": "b4dc36b04a37539dd7e932b16107bc3400d7fbfcf9e1f2b26e98c5f662fac406",
+      "bytes": 3252,
+      "sha256": "b0140a7c3c9e2a5b74dfb0ea1546e6b3e4dce014b58e03e64c94f9a93acadd57",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_research_evidence_integrity.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 5864,
+      "sha256": "75ec26ff5f7f5699b1a8f837e9eb62e7e31e0b2d9060078323e23f3fca58575b",
       "mode": "0o644"
     },
     {
       "path": "tests/test_research_jobs.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 10296,
-      "sha256": "a6062e52d30e0818b83ea4dacc5fd7c0e1e61f2693f6efe2ba780b93e36887b5",
+      "bytes": 14173,
+      "sha256": "8ade0ca043c577d9a76f0dfabd7d2b4cdf3ae6a69bd3a17ca68109373988d6aa",
       "mode": "0o644"
     },
     {
       "path": "tests/test_research_lab.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 7406,
-      "sha256": "880cb907a0c2ba7b747c683ce9f0e4d37caca7750928c18a4fbc1e898560f83f",
+      "bytes": 7627,
+      "sha256": "21102ddadee0662b2cbd27a6571ecd65e5dcab011ad7109c4b6a17e542c165df",
       "mode": "0o644"
     },
     {
       "path": "tests/test_research_workspace.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 11432,
-      "sha256": "4ba1966867b18315d0a2d4e05414f48927affd2b2a9ac3c2a9e7af4767a19fae",
+      "bytes": 12868,
+      "sha256": "a26a692b688d77be4f888419cdd62b1650f37ba9efa0bd503e020b2e861fd162",
       "mode": "0o644"
     },
     {
@@ -18992,6 +19136,38 @@
       "mode": "0o600"
     },
     {
+      "path": "tests/test_site_database_vault.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 6614,
+      "sha256": "524456e64093f8e3633a1e77eae4e396f15982c514828ec430d28bbb99f632a2",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_site_resilience.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 28965,
+      "sha256": "489f39e5b0ee3246ded717a48e9c9256d26938f90fd53ca448a27638387df152",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_site_runtime_setup.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 5435,
+      "sha256": "47291899fef8927a17d036cb6dd872a9be0f1363e91701007feb0ad370aca0ec",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_site_runtime_windows.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 7841,
+      "sha256": "9d0da3001e06804ce1cc7d346b25389c429e76db6360995ede7bf79cab6375d1",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_solver_router.py",
       "category": "tests",
       "kind": "file",
@@ -19051,8 +19227,8 @@
       "path": "tests/test_terminal_grid.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 6249,
-      "sha256": "ee2ba46e6cf414bf529b0086cd3173a0b222292998333824b4ca9f5eaf90b03b",
+      "bytes": 6639,
+      "sha256": "c34bcba9aaee40450accd9382797113c7bd03c0c4dfd84b70e3f3c0eda861f44",
       "mode": "0o644"
     },
     {
@@ -19144,11 +19320,27 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_web_operator_lifecycle.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 8642,
+      "sha256": "6b40820fb913ed2c69534e3da2e2d8c9ee8f56460fa870954fa6dd80be72d3eb",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_web_operator_qml_lifecycle.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 13447,
+      "sha256": "9b18221cfd2b1284b46f184084b2e71c907d31e23d2d4bd54ab92315919f01bd",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_web_surface.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 5757,
-      "sha256": "9b96fa2eb1ac42f164863b7c225260759f1863ccab9fb49c00127ac93619ef71",
+      "bytes": 5970,
+      "sha256": "feb14b8a3831781e0fb6bfddd60181d51202e9a9525e7163bd67cc679391cbed",
       "mode": "0o600"
     },
     {
@@ -19168,6 +19360,14 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_windows_chat_clipboard.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 7831,
+      "sha256": "cd9e07e2b3276cfba2b34dfe07ea406c23e477876dbeae048b689ddaddd656b2",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_windows_desktop.py",
       "category": "tests",
       "kind": "file",
@@ -19176,11 +19376,59 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_windows_game_workflows.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11030,
+      "sha256": "e51ec272452d186e44b246df1337ee900d236844f2701602e1af967633e37ddb",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_windows_platform.py",
       "category": "tests",
       "kind": "file",
       "bytes": 6694,
       "sha256": "cf629d0224e69c16d6da803d9342f7412ee9d0e9c3d823bbff70c37f8dec596d",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_windows_research_backend.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 5068,
+      "sha256": "9abdb4207fa5dae47337d0c6d5d38ba36ed6aaa4c4c7c2c416e93a2a8a0f9e1c",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_windows_research_sandbox.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 12728,
+      "sha256": "b8331974d819e41b05b327bced75949fe5fa11b644a2020353d33bd2372d464b",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_windows_research_sandbox_scope.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 1796,
+      "sha256": "7d0992b78a71cdbcd5f145f15286de0f94e74eb1b4491e33927f35cf59c35d37",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_windows_research_setup.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 12091,
+      "sha256": "55703a1335c8dbbd31b9aa9cb725f9ceca41cc0525cc2829af38f5603fd149b9",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_windows_research_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 13165,
+      "sha256": "d4cb0333d193982bfbf6aff91be508964fc244316489944a83b4e7e2bbf63c01",
       "mode": "0o644"
     },
     {
@@ -19331,8 +19579,8 @@
       "path": "tools/blender/prepare_game_asset_uv.py",
       "category": "tools",
       "kind": "file",
-      "bytes": 6191,
-      "sha256": "641cca611313d75b83bec3354869260735f97851ffb89b138a3b55ec7f1992de",
+      "bytes": 6518,
+      "sha256": "03142b8f1c64227e6acb1abc9be1d90531fef8a3687cea2de634ae2429c9c2b3",
       "mode": "0o644"
     },
     {
@@ -19379,8 +19627,16 @@
       "path": "tools/install_research_engines.py",
       "category": "tools",
       "kind": "file",
-      "bytes": 6027,
-      "sha256": "2f0839b7f493e2965fa8db88ea742f56f889fc7ae9ffa0174d90a7fcf51b19ad",
+      "bytes": 6196,
+      "sha256": "e41b9bdffbba4bd2acbfe22457ea723cb6f573cd3672702cf2577a61f290e6ed",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/install_site_runtime.py",
+      "category": "tools",
+      "kind": "file",
+      "bytes": 568,
+      "sha256": "875c2862bb6b3a2669a8fbb20fed2a47c5bb396c4acb14410344b1d37ad816d4",
       "mode": "0o644"
     },
     {
@@ -19403,8 +19659,8 @@
       "path": "tools/research/profile_game_asset_scene.py",
       "category": "tools",
       "kind": "file",
-      "bytes": 7085,
-      "sha256": "6dce4542a01bff8912654f0ccc4bdfe7ff7cac70f3460f33381a40f21759e0bd",
+      "bytes": 7607,
+      "sha256": "cc81c5b09710cb5c18a5c298b1390f5f4156c97ffd141815de226502039a3534",
       "mode": "0o644"
     },
     {
@@ -19428,6 +19684,14 @@
       "category": "tools",
       "kind": "symlink",
       "target": "../../skills/gg-live-eyes"
+    },
+    {
+      "path": "tools/verify_site_runtime.py",
+      "category": "tools",
+      "kind": "file",
+      "bytes": 15220,
+      "sha256": "d61e15c2ebae3607ffea9b620dbea519306829bf63fa259eb5350049987c4004",
+      "mode": "0o644"
     },
     {
       "path": "tools/world/build_app_audio.py",

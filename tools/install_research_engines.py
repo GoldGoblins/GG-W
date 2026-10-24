@@ -8,8 +8,12 @@ import shutil
 import subprocess
 import tempfile
 import zipfile
+import sys
 
-ROOT = Path('/home/GG/.local/share/goldgoblins/gg-ai-desktop/research-tools')
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from backend.research_lab import TOOLS_ROOT
+
+ROOT = TOOLS_ROOT
 URL = 'https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_12.1.4_build/ghidra_12.1.4_PUBLIC_20260921.zip'
 CHECKSUM = 'ddac49f903da9d5bac833e5cc79395098b9c33cfd3279be5f31bd00387d2d4db'
 JAVA_RPM_VERSION = '25.0.4.1.1-1.1.fc44.x86_64'
@@ -64,6 +68,9 @@ def install_jdk(temp: Path):
 
 
 def main():
+    if os.name == 'nt':
+        from backend.windows_research_setup import install
+        return install(ROOT)
     os.umask(0o077)
     ROOT.mkdir(parents=True, exist_ok=True)
     if shutil.disk_usage(ROOT).free < 3_000_000_000:

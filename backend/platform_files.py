@@ -4,10 +4,24 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import stat
+import time
 
 NOFOLLOW = getattr(os, "O_NOFOLLOW", 0)
 CLOEXEC = getattr(os, "O_CLOEXEC", 0)
 NONBLOCK = getattr(os, "O_NONBLOCK", 0)
+
+
+def atomic_replace(source, destination):
+    """Allow brief Windows reader/antivirus sharing locks to clear."""
+    deadline = time.monotonic() + 1.5
+    while True:
+        try:
+            os.replace(source, destination)
+            return
+        except PermissionError:
+            if os.name != 'nt' or time.monotonic() >= deadline:
+                raise
+            time.sleep(.01)
 
 
 def is_link(path):

@@ -29,6 +29,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urlparse
+from backend.platform_support import local_file_path
 
 
 SCHEMA = "gg.game-engine.assets.v1"
@@ -559,11 +560,11 @@ def _resolve_local_source(source: Any) -> tuple[Path | None, str | None]:
         return None, "ASSET_SOURCE_EMPTY"
 
     parsed = urlparse(raw)
-    if parsed.scheme:
-        if parsed.scheme != "file" or parsed.netloc not in {"", "localhost"}:
+    is_path = Path(raw).is_absolute() and not raw.lower().startswith('file:')
+    if parsed.scheme and not is_path:
+        if parsed.scheme != "file" or parsed.netloc not in {"", "localhost"} or parsed.query or parsed.fragment:
             return None, "ASSET_SOURCE_NOT_LOCAL"
-        raw_path = unquote(parsed.path)
-        candidate = Path(raw_path)
+        candidate = local_file_path(raw)
     else:
         candidate = Path(raw)
         if not candidate.is_absolute():

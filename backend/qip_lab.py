@@ -15,10 +15,18 @@ import json
 import os
 from pathlib import Path
 import shutil
+import stat
 import subprocess
+import tempfile
 import time
+import threading
+import uuid
+from collections import OrderedDict
 from typing import Any
 from urllib.parse import unquote, urlparse
+from backend.platform_support import local_file_path
+from backend.platform_process import run_bounded
+from backend.platform_files import NONBLOCK, secure_open, set_private_mode
 
 
 SCHEMA = "gg.qip.wasm-lab.v1"
@@ -28,6 +36,8 @@ MAX_TABLE_ENTRIES = 4096
 MAX_INPUT_BYTES = 64 * 1024
 MAX_OUTPUT_BYTES = 1 * 1024 * 1024
 RUN_TIMEOUT_SECONDS = 4.0
+_JOBS = OrderedDict()
+_JOBS_LOCK = threading.Lock()
 
 
 class WasmFormatError(ValueError):
@@ -38,9 +48,11 @@ def _path_from_url(raw: str | os.PathLike[str]) -> Path:
     value = str(raw or "").strip()
     if value.startswith("file:"):
         parsed = urlparse(value)
-        if parsed.scheme != "file":
+        if parsed.scheme != "file" or parsed.netloc not in ('', 'localhost') or parsed.query or parsed.fragment:
             raise WasmFormatError("QIP_FILE_SCHEME")
-        value = unquote(parsed.path)
+        value = str(local_file_path(value))
+    if os.name == 'nt' and value.startswith(('\\\\', '//')):
+        raise WasmFormatError('QIP_LOCAL_FILE_REQUIRED')
     path = Path(value).expanduser()
     try:
         path = path.resolve(strict=True)
@@ -49,6 +61,26 @@ def _path_from_url(raw: str | os.PathLike[str]) -> Path:
     if not path.is_file():
         raise WasmFormatError("QIP_FILE_NOT_FOUND")
     return path
+
+
+def _read_module(raw_path: str) -> tuple[Path, bytes]:
+    path = _path_from_url(raw_path)
+    if path.suffix.lower() != ".wasm":
+        raise WasmFormatError("QIP_EXPECTED_WASM")
+    with os.fdopen(secure_open(path, os.O_RDONLY | NONBLOCK), "rb") as stream:
+        before = os.fstat(stream.fileno())
+        if not stat.S_ISREG(before.st_mode):
+            raise WasmFormatError("QIP_FILE_NOT_FOUND")
+        if before.st_size > MAX_MODULE_BYTES:
+            raise WasmFormatError("QIP_MODULE_TOO_LARGE")
+        data = stream.read(MAX_MODULE_BYTES + 1)
+        after = os.fstat(stream.fileno())
+        if len(data) > MAX_MODULE_BYTES:
+            raise WasmFormatError("QIP_MODULE_TOO_LARGE")
+        if (before.st_size, before.st_mtime_ns, before.st_ctime_ns) != (
+                after.st_size, after.st_mtime_ns, after.st_ctime_ns):
+            raise WasmFormatError("QIP_FILE_CHANGED_DURING_INSPECTION")
+    return path, data
 
 
 def _u32(data: bytes, offset: int) -> tuple[int, int]:
@@ -318,10 +350,7 @@ def inspect_bytes(data: bytes, *, name: str = "module.wasm") -> dict[str, Any]:
 
 def inspect_file(raw_path: str) -> dict[str, Any]:
     try:
-        path = _path_from_url(raw_path)
-        if path.suffix.lower() != ".wasm":
-            raise WasmFormatError("QIP_EXPECTED_WASM")
-        data = path.read_bytes()
+        path, data = _read_module(raw_path)
         result = inspect_bytes(data, name=path.name)
         result["path"] = str(path)
         return result
@@ -380,7 +409,7 @@ function runOnce(bytes, input) {
 
 async function main() {
   const file = process.argv[1];
-  const input = Buffer.from(process.argv[2] || "", "base64");
+  const input = fs.readFileSync(process.argv[2]);
   const bytes = fs.readFileSync(file);
   const first = await runOnce(bytes, input);
   const second = await runOnce(bytes, input);
@@ -398,12 +427,16 @@ main().catch((error) => {
 '''
 
 
-def run_file(raw_path: str, input_text: str) -> dict[str, Any]:
-    inspection = inspect_file(raw_path)
+def run_file(raw_path: str, input_text: str, *, cancelled=None) -> dict[str, Any]:
+    try:
+        path, module_bytes = _read_module(raw_path)
+        inspection = inspect_bytes(module_bytes, name=path.name)
+        inspection["path"] = str(path)
+    except (OSError, WasmFormatError) as exc:
+        inspection = {"schema": SCHEMA, "state": "BLOCKED", "reason": str(exc) or "QIP_FILE_READ"}
     if inspection.get("state") != "READY":
         return {"schema": SCHEMA, "state": "BLOCKED", "inspection": inspection}
     try:
-        path = _path_from_url(raw_path)
         input_bytes = str(input_text or "").encode("utf-8")
         if len(input_bytes) > MAX_INPUT_BYTES:
             return {
@@ -421,30 +454,46 @@ def run_file(raw_path: str, input_text: str) -> dict[str, Any]:
                 "inspection": inspection,
             }
         started = time.monotonic()
-        completed = subprocess.run(
-            [
-                node,
-                "-e",
-                _NODE_RUNNER,
-                str(path),
-                base64.b64encode(input_bytes).decode("ascii"),
-            ],
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=False,
-            timeout=RUN_TIMEOUT_SECONDS,
-            env={
-                "PATH": os.environ.get("PATH", ""),
-                "NODE_NO_WARNINGS": "1",
-            },
-        )
+        # Inspect and execute exactly the same bytes. Private files also keep
+        # input out of process arguments and below Windows' command-line cap.
+        with tempfile.TemporaryDirectory(prefix="gg-qip-") as raw_scratch:
+            scratch = Path(raw_scratch)
+            set_private_mode(scratch, 0o700)
+            snapshot = scratch / "module.wasm"
+            input_path = scratch / "input.bin"
+            for destination, data in ((snapshot, module_bytes), (input_path, input_bytes)):
+                with os.fdopen(secure_open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "wb") as stream:
+                    stream.write(data)
+            if cancelled and cancelled():
+                return {"schema": SCHEMA, "state": "CANCELLED", "reason": "QIP_RUNTIME_CANCELLED", "inspection": inspection}
+            code, stdout, stderr, trigger = run_bounded(
+                [
+                    node,
+                    '--max-old-space-size=192',
+                    f'--wasm-max-mem-pages={MAX_MEMORY_PAGES}',
+                    f'--wasm-max-table-size={MAX_TABLE_ENTRIES}',
+                    "-e",
+                    _NODE_RUNNER,
+                    str(snapshot),
+                    str(input_path),
+                ],
+                timeout=RUN_TIMEOUT_SECONDS,
+                max_output_bytes=2 * MAX_OUTPUT_BYTES,
+                cancelled=cancelled,
+                env={
+                    "PATH": os.environ.get("PATH", ""),
+                    "NODE_NO_WARNINGS": "1",
+                },
+            )
         elapsed_ms = round((time.monotonic() - started) * 1000.0, 2)
+        if trigger != 'NONE':
+            return {'schema': SCHEMA, 'state': 'CANCELLED' if trigger == 'CANCELLED' else trigger,
+                    'reason': 'QIP_RUNTIME_' + trigger, 'inspection': inspection}
         try:
-            payload = json.loads(completed.stdout.decode("utf-8"))
+            payload = json.loads(stdout.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError):
             payload = {"error": "QIP_RUNTIME_OUTPUT_INVALID"}
-        if completed.returncode != 0 or payload.get("error"):
+        if code != 0 or payload.get("error"):
             return {
                 "schema": SCHEMA,
                 "state": "ERROR",
@@ -497,3 +546,44 @@ def run_file(raw_path: str, input_text: str) -> dict[str, Any]:
             "reason": str(exc) or "QIP_RUNTIME_ERROR",
             "inspection": inspection,
         }
+
+
+def start(raw_path: str, input_text: str) -> dict[str, Any]:
+    """Run the bounded WASM worker without blocking Qt's GUI thread."""
+    with _JOBS_LOCK:
+        if any(entry['result']['state'] in {'RUNNING', 'CANCELLING'} for entry in _JOBS.values()):
+            return {'schema': SCHEMA, 'state': 'ERROR', 'reason': 'QIP_ALREADY_RUNNING'}
+        while len(_JOBS) >= 8:
+            _JOBS.popitem(last=False)
+        job_id = uuid.uuid4().hex
+        stop = threading.Event()
+        entry = {'cancel': stop, 'result': {'schema': SCHEMA, 'job_id': job_id, 'state': 'RUNNING'}}
+        _JOBS[job_id] = entry
+
+    def execute():
+        try:
+            result = run_file(raw_path, input_text, cancelled=stop.is_set)
+        except Exception as exc:
+            result = {'schema': SCHEMA, 'state': 'ERROR', 'reason': type(exc).__name__}
+        with _JOBS_LOCK:
+            if stop.is_set():
+                result = {"schema": SCHEMA, "state": "CANCELLED", "reason": "QIP_RUNTIME_CANCELLED"}
+            entry['result'] = {**result, 'job_id': job_id}
+
+    threading.Thread(target=execute, name='gg-qip-wasm', daemon=True).start()
+    return {'schema': SCHEMA, 'job_id': job_id, 'state': 'RUNNING'}
+
+
+def job_status(job_id: str) -> dict[str, Any]:
+    with _JOBS_LOCK:
+        entry = _JOBS.get(str(job_id))
+        return dict(entry['result']) if entry else {'schema': SCHEMA, 'state': 'ERROR', 'reason': 'QIP_JOB_NOT_FOUND'}
+
+
+def cancel(job_id: str) -> dict[str, Any]:
+    with _JOBS_LOCK:
+        entry = _JOBS.get(str(job_id))
+        if entry and entry['result']['state'] == 'RUNNING':
+            entry['cancel'].set()
+            entry['result'] = {**entry['result'], 'state': 'CANCELLING'}
+        return dict(entry['result']) if entry else {'schema': SCHEMA, 'state': 'ERROR', 'reason': 'QIP_JOB_NOT_FOUND'}

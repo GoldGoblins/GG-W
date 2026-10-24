@@ -1,7 +1,10 @@
 """Bounded stereo decoding into the native mixer; FFmpeg provides file backpressure."""
 from __future__ import annotations
-import array,math,os,shutil,subprocess,weakref
+import array,math,os,shutil,subprocess,sys,weakref
 from pathlib import Path
+from backend.platform_support import find_executable
+from backend.platform_support import terminate_process_tree
+from backend.platform_process import background_options
 
 # This is virtual address space, including mapped codec/driver libraries and
 # mandatory FFmpeg pipeline thread stacks. The six-thread pipeline measured
@@ -10,18 +13,33 @@ from pathlib import Path
 DECODER_ADDRESS_LIMIT=1024*1024*1024
 
 def stop(process):
+    descendants=[]
     if process.poll() is None:
-        process.terminate()
+        if os.name=='nt':
+            import psutil
+            try:descendants=psutil.Process(process.pid).children(recursive=True)
+            except psutil.NoSuchProcess:pass
+            terminate_process_tree(process.pid,force=True)
+        else:process.terminate()
         try:process.wait(timeout=.2)
         except subprocess.TimeoutExpired:process.kill();process.wait(timeout=1)
+    if descendants:
+        # Wait for the real decoder too: a terminated launcher can exit before
+        # its Job Object has released FFmpeg's open input file on Windows.
+        import psutil
+        _gone,alive=psutil.wait_procs(descendants,timeout=1)
+        for child in alive:
+            try:child.kill()
+            except psutil.NoSuchProcess:pass
+        if alive:psutil.wait_procs(alive,timeout=1)
     if process.stdout:process.stdout.close()
     if process.stderr:process.stderr.close()
     if process.stdin and not process.stdin.closed:process.stdin.close()
 
 class AudioFileStream:
     def __init__(self,audio,identity,path,*,loop=True,bus=1,gain=.22):
-        ffmpeg=shutil.which('ffmpeg');limit=shutil.which('prlimit')
-        if not ffmpeg or not limit:raise RuntimeError('Bounded audio file decoder unavailable')
+        ffmpeg=find_executable('ffmpeg');limit=shutil.which('prlimit') if os.name!='nt' else None
+        if not ffmpeg or (os.name!='nt' and not limit):raise RuntimeError('Bounded audio file decoder unavailable')
         from backend.game_engine_audio_archive import ArchiveAudioSource,ArchiveFeed
         archive=isinstance(path,ArchiveAudioSource)
         if not archive:
@@ -29,12 +47,18 @@ class AudioFileStream:
             if not path.is_file():raise ValueError('Audio file missing')
         self.audio=audio;self.identity=identity;self.path=path;self.pending=b'';self.ended=False;self.archive_loop=archive and loop;self.feeder=None
         self.audio.stream_create(identity,48000,48000)
-        command=[limit,'--as='+str(DECODER_ADDRESS_LIMIT),'--core=0','--',ffmpeg,'-nostdin','-hide_banner','-loglevel','error','-cpucount','1','-threads','1','-filter_threads','1','-filter_complex_threads','1']
+        if os.name=='nt':
+            prefix=[sys.executable,'-B',str(Path(__file__).with_name('game_engine_audio_worker.py')),ffmpeg]
+        else:prefix=[limit,'--as='+str(DECODER_ADDRESS_LIMIT),'--core=0','--',ffmpeg]
+        command=prefix+['-nostdin','-hide_banner','-loglevel','error','-cpucount','1','-threads','1','-filter_threads','1','-filter_complex_threads','1']
         if loop and not archive:command+=['-stream_loop','-1']
         command+=['-protocol_whitelist','file,pipe','-format_whitelist','wav,mp3,ogg','-i','pipe:0' if archive else str(path),'-vn','-sn','-dn','-threads','1','-c:a','pcm_f32le','-f','f32le','-ac','2','-ar','48000','pipe:1']
         self.command=command;self.archive=archive
         if archive:self.feeder=ArchiveFeed(path,stop)
-        self._decoder()
+        try:self._decoder()
+        except Exception:
+            if self.feeder:self.feeder.close()
+            raise
         self._finalizer=weakref.finalize(self,self.feeder.close if archive else stop,*(() if archive else (self.process,)))
         try:
             self.voice=self.audio.stream_play(identity,bus,gain)
@@ -45,10 +69,14 @@ class AudioFileStream:
         # FFmpeg's filter-thread flags do not control libgomp and numerical
         # libraries loaded by the distribution's libavfilter build.
         env={**os.environ,'OMP_NUM_THREADS':'1','OMP_THREAD_LIMIT':'1','OPENBLAS_NUM_THREADS':'1','MKL_NUM_THREADS':'1','MALLOC_ARENA_MAX':'2'}
-        self.process=subprocess.Popen(self.command,stdin=subprocess.PIPE if self.archive else subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=subprocess.PIPE,bufsize=0,env=env)
-        os.set_blocking(self.process.stdout.fileno(),False)
-        os.set_blocking(self.process.stderr.fileno(),False);self.diagnostic=b''
-        if self.feeder:self.feeder.attach(self.process)
+        self.process=subprocess.Popen(self.command,stdin=subprocess.PIPE if self.archive else subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=subprocess.PIPE,bufsize=0,env=env,**background_options())
+        try:
+            os.set_blocking(self.process.stdout.fileno(),False)
+            os.set_blocking(self.process.stderr.fileno(),False);self.diagnostic=b''
+            if self.feeder:self.feeder.attach(self.process)
+        except Exception:
+            stop(self.process)
+            raise
     def pump(self):
         if self.ended:return
         if self.feeder and self.feeder.error:raise RuntimeError('Archive audio: '+self.feeder.error)

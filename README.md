@@ -41,6 +41,36 @@ in 6.12.0 when a QObject-returning slot returns an absent optional object.
 The launcher uses UTF-8 and Qt's Windows platform plugin and Basic controls.
 The original Fedora launch scripts remain available.
 
+RESEARCH contains backlog, evidence, source/method memory, web-skill checks,
+SQL previews, recorded evaluations, WASM, reverse engineering and game workflows.
+Failed saves keep drafts, jobs support cancellation, and errors retain the last
+usable report. The WASM runtime runs asynchronously with enforced memory,
+table, time and input/output limits. EVALS records checks and results supplied
+by the user; starting a trace does not itself run a test suite.
+
+Windows reverse engineering uses REA 6.0.0 for JavaScript/Electron structure
+and Ghidra 12.1.4 with Temurin JDK 25.0.4.1 for native functions, pseudocode,
+search and references. Analysis uses a Windows AppContainer with no network
+capabilities, read-only tool/input snapshots and disposable writable scratch.
+Ghidra exchanges JSON through files so it needs no localhost exemption.
+The analysis JVM includes a filesystem-metadata compatibility module generated
+from the pinned JDK sources, with source integrity and filesystem limits checked
+before use.
+The selected program is parsed and is never launched.
+
+Install these optional research engines explicitly, from official pinned releases:
+
+```powershell
+.\.venv-windows\Scripts\python.exe -B tools\install_research_engines.py
+.\gg-research.cmd self-test
+```
+
+The per-user installer checks archive integrity and preserves packaged timestamps;
+reruns check pinned versions and recorded critical-file integrity. The known-answer
+test verifies specific JavaScript and native workflows, rather than arbitrary
+conclusions about user programs. No downloads occur during desktop startup.
+Restart the whole application after updating the Python backend.
+
 On Windows every WEB tab uses the installed Microsoft Edge WebView2 runtime.
 Qt WebView provides the default host; an optional small GG host adds native
 extension support when WEB filtering is installed. This supplies H.264/AAC playback and Media Source streaming
@@ -160,9 +190,10 @@ with the attempt count while reconnecting, then shows the actual failure if
 the budget is exhausted. Pause, Stop and selecting another station cancel
 pending retries. Local music and downloaded files do not reconnect.
 
-**Remaining Windows work:** Linux-only analysis sandboxes, QML preflight,
-SITE database/PHP services and the Solana validator
-are not verified Windows features. Podman's presence does not make local AI
+**Remaining Windows work:** QML preflight and the Solana validator are not
+verified Windows features. RESEARCH uses the verified Windows AppContainer;
+SITE supports the separately installed and verified native PHP/MariaDB tools
+described in the patch notes. Podman's presence does not make local AI
 or isolated tools ready: the configured immutable container images and model
 weights must also exist. External application discovery has Windows support;
 GIMP embedding has not been visually verified. Blender EXT now uses a Windows
@@ -211,6 +242,112 @@ PYTHON="$PWD/.venv/bin/python" ./run-gg-ai-desktop.sh
 Install and sign in to Codex for GPT TUI or Grok Build for GROK TUI. External
 provider plugins are cataloged in `config/dependencies.json` and installed
 through their respective provider clients.
+
+## Patch notes · 2026-10-24 · Windows RESEARCH and chat clipboard
+
+Windows RESEARCH now runs pinned REA 6.0.0 and Ghidra 12.1.4 with Temurin
+JDK 25.0.4.1 in a network-disabled AppContainer. Input/tool snapshots are
+read-only, writable scratch and process budgets are bounded, and the selected
+program is parsed without launching it. The optional official-source installer
+and known-answer self-test are documented above; vendor installations remain
+per-user dependencies and are not bundled in this patch.
+
+RESEARCH and GAMES preserve drafts and usable reports across failures, expose
+actual cancellation and evidence states, support native Windows tool discovery,
+and run WASM asynchronously with memory/table/time/input/output limits. EVALS
+records supplied checks and results; opening a trace does not execute a suite.
+
+Chat copy/paste preserves selected text and handles Windows image clipboard
+rendering. GPT image pastes use stable temporary attachments, while the other
+terminal retains its native image protocol. Failed image reads produce a
+visible notice. Terminal mouse/shortcut regressions accompany these changes.
+
+This patch includes every new distributable source change since the previous
+GG-W patch. Sessions, credentials, local databases, installed vendor binaries
+and private authored assets remain outside the public source distribution.
+Restart the entire desktop after updating.
+
+## Patch notes · 2026-10-24 · verified native Windows SITE runtimes
+
+SITE can use verified per-user PHP 8.5.12 x64 NTS and MariaDB 12.3.3 LTS from
+their official ZIP distributions. The installer checks pinned archive digests,
+installed files and the managed PHP configuration before launching tools. It
+does not register a service or change the system PATH. Interrupted setup can
+resume by rechecking already-published vendor files.
+
+```powershell
+.\.venv-windows\Scripts\python.exe -B tools\install_site_runtime.py
+.\.venv-windows\Scripts\python.exe -B tools\verify_site_runtime.py
+```
+
+Managed PHP loads an explicit configuration and an empty additional-INI
+directory, with mysqli and the bundled SITE image/text/archive extensions.
+PHP2Shell's corrected soft/hard memory limits are configured and checked.
+SITE preview processes receive a restricted environment, and the health panel
+includes configuration identity when deciding whether a restart is needed.
+Plain PHP/HTML previews do not require a WordPress database configuration.
+
+A new local database is initialized offline before opening its loopback port.
+Its administrator secret is stored in the current user's Windows Credential
+Manager and passed to clients only in memory. Existing unmarked databases are
+not reset or silently migrated. Server reuse checks the real process/listener;
+app shutdown stops only a database child that instance started.
+Imports require a separate application account and schema, preserve the vault
+administrator, and synchronize the configured application password on reimport.
+
+Real isolated tests cover native initialization, authenticated mysqli readback,
+custom WordPress table prefixes, URL postconditions, cancellation, failed import
+and retry, persistence across restart, and graceful shutdown. The synthetic
+PHP/database page was also verified through the visible GG WEB tab. This proof
+does not inspect or change an imported user's website or a hosting provider.
+Restart the entire desktop after updating the Python backend.
+
+## Patch notes · 2026-10-23 · imports, web actions and failure recovery
+
+**SITE.** File imports stage and validate a replacement before switching the
+active site, with recovery bookkeeping, decoded-content budgets and cancellation.
+Background import jobs keep the interface responsive. Database imports stream
+their input, check the configured WordPress table prefix and local URL rewrite,
+and report partial completion when a later step fails. PHP health identifies the
+selected local runtime and distinguishes upstream version evidence from an
+unverified vendor backport or a running preview that needs restarting.
+Automatic config updates accept supported literal WordPress settings and the
+canonical bootstrap. Dynamic, conditional or ambiguous database bindings require
+manual review; they are never executed or silently rewritten by the importer.
+
+**WEB.** One operator click uses one activation path. Pending scripts, pointer
+actions and captures are tied to their operation and document. Command claims,
+expiry and matching results prevent stale completion from clearing a newer
+operation; interrupted effects are not automatically replayed after restart.
+
+**RESEARCH.** A finding's source, evidence, optional method and bounded redacted
+report snapshot commit together. Shape checks are labelled `STRUCTURE_CHECKED`;
+only a passing fixture test bound to the unchanged method can confer
+`FIXTURE_TESTED`. Legacy or caller-supplied verification flags do not establish
+test evidence. The reference workflows include an original interrupted-state
+review method inspired by the published PHP2Shell research.
+Evidence cards can reopen their saved report after the temporary analysis cache
+or job history has expired, without claiming that the current source was retested.
+
+The built-in PHP source reviewer inventories declarations, lexical call
+references and input/shared-state/error API locations without executing PHP.
+Select a `.php` file with `analyze`, `function`, `search` or `xrefs`; use
+`php_analyze` for a PHP project directory. The same operations are available
+through `gg-research.cmd`. This bounded lexical inventory does not resolve
+framework routing or dynamic dispatch and does not establish vulnerabilities.
+Configuration, hidden and vendor files are omitted from project snapshots.
+
+**Assets.** An internal decoder panic retires its process. Texture admission
+checks decoded dimensions and memory before pixel allocation. Blender UV output
+is validated before publication, preserves the previous scene on failure and
+uses the platform's installed Blender. Recovery checks use synthetic assets;
+private authored game fixtures remain installation-specific.
+Windows FFmpeg audio streams also use the installed decoder with native process
+limits; stopping a stream waits for its child processes to release their inputs.
+
+Restart the whole desktop after updating; workspace reload does not replace
+the running Python backend. These local changes do not update remote PHP
+servers or verify a hosting provider's installed patch status.
 
 ## Patch notes · 2026-10-23 · integrated window title bar
 

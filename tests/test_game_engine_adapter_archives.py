@@ -25,9 +25,17 @@ class Archives(unittest.TestCase):
     def test_bounds_root_symlinks_and_large_entry(self):
         self.write('model.MPQ')
         with tempfile.TemporaryDirectory() as outside:
-            foreign=Path(outside)/'outside.mpq';foreign.write_bytes(fixture.mpq());(self.data/'patch.MPQ').symlink_to(foreign)
-            with self.assertRaisesRegex(ValueError,'outside'):self.mount()
-        (self.data/'patch.MPQ').unlink();(self.data/'patch.MPQ').write_bytes(fixture.mpq(file_size=0xffffffff));self.mount()
+            foreign=Path(outside)/'outside.mpq';foreign.write_bytes(fixture.mpq())
+            if os.name=='nt':
+                from backend.application_paths import expose_directory
+                alias=self.root/'outside-data';expose_directory(alias,Path(outside))
+                with self.assertRaisesRegex(ValueError,'outside'):self.reader.request('mount_chain',path=str(alias))
+                alias.rmdir()
+            else:
+                (self.data/'patch.MPQ').symlink_to(foreign)
+                with self.assertRaisesRegex(ValueError,'outside'):self.mount()
+                (self.data/'patch.MPQ').unlink()
+        (self.data/'patch.MPQ').write_bytes(fixture.mpq(file_size=0xffffffff));self.mount()
         with self.assertRaisesRegex(ValueError,'capacity'):self.read()
     def test_on_demand_m2_texture_pose_and_cleanup(self):
         self.write('model.MPQ',fixture.animated_m2(),entry='GG/Panel.m2');self.write('texture.MPQ',fixture.blp(),entry='GG/gold.blp')

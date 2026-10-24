@@ -49,6 +49,7 @@ class ResearchLabTests(unittest.TestCase):
                 self.assertEqual(lab.inspect_file(raw)["status"], "ERROR")
         self.assertFalse((research_desk.ROOT / research_desk.DB_NAME).exists())
 
+    @unittest.skipUnless(hasattr(os, 'mkfifo'), 'POSIX FIFO; Windows regular-file checks run in Windows tests')
     def test_fifo_is_rejected_without_blocking(self):
         p = self.root / "pipe"
         os.mkfifo(p)
@@ -105,8 +106,9 @@ class ResearchLabTests(unittest.TestCase):
         lab.seed_references()
         lab.seed_references()
         snapshot = research_desk.snapshot()
-        self.assertEqual(len(snapshot["sources"]), 3)
-        self.assertEqual(len(snapshot["methods"]), 3)
+        self.assertEqual(len(snapshot["sources"]), 4)
+        self.assertEqual(len(snapshot["methods"]), 4)
+        self.assertTrue(any('Interrupted state review' in method['name'] for method in snapshot['methods']))
         self.assertTrue(all(m["status"] == "PROPOSED" for m in snapshot["methods"]))
 
     def test_named_headers_and_long_secrets_are_redacted(self):

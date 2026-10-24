@@ -75,8 +75,25 @@ Item {
     property real chromeY: 12
     property var _chromeDone: null
     property var _addrCmd: null
+    property var _addrPane: null
+    property var _webOpCurrent: ({})
+    property var _webOpPane: null
+    property int _webOpEpoch: 0
     property string _addrTarget: ""
     property int _addrIndex: 0
+    Connections {
+        target: root.scratchHost()
+        ignoreUnknownSignals: true
+        function onWebOperatorCancelled(commandId, reason) {
+            root.cancelWebOperator(commandId, reason)
+        }
+    }
+    onLiveWebPaneChanged: {
+        var action = String(root._webOpCurrent.action || "")
+        if (root._webOpPane && root._webOpPane !== root.liveWebPane
+                && ["TAB_NEW", "TAB_CLOSE", "TAB_NEXT", "TAB_PREV"].indexOf(action) < 0)
+            root.cancelWebOperator(String(root._webOpCurrent.command_id || ""), "PANE_CHANGED")
+    }
     readonly property string currentContextReference:
         root.currentObjectId.length > 0 ? "@current" : "@workspace"
     readonly property string slashCommandTemplate:
@@ -568,6 +585,8 @@ Item {
     property bool keepResearch: false
     property string pendingResearchSection: ""
     onHostKindChanged: {
+        if (hostKind !== "WEB" && root.pendingWebOpPayload.length === 0)
+            root.cancelWebOperator(String(root._webOpCurrent.command_id || ""), "PANE_HIDDEN")
         if (hostKind === "QIP") {
             root.openResearch("WASM LAB")
             return
@@ -599,6 +618,20 @@ Item {
     property string browseBarText: ""
     property int sitePreviewNonce: 0
     property string siteImportStatus: "SITE · waiting for import"
+    property string siteJobId: ""
+    property string siteJobState: "IDLE"
+    property string siteJobKind: ""
+    readonly property bool siteImportBusy: siteJobState === "RUNNING" || siteJobState === "CANCELLING"
+    property string siteHealthSummary: "PHP · not checked · CHECK PHP inspects the local runtime"
+    property string siteHealthDetail: ""
+    property string siteVersionSummary: "Version evidence only · running server not verified"
+
+    Timer {
+        interval: 120
+        repeat: true
+        running: root.siteImportBusy && root.siteJobId.length > 0
+        onTriggered: root.pollSiteJob()
+    }
     property bool sitePreviewRunning: false
     property string sitePreviewOrigin: ""
     property bool sitePreviewFullscreen: false
@@ -1361,6 +1394,7 @@ Item {
     }
 
     function moveChromeTo(item, ox, oy, done) {
+        done = root._webGuard(root._webOpCurrent, done)
         if (!item) {
             if (typeof done === "function")
                 done()
@@ -1411,6 +1445,7 @@ Item {
         }
         root.chromeShape = "text"
         root._addrCmd = cmd
+        root._addrPane = pane
         root._addrTarget = String(url || "")
         root._addrIndex = 0
         root.addressTyping = true
@@ -1424,6 +1459,12 @@ Item {
     }
 
     function _addrTick() {
+        if (!root._webCommandLive(root._addrCmd))
+            return
+        if (root._addrPane !== root.liveWebPane) {
+            root.cancelWebOperator(String(root._addrCmd.command_id || ""), "PANE_CHANGED")
+            return
+        }
         if (root._addrIndex >= root._addrTarget.length) {
             addrTypeTimer.stop()
             root.addressTyping = false
@@ -1433,19 +1474,19 @@ Item {
             if (pane && pane.waitLoad) {
                 pane.agentActive = true
                 pane.agentShape = "wait"
-                pane.waitLoad(function(state) {
+                pane.waitLoad(root._webGuard(cmd, function(state) {
                     root.chromeOn = false
                     var href = pane.currentHref()
                     root.reportWebOperator(
                         cmd,
-                        state === "PASS" || href.length > 0,
+                        state === "PASS",
                         state === "PASS" ? "OPENED_WEB_TAB" : "OPEN_" + state,
                         href || root._addrTarget,
                         "",
                         "",
                         []
                     )
-                })
+                }))
                 return
             }
             root.chromeOn = false
@@ -1459,6 +1500,7 @@ Item {
     }
 
     function clickPlusThen(done) {
+        done = root._webGuard(root._webOpCurrent, done)
         var pane = root.liveWebPane
         if (pane) {
             pane.agentActive = false
@@ -1476,7 +1518,54 @@ Item {
         })
     }
 
-    function reportWebOperator(cmd, ok, reason, url, title, text, links, image) {
+    function _webCommandLive(cmd) {
+        if (!cmd || !cmd.command_id || cmd.command_id !== root._webOpCurrent.command_id)
+            return false
+        if (Number(cmd.expires_at || 0) > 0 && Date.now() / 1000 >= Number(cmd.expires_at)) {
+            root.cancelWebOperator(String(cmd.command_id), "OPERATOR_TIMEOUT")
+            return false
+        }
+        return true
+    }
+
+    function _webGuard(cmd, fn) {
+        var epoch = root._webOpEpoch
+        return function(value) {
+            if (epoch !== root._webOpEpoch || !root._webCommandLive(cmd))
+                return
+            if (typeof fn === "function")
+                fn(value)
+        }
+    }
+
+    function cancelWebOperator(commandId, reason) {
+        var cmd = root._webOpCurrent
+        if (!commandId || !cmd || String(cmd.command_id || "") !== String(commandId))
+            return
+        root.pendingWebOpPayload = ""
+        webOpRetry.stop()
+        addrTypeTimer.stop()
+        chromeMove.doneFn = null
+        chromeMove.stop()
+        root.addressTyping = false
+        root.chromeOn = false
+        var pane = root._webOpPane
+        if (pane && pane.cancelLoadWait)
+            pane.cancelLoadWait()
+        if (pane && pane.cancelOperator)
+            pane.cancelOperator(commandId, reason || "OPERATOR_CANCELLED")
+        if (String(root._webOpCurrent.command_id || "") === String(commandId))
+            root.reportWebOperator(cmd, false, reason || "OPERATOR_CANCELLED", "", "", "", [])
+    }
+
+    function reportWebOperator(cmd, ok, reason, url, title, text, links, image, completionUncertain) {
+        if (!cmd || !cmd.command_id || cmd.command_id !== root._webOpCurrent.command_id)
+            return
+        root._webOpCurrent = ({})
+        root._webOpEpoch += 1
+        root._webOpPane = null
+        root._addrCmd = null
+        root._addrPane = null
         var host = root.scratchHost()
         if (!host || !host.webOperatorReport)
             return
@@ -1497,6 +1586,7 @@ Item {
             "text": text || "",
             "links": links || [],
             "image": image || "",
+            "completion_uncertain": completionUncertain === true,
             "action_authority": scoped ? "TASK_SCOPED" : "NONE",
             "general_action_authority": scoped ? "TASK_SCOPED" : "NONE",
             "scope_authority": scoped
@@ -1508,6 +1598,16 @@ Item {
     }
 
     function applyWebOperator(payload) {
+        var cmd
+        try { cmd = JSON.parse(String(payload || "{}")) } catch (err) { return }
+        if (!cmd.command_id || cmd.command_id === root._webOpCurrent.command_id)
+            return
+        if (root._webOpCurrent.command_id)
+            root.cancelWebOperator(String(root._webOpCurrent.command_id), "OPERATOR_REPLACED")
+        root._webOpCurrent = cmd
+        root._webOpEpoch += 1
+        if (!root._webCommandLive(cmd))
+            return
         if (root.hostKind !== "WEB") {
             // An approved visible-WEB action may arrive while the user is
             // looking at CODE, SITE or another workspace surface.  Switch
@@ -1570,6 +1670,9 @@ Item {
             return
         }
         var action = String(cmd.action || "")
+        if (!root._webCommandLive(cmd))
+            return
+        root._webOpPane = root.liveWebPane
         if (action === "TAB_NEW") {
             var sel = String(cmd.selector || "")
             var url = String(cmd.url || "")
@@ -1588,12 +1691,17 @@ Item {
                     "selector": sel,
                     "text": "aux",
                     "risk_class": cmd.risk_class,
+                    "expires_at": Number(cmd.expires_at || 0),
                     "task_scoped_authorization": cmd.task_scoped_authorization || null
-                }, function(result) {
+                }, root._webGuard(cmd, function(result) {
                     var value = result || {}
+                    if (value.ok !== true) {
+                        root.reportWebOperator(cmd, false, String(value.reason || "FAIL"), "", "", "", [], "", value.completion_uncertain)
+                        return
+                    }
                     var href = String(value.url || "")
                     var before = root.webTabCount()
-                    Qt.callLater(function() {
+                    Qt.callLater(root._webGuard(cmd, function() {
                         if (root.webTabCount() === before && href.length > 0)
                             root.openWebTab(href)
                         root.reportWebOperator(
@@ -1605,8 +1713,8 @@ Item {
                             String(root.webTabCount()),
                             []
                         )
-                    })
-                })
+                    }))
+                }))
                 return
             }
             root.clickPlusThen(function() {
@@ -1635,6 +1743,7 @@ Item {
                     "action_authority": cmd.action_authority || "NONE",
                     "scope_authority": cmd.scope_authority || "NONE",
                     "task_scoped_authorization": cmd.task_scoped_authorization || null
+                    , "expires_at": Number(cmd.expires_at || 0)
                 })
                 root.pendingWebOpTries = 0
                 webOpRetry.restart()
@@ -1678,7 +1787,7 @@ Item {
             root.typeAddressThenGo(String(cmd.url || ""), cmd)
             return
         }
-        pane.playOperator(cmd, function(result) {
+        pane.playOperator(cmd, root._webGuard(cmd, function(result) {
             var value = result || {}
             root.reportWebOperator(
                 cmd,
@@ -1688,9 +1797,10 @@ Item {
                 String(value.title || ""),
                 String(value.text || ""),
                 value.links || [],
-                String(value.image || "")
+                String(value.image || ""),
+                value.completion_uncertain
             )
-        })
+        }))
     }
 
     function applySitePreviewUrl() {
@@ -1712,6 +1822,8 @@ Item {
     }
 
     function ensureSitePreview() {
+        if (root.siteImportBusy)
+            return false
         var host = root.scratchHost()
         if (host === null)
             return false
@@ -1779,7 +1891,101 @@ Item {
         root.sitePreviewFullscreen = false
     }
 
+    function assessSitePhpVersion(value) {
+        var host = root.scratchHost()
+        if (!host || !host.sitePhpVersionAssessment)
+            return false
+        try {
+            var result = JSON.parse(String(host.sitePhpVersionAssessment(value)))
+            root.siteVersionSummary = String(result.status || "UNKNOWN")
+                + " · version evidence only · running server not verified · " + String(result.detail || "")
+            return true
+        } catch (error) {
+            root.siteVersionSummary = "UNKNOWN · version could not be assessed"
+            return false
+        }
+    }
+
+    function applySiteJobReply(reply) {
+        var state = String(reply.state || "ERROR")
+        if (reply.job_id) {
+            root.siteJobId = String(reply.job_id)
+            root.siteJobKind = String(reply.kind || root.siteJobKind)
+        }
+        root.siteJobState = state
+        if (root.siteJobKind !== "HEALTH" && root.siteImportBusy) {
+            root.sitePreviewRunning = false
+            root.sitePreviewOrigin = ""
+            root.sitePreviewFullscreen = false
+        }
+        if (state === "RUNNING" || state === "CANCELLING") {
+            root.siteImportStatus = (state === "CANCELLING" ? "CANCELLING" : "IMPORT " + root.siteJobKind)
+                + " · " + String(reply.phase || "starting")
+                + (Number(reply.total) > 0 ? " · " + String(reply.current || 0) + "/" + String(reply.total) : "")
+            return
+        }
+        if (reply.health) {
+            var health = reply.health
+            root.siteHealthSummary = "PHP · " + String(health.version || health.runtime || "UNKNOWN")
+                + " · " + String(health.status || "UNKNOWN")
+                + (health.restart_required ? " · RESTART PREVIEW REQUIRED" : "")
+                + " · rules " + String(health.rules_date || "unknown")
+            root.siteHealthDetail = String(health.detail || "")
+        }
+        if (root.siteJobKind === "TREE") {
+            root.refreshSiteFiles()
+            if (state === "DONE") {
+                var host = root.scratchHost()
+                var preferred = host && host.preferredSiteFile ? String(host.preferredSiteFile()) : ""
+                if (preferred.length > 0)
+                    root.openSiteFile(preferred)
+            }
+        }
+        root.siteImportStatus = String(reply.summary || reply.reason || state)
+        root.liveAidEvidenceSummary = root.siteImportStatus
+    }
+
+    function startSiteJob(kind, source) {
+        var host = root.scratchHost()
+        if (!host || !host.siteStart)
+            return false
+        if (root.siteImportBusy)
+            return true
+        try {
+            var reply = JSON.parse(String(host.siteStart(kind, source)))
+            root.siteJobKind = kind
+            root.applySiteJobReply(reply)
+        } catch (error) {
+            root.siteImportStatus = "FAIL: SITE job could not start"
+        }
+        return true
+    }
+
+    function pollSiteJob() {
+        var host = root.scratchHost()
+        if (!host || !host.siteStatus)
+            return
+        try {
+            var reply = JSON.parse(String(host.siteStatus(root.siteJobId)))
+            if (reply.job_id && String(reply.job_id) !== root.siteJobId)
+                return
+            root.applySiteJobReply(reply)
+        } catch (error) {
+            root.siteImportStatus = "SITE · waiting for job status"
+        }
+    }
+
+    function cancelSiteJob() {
+        var host = root.scratchHost()
+        if (host && host.siteCancel && root.siteImportBusy) {
+            try { root.applySiteJobReply(JSON.parse(String(host.siteCancel(root.siteJobId)))) }
+            catch (error) { root.siteImportStatus = "SITE · cancellation status unavailable" }
+        }
+    }
+
     function importSiteSqlFromDialog(urlString) {
+        if (root.startSiteJob("SQL", urlString))
+            return
         var host = root.scratchHost()
         if (host === null)
             return
@@ -1790,6 +1996,8 @@ Item {
     }
 
     function importSiteFromDialog(urlString) {
+        if (root.startSiteJob("TREE", urlString))
+            return
         var host = root.scratchHost()
         if (host === null)
             return
@@ -1809,6 +2017,8 @@ Item {
     }
 
     function saveSiteBuffer() {
+        if (root.siteImportBusy)
+            return false
         var host = root.scratchHost()
         if (host === null)
             return false
@@ -3319,6 +3529,11 @@ Item {
                     ignoreUnknownSignals: true
 
                     function onSiteImportProgress(phase, current, total, extra) {
+                        if (String(phase) === "JOB_STARTED") {
+                            try { root.applySiteJobReply(JSON.parse(String(extra))) }
+                            catch (error) { root.siteImportStatus = "FAIL: SITE job status unavailable" }
+                            return
+                        }
                         var line = String(phase)
                         if (Number(total) > 0)
                             line += " · " + String(current) + "/" + String(total)
@@ -3337,7 +3552,9 @@ Item {
                     anchors.top: parent.top
                     height: 18
                     text: root.siteImportStatus
+                    textFormat: Text.PlainText
                     color: root.siteImportStatus.indexOf("FAIL") === 0
+                        || root.siteImportStatus.indexOf("PARTIAL") === 0
                         ? "#c98989"
                         : "#8b949e"
                     font.family: "monospace"
@@ -3406,6 +3623,7 @@ Item {
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
+                            enabled: !root.siteImportBusy
                             onClicked: siteSqlDialog.open()
                         }
                     }
@@ -3418,6 +3636,7 @@ Item {
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
+                            enabled: !root.siteImportBusy
                             onClicked: siteZipDialog.open()
                         }
                     }
@@ -3430,14 +3649,97 @@ Item {
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
+                            enabled: !root.siteImportBusy
                             onClicked: siteFolderDialog.open()
+                        }
+                    }
+
+                    Text {
+                        objectName: "workspaceSiteHealthButton"
+                        text: root.siteImportBusy ? "CANCEL" : "CHECK PHP"
+                        color: "#c8a97e"
+                        font.family: "monospace"
+                        font.pixelSize: 12
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.siteImportBusy ? root.cancelSiteJob() : root.startSiteJob("HEALTH", "")
                         }
                     }
                 }
 
+                Text {
+                    objectName: "workspaceSiteHealthStatus"
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.topMargin: 21
+                    height: 18
+                    text: root.siteHealthSummary + (root.siteHealthDetail.length ? " · " + root.siteHealthDetail : "")
+                    textFormat: Text.PlainText
+                    font.family: "monospace"
+                    font.pixelSize: 11
+                    color: "#8b949e"
+                    elide: Text.ElideRight
+                }
+
+                Row {
+                    id: siteVersionRow
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.topMargin: 43
+                    spacing: 8
+                    height: 20
+                    TextField {
+                        id: siteVersionInput
+                        objectName: "workspaceSitePhpVersionInput"
+                        width: 180
+                        height: 20
+                        font.family: "monospace"
+                        font.pixelSize: 11
+                        placeholderText: "PHP version / vendor revision"
+                        color: "#d8dee9"
+                        selectByMouse: true
+                        maximumLength: 100
+                        topPadding: 0
+                        bottomPadding: 0
+                        background: Rectangle { color: "#161616"; border.color: "#454545" }
+                        onAccepted: root.assessSitePhpVersion(text)
+                    }
+                    Text {
+                        objectName: "workspaceSitePhpVersionAssess"
+                        text: "ASSESS"
+                        color: "#c8a97e"
+                        font.family: "monospace"
+                        font.pixelSize: 11
+                        height: 20
+                        verticalAlignment: Text.AlignVCenter
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.assessSitePhpVersion(siteVersionInput.text)
+                        }
+                    }
+                }
+                Text {
+                    objectName: "workspaceSitePhpVersionResult"
+                    anchors.left: siteVersionRow.right
+                    anchors.leftMargin: 12
+                    anchors.right: parent.right
+                    anchors.top: siteVersionRow.top
+                    height: 20
+                    text: root.siteVersionSummary
+                    textFormat: Text.PlainText
+                    font.family: "monospace"
+                    font.pixelSize: 11
+                    color: "#8b949e"
+                    elide: Text.ElideRight
+                    verticalAlignment: Text.AlignVCenter
+                }
+
                 Loader {
                     anchors.fill: parent
-                    anchors.topMargin: 22
+                    anchors.topMargin: 68
                     active: siteHost.visible && !root.sitePreviewFullscreen
                     source: active ? root.webPaneSource : ""
                     onLoaded: {
