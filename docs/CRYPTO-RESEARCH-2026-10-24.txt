@@ -1,0 +1,144 @@
+GG AI DESKTOP - CRYPTO review and Windows responsiveness
+2026-10-24
+
+Original intent
+Improve the entire CRYPTO workspace, its upper-right wallet and lower-right
+status panel on this Windows computer. The requested quality target is AAA
+with responsive 60 Hz interaction.
+
+Facts and findings
+The UI used independent status pollers. Full status generation could perform
+filesystem reads, JSON work and a two-second LAB health request on Qt's GUI
+thread. Resetting a running factory or desk could re-enter a non-reentrant
+lock. Slow chart completions could replace a newer interval selection.
+Wallet popup assignments could detach its shared status binding.
+
+The selected watch account was not consistently bound to the preferred
+signer. Windows signing assumed openssl was on PATH. Interrupted plain JSON
+writes could damage state, status reads traversed growing journals, and a
+backtest cache read the report before checking its cached identity.
+Missing validator software was presented as LAB OFF. Process-name checks
+alone did not establish ownership of a validator or loopback RPC service.
+
+Decisions and implementation
+All 42 CRYPTO host slots now use one shared asynchronous status/action lane.
+Prepared status strings are read immediately by Qt; substantial serialization
+runs outside the GUI lock. An accepted action executes once; repeated clicks
+do not queue duplicate transactions. Errors remain visible and worker-start
+failure releases the busy state. Shutdown discards unstarted actions.
+
+The workspace, wallet and rail share status updates. Visible pending work uses
+one adaptive poller; hidden panes pause polling. Chart preparation coalesces
+pan, zoom and resize work, preserves per-pixel extrema and uses threaded
+Canvas rasterization. Optional web charts retain viewport position and detect
+historical corrections, markers and equity changes.
+
+Market refresh shares concurrent downloads and bounds caches. Frames retain
+provider, pair, quote currency, actual timestamps and fetch provenance. KAS
+uses Gate spot candles with a labelled CoinGecko fallback. An older interval's
+completion is discarded. Corrupt chart files are bounded and validated before
+admission. Unknown or failed RPC reads retain the last known state with a
+loading/stale/error indication rather than manufacturing zero balances.
+USDT-quoted portfolio estimates are labelled as approximations to USD.
+
+Signing discovers the installed Windows OpenSSL, bounds its child process,
+restricts its environment and validates seed/public-key consistency. A signer
+must match the selected account; transaction construction checks the expected
+public key before contacting RPC. State uses private atomic publication and
+bounded journal reads. Corrupt balances are preserved with diagnostics.
+
+LAB ownership binds the configured executable, ledger, loopback port, PID and
+process creation time. External RPC services are identified separately. Start
+does not automatically erase an existing or frozen ledger.
+
+Verification
+All 23 offline CRYPTO/Polymarket test scripts passed with temporary state and
+sockets disabled. This includes chart races, fault injection, once-only action
+dispatch, stale/failing RPC, numerical/data validation, paper strategies,
+state recovery, real QML bindings and native RFC 8032 signing with test keys.
+The complete Windows desktop startup and ChatSurfaceHost checks also passed.
+
+The final isolated Windows Direct3D11 QQuickWindow test used 20,000 synthetic
+chart samples and hover/pan/zoom/resize. It observed 795
+queued frameSwapped callbacks in 5.197 seconds (152.78 Hz). Frame-gap p95 was
+12.415 ms, p99 17.671 ms, maximum 29.808 ms. GUI interaction p95 was 0.303 ms,
+maximum 2.656 ms. The user foreground window remained unchanged.
+These are Qt callback timings, not hardware presentation timestamps or a
+guarantee of flawless timing across every page and concurrent workload.
+
+With a deliberately blocked background serializer, 1,000 prepared UI reads
+had p95 0.0008 ms and maximum 0.0035 ms in the final offline run.
+The chart reduced 20,000 source samples to 1,556 paint samples at an 853-pixel
+view width, retaining extrema. Four overlapping jobs produced two status
+polls over 2.2 seconds; the hidden pane produced none.
+
+Seventeen preview pages passed geometry and QML warning checks. Missing-price,
+narrow-portfolio and trader previews were visually inspected; the other pages
+were generated and checked structurally.
+
+Separate read-only public feed checks returned 399 closed one-hour candles
+for SOLUSDT (Binance spot) and KASUSDT (Gate spot). No account API or wallet
+credentials were used. Public service availability can change.
+
+Assumptions and unresolved scope
+No real wallet, private key, funds, order, airdrop or live validator was
+accessed or changed during verification. Tests do not establish investment
+returns or live settlement correctness. Existing paper/observe boundaries
+remain enforced.
+The configured local Solana validator is absent. Actual LAB startup remains
+unverified. Solana's official Windows installation path requires WSL; no WSL,
+validator or system component was installed in this optimization task.
+Restart the entire desktop to load the changed Python backend.
+
+Primary sources checked
+https://doc.qt.io/qt-6/qtquick-performance.html
+https://doc.qt.io/qt-6/qml-qtquick-canvas.html
+https://tradingview.github.io/lightweight-charts/docs/4.2
+https://solana.com/docs/rpc/http/getbalance
+https://solana.com/docs/rpc/http/gettokenaccountsbyowner
+https://www.gate.com/en-us/docs/developers/apiv4/#market-candlesticks
+https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints
+https://www.rfc-editor.org/rfc/rfc8032#section-7.1
+https://docs.openssl.org/3.0/man1/openssl-pkeyutl/
+https://solana.com/docs/intro/installation
+
+Reproduce
+.venv-windows\Scripts\python.exe -B tests\run_crypto_checks.py
+.venv-windows\Scripts\python.exe -B tests\test_windows_desktop.py -v
+Optional native measurement: set GG_TEST_CRYPTO_NATIVE_FRAMES=1 and run
+.venv-windows\Scripts\python.exe -B tests\test_crypto_ui_refresh.py
+
+Idle work and current background behavior
+Native and software-only CRYPTO fixtures were tested without animations,
+network or input: frame/paint counts stopped changing after settling. A
+continuous CRYPTO chart loop was not reproduced. This does not establish the
+complete cause of physical fan speed.
+
+Concrete avoidable work existed in utility painting, silent audio analysis and
+editor cursor scanning. The release retains dirty/settling-only visible
+painting, exact-silence FFT bypass and event-driven cursor/text updates.
+Constant audible levels converge before painting stops; controls and actual
+audio data remain active.
+
+An earlier attempted optimization paused activity lamps and reduced audio
+status updates when unfocused. That behavior has been superseded. The current
+release keeps real telemetry, activity lamps and active audio meter data
+current independently of focus, window coverage or minimized state. Hidden
+Canvas painting can stop without stopping its producer. Restoration paints
+the latest state instead of replaying a backlog.
+
+Synthetic regression evidence:
+- Silent paused spectrum/frequency canvases settle to zero paints.
+- Exact silent PCM skips FFT; silence clears old spectrum once.
+- An unchanged editor performs no periodic cursor-prefix rescans.
+- Activity lamps respond to changed data while another fixture holds focus.
+- Active audio data keeps its usual cadence in covered/minimized fixtures.
+- Hidden/minimized canvases perform zero paints and repaint current state on
+  restoration. Constant audible input settles without a stale level freeze.
+
+The idle-load, background-activity, Utility controls, native Windows audio and
+full-startup checks pass. These are bounded software fixtures, not a physical
+fan-speed, thermal or flawless frame-timing guarantee. A full restart loads
+the changed Python and persistent QML modules. See the current technical notes
+in docs/DESKTOP-MEMORY-AND-BACKGROUND-2026-10-25.txt and
+docs/DESKTOP-LOAD-DIAGNOSIS-2026-10-25.txt.

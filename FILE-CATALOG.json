@@ -4,18 +4,18 @@
   "source_root": ".",
   "dependency_catalog": "config/dependencies.json",
   "categories": {
-    "application-code": 436,
-    "configuration": 4,
+    "application-code": 445,
+    "configuration": 6,
     "contracts": 5,
-    "documentation": 1,
+    "documentation": 7,
     "entrypoints-and-guidance": 34,
     "gg-skills": 8,
     "gpt-knowledge": 93,
     "installation-and-packaging": 6,
-    "interface": 224,
+    "interface": 229,
     "native-engine": 1188,
     "shared-support": 54,
-    "tests": 381,
+    "tests": 415,
     "tools": 35
   },
   "files": [
@@ -83,24 +83,24 @@
       "path": "README.md",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 96731,
-      "sha256": "05e2d326dfe1e661f353c0ccd1defb242a89e2580c8837242cdc4cedf4c48909",
+      "bytes": 101186,
+      "sha256": "e9b4ece763594bd25ed22d779f619713ab84bc6cb7f1f8dbf593be519c8df7aa",
       "mode": "0o600"
     },
     {
       "path": "SOURCE-MANIFEST.json",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 497931,
-      "sha256": "420c8ec6a0e4da6a6fe8c4146b8eb3d3dd6e2a1687918f21b96a8e90341634f2",
+      "bytes": 503876,
+      "sha256": "eaa47edca6da13ac1bbf917ad5ce8ae13647a228e18b7980a390c2b43e3bce15",
       "mode": "0o644"
     },
     {
       "path": "WINDOWS-PORT.json",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 79424,
-      "sha256": "a6a86dbde28caa4acffbd6dea76164ad1932e7317dc843ba726979381e9d34ad",
+      "bytes": 143550,
+      "sha256": "3d4afafcd5f0653e57a22978608d4675c72dfe520f74cea0f56d3805344aca1c",
       "mode": "0o644"
     },
     {
@@ -171,8 +171,8 @@
       "path": "backend/app_audio.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 7273,
-      "sha256": "074a2c9aa75c5da710cd01f742e4b957ce6ba5b0a8663a856addb305f355e2aa",
+      "bytes": 7724,
+      "sha256": "8526d7e773b710281dc6777ccb816ca300fbaa5d5fcc6897608ca43aca69a675",
       "mode": "0o644"
     },
     {
@@ -307,8 +307,8 @@
       "path": "backend/chat_surface_host.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 257477,
-      "sha256": "0762432f52886d044151f16bbdde3001eb555d8992f3ab51f5fd277f3483b385",
+      "bytes": 254077,
+      "sha256": "5fafa167e0e59fe5a2158339878d4da0e1e2336767b3d8df705805513d3bc571",
       "mode": "0o600"
     },
     {
@@ -419,16 +419,16 @@
       "path": "backend/crypto_contract.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 13964,
-      "sha256": "7f734144e8bbd2d14af4d1b47314f8ade1b3c73f5dfdd746e0ee4d485120a327",
+      "bytes": 18049,
+      "sha256": "d64f14a7c33d528b57728b93564cf178504d3e38ad3eed82dadf75b0db8ca5f6",
       "mode": "0o644"
     },
     {
       "path": "backend/crypto_data.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 3221,
-      "sha256": "74c86ab2a0cf420f64cbc183533fa74d6598de61993300b8bf0d9a4c5e614793",
+      "bytes": 5166,
+      "sha256": "ff9940d0fe2058ccc078e3ee4c80115a51a524d842f17495b188032630d9f3e4",
       "mode": "0o644"
     },
     {
@@ -443,16 +443,16 @@
       "path": "backend/crypto_flash_arb.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 9076,
-      "sha256": "334ba174564559b22ea210d64a4d52e32c271f89cfdfcdad8acee4e2c9cb91c9",
+      "bytes": 9859,
+      "sha256": "2e4c5240851a31d827aeaae2a2d5eedc9d0a7ae8bf28f440ac56e8cec7d65a54",
       "mode": "0o644"
     },
     {
       "path": "backend/crypto_host.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 78531,
-      "sha256": "856c9be4e5e96a89fedb14ac35787360653debeb0e93d6baf3eeb734788a9be3",
+      "bytes": 85515,
+      "sha256": "2778ac35b66004961ffd10b1262de656ee8d1a5f2341049e2da1140125bf98eb",
       "mode": "0o644"
     },
     {
@@ -475,24 +475,24 @@
       "path": "backend/crypto_keys.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 5929,
-      "sha256": "6fe3a29f69cd463f3015b6c040979766e85fc37f9d73c260a922884e0ab63d67",
+      "bytes": 9635,
+      "sha256": "3ebba56ea994d9c7f52b6cb01f1736bbb03d05e15d33ba86e7d95ca9d2b8c33e",
       "mode": "0o644"
     },
     {
       "path": "backend/crypto_lab.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 11107,
-      "sha256": "e3b9d337cea1607dcd05b384333b54ef94b8d2edde3c0ecb8f38edf911aee5fb",
+      "bytes": 15532,
+      "sha256": "f9e3f2b37689a8a019b76f117896159b6a2349ade1d1fac0aa3b9f159425b530",
       "mode": "0o644"
     },
     {
       "path": "backend/crypto_market.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 7297,
-      "sha256": "3d8b05867e8e5bdd321e10f77c4de713e094e514afb4f24c8850d2b9477b5031",
+      "bytes": 11551,
+      "sha256": "748addbfa07f1819faf81414b1ab21ba2ae929392b5308c863303945cdb2ea74",
       "mode": "0o644"
     },
     {
@@ -507,8 +507,8 @@
       "path": "backend/crypto_paper.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 12446,
-      "sha256": "2dcbefeff47200fc2cf130d9d2b6b497c9162da6297d9f2907cd976ca0d2ca20",
+      "bytes": 12519,
+      "sha256": "d450c5dc3c8e5d42e385aecd62a765c6addacbcac45b06ac1c8749da87f28a5c",
       "mode": "0o644"
     },
     {
@@ -517,6 +517,62 @@
       "kind": "file",
       "bytes": 5561,
       "sha256": "9787295bf2a7eff340530c2d7cf0ba237cad3d6a912315a7d54ffd984b514366",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/crypto_pump.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 40916,
+      "sha256": "42f6228b0821846328dbc7f77a0d585f4459efd7ba36bc71051b435b99781393",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/crypto_pump_accounts.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 27901,
+      "sha256": "138ae32674d633c32cc5eefa3e83b518b2c2019f96b5c0f7baa0ddbb0e8a60ac",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/crypto_pump_paper.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 12209,
+      "sha256": "82255cb03f10b63d0c08f1505c7b2197e284e4cd244c422d072c9edde0329cce",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/crypto_pump_quotes.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 22153,
+      "sha256": "e0ef0133cd77ce4f4aa40c577e16250c8f421eb018898e71284cb40eafc658f0",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/crypto_pump_stress.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 8037,
+      "sha256": "d206f1b572a940b31a4f46478de8c8b921fb58c565ae99c61e407f2a202114c0",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/crypto_pump_tx.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 15881,
+      "sha256": "aaab032fe4c4dba5555525880b28bf0c792f95fb24e505d1905d128c70e7b029",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/crypto_research_quality.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 9912,
+      "sha256": "747c4d1cb7d63979fab2add6b2654f0bdb57564c97755ffe39aca654a27b4002",
       "mode": "0o644"
     },
     {
@@ -531,24 +587,32 @@
       "path": "backend/crypto_strategy_factory.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 19935,
-      "sha256": "cae22eba90730ff0aebf913a850686a7a8967e769fd3259dc94e8b7fde413639",
+      "bytes": 24280,
+      "sha256": "883417d93b746c956c0fc55a3d5c1a86238d6f6de1d56f52ae204f44c36b4242",
       "mode": "0o644"
     },
     {
       "path": "backend/crypto_trader.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 132850,
-      "sha256": "d72547ffdb660e87c0dacd4afb46649b35d3534b689c984081fb02b4dac546d6",
+      "bytes": 133251,
+      "sha256": "287e99a9abce2e0e2457ab3f0d0168a83daf5fe3bccdba58fca9f2a7c428c914",
       "mode": "0o644"
     },
     {
       "path": "backend/crypto_tx.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 6237,
-      "sha256": "768209fa97e5f36b059b91df83cbe067fde0d45b0c226027d9abb3e6b7c63431",
+      "bytes": 6400,
+      "sha256": "d6c480c666549947ed7a439ca93551e08ec8d3dc612fcdbddcd2c553663fbdae",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/crypto_ui_runtime.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 9134,
+      "sha256": "01c32a57857b747df127166cea5b926603dd8824dd6cbd7b9c290b1e459d0e69",
       "mode": "0o644"
     },
     {
@@ -2355,8 +2419,8 @@
       "path": "backend/kaspa_contract.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 2432,
-      "sha256": "f3217e2814cb7d1b9742e8df1e42b794d5dfeff2b19b3c805952777b93f4c71e",
+      "bytes": 2361,
+      "sha256": "cfbd8b99a9596c0d2487ee4b827544da3ed5689ac9af1d903d1cab5d73742a93",
       "mode": "0o644"
     },
     {
@@ -2627,8 +2691,8 @@
       "path": "backend/live_vision.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 20097,
-      "sha256": "09af1be7307a3b94b8c858ec21ac7fa5dafe04d032a42bb644b3dec520ba84e7",
+      "bytes": 22636,
+      "sha256": "2767775b292ceba3137ab3181d49aee7b1916234bcce47496adc95ce48465de8",
       "mode": "0o644"
     },
     {
@@ -3235,8 +3299,8 @@
       "path": "backend/resident_chat_qt.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 33246,
-      "sha256": "e4b4c8d9d57c993cf3b6472fb5ce5b94060b2f21cc0ebfd1b4788e8abfc11247",
+      "bytes": 33706,
+      "sha256": "733c3c3d5e163a463344f8466d2d3b737597af3420837b90e3d4979ad695c9c2",
       "mode": "0o644"
     },
     {
@@ -3403,8 +3467,8 @@
       "path": "backend/terminal_grid.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 45755,
-      "sha256": "2870ca52d97c9c71b78ea4843368853d16f8978e143daefbed9198bd6bbbe6a1",
+      "bytes": 48234,
+      "sha256": "534fe705ca020f933a0ec586040a5c4aed534d4dcfccb9cf40dc2ce0c7dea51e",
       "mode": "0o644"
     },
     {
@@ -3435,8 +3499,8 @@
       "path": "backend/tmog_sampler.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 7229,
-      "sha256": "3adfe2f921e90e2d80d02f547fdd5cef95fd10ef20602873ad2221b543243782",
+      "bytes": 7899,
+      "sha256": "50a9346eea174d92be407b562b14e368f96a42833265db651791dde08d567e0e",
       "mode": "0o644"
     },
     {
@@ -3539,16 +3603,24 @@
       "path": "backend/windows_telemetry.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 10762,
-      "sha256": "63c91501f454f814d65b255ca67327eb1f52db73384d7841078229e7afb71a97",
+      "bytes": 18208,
+      "sha256": "697279b734e9216856addee3874ee9321ab43adb04e438076e8ad9db4041f53f",
       "mode": "0o644"
     },
     {
       "path": "backend/windows_vision.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 7884,
-      "sha256": "4ec543c1bce3c4c5dff4ac2c88aa68ec28530f4f24564f983d14ec992e69925f",
+      "bytes": 9513,
+      "sha256": "7a6eb489c7b03035d81729b05c0a02e2badbc1f44e2ca6798eaefcfdec1b4d46",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/windows_vision_activity.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 13674,
+      "sha256": "8ca0e93209d1b696e1ffcab2e66aa478946c66f87ba66047b8383e4104422304",
       "mode": "0o644"
     },
     {
@@ -3600,11 +3672,27 @@
       "mode": "0o644"
     },
     {
+      "path": "config/crypto-pump-instructions.json",
+      "category": "configuration",
+      "kind": "file",
+      "bytes": 14113,
+      "sha256": "a540352acaa187ba85bb914b5fc96d3658b027db18ade501201376a1a304a09c",
+      "mode": "0o644"
+    },
+    {
+      "path": "config/crypto-pump-protocol.json",
+      "category": "configuration",
+      "kind": "file",
+      "bytes": 3798,
+      "sha256": "433adc3544c94672a0243c3ab7d6d7d14fde99c3c60ec8e881b50de723eb626e",
+      "mode": "0o644"
+    },
+    {
       "path": "config/dependencies.json",
       "category": "configuration",
       "kind": "file",
-      "bytes": 13233,
-      "sha256": "da151120933daea7b03055e17268599cafee012357a70748cc710616a9d20a87",
+      "bytes": 14686,
+      "sha256": "c09a63804bdc520f82369f57ba631cf519246c3151df92e26704ee3e94bf5089",
       "mode": "0o644"
     },
     {
@@ -3622,6 +3710,54 @@
       "bytes": 11194,
       "sha256": "c366f083621bb4d26c551e704b8d8c646899e245ace773b0758709079aa02aa6",
       "mode": "0o600"
+    },
+    {
+      "path": "docs/CRYPTO-LEDGER-DESIGN-2026-10-25.txt",
+      "category": "documentation",
+      "kind": "file",
+      "bytes": 11320,
+      "sha256": "a999802318f5f0a0ec071a1762ac29d8b5f5de83622f036d95512eb62c336ff3",
+      "mode": "0o644"
+    },
+    {
+      "path": "docs/CRYPTO-PUMP-AND-RESEARCH-2026-10-25.txt",
+      "category": "documentation",
+      "kind": "file",
+      "bytes": 10464,
+      "sha256": "8538b11a43f2261650a5466da6c0a58c8cfd2f03de909c65d484353ca008ceb3",
+      "mode": "0o644"
+    },
+    {
+      "path": "docs/CRYPTO-RESEARCH-2026-10-24.txt",
+      "category": "documentation",
+      "kind": "file",
+      "bytes": 8079,
+      "sha256": "9b245238774465af76fbba6e4e6f4ef9f2a99692752d4f019c73d2a98937a05e",
+      "mode": "0o644"
+    },
+    {
+      "path": "docs/DESKTOP-LOAD-DIAGNOSIS-2026-10-25.txt",
+      "category": "documentation",
+      "kind": "file",
+      "bytes": 3535,
+      "sha256": "e4b18387d8ae95319d8d5de08a4b2fee53c990638714e3fb25914d9a6ddea848",
+      "mode": "0o644"
+    },
+    {
+      "path": "docs/DESKTOP-MEMORY-AND-BACKGROUND-2026-10-25.txt",
+      "category": "documentation",
+      "kind": "file",
+      "bytes": 4236,
+      "sha256": "872fff1eaa53a9409db552386d004a6e18d6d6c7fdc300e092289d8d5a1e18eb",
+      "mode": "0o644"
+    },
+    {
+      "path": "docs/LIVE-EYES-INDICATOR-2026-10-25.txt",
+      "category": "documentation",
+      "kind": "file",
+      "bytes": 4117,
+      "sha256": "9a018f5152c0011b8f7098e5345c18c0098945c5a55d29c380cbaa92560fc0c5",
+      "mode": "0o644"
     },
     {
       "path": "docs/gg-ai-desktop.png",
@@ -3667,8 +3803,8 @@
       "path": "gg-eyes",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 9504,
-      "sha256": "90d993d67af46c36a015acb5375225d5095efce6673726225151376df26ccdff",
+      "bytes": 10420,
+      "sha256": "b02a7b819a073cd1c714fcd9aa4bd9be29072e7bd04103474b245185def83418",
       "mode": "0o755"
     },
     {
@@ -4515,8 +4651,8 @@
       "path": "main.py",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 395033,
-      "sha256": "8bbbad84cbb0a7108519ef0db1b8ada2e4fafa602c03b6f05b8192431d286e9b",
+      "bytes": 395096,
+      "sha256": "1fed1c4acb844f9d017afdc8e8866aa8849e48150e1f422de5b01b9db17b22fd",
       "mode": "0o644"
     },
     {
@@ -14067,16 +14203,16 @@
       "path": "packaging/source-base.json",
       "category": "installation-and-packaging",
       "kind": "file",
-      "bytes": 120166,
-      "sha256": "6588d92fe30aabe178bcabbd87c456bfc10b83f193ddd9455466d8558336d0ee",
+      "bytes": 120469,
+      "sha256": "3aa7882a908f9288341b267399d37a19440d354bdb38d12fd026f50229faa4e4",
       "mode": "0o644"
     },
     {
       "path": "qml/Main.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 151643,
-      "sha256": "beb32f8bf7876550bbe7e2ff5b4f86ddd6185a62277dc4c6612db020301c7f04",
+      "bytes": 151766,
+      "sha256": "96c2c3cfe3f06aba89eb04909b2cd38f4a78d4b13c8c9006dcee4194861aabdd",
       "mode": "0o644"
     },
     {
@@ -14187,32 +14323,48 @@
       "path": "qml/components/ContextComposer.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 23049,
-      "sha256": "3edf6eb150df9ad3ea15f19305ed07e2027a61643236dc751e08c9280ad9b762",
+      "bytes": 23649,
+      "sha256": "684fa2427271d810d4d106a4ad70f5f57c69c04b7fc0aabba5a8e469ce168434",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/CryptoButton.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 1722,
+      "sha256": "0fbaaa8d43f5432092cf0cdbae2d792a5e2c96aff81939168964bb550c3705a6",
       "mode": "0o644"
     },
     {
       "path": "qml/components/CryptoChart.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 2963,
-      "sha256": "fa26f8bc39b3271385fbce826889d6736b01959fd70a29ae1ac0a218680e51ba",
+      "bytes": 3710,
+      "sha256": "2248bdd8edec48be81bf8cb4d88c36e7762a7cab1efc371ef93201b1ff0abd91",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/CryptoField.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 562,
+      "sha256": "27ee1e273216bbad5e78877dd6a1411c0ca352447be78ee042f86724644c5933",
       "mode": "0o644"
     },
     {
       "path": "qml/components/CryptoHoldings.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 5910,
-      "sha256": "71315ba58ac38dc83f170c603f7cd73d0c814b6f9766d36e94caeb8f7d3374a8",
+      "bytes": 13596,
+      "sha256": "551170fb4bf6fd6580fe3182936553ea20647ed416b32b24c3d0838b9919c9e0",
       "mode": "0o644"
     },
     {
       "path": "qml/components/CryptoPaperAccounts.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 5049,
-      "sha256": "ff0495e18e8d326face3abc47bd18cb8bbe4459cad2f0dd5e7204e8830d9eb59",
+      "bytes": 7469,
+      "sha256": "f1c414a0f6bf3c8a0c7dde892b5791262295de8ee7cf7c13cd8079a0f12b0e53",
       "mode": "0o644"
     },
     {
@@ -14227,16 +14379,24 @@
       "path": "qml/components/CryptoPortfolioSummary.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 3336,
-      "sha256": "0e79872f9a44c6dbdba311d44b6cf26bac115d4edaad8ccc449fa40c3da91009",
+      "bytes": 4067,
+      "sha256": "498d43a130164be52163032a3b9183921d9d55495ba372a319c4991fdf478432",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/CryptoPumpPanel.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 30358,
+      "sha256": "9825471735f6db774c4e14bf4f660fb752dd3ef6d784d1e9658e8248ef5c3b61",
       "mode": "0o644"
     },
     {
       "path": "qml/components/CryptoSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 170089,
-      "sha256": "a05a9ae7e1cee49c169b7113a44e82bc4839de0a10123347cebcd491a51b903f",
+      "bytes": 186785,
+      "sha256": "fa03bc1617a9375cf3998da1ce8eaedeec032bc483d63d2112cbbd3374a4680d",
       "mode": "0o644"
     },
     {
@@ -14640,6 +14800,14 @@
       "mode": "0o644"
     },
     {
+      "path": "qml/components/LiveEyesStatus.js",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 2234,
+      "sha256": "83087fc24b2c32650980f8fa84127988dccaae1fdb6ba19b2423c0bf371f6818",
+      "mode": "0o644"
+    },
+    {
       "path": "qml/components/LocalGameServices.qml",
       "category": "interface",
       "kind": "file",
@@ -14851,16 +15019,16 @@
       "path": "qml/components/TelemetryRail.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 20583,
-      "sha256": "1aa1587b200aded27392ad4aa2470f442384a2758e311becb07816054517fca3",
+      "bytes": 23992,
+      "sha256": "169b249b10d0c1ad0a41e4624f3e87ed4a28c93abdd3c0863e7032cee431d0c8",
       "mode": "0o644"
     },
     {
       "path": "qml/components/TmogCard.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 4442,
-      "sha256": "23e25cfb3a8a775cbc974ea73d2532c9a2f4722172e05b60f9afa0ff9d849d22",
+      "bytes": 4662,
+      "sha256": "e092d6ce80897a7cd03919668edc38e6e17d53f2d0b34f0449a214bbf100442b",
       "mode": "0o644"
     },
     {
@@ -14888,6 +15056,14 @@
       "mode": "0o644"
     },
     {
+      "path": "qml/components/TmogReadings.js",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 3120,
+      "sha256": "e0b25f8fc7b982e5141ce16db9f7311977e492a3fd365198de056de2a02a3f90",
+      "mode": "0o644"
+    },
+    {
       "path": "qml/components/TmogRow.qml",
       "category": "interface",
       "kind": "file",
@@ -14907,16 +15083,16 @@
       "path": "qml/components/TmogSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 115648,
-      "sha256": "33209a99207054a0c6603ed84845b91c5cc2f6506971558fdfa6fed846e236ff",
+      "bytes": 117230,
+      "sha256": "4ea029286116c51d5739eccbefdf347ff56e45d9643def583b2cc771233ba559",
       "mode": "0o644"
     },
     {
       "path": "qml/components/UtilitySurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 39290,
-      "sha256": "823f26f26c9197fd317ecf67290ce3137ca691180a1959bb988fc88430c904b8",
+      "bytes": 41532,
+      "sha256": "9c14b36fc4594df58840d775e01054da6ee9ee8821d6cc5a73ea8bb3fec47ff0",
       "mode": "0o644"
     },
     {
@@ -14955,8 +15131,8 @@
       "path": "qml/components/WalletPopup.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 13395,
-      "sha256": "270c4bb324cab9bd9bb097b64c34a2bb4f455732a9c008f2d3d0549735ae43a1",
+      "bytes": 19923,
+      "sha256": "00c74694d00a13b30a68a4fcac49ae07d11febd1533773dc82c85a2b9d6b89f8",
       "mode": "0o644"
     },
     {
@@ -15011,8 +15187,8 @@
       "path": "qml/components/WorkspaceSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 169249,
-      "sha256": "a7926f291f34d1e4e729405d6e8cf6c06a8facffaa3a760b37a6d7eba28ad19b",
+      "bytes": 168931,
+      "sha256": "a61e78f2dfbb3fd557f78721008559936e941a15ad0f4f8705b69328606de5c7",
       "mode": "0o644"
     },
     {
@@ -15443,8 +15619,8 @@
       "path": "qml/crypto-hole/index.html",
       "category": "interface",
       "kind": "file",
-      "bytes": 5701,
-      "sha256": "651616de215d7e778c98db9ae2650a77fba7e76359e772a473ed73c6cfd5b07c",
+      "bytes": 6387,
+      "sha256": "1fe5b3310c4c39fc5b2d780b4d35239724e64f6f79a41283b8c70c14c86d4484",
       "mode": "0o644"
     },
     {
@@ -15955,8 +16131,8 @@
       "path": "skills/gg-live-eyes/SKILL.md",
       "category": "gg-skills",
       "kind": "file",
-      "bytes": 6644,
-      "sha256": "e0704011c2f219654eae08111a4c2198e6d7ec6f1b8aa4822ce73bc79cc94c0a",
+      "bytes": 7576,
+      "sha256": "bb10e5198138d932279206b56b55e559210fa8f302d085bf27ecefa050dfb94b",
       "mode": "0o644"
     },
     {
@@ -16003,8 +16179,8 @@
       "path": "startup.py",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 5819,
-      "sha256": "913dc265b83a99edd0b95050e1d6363fbff534c9d247eba3b2ee2a2fbb837187",
+      "bytes": 8997,
+      "sha256": "69302d8d2cc41872bfc54e8ef3eee2bf888179c4dcdc2f5dfe6f80e820afa6c4",
       "mode": "0o644"
     },
     {
@@ -16499,16 +16675,16 @@
       "path": "tests/preview_crypto_ui.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 10167,
-      "sha256": "0cbe399084d02b6e0fcea1eb83fbd356834fedb73f05adfd6a64f0b6350cf3dc",
+      "bytes": 10753,
+      "sha256": "e2ae5ddb020c6756f126f9cc534b4abace688258a77fc07ae9cacea838c307b7",
       "mode": "0o644"
     },
     {
       "path": "tests/run_crypto_checks.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 1981,
-      "sha256": "10526cce9298c96b7655db082a5ba3c9a7a8c1eee1c6acd5ffbc949f1b845209",
+      "bytes": 2349,
+      "sha256": "608c01a9224cf9efcc5c1472df553bf6cacabdebbed84e740cf1b24ed5bf2d05",
       "mode": "0o644"
     },
     {
@@ -16533,6 +16709,14 @@
       "kind": "file",
       "bytes": 11259,
       "sha256": "7c8b111bd54262e3863700b22fe385eabe15d39db79d45d3d928570dcd0759c3",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_app_audio_idle.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 6280,
+      "sha256": "f10902201ed6113e885ed82e7516a4ac88577017efc0e0bd7836a5f59e848500",
       "mode": "0o644"
     },
     {
@@ -16672,6 +16856,14 @@
       "mode": "0o600"
     },
     {
+      "path": "tests/test_chat_shutdown.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 5598,
+      "sha256": "c5e1a555a521fb32b4826f7c73589361a4d0256f4ba23b719b706512bb7b5b74",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_chat_surface_host.py",
       "category": "tests",
       "kind": "file",
@@ -16728,11 +16920,27 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_crypto_chart_lifecycle.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 10709,
+      "sha256": "670d428eaecff4873a9795457edfdcd4a56b2f20edbec102a9dd69399c05f332",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_crypto_contract.py",
       "category": "tests",
       "kind": "file",
       "bytes": 4346,
       "sha256": "870a1ff1bf309cd6efebd3c2227fba9abc73713973278c81e8a9baf3ea5c2307",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_design.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 20952,
+      "sha256": "d90ec3626147009a3ded45d112e44ccba47e17a636deec10b6239c3616dd6168",
       "mode": "0o644"
     },
     {
@@ -16744,19 +16952,27 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_crypto_engine_state.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 5824,
+      "sha256": "e52f63c91de13fffb9208e8739d1ec45e3fc846744a774f61d2542df5414b8a2",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_crypto_flash_arb.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 2341,
-      "sha256": "27825c03abf59eb96b195c2190ee915bc99bd7b5497e7eebb9bf935dcfe67f87",
+      "bytes": 3747,
+      "sha256": "7479d2f3a40343184b1b96c8fc33a36ee720c35de54da8aad79a51470b888e70",
       "mode": "0o644"
     },
     {
       "path": "tests/test_crypto_host.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 12708,
-      "sha256": "3dfeefe2373413bdc7a40a93017d7006f506d20f4977c84d8157fe536f8806a5",
+      "bytes": 12806,
+      "sha256": "43896f7d6b939ffa8509dfe5977809d6a026097944ff6a744cfb7fa6604ac8e7",
       "mode": "0o644"
     },
     {
@@ -16773,6 +16989,30 @@
       "kind": "file",
       "bytes": 2766,
       "sha256": "b65ed1b4b0efcbcbcbd4d1f791b138f87cdb4058f1e265050922f8e49e088b86",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_keys_windows.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 6657,
+      "sha256": "f84c6e77f465522fc5b7dc5538b1b1ed9b74eae4322de43dfed4f38d18ee100a",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_lab_windows.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 6754,
+      "sha256": "9bc72d7f828257d9c5735803486e9462573f84850a665da471ea3e936239fdb1",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_market_refresh.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11530,
+      "sha256": "95ff62bd3e917e0d418cedb5735d3136bd9ee6a7316b7e71a1f2edfa7d852d86",
       "mode": "0o644"
     },
     {
@@ -16800,11 +17040,99 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_crypto_pump_accounts.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 17682,
+      "sha256": "1842e644004f909321fe30aea8df39aa08b447f9fbf91dd45fcd36ba0120b129",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_pump_integration.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11028,
+      "sha256": "9c1b0f24b04bd35fec25fafa9bcae4aaae4e6f1b75f91e88f6f7a762e17549c2",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_pump_paper.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 6089,
+      "sha256": "00d33c8b5f09b205fd318e4125a20ecb0e66b81276bb8b477b8e4d17b9960f9d",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_pump_quotes.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 13228,
+      "sha256": "69c51f918f7d9eefd7894d2a88ce9142c57e2c3c2255846a90b5ce600f5d3c97",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_pump_runtime.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 39290,
+      "sha256": "f28ee22df3f91a88c2fb9b09733b30c817ecbeec78dfbc14a337d63d33d0595a",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_pump_stress.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 8383,
+      "sha256": "ff4c6c45b85a04d728c02074be099f6880815bf6089f7c0e915ded1d3d026b5b",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_pump_tx.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 17025,
+      "sha256": "73d888dc34610dbd657a06c2aedecdff411fbc4811fd4c48b0b4df3132897558",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_pump_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 17681,
+      "sha256": "2f6337f92739784db96f5e94224b481108d5534411b85643ec7249b3c2ef574b",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_crypto_reliability.py",
       "category": "tests",
       "kind": "file",
       "bytes": 18869,
       "sha256": "1cf465633a6197f3641d80767787d5db67dc33eaddea0268aea1f4c4afab28ec",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_research_quality.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 7323,
+      "sha256": "fa2a3969352bf7cd6a2f8870e257536f421a9806ed2930491d6ba90a1d191771",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_research_quality_factory.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 8212,
+      "sha256": "9e3d7412a8a723783f332f8ab1b3903f3ad041dbf73770db7f115d5c16a74ba8",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_state_atomic.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 4916,
+      "sha256": "89fe4ef9a3cbb44ae9a590ffd073a5d8b0e77e35267605a7ccbfcc63edf0aac6",
       "mode": "0o644"
     },
     {
@@ -16821,6 +17149,22 @@
       "kind": "file",
       "bytes": 48888,
       "sha256": "d22665e930d6908d81ab21ed6183e156513bdf28ea4d33d32e521f720b6db46a",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_ui_refresh.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 13943,
+      "sha256": "6f62baeef7bf221151b2a9266b9c05779b84169f0151dbca4b4e75c581f07e4e",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_ui_runtime.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 8443,
+      "sha256": "36a06ce9413e427fc39e3da63b2a8b70aa662bdacc1fffb6eaed562c51a6c243",
       "mode": "0o644"
     },
     {
@@ -16909,6 +17253,14 @@
       "kind": "file",
       "bytes": 18717,
       "sha256": "a66f961c29dcd34cabfde04f240bffe36094a4d3ab07445f2982641f0d28eaa0",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_desktop_idle_load.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 6519,
+      "sha256": "07e9868f128db6f507612873510418b36ae3fddbf94fcee2f2405d41998d5c75",
       "mode": "0o644"
     },
     {
@@ -18704,6 +19056,22 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_live_eyes_status_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 9647,
+      "sha256": "1a327e8741134968ae110b304e83b75d88d35f0ac147a180e5b04a87752a3c24",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_live_eyes_video_activity.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11625,
+      "sha256": "71bd2ec625b7442aa8cbcff0fa63fef76e727b0d27c0b10c094de318d9f67d24",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_live_mandate_store.py",
       "category": "tests",
       "kind": "file",
@@ -19056,6 +19424,14 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_resident_chat_lifecycle.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 8501,
+      "sha256": "06508686be8332ed159b47138bae47656b0ba5052b89ef6529d8000ebe6e2f6f",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_resident_chat_live_ui.py",
       "category": "tests",
       "kind": "file",
@@ -19208,6 +19584,14 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_startup_shutdown.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 5442,
+      "sha256": "7794519cabb02a55421fe5b520dde5aa9677faf2b928a30811381712de911a2d",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_surface_intent.py",
       "category": "tests",
       "kind": "file",
@@ -19240,6 +19624,22 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_terminal_input_backpressure.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 5247,
+      "sha256": "7ba6a0e1e7751c1f930785f99f1a1dc244644f9a9ffbdf0cc829459e71fd5e07",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_terminal_snapshot_backpressure.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 9037,
+      "sha256": "1493bd0035529e0f7ee71d1e3657e98b70f95c07cc3a2fef68c9b4e2aee83757",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_terminal_window_state.py",
       "category": "tests",
       "kind": "file",
@@ -19256,6 +19656,14 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_tmog_background_activity.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 3239,
+      "sha256": "3a0bea9ed7db3ee27c606f21d06b73b12e56b8b4211eb5b42e226d42ed799728",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_tmog_contract.py",
       "category": "tests",
       "kind": "file",
@@ -19264,19 +19672,35 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_tmog_numeric_labels.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 9075,
+      "sha256": "5511f40909411831777a845b3312555ccca2783f12bbdd4c8ca00a67e5bd9f4c",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_tmog_numeric_readings.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 7390,
+      "sha256": "452e7697126bdd523acb92dd6d1ced25f6341bcdca6ca1802dc5226dc2650bc9",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_tmog_responsiveness.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 8934,
-      "sha256": "09173c0141b23a2114deaa1ed742b6b68ccd65338f0a4414b21f78157ceb2320",
+      "bytes": 9015,
+      "sha256": "916195b092ea4b2a52e6d0cb1541fba0e9ddcd04b56e4f1d8801455c8a4a325b",
       "mode": "0o644"
     },
     {
       "path": "tests/test_tmog_visual_damping.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 3603,
-      "sha256": "e024db54f870aeee0a8b319fb3b1d6cb516dc6646db7a0f19e8cd14ea443f757",
+      "bytes": 4968,
+      "sha256": "9e66628668c461f330bfd6b2e992522fd192e6c326eae863af464ebd04bec8ab",
       "mode": "0o644"
     },
     {
@@ -19285,6 +19709,14 @@
       "kind": "file",
       "bytes": 9314,
       "sha256": "93a8ef91faa8c81d34d0510afc5a4b02f63fbaed6e9187ce71d29dd37ce93f0e",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_utility_idle_load.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11685,
+      "sha256": "1cf07f41ab33d9d5fa65303e52071c69a421194053bb9f31970a9c6ccc13e333",
       "mode": "0o644"
     },
     {
@@ -19443,16 +19875,32 @@
       "path": "tests/test_windows_telemetry.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 3523,
-      "sha256": "03fe761c60fe4cf6e29ca64dc4eea2a75909c2bc7c36f74a4c4e21b2300c976d",
+      "bytes": 3771,
+      "sha256": "e561302482b3589d390ac9617ad0c7ab180e67f5c6eccb5cf4ee36e57ab2fe9c",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_windows_telemetry_sampling.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 13961,
+      "sha256": "e373b9c3f7a8c7c92d00eb73946140276beb9f0cc680c7ac01be58a22c8e371c",
       "mode": "0o644"
     },
     {
       "path": "tests/test_windows_vision.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 5125,
-      "sha256": "cd448e05f7f61502ec5fa300a638cef33c5735692256d1cfbdb00b9b0f13a3e1",
+      "bytes": 11341,
+      "sha256": "e3a28d999b9903ec856fe128ae8d9ab05698c9f7dcde9792a954de02ea4d952c",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_windows_vision_activity.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 14205,
+      "sha256": "652bd40da654f0250068d203ab8f441c1051120bed7c06aac406065d2163816d",
       "mode": "0o644"
     },
     {

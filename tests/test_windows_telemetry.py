@@ -14,8 +14,8 @@ from backend import windows_telemetry as metrics
 class WindowsTelemetryTests(unittest.TestCase):
     def test_io_rate_is_held_between_counter_reads_and_handles_reset(self):
         clock = [10.0]
-        with patch.multiple(metrics, _previous_io=None, _last_pulse_at=0.0,
-                            _io_rates=(0.0, 0.0, 0.0, 0.0), _interface=(0.0, "")), \
+        with patch.multiple(metrics, _previous_io=None, _last_pulse_at=None, _probe_cache={},
+                            _io_rates=(0.0, 0.0, 0.0, 0.0), _interface=(None, "")), \
              patch.object(metrics.time, "monotonic", side_effect=lambda: clock[0]), \
              patch.object(metrics.psutil, "virtual_memory", return_value=SimpleNamespace(
                  used=1024**3, total=2*1024**3, percent=50)), \
@@ -30,13 +30,18 @@ class WindowsTelemetryTests(unittest.TestCase):
              patch.object(metrics.psutil, "net_if_stats", return_value={
                  "Ethernet": SimpleNamespace(isup=True)}) as interfaces:
             first = metrics.pulse()
-            self.assertEqual(first["cpu_busy"], 30)
+            self.assertIsNone(first["cpu_busy"])
+            self.assertTrue(first["cpu_pending"])
+            self.assertEqual(first["cores"], [])
             self.assertEqual(first["net_rx_bps"], 0)
             clock[0] += 0.016
             self.assertEqual(metrics.pulse()["net_rx_bps"], 0)
             self.assertEqual(network.call_count, 1)
             clock[0] = 10.12
-            measured = metrics.pulse()["net_rx_bps"]
+            mature = metrics.pulse()
+            self.assertEqual(mature["cpu_busy"], 30)
+            self.assertFalse(mature["cpu_pending"])
+            measured = mature["net_rx_bps"]
             self.assertAlmostEqual(measured, 100000)
             clock[0] = 10.136
             self.assertEqual(metrics.pulse()["net_rx_bps"], measured)

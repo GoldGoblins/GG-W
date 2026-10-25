@@ -316,7 +316,8 @@ def export_parts(parts: list[dict]) -> dict:
     return {"images": paths, "metadata": [json.loads(p["text"]) for p in parts if p["type"] == "text"]}
 
 
-def video_observation(source: str, *, start: float = 0, seconds: float = 2, fps: float = 25) -> dict:
+def video_observation(source: str, *, start: float = 0, seconds: float = 2, fps: float = 25,
+                      on_frame=None, cancelled=None) -> dict:
     """Decode only a requested interval, through pipes, with decoder timestamps.
 
     URLs resolve to media streams; no browser cookies, recording, model
@@ -325,6 +326,25 @@ def video_observation(source: str, *, start: float = 0, seconds: float = 2, fps:
     """
     import re
     import shutil
+    cancellation = threading.Event()
+
+    def cancellation_requested():
+        if cancellation.is_set():
+            return True
+        try:
+            requested = cancelled is not None and bool(cancelled())
+        except BaseException:
+            # A broken cancellation channel must not leave a decoder running.
+            requested = True
+        if requested:
+            cancellation.set()
+        return requested
+
+    def check_cancelled():
+        if cancellation_requested():
+            raise RuntimeError("Video observation stopped: CANCELLED")
+
+    check_cancelled()
     start, seconds, fps = float(start), float(seconds), float(fps)
     if not all(math.isfinite(v) for v in (start, seconds, fps)) or start < 0 or not 0 < seconds <= 6 or not 1 <= fps <= 25:
         raise ValueError("Video interval must be 0–6 seconds at 1–25 fps")
@@ -338,16 +358,30 @@ def video_observation(source: str, *, start: float = 0, seconds: float = 2, fps:
         downloader = find_executable("yt-dlp")
         if not downloader:
             raise RuntimeError("yt-dlp is not installed")
-        try:
-            completed = subprocess.run([downloader, "--no-cache-dir", "--no-playlist", "--skip-download",
-                                        "--no-warnings", "--dump-single-json", "-f",
-                                        "best[height<=720]/bestvideo[height<=720]/best", "--", source],
-                                       stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=60)
-        except subprocess.TimeoutExpired:
-            raise RuntimeError("Videolänken svarade inte inom en minut.") from None
-        if completed.returncode:
+        resolver = [downloader, "--no-cache-dir", "--no-playlist", "--skip-download",
+                    "--no-warnings", "--dump-single-json", "-f",
+                    "best[height<=720]/bestvideo[height<=720]/best", "--", source]
+        if cancelled is not None:
+            from backend.platform_process import run_bounded
+            code, resolved, _, trigger = run_bounded(resolver, timeout=60,
+                max_output_bytes=4 * 1024 * 1024, cancelled=cancellation_requested)
+            check_cancelled()
+            if trigger == "CANCELLED":
+                raise RuntimeError("Video observation stopped: CANCELLED")
+            if trigger == "TIMEOUT":
+                raise RuntimeError("Videolänken svarade inte inom en minut.")
+            if trigger != "NONE":
+                raise RuntimeError("Videolänken kunde inte öppnas. Ingen film sparades.")
+        else:
+            try:
+                completed = subprocess.run(resolver, stdout=subprocess.PIPE,
+                                           stderr=subprocess.DEVNULL, timeout=60)
+            except subprocess.TimeoutExpired:
+                raise RuntimeError("Videolänken svarade inte inom en minut.") from None
+            code, resolved = completed.returncode, completed.stdout
+        if code:
             raise RuntimeError("Videolänken kunde inte öppnas. Ingen film sparades.")
-        metadata = json.loads(completed.stdout)
+        metadata = json.loads(resolved)
         stream_source = metadata.get("url", "")
         if urlparse(stream_source).scheme not in {"http", "https"}:
             raise RuntimeError("The link did not resolve to a media stream")
@@ -365,26 +399,54 @@ def video_observation(source: str, *, start: float = 0, seconds: float = 2, fps:
     command += ["-ss", str(start), "-i", stream_source, "-t", str(seconds), "-an", "-sn",
                 "-vf", f"fps={fps},scale=w='min(1600,iw)':h=-2,showinfo",
                 "-c:v", "mjpeg", "-q:v", "3", "-f", "image2pipe", "pipe:1"]
+    check_cancelled()
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     frames, timestamps = [], {}
     pending = bytearray()
     byte_count = 0
     exceeded = False
     timed_out = threading.Event()
+    watcher_stop = threading.Event()
+
+    def kill_decoder():
+        if process.poll() is None:
+            try:
+                process.kill()
+            except OSError:
+                # Exit can race the watchdog; never target a different process.
+                pass
+
     def expire():
         timed_out.set()
-        process.kill()
+        kill_decoder()
     timer = threading.Timer(60, expire)
-    timer.start()
+
     def read_timestamps():
-        for raw in process.stderr:
-            match = re.search(rb"n:\s*(\d+).*?pts_time:([\d.eE+-]+)", raw)
-            if match and int(match[1]) < 151:
-                timestamps[int(match[1])] = start + float(match[2])
+        try:
+            for raw in process.stderr:
+                match = re.search(rb"n:\s*(\d+).*?pts_time:([\d.eE+-]+)", raw)
+                if match and int(match[1]) < 151:
+                    timestamps[int(match[1])] = start + float(match[2])
+        except (OSError, ValueError):
+            pass
+
+    def watch_cancellation():
+        while not watcher_stop.wait(0.05):
+            if cancellation_requested():
+                kill_decoder()
+                return
+
     reader = threading.Thread(target=read_timestamps, daemon=True)
-    reader.start()
+    watcher = (threading.Thread(target=watch_cancellation, daemon=True)
+               if cancelled is not None else None)
     try:
+        timer.start()
+        reader.start()
+        if watcher is not None:
+            watcher.start()
+        check_cancelled()
         while chunk := process.stdout.read(65536):
+            check_cancelled()
             pending.extend(chunk)
             if len(pending) > MAX_FRAME_BYTES:
                 exceeded = True
@@ -402,17 +464,26 @@ def video_observation(source: str, *, start: float = 0, seconds: float = 2, fps:
                     process.kill()
                     break
                 frames.append({"seq": len(frames) + 1, "age_ms": 0, "jpeg": base64.b64encode(data).decode()})
+                if on_frame is not None:
+                    on_frame(frames=len(frames), last_frame_at=time.monotonic(), received_fps=0)
             if exceeded:
                 break
         process.wait(timeout=5)
-        reader.join(timeout=2)
     finally:
+        watcher_stop.set()
         timer.cancel()
         if process.poll() is None:
-            process.kill()
+            kill_decoder()
             process.wait(timeout=5)
+        if watcher is not None and watcher.ident is not None:
+            watcher.join(timeout=1)
+        if reader.ident is not None:
+            reader.join(timeout=1)
+        if timer.ident is not None:
+            timer.join(timeout=1)
         process.stdout.close()
         process.stderr.close()
+    check_cancelled()
     if exceeded or timed_out.is_set():
         raise RuntimeError("Videosekvensen nådde minnes- eller tidsgränsen. Välj ett kortare avsnitt.")
     if process.returncode or not frames:

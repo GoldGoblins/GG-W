@@ -16,7 +16,7 @@ import time
 from typing import Any
 
 from backend import crypto_backtest, crypto_bots, crypto_data
-from backend.crypto_contract import ensure_state_dir
+from backend.crypto_contract import ensure_state_dir, write_state_json, read_state_json
 
 PAIRS = {"SOLUSDT", "KASUSDT"}
 SCHEMA = 1
@@ -49,24 +49,22 @@ def _path(pair: str):
 def _load(pair: str) -> dict[str, Any]:
     path = _path(pair)
     try:
-        value = json.loads(path.read_text())
+        value = read_state_json(path)
     except FileNotFoundError:
         return {"schema": SCHEMA, "pair": pair, "primary": "1h", "accounts": {}, "events": []}
+    except (OSError, ValueError):
+        raise ValueError('CRYPTO_PAPER_STATE_CORRUPT') from None
     if value.get("schema") != SCHEMA or value.get("pair") != pair:
         raise ValueError("CRYPTO_PAPER_STATE_VERSION")
+    if (not isinstance(value.get('accounts'), dict) or not isinstance(value.get('events'), list)
+            or not all(isinstance(account, dict) for account in value['accounts'].values())):
+        raise ValueError('CRYPTO_PAPER_STATE_CORRUPT')
     return value
 
 
 def _save(value: dict[str, Any]) -> None:
     path = _path(value["pair"])
-    temporary = path.with_suffix(".new")
-    with temporary.open("w", encoding="utf-8") as stream:
-        stream.write(json.dumps(value, allow_nan=False, separators=(",", ":")) + "\n")
-        stream.flush()
-        os.fsync(stream.fileno())
-    temporary.chmod(0o600)
-    os.replace(temporary, path)
-    sync_directory(path.parent)
+    write_state_json(path, value)
 
 
 def _new_account() -> dict[str, Any]:

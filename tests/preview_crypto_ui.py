@@ -12,7 +12,7 @@ os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--disable-gpu --disable-bac
 PROJECT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT))
 from PySide6.QtCore import QObject, QTimer, QUrl, Slot
-from PySide6.QtGui import QGuiApplication
+from PySide6.QtGui import QFont, QFontDatabase, QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuick import QQuickWindow
 from PySide6.QtWebEngineQuick import QtWebEngineQuick
@@ -76,6 +76,11 @@ def main():
             def cryptoRefreshKasChart(self): return self.cryptoStatus()
         QtWebEngineQuick.initialize()
         app=QGuiApplication([])
+        if os.name == 'nt':
+            for font_file in ('consola.ttf', 'consolab.ttf', 'seguisym.ttf'):
+                QFontDatabase.addApplicationFont(str(Path(os.environ.get('SystemRoot', 'C:/Windows')) / 'Fonts' / font_file))
+        QFont.insertSubstitution('monospace', 'Consolas' if os.name == 'nt' else 'DejaVu Sans Mono')
+        app.setFont(QFont('Consolas' if os.name == 'nt' else 'DejaVu Sans Mono'))
         engine=QQmlApplicationEngine()
         messages=[]
         engine.warnings.connect(lambda warnings: messages.extend(w.toString() for w in warnings))
@@ -88,18 +93,19 @@ def main():
         window=engine.rootObjects()[0]
         pane=window.findChild(QObject,"reviewPane")
         pane.setProperty("statusJson",json.dumps(payload))
-        pages=["PORTFOLIO","PORTFOLIO_BOTTOM","PORTFOLIO_WALLET","PORTFOLIO_NARROW","PORTFOLIO_EMPTY","PORTFOLIO_NOPRICE","PORTFOLIO_SINGLE","BACKTEST","TRADER","TRADER_NARROW","FACTORY","FACTORY_BOTTOM","DESK","POLY","KAS","KAS_WALLET","ACTIVITY"]
+        pages=["PORTFOLIO","PORTFOLIO_BOTTOM","PORTFOLIO_WALLET","PORTFOLIO_NARROW","PORTFOLIO_430","PORTFOLIO_EMPTY","PORTFOLIO_NOPRICE","PORTFOLIO_SINGLE","BACKTEST","TRADER","TRADER_NARROW","PUMP","PUMP_NARROW","SIGNAL","ARB","FACTORY","FACTORY_BOTTOM","FACTORY_NARROW","DESK","POLY","KAS","KAS_WALLET","ACTIVITY"]
         index=0
         geometry=[]
         def capture():
             nonlocal index
             page=pages[index]
-            window.setWidth(720 if page in ("PORTFOLIO_NARROW","TRADER_NARROW") else 1100)
-            window.setHeight(650 if page in ("PORTFOLIO_NARROW","TRADER_NARROW") else 780)
+            narrow = page in ("PORTFOLIO_430", "PUMP_NARROW", "FACTORY_NARROW")
+            window.setWidth(430 if narrow else 720 if page in ("PORTFOLIO_NARROW","TRADER_NARROW") else 1100)
+            window.setHeight(650 if narrow or page in ("PORTFOLIO_NARROW","TRADER_NARROW") else 780)
             pane.setProperty("statusJson",json.dumps(payload))
             pane.setProperty("assetPick","KAS" if page.startswith("KAS") else "SOL")
             pane.setProperty("walletToolsOpen",page.endswith("WALLET"))
-            pane.setProperty("page","FACTORY" if page=="FACTORY_BOTTOM" else "PORTFOLIO" if page.startswith(("PORTFOLIO","KAS")) else "TRADER" if page=="TRADER_NARROW" else page)
+            pane.setProperty("page","PORTFOLIO" if page.startswith(("PORTFOLIO","KAS")) else page.split("_")[0])
             if page in ("PORTFOLIO_EMPTY","PORTFOLIO_NOPRICE","PORTFOLIO_SINGLE"):
                 fixture=json.loads(json.dumps(payload))
                 assets=[] if page.endswith("EMPTY") else payload["holdings"][:1] if page.endswith("SINGLE") else [dict(a,price_usd=None) for a in payload["holdings"]]
@@ -112,9 +118,9 @@ def main():
             holdings.setProperty("contentY",0)
             if page=="PORTFOLIO_BOTTOM":
                 holdings.setProperty("contentY",max(0,holdings.property("contentHeight")-holdings.property("height")))
-            if page=="FACTORY_BOTTOM":
+            if page.startswith("FACTORY"):
                 scroll=pane.findChild(QObject,"cryptoFactoryScroll")
-                scroll.setProperty("contentY",max(0,scroll.property("contentHeight")-scroll.property("height")))
+                scroll.setProperty("contentY",max(0,scroll.property("contentHeight")-scroll.property("height")) if page=="FACTORY_BOTTOM" else 0)
             if page=="BACKTEST": pane.setProperty("botTape","bt0")
             def save():
                 nonlocal index
@@ -133,7 +139,7 @@ def main():
                 else: app.quit()
             QTimer.singleShot(500,save)
         QTimer.singleShot(800,capture)
-        QTimer.singleShot(20000,app.quit)
+        QTimer.singleShot(30000,app.quit)
         app.exec()
         (output/'warnings.json').write_text(json.dumps(messages,indent=2))
         (output/'geometry.json').write_text(json.dumps(geometry,indent=2))

@@ -29,6 +29,7 @@ from PySide6.QtCore import (
     QSocketNotifier,
     QThread,
     QTimer,
+    QUrl,
     Signal,
     Slot,
 )
@@ -81,6 +82,7 @@ from backend import gpt_memory_commands
 
 BASH = "/bin/bash"
 _PTY_READ_BUDGET = 48 * 1024
+_PTY_MAX_UNAPPLIED_BYTES = 4 * _PTY_READ_BUDGET
 _PTY_DRAIN_MS = 32
 _PTY_BACKUP_MS = 500
 _PTY_WRITE_CHUNK = 16 * 1024
@@ -235,6 +237,7 @@ class ChatSurfaceHost(QObject):
     workbenchExtensionsChanged = Signal(str)
     flowTuiChanged = Signal(str)
     startupChatChanged = Signal()
+    cryptoStatusUpdated = Signal(str)
 
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -280,6 +283,7 @@ class ChatSurfaceHost(QObject):
         self._wallet_last_turn: int | None = None
         self._wallet_json = ""
         self._gpt_wallet_json = ""
+        self._crypto_ui = None
         # The old state file was written by a host-wide mtime scan and can
         # point at the parent Codex conversation.  GPTUI keeps its active
         # pointer and new rollout root separate; legacy sessions remain
@@ -322,9 +326,9 @@ class ChatSurfaceHost(QObject):
         self._wallet_timer.setInterval(15000)
         self._wallet_timer.timeout.connect(self._emit_wallet)
         self._wallet_timer.start()
-        self._live_vision_json = '{"state":"off"}'
+        self._live_vision_json = live_vision.ui_status()
         self._live_vision_timer = QTimer(self)
-        self._live_vision_timer.setInterval(1000)
+        self._live_vision_timer.setInterval(250 if os.name == "nt" else 1000)
         self._live_vision_timer.timeout.connect(self._refresh_live_vision_status)
         self._live_vision_timer.start()
         self._qml_watch: QFileSystemWatcher | None = None
@@ -348,11 +352,16 @@ class ChatSurfaceHost(QObject):
         self._crypto_timer.setInterval(60000)
         self._crypto_timer.timeout.connect(self._crypto_idle_tick)
         self._crypto_timer.start()
+        self._pump_timer = QTimer(self)
+        self._pump_timer.setInterval(5000)
+        self._pump_timer.timeout.connect(crypto_host.pump_heartbeat)
+        self._pump_timer.start()
         self._idle_learn_timer = QTimer(self)
         self._idle_learn_timer.setInterval(45000)
         self._idle_learn_timer.timeout.connect(self._idle_learn_tick)
         self._idle_learn_timer.start()
         self._tmog_sampler = TmogSampler()
+        self._tmog_sampler.start()
         self._chat_io_at = 0.0
         self._console_provider = None
         self._console_provider_added = False
@@ -2134,229 +2143,145 @@ class ChatSurfaceHost(QObject):
             embed.hide()
         self._hide_torlink()
 
+    def _crypto_runtime(self):
+        if self._crypto_ui is None:
+            from backend.crypto_ui_runtime import CryptoUiRuntime
+            self._crypto_ui = CryptoUiRuntime(self)
+            self._crypto_ui.updated.connect(self.cryptoStatusUpdated)
+        return self._crypto_ui
+
+    def _crypto_async(self, name: str, callback, *args) -> str:
+        return self._crypto_runtime().submit(name, lambda: callback(*args))
+
     @Slot(result=str)
     def cryptoStatus(self) -> str:
-        try:
-            return json.dumps(crypto_host.status_payload(), separators=(",", ":"))
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__})
+        return self._crypto_runtime().snapshot()
 
     @Slot(result=str)
     def cryptoRailStatus(self) -> str:
-        try:
-            return json.dumps(
-                crypto_host.status_payload(rail=True), separators=(",", ":")
-            )
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__})
+        return self._crypto_runtime().snapshot(rail=True)
+
+    @Slot(str, str, result=str)
+    def cryptoPumpInspect(self, mint: str, pool: str) -> str:
+        return self._crypto_async("pump_inspect", crypto_host.pump_inspect, mint, pool)
+
+    @Slot(str, str, str, result=str)
+    def cryptoPumpQuote(self, side: str, amount: str, slippage: str) -> str:
+        return self._crypto_async("pump_quote", crypto_host.pump_quote, side, amount, slippage)
+
+    @Slot(result=str)
+    def cryptoPumpSimulate(self) -> str:
+        return self._crypto_async("pump_simulate", crypto_host.pump_simulate)
+
+    @Slot(result=str)
+    def cryptoPumpPaperTrade(self) -> str:
+        return self._crypto_async("pump_paper", crypto_host.pump_paper_trade)
+
+    @Slot(result=str)
+    def cryptoPumpPaperReset(self) -> str:
+        return self._crypto_async("pump_paper_reset", crypto_host.pump_paper_reset)
+
+    @Slot(result=str)
+    def cryptoPumpRefresh(self) -> str:
+        return self._crypto_async("pump_refresh", crypto_host.pump_refresh)
 
     @Slot(result=str)
     def cryptoRefreshChart(self) -> str:
-        try:
-            crypto_host.request_chart_refresh("SOL")
-            return json.dumps(crypto_host.status_payload(), separators=(",", ":"))
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__})
+        return self._crypto_async("refresh_sol", crypto_host.request_chart_refresh, "SOL")
 
     @Slot(str, result=str)
     def cryptoSetChartInterval(self, interval: str) -> str:
-        try:
-            return json.dumps(
-                crypto_host.set_chart_interval(interval),
-                separators=(",", ":"),
-            )
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__})
+        return self._crypto_async("sol_interval", crypto_host.set_chart_interval, interval)
 
     @Slot(result=str)
     def cryptoRefreshKasChart(self) -> str:
-        try:
-            crypto_host.request_chart_refresh("KAS")
-            return json.dumps(crypto_host.status_payload(), separators=(",", ":"))
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__})
+        return self._crypto_async("refresh_kas", crypto_host.request_chart_refresh, "KAS")
 
     @Slot(result=str)
     def cryptoExtendSolChart(self) -> str:
-        try:
-            return json.dumps(
-                crypto_host.extend_sol_chart(),
-                separators=(",", ":"),
-            )
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__})
+        return self._crypto_async("sol_history", crypto_host.extend_sol_chart)
 
     @Slot(result=str)
     def cryptoExtendKasChart(self) -> str:
-        try:
-            return json.dumps(
-                crypto_host.extend_kas_chart(),
-                separators=(",", ":"),
-            )
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__})
+        return self._crypto_async("kas_history", crypto_host.extend_kas_chart)
 
     @Slot(str, result=str)
     def cryptoSetKasChartInterval(self, interval: str) -> str:
-        try:
-            return json.dumps(
-                crypto_host.set_kas_chart_interval(interval),
-                separators=(",", ":"),
-            )
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__})
+        return self._crypto_async("kas_interval", crypto_host.set_kas_chart_interval, interval)
 
     @Slot(str, result=str)
     def cryptoSetPortfolioAsset(self, asset: str) -> str:
-        try:
-            return json.dumps(
-                crypto_host.set_portfolio_asset(asset),
-                separators=(",", ":"),
-            )
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("asset", crypto_host.set_portfolio_asset, asset)
 
     @Slot(str, result=str)
     def cryptoConnectWatch(self, pubkey: str) -> str:
-        try:
-            return json.dumps(
-                crypto_host.connect_watch(pubkey),
-                separators=(",", ":"),
-            )
-        except ValueError as exc:
-            return json.dumps({"error": str(exc)})
+        return self._crypto_async("connect", crypto_host.connect_watch, pubkey)
 
     @Slot(result=str)
     def cryptoCreateTestWallet(self) -> str:
-        try:
-            return json.dumps(
-                crypto_host.create_test_wallet(),
-                separators=(",", ":"),
-            )
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("create_wallet", crypto_host.create_test_wallet)
 
     @Slot(str, result=str)
     def cryptoImportKeypair(self, path: str) -> str:
-        try:
-            raw = str(path or "").replace("file://", "")
-            return json.dumps(
-                crypto_host.import_keypair_file(raw),
-                separators=(",", ":"),
-            )
-        except ValueError as exc:
-            return json.dumps({"error": str(exc)})
+        url = QUrl(str(path or ""))
+        raw = url.toLocalFile() if url.isLocalFile() else str(path or "")
+        return self._crypto_async("import_wallet", crypto_host.import_keypair_file, raw)
 
     @Slot(result=str)
     def cryptoAirdrop(self) -> str:
-        try:
-            return json.dumps(crypto_host.airdrop_testnet(), separators=(",", ":"))
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("airdrop", crypto_host.airdrop_testnet)
 
     @Slot(result=str)
     def cryptoDisconnect(self) -> str:
-        return json.dumps(crypto_host.disconnect(), separators=(",", ":"))
+        return self._crypto_async("disconnect", crypto_host.disconnect)
 
     @Slot(str, result=str)
     def cryptoSelectAccount(self, pubkey: str) -> str:
-        try:
-            return json.dumps(
-                crypto_host.select_account(pubkey),
-                separators=(",", ":"),
-            )
-        except ValueError as exc:
-            return json.dumps({"error": str(exc)})
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("account", crypto_host.select_account, pubkey)
 
     @Slot(str, result=str)
     def cryptoSetNetwork(self, network: str) -> str:
-        try:
-            payload = crypto_host.set_network(network)
-            if "wallet" in payload:
-                return json.dumps(crypto_host.status_payload(), separators=(",", ":"))
-            return json.dumps(payload, separators=(",", ":"))
-        except ValueError as exc:
-            return json.dumps({"error": str(exc)})
+        return self._crypto_async("network", crypto_host.set_network, network)
 
     @Slot(result=str)
     def cryptoLabOn(self) -> str:
-        try:
-            return json.dumps(crypto_host.lab_on(), separators=(",", ":"))
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("lab_on", crypto_host.lab_on)
 
     @Slot(result=str)
     def cryptoLabOff(self) -> str:
-        try:
-            return json.dumps(crypto_host.lab_off(), separators=(",", ":"))
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("lab_off", crypto_host.lab_off)
 
     @Slot(result=str)
     def cryptoKaspaGenesis(self) -> str:
-        try:
-            crypto_host.kaspa_genesis()
-            return json.dumps(crypto_host.status_payload(), separators=(",", ":"))
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("kas_genesis", crypto_host.kaspa_genesis)
 
     @Slot(str, int, result=str)
     def cryptoKaspaTransition(self, function: str, amount: int) -> str:
-        try:
-            crypto_host.kaspa_transition(function, int(amount))
-            return json.dumps(crypto_host.status_payload(), separators=(",", ":"))
-        except ValueError as exc:
-            return json.dumps({"error": str(exc)})
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("kas_transition", crypto_host.kaspa_transition, function, int(amount))
 
     @Slot(result=str)
     def cryptoKaspaCompile(self) -> str:
-        try:
-            crypto_host.kaspa_compile()
-            return json.dumps(crypto_host.status_payload(), separators=(",", ":"))
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("kas_compile", crypto_host.kaspa_compile)
 
     @Slot(str, result=str)
     def cryptoKaspaSetNetwork(self, network: str) -> str:
-        try:
-            crypto_host.kaspa_set_network(network)
-            return json.dumps(crypto_host.status_payload(), separators=(",", ":"))
-        except ValueError as exc:
-            return json.dumps({"error": str(exc)})
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("kas_network", crypto_host.kaspa_set_network, network)
 
     @Slot(bool, result=str)
     def cryptoArmBot(self, armed: bool) -> str:
-        try:
-            return json.dumps(crypto_host.set_bot_armed(bool(armed)), separators=(",", ":"))
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("arm_bot", crypto_host.set_bot_armed, bool(armed))
 
     @Slot(result=str)
     def cryptoEvalSignals(self) -> str:
-        try:
-            return json.dumps(crypto_host.evaluate_signals(), separators=(",", ":"))
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("signals", crypto_host.evaluate_signals)
 
     @Slot(bool, result=str)
     def cryptoArmTrader(self, armed: bool) -> str:
-        try:
-            return json.dumps(crypto_host.set_trader_armed(bool(armed)), separators=(",", ":"))
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("arm_paper", crypto_host.set_trader_armed, bool(armed))
 
     @Slot(bool, result=str)
     def cryptoPaperAll(self, enabled: bool) -> str:
-        try:
-            return json.dumps(crypto_host.set_paper_all(bool(enabled)), separators=(",", ":"))
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("paper_all", crypto_host.set_paper_all, bool(enabled))
 
     def _crypto_idle_tick(self) -> None:
         threading.Thread(
@@ -2398,17 +2323,11 @@ class ChatSurfaceHost(QObject):
 
     @Slot(result=str)
     def cryptoTickTrader(self) -> str:
-        try:
-            return json.dumps(crypto_host.start_paper_tick("trader"), separators=(",", ":"))
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("paper_tick", crypto_host.start_paper_tick, "trader")
 
     @Slot(result=str)
     def cryptoResetTrader(self) -> str:
-        try:
-            return json.dumps(crypto_host.reset_trader(), separators=(",", ":"))
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("reset_paper", crypto_host.reset_trader)
 
     @Slot(str, str, str, str, result=str)
     def cryptoPolymarketQuery(
@@ -2418,134 +2337,59 @@ class ChatSurfaceHost(QObject):
         hour: str,
         slug: str,
     ) -> str:
-        try:
-            return json.dumps(
-                crypto_host.start_polymarket_query(
-                    preset,
-                    query_date,
-                    hour,
-                    slug,
-                ),
-                separators=(",", ":"),
-            )
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("polymarket", crypto_host.start_polymarket_query, preset, query_date, hour, slug)
 
     @Slot(result=str)
     def cryptoPolymarketStatus(self) -> str:
-        try:
-            return json.dumps(
-                crypto_host.poll_polymarket_query(),
-                separators=(",", ":"),
-            )
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_runtime().snapshot()
 
     @Slot(result=str)
     def cryptoPolymarketReset(self) -> str:
-        try:
-            return json.dumps(
-                crypto_host.reset_polymarket_query(),
-                separators=(",", ":"),
-            )
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("polymarket_reset", crypto_host.reset_polymarket_query)
 
     @Slot(result=str)
     def cryptoStrategyFactory(self) -> str:
-        try:
-            return json.dumps(
-                crypto_host.start_strategy_factory(),
-                separators=(",", ":"),
-            )
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("factory", crypto_host.start_strategy_factory)
 
     @Slot(result=str)
     def cryptoStrategyFactoryStatus(self) -> str:
-        try:
-            payload = crypto_host.status_payload()
-            return json.dumps(payload, separators=(",", ":"))
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_runtime().snapshot()
 
     @Slot(result=str)
     def cryptoStrategyFactoryReset(self) -> str:
-        try:
-            return json.dumps(
-                crypto_host.reset_strategy_factory(),
-                separators=(",", ":"),
-            )
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("factory_reset", crypto_host.reset_strategy_factory)
 
     @Slot(result=str)
     def cryptoDesk(self) -> str:
-        try:
-            return json.dumps(
-                crypto_host.start_desk(),
-                separators=(",", ":"),
-            )
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("desk", crypto_host.start_desk)
 
     @Slot(result=str)
     def cryptoDeskReset(self) -> str:
-        try:
-            return json.dumps(
-                crypto_host.reset_desk(),
-                separators=(",", ":"),
-            )
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("desk_reset", crypto_host.reset_desk)
 
     @Slot(str, result=str)
     def cryptoSetBook(self, book_id: str) -> str:
-        try:
-            return json.dumps(
-                crypto_host.set_trader_book(str(book_id or "")),
-                separators=(",", ":"),
-            )
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("book", crypto_host.set_trader_book, str(book_id or ""))
 
     @Slot(result=str)
     def cryptoBacktestTrader(self) -> str:
-        try:
-            return json.dumps(crypto_host.start_backtest_trader(), separators=(",", ":"))
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("backtest", crypto_host.start_backtest_trader)
 
     @Slot(result=str)
     def cryptoTickBot(self) -> str:
-        try:
-            return json.dumps(crypto_host.start_paper_tick("bot"), separators=(",", ":"))
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("bot_tick", crypto_host.start_paper_tick, "bot")
 
     @Slot(result=str)
     def cryptoFlashArb(self) -> str:
-        try:
-            return json.dumps(crypto_host.run_flash_arb(), separators=(",", ":"))
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("flash_arb", crypto_host.run_flash_arb)
 
     @Slot(result=str)
     def cryptoFlashArbReset(self) -> str:
-        try:
-            return json.dumps(crypto_host.reset_flash_arb(), separators=(",", ":"))
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__ + ":" + str(exc)})
+        return self._crypto_async("flash_reset", crypto_host.reset_flash_arb)
 
     @Slot(str, result=str)
     def cryptoIngestSignal(self, raw: str) -> str:
-        try:
-            return json.dumps(
-                crypto_host.ingest_paper_signal(raw),
-                separators=(",", ":"),
-            )
-        except ValueError as exc:
-            return json.dumps({"error": str(exc)})
+        return self._crypto_async("signal", crypto_host.ingest_paper_signal, raw)
 
     @Slot(str, result=str)
     def qipInspect(self, path: str) -> str:
@@ -6557,60 +6401,64 @@ class ChatSurfaceHost(QObject):
             self.chatSessionsChanged.emit(listing)
 
     def shutdown(self) -> None:
-        from backend import site_jobs
-        site_jobs.cancel()
-        self._web_op_timer.stop()
-        self._tmog_sampler.close()
-        self._startup_chat_timer.stop()
-        self._startup_chat_restoring = False
-        self._startup_chat_blocking = False
-        self._live_vision_timer.stop()
-        # The independent bounded screen service survives an app restart during
-        # the same task. Explicit stop remains available in the visible UI.
-        guard = getattr(self, "_gpt_storage_guard", None)
-        if guard is not None and guard.poll() is None:
-            guard.terminate()
-        self._gpt_storage_guard = None
-        self._idle_learn_timer.stop()
-        self._crypto_timer.stop()
-        self._tui_focus_timer.stop()
-        self._tui_focus_terminal = ""
-        self._gpt_capture_timer.stop()
-        self._flow_tui_stop()
-        for identity in list(self._sessions):
-            self._close(identity)
-        self._qml_rebind_timer.stop()
-        self._qml_reload_safety_barrier()
-        self.stopSitePreview()
-        from backend.site_database import stop_mysqld
-        stop_mysqld(timeout=3.0, only_started=True)
-        embed = self._tui_embed
-        self._tui_embed = None
-        if embed is not None:
-            embed.stop()
-        tmog = self._tmog_embed
-        self._tmog_embed = None
-        if tmog is not None:
-            tmog.stop()
-        media = self._media_embed
-        self._media_embed = None
-        if media is not None:
-            media.stop()
-        torlink = self._torlink_embed
-        self._torlink_embed = None
-        if torlink is not None:
-            torlink.stop()
-        external = self._external_embed
-        self._external_embed = None
-        if external is not None:
-            external.stop()
-        draw = self._draw_embed
-        self._draw_embed = None
-        if draw is not None:
-            draw.stop()
-        self._osint.shutdown()
-        game_engine_host.shutdown()
-        media_host.stop()
+        if getattr(self, "_shutdown_in_progress", False):
+            return
+        self._shutdown_in_progress = True
+        failures: list[tuple[str, str]] = []
+
+        def release(step: str, action: Callable[[], Any]) -> None:
+            try:
+                action()
+            except Exception as exc:
+                # Cleanup must continue after one failed native child. Keep
+                # only fixed step names and exception classes, never payloads.
+                failures.append((step, type(exc).__name__))
+
+        try:
+            # Stop producers before any cleanup call can enter a nested Qt
+            # event loop. This includes wallet, desktop input, resize and QML
+            # reload timers that previously survived the shutdown sequence.
+            for timer in self.findChildren(QTimer):
+                release("timer", timer.stop)
+            self._startup_chat_restoring = False
+            self._startup_chat_blocking = False
+            self._tui_focus_terminal = ""
+            if self._crypto_ui is not None:
+                release("crypto", self._crypto_ui.close)
+            from backend import site_jobs
+
+            release("site_jobs", site_jobs.cancel)
+            release("telemetry", self._tmog_sampler.close)
+            # The independent bounded screen service survives an app restart
+            # during the same task; explicit stop remains in the visible UI.
+            guard = getattr(self, "_gpt_storage_guard", None)
+            self._gpt_storage_guard = None
+            if guard is not None:
+                def close_guard() -> None:
+                    if guard.poll() is None:
+                        guard.terminate()
+                release("storage_guard", close_guard)
+            release("flow", self._flow_tui_stop)
+            for identity in list(self._sessions):
+                release("terminal", lambda key=identity: self._close(key))
+            release("qml_surfaces", self._qml_reload_safety_barrier)
+            release("site_preview", self.stopSitePreview)
+            from backend.site_database import stop_mysqld
+
+            release("site_database", lambda: stop_mysqld(timeout=3.0, only_started=True))
+            for name in ("_tui_embed", "_tmog_embed", "_media_embed",
+                         "_torlink_embed", "_external_embed", "_draw_embed"):
+                embed = getattr(self, name, None)
+                setattr(self, name, None)
+                if embed is not None:
+                    release(name, embed.stop)
+            release("osint", self._osint.shutdown)
+            release("game_engine", game_engine_host.shutdown)
+            release("pump", crypto_host.close_pump)
+            release("media", media_host.stop)
+        finally:
+            self._shutdown_errors = tuple(failures[-32:])
+            self._shutdown_in_progress = False
 
     def _pty_readable(self, terminal_id: str) -> None:
         if not isinstance(terminal_id, str):
@@ -6646,15 +6494,28 @@ class ChatSurfaceHost(QObject):
         if session is None:
             return False
         master = session["master"]
+        grid = None
+        if terminal_id in (GROK_TUI_TERMINAL_ID, "ws.tui.gpt"):
+            grid = getattr(self, "_gpt_grid", None) if terminal_id == "ws.tui.gpt" else self._tui_grid
+        budget = _PTY_READ_BUDGET
+        pending_input = getattr(grid, "pending_input_bytes", None)
+        if callable(pending_input):
+            budget = min(budget, max(0, _PTY_MAX_UNAPPLIED_BYTES - pending_input()))
+            if budget == 0:
+                # Leave unread output in the terminal pipe. Its bounded OS
+                # buffers apply backpressure without dropping bytes or adding
+                # unbounded queued Python/Qt payloads. The drain timer retries.
+                return True
         chunks: list[bytes] = []
         hit_budget = False
+        pipe_closed = False
         total = 0
         try:
             while True:
-                if total >= _PTY_READ_BUDGET:
+                if total >= budget:
                     hit_budget = True
                     break
-                piece = _read_pty(master, min(4096, _PTY_READ_BUDGET - total))
+                piece = _read_pty(master, min(4096, budget - total))
                 if not piece:
                     break
                 chunks.append(piece)
@@ -6662,8 +6523,9 @@ class ChatSurfaceHost(QObject):
         except BlockingIOError:
             pass
         except OSError:
-            self._close(terminal_id)
-            return False
+            # EOF can arrive after useful bytes in this same drain. Deliver
+            # those bytes before releasing the terminal and its pipe handles.
+            pipe_closed = True
         if chunks:
             self._chat_io_at = time.monotonic()
             if self._startup_chat_restoring and terminal_id == self._startup_chat_terminal:
@@ -6674,7 +6536,6 @@ class ChatSurfaceHost(QObject):
                 visible = _strip_ansi(raw.decode("utf-8", errors="replace"))
                 commands = self._commands_from_gpt_output(visible)
             if terminal_id in (GROK_TUI_TERMINAL_ID, "ws.tui.gpt"):
-                grid = getattr(self, "_gpt_grid", None) if terminal_id == "ws.tui.gpt" else self._tui_grid
                 if grid is not None:
                     grid.feed_bytes(raw)
                 self._arm_tui_focus(terminal_id)
@@ -6691,8 +6552,10 @@ class ChatSurfaceHost(QObject):
                     if text:
                         self.chatTerminalOutput.emit(terminal_id, text)
         proc = session["proc"]
-        if proc.poll() is not None:
-            self.chatTerminalExit.emit(terminal_id, int(proc.returncode or 0))
+        exited = proc.poll() is not None
+        if pipe_closed or (exited and not hit_budget):
+            if exited:
+                self.chatTerminalExit.emit(terminal_id, int(proc.returncode or 0))
             self._close(terminal_id)
             return False
         return hit_budget

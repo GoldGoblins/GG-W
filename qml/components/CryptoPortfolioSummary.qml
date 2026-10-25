@@ -7,76 +7,82 @@ Item {
     property string symbol: "SOL"
     property string mode: "SIMULERAT · LOCALNET"
     property string quantity: ""
-    height: 92
-    Rectangle {
+    property string quoteCurrency: "USD"
+    readonly property bool quantityKnown: /^[0-9]+(?:\.[0-9]+)?$/.test(quantity)
+    readonly property bool changeKnown: snapshot.change_24h_pct !== null
+        && snapshot.change_24h_pct !== undefined && isFinite(Number(snapshot.change_24h_pct))
+    readonly property color changeColor: !changeKnown ? "#8b949e"
+        : Number(snapshot.change_24h_pct) >= 0 ? "#8db89a" : "#c98989"
+    readonly property int totalAssets: (snapshot.assets || []).length
+    readonly property bool partial: totalAssets > 0 && snapshot.complete !== true
+    height: 108
+
+    GgFrame {
         anchors.fill: parent
-        color: "#1d1d1d"
-        border.color: "#353535"
-        radius: 5
+        leftLegend: "PORTFÖLJ"
+        rightLegend: summary.symbol
+        backgroundColor: "#161616"
+        borderColor: "#6a6a6a"
+        radius: 4
     }
     Column {
-        anchors.left: parent.left
-        anchors.leftMargin: 14
-        anchors.top: parent.top
-        anchors.topMargin: 9
-        width: parent.width * 0.55 - 24
-        spacing: 3
+        x: 16; y: 12; width: parent.width * 0.53 - 30; spacing: 6
         Text {
             width: parent.width
-            text: summary.snapshot.complete || !(summary.snapshot.assets || []).length ? "INNEHAV · " + summary.mode : "VÄRDERAD DEL · " + summary.mode
-            color: "#c8a97e"; font.family: "monospace"; font.pixelSize: 10
-            elide: Text.ElideRight
+            text: summary.partial ? "VÄRDERAT INNEHAV · DELVIS" : "PORTFÖLJVÄRDE"
+            color: "#c8cdd4"; font.family: "monospace"; font.pixelSize: 10; font.letterSpacing: 0.6
+            elide: Text.ElideRight; textFormat: Text.PlainText
         }
         Text {
             objectName: "portfolioTotalValue"
             width: parent.width
             text: Format.money(summary.snapshot.value_usd, "USD", false)
-            color: "#e6edf3"; font.family: "monospace"; font.pixelSize: summary.width < 550 ? 23 : 27; font.bold: true
-            elide: Text.ElideRight
+            color: "#e6edf3"; font.family: "monospace"; font.pixelSize: summary.width < 550 ? 20 : 22
+            font.bold: true; elide: Text.ElideRight; textFormat: Text.PlainText
         }
         Text {
             width: parent.width
-            text: (summary.snapshot.value_sek !== null && summary.snapshot.value_sek !== undefined ? Format.money(summary.snapshot.value_sek, "SEK", false) + " · " : "")
-                + String(summary.snapshot.valued_count || 0) + "/" + String((summary.snapshot.assets || []).length) + " värderade"
-                + (summary.snapshot.stale_count > 0 ? " · äldre pris" : "")
-            color: "#8b949e"; font.family: "monospace"; font.pixelSize: 11
-            elide: Text.ElideRight
+            text: (summary.snapshot.value_sek !== null && summary.snapshot.value_sek !== undefined
+                ? Format.money(summary.snapshot.value_sek, "SEK", false) + " · " : "")
+                + String(summary.snapshot.valued_count || 0) + "/" + summary.totalAssets + " värderade"
+            color: summary.partial ? "#c8a97e" : "#8b949e"
+            font.family: "monospace"; font.pixelSize: 10; elide: Text.ElideRight; textFormat: Text.PlainText
+        }
+        Text {
+            width: parent.width
+            text: summary.mode + (summary.snapshot.stale_count > 0 ? " · ÄLDRE PRIS" : "")
+            color: "#8b949e"; font.family: "monospace"; font.pixelSize: 9
+            elide: Text.ElideRight; textFormat: Text.PlainText
         }
     }
     Rectangle {
-        x: parent.width * 0.55
-        y: 12; width: 1; height: parent.height - 24; color: "#353535"
+        x: parent.width * 0.53; y: 14; width: 1; height: parent.height - 28; color: "#6a6a6a"
     }
     Column {
-        x: parent.width * 0.55 + 14
-        y: 9
-        width: parent.width * 0.45 - 28
-        spacing: 3
+        x: parent.width * 0.53 + 16; y: 12; width: parent.width * 0.47 - 30; spacing: 6
         Text {
-            width: parent.width; elide: Text.ElideRight
-            text: summary.symbol + " · MARKNADSPRIS / TOKEN"
-            color: "#8b949e"; font.family: "monospace"; font.pixelSize: 10
-        }
-        Row {
-            spacing: 12
-            Text {
-                text: Format.money(summary.snapshot.price_usd, "USD", true)
-                color: "#e6edf3"; font.family: "monospace"; font.pixelSize: summary.width < 550 ? 20 : 25; font.bold: true
-            }
-            Text {
-                visible: summary.width >= 680
-                anchors.verticalCenter: parent.verticalCenter
-                text: Format.percent(summary.snapshot.change_24h_pct) + " / 24h"
-                color: summary.snapshot.change_24h_pct === null ? "#8b949e" : Number(summary.snapshot.change_24h_pct) >= 0 ? "#8db89a" : "#c98989"
-                font.family: "monospace"; font.pixelSize: 12
-            }
+            width: parent.width
+            text: summary.symbol + (summary.quoteCurrency === "USDT" ? " / USDT ≈ USD" : " / USD")
+            color: "#8b949e"; font.family: "monospace"; font.pixelSize: 10; font.letterSpacing: 0.6
+            elide: Text.ElideRight; textFormat: Text.PlainText
         }
         Text {
             width: parent.width
-            text: summary.width < 680 ? Format.percent(summary.snapshot.change_24h_pct) + " / 24h i prisserien"
-                : Format.quantity(summary.quantity) + " " + summary.symbol + " · 24h i prisserien"
-            color: "#8b949e"; font.family: "monospace"; font.pixelSize: 11
-            elide: Text.ElideRight
+            text: Format.money(summary.snapshot.price_usd, "USD", true)
+            color: "#e6edf3"; font.family: "monospace"; font.pixelSize: summary.width < 550 ? 20 : 22
+            font.bold: true; elide: Text.ElideRight; textFormat: Text.PlainText
+        }
+        Text {
+            width: parent.width
+            text: Format.percent(summary.snapshot.change_24h_pct) + "  ·  24h prisförändring"
+            color: summary.changeColor; font.family: "monospace"; font.pixelSize: 10
+            elide: Text.ElideRight; textFormat: Text.PlainText
+        }
+        Text {
+            width: parent.width
+            text: summary.quantityKnown ? Format.quantity(summary.quantity) + " " + summary.symbol + " i innehav" : "Innehav saknas"
+            color: "#8b949e"; font.family: "monospace"; font.pixelSize: 9
+            elide: Text.ElideRight; textFormat: Text.PlainText
         }
     }
 }

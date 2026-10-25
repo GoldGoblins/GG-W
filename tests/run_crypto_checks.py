@@ -33,7 +33,14 @@ def main():
                         if result.returncode:
                             failed.append(path.name)
                     else:
-                        runpy.run_path(str(path), run_name="__main__")
+                        arguments = sys.argv
+                        try:
+                            # The selected script is not a unittest test-name
+                            # argument. Each child owns its normal argv shape.
+                            sys.argv = [str(path)]
+                            runpy.run_path(str(path), run_name="__main__")
+                        finally:
+                            sys.argv = arguments
                 except SystemExit as exc:
                     if exc.code:
                         failed.append(path.name)

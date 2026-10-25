@@ -11,6 +11,7 @@ Item {
     property bool fitContent: false
     property bool lamp: false
     property bool lampOn: false
+    property bool compactLegend: false
     default property alias body: inner.data
     signal tabChosen(string tabId)
 
@@ -37,7 +38,7 @@ Item {
     Rectangle {
         visible: root.tabs && root.tabs.length > 0
         anchors.left: parent.left
-        anchors.leftMargin: 10
+        anchors.leftMargin: root.compactLegend ? 4 : 10
         anchors.top: parent.top
         anchors.topMargin: -7
         height: 18
@@ -81,11 +82,11 @@ Item {
     Rectangle {
         visible: root.leftLegend.length > 0 && !(root.tabs && root.tabs.length)
         anchors.left: parent.left
-        anchors.leftMargin: 10
+        anchors.leftMargin: root.compactLegend ? 4 : 10
         anchors.top: parent.top
         anchors.topMargin: -7
         height: 20
-        width: leftTxt.implicitWidth + 10 + (root.lamp ? 14 : 0)
+        width: leftTxt.implicitWidth + (root.compactLegend ? 8 : 10) + (root.lamp ? 14 : 0)
         color: root.fill
         Row {
             anchors.centerIn: parent
@@ -95,7 +96,7 @@ Item {
                 text: root.leftLegend
                 color: "#d8dee9"
                 font.family: "monospace"
-                font.pixelSize: 12
+                font.pixelSize: root.compactLegend ? 10 : 12
                 font.bold: true
             }
             Rectangle {
@@ -112,11 +113,11 @@ Item {
     Rectangle {
         visible: root.rightLegend.length > 0
         anchors.right: parent.right
-        anchors.rightMargin: 10
+        anchors.rightMargin: root.compactLegend ? 4 : 10
         anchors.top: parent.top
         anchors.topMargin: -7
         height: 20
-        width: rightTxt.implicitWidth + 10
+        width: rightTxt.implicitWidth + (root.compactLegend ? 8 : 10)
         color: root.fill
         Text {
             id: rightTxt
@@ -124,7 +125,7 @@ Item {
             text: root.rightLegend
             color: "#c8cdd4"
             font.family: "monospace"
-            font.pixelSize: 12
+            font.pixelSize: root.compactLegend ? 10 : 12
         }
     }
 

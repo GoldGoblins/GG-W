@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Window
 import "components"
+import "components/LiveEyesStatus.js" as EyesStatus
 
 ApplicationWindow {
     id: root
@@ -39,6 +40,13 @@ ApplicationWindow {
         try { return JSON.parse(root.liveVisionStatusJson) } catch (err) { return {state: "off"} }
     }
     property string cryptoStatusJson: "{}"
+    readonly property var cryptoStatus: {
+        try {
+            var value = JSON.parse(root.cryptoStatusJson || "{}")
+            return value && typeof value === "object" && !Array.isArray(value) ? value : ({})
+        } catch (err) { return ({}) }
+    }
+    onCryptoStatusJsonChanged: root.applyCryptoWalletLabel()
     property bool walletOpen: false
     property real walletX: -1
     property real walletY: -1
@@ -528,8 +536,7 @@ ApplicationWindow {
     function applyCryptoWalletLabel() {
         var label = "WALLET · DISCONNECTED"
         try {
-            var parsed = JSON.parse(root.cryptoStatusJson || "{}")
-            var w = parsed.wallet || {}
+            var w = root.cryptoStatus.wallet || {}
             if (w.label)
                 label = String(w.label)
             else {
@@ -1103,10 +1110,22 @@ ApplicationWindow {
     }
 
     Timer {
-        interval: 30000
-        running: true
+        objectName: "cryptoShellRefreshTimer"
+        interval: root.cryptoStatus.refreshing === true
+            || (root.cryptoStatus.wallet || {}).rpc_loading === true
+            || String((root.cryptoStatus.ui_operation || {}).state || "") === "running" ? 1000 : 30000
+        running: root.visible && root.visibility !== Window.Minimized
         repeat: true
         onTriggered: root.pullCryptoStatus()
+    }
+
+    Connections {
+        target: root.surfaceHost
+        ignoreUnknownSignals: true
+        function onCryptoStatusUpdated(raw) {
+            if (raw && raw !== root.cryptoStatusJson)
+                root.cryptoStatusJson = raw
+        }
     }
 
     function persistDesktopSettings() {
@@ -2633,17 +2652,15 @@ ApplicationWindow {
                 spacing: 16
 
                 Text {
+                    objectName: "liveEyesIndicator"
                     visible: root.liveEyes.state !== "off"
-                    text: root.liveEyes.state === "live"
-                          ? "ÖGON · " + (root.liveEyes.received_fps || 0) + " fps"
-                          : "ÖGON · " + (root.liveEyes.state === "error" ? "FEL" : "VÄNTAR")
-                    color: root.liveEyes.state === "live" && root.liveEyes.frame_age_ms <= 2000
-                           ? root.green : root.amber
+                    text: EyesStatus.title(root.liveEyes)
+                    textFormat: Text.PlainText
+                    color: EyesStatus.fresh(root.liveEyes) ? root.green : root.amber
                     font.family: "monospace"
                     font.pixelSize: 13
                     ToolTip.visible: eyesStopArea.containsMouse
-                    ToolTip.text: (root.liveEyes.reason || "Skärmfångst aktiv")
-                                  + "\nKlicka för att stoppa skärmdelningen."
+                    ToolTip.text: EyesStatus.tooltip(root.liveEyes)
                     MouseArea {
                         id: eyesStopArea
                         anchors.fill: parent
@@ -2668,15 +2685,8 @@ ApplicationWindow {
                     width: walletChipRow.width
                     height: walletChipRow.height
                     readonly property string walletShort: {
-                        if (workspace) {
-                            var live = String(workspace.cryptoWalletLabel || "")
-                            if (live.indexOf("WALLET · ") === 0
-                                    && live.indexOf("DISCONNECTED") < 0)
-                                return live.slice(9)
-                        }
                         try {
-                            var parsed = JSON.parse(root.cryptoStatusJson || "{}")
-                            var w = parsed.wallet || {}
+                            var w = root.cryptoStatus.wallet || {}
                             var key = String(w.pubkey || "")
                             if (key.length >= 8)
                                 return key.slice(0, 4) + "…" + key.slice(-4)
@@ -2728,9 +2738,6 @@ ApplicationWindow {
                                     root.walletX = Math.max(12, root.width - 346)
                                     root.walletY = 44
                                 }
-                                if (root.surfaceHost
-                                        && root.surfaceHost.cryptoStatus)
-                                    root.cryptoStatusJson = root.surfaceHost.cryptoStatus()
                             }
                         }
                     }
@@ -3529,6 +3536,7 @@ ApplicationWindow {
                 chatSessionsJson: root.chatSessionsJson
                 activeChatSession: root.activeChatSession
                 cryptoStatusJson: root.cryptoStatusJson
+                cryptoSnapshot: root.cryptoStatus
                 onCryptoAccountChosen: function(pubkey) {
                     if (!root.surfaceHost || !root.surfaceHost.cryptoSelectAccount)
                         return
@@ -3702,6 +3710,8 @@ ApplicationWindow {
         visualWidth: root.visualSurfaceMetric("wallet", "width", -1)
         visualHeight: root.visualSurfaceMetric("wallet", "height", -1)
         statusJson: root.cryptoStatusJson
+        statusSnapshot: root.cryptoStatus
+        externallyManagedStatus: true
         onRequestClose: root.walletOpen = false
         onWalletStatusUpdated: function(raw) {
             root.cryptoStatusJson = raw

@@ -40,9 +40,32 @@ TOOLS = [
 
 def perform(name, args):
     if name == "video":
-        value = vision.video_observation(args["source"], start=args.get("start", 0),
-                                         seconds=args.get("seconds", 2), fps=args.get("fps", 25))
-        return vision.image_parts(value, sequence=not args.get("detail", False))
+        lease = None
+        completed = None
+        failure = None
+        options = {"start": args.get("start", 0), "seconds": args.get("seconds", 2),
+                   "fps": args.get("fps", 25)}
+        if os.name == "nt":
+            from backend import windows_vision_activity as activity
+            lease = activity.begin("video", 120)
+            options.update(on_frame=lambda **values: activity.update(lease, **values),
+                           cancelled=lambda: activity.cancelled(lease))
+        try:
+            value = vision.video_observation(args["source"], **options)
+            parts = vision.image_parts(value, sequence=not args.get("detail", False))
+            if lease is not None and activity.cancelled(lease):
+                raise RuntimeError("Video observation stopped: CANCELLED")
+            completed = value
+            return parts
+        except BaseException as exc:
+            failure = type(exc).__name__
+            raise
+        finally:
+            if lease is not None:
+                try:
+                    activity.finish(lease, completed, error=failure)
+                except (OSError, RuntimeError):
+                    pass
     if name in {"start","frame","clip"}:
         vision.ensure_service()
     if name == "status":

@@ -7,11 +7,13 @@ Park is zero. MAINNET not used.
 from __future__ import annotations
 
 import json
+import os
 import time
 from pathlib import Path
 from typing import Any
 
-from backend.crypto_contract import ensure_state_dir, format_units
+from backend.crypto_contract import (ensure_state_dir, format_units, write_state_json,
+                                     read_state_json, read_journal_tail)
 from backend import crypto_backtest
 from backend.crypto_indicators import (
     aroon_osc,
@@ -843,13 +845,11 @@ def default_state() -> dict[str, Any]:
 def load_state() -> dict[str, Any]:
     path = _state_path()
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError, UnicodeError):
-        payload = default_state()
-        save_state(payload)
-        return payload
-    if not isinstance(payload, dict):
-        payload = default_state()
+        payload = read_state_json(path)
+    except FileNotFoundError:
+        return default_state()
+    except (OSError, ValueError):
+        raise ValueError('CRYPTO_TRADER_STATE_CORRUPT') from None
     base = default_state()
     base.update(payload)
     return base
@@ -857,8 +857,7 @@ def load_state() -> dict[str, Any]:
 
 def save_state(payload: dict[str, Any]) -> dict[str, Any]:
     path = _state_path()
-    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    path.chmod(0o600)
+    write_state_json(path, payload)
     return load_state()
 
 
@@ -873,22 +872,7 @@ def append_lot(row: dict[str, Any]) -> None:
 
 
 def read_lots(limit: int = 24) -> list[dict[str, Any]]:
-    path = _lots_path()
-    if not path.is_file():
-        return []
-    try:
-        lines = path.read_text(encoding="utf-8").splitlines()
-    except OSError:
-        return []
-    rows: list[dict[str, Any]] = []
-    for line in lines[-max(1, int(limit)) :]:
-        try:
-            item = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        if isinstance(item, dict):
-            rows.append(item)
-    return rows
+    return read_journal_tail(_lots_path(), limit)
 
 
 def _utc_day(ts: int | None = None) -> str:
@@ -1028,11 +1012,7 @@ def save_signal_params(payload: dict[str, Any]) -> dict[str, Any]:
     merged = default_signal_params()
     merged.update(payload)
     path = _params_path()
-    path.write_text(json.dumps(merged, indent=2) + "\n", encoding="utf-8")
-    try:
-        path.chmod(0o600)
-    except OSError:
-        pass
+    write_state_json(path, merged)
     return merged
 
 
@@ -1230,24 +1210,43 @@ def _slim_backtest(payload: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+def _backtest_signature(path: Path) -> tuple[int, ...]:
+    info = path.stat()
+    identity = (info.st_mtime_ns, info.st_size, info.st_ino, info.st_ctime_ns)
+    if os.name == 'nt':
+        # NTFS ctime is creation time. ChangeTime also detects an in-place edit
+        # whose caller restored the modification timestamp and file length.
+        import ctypes
+        import msvcrt
+        class BasicInfo(ctypes.Structure):
+            _fields_ = [(name, ctypes.c_int64) for name in ('created', 'accessed', 'written', 'changed')] + [('attributes', ctypes.c_uint32)]
+        api = ctypes.WinDLL('kernel32', use_last_error=True)
+        query = api.GetFileInformationByHandleEx
+        query.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_uint32]
+        query.restype = ctypes.c_int
+        data = BasicInfo()
+        with path.open('rb') as stream:
+            if not query(msvcrt.get_osfhandle(stream.fileno()), 0, ctypes.byref(data), ctypes.sizeof(data)):
+                raise OSError('CRYPTO_BACKTEST_FILE_METADATA')
+        identity += (data.changed,)
+    return identity
+
+
 def _load_backtest_file(path: Path) -> dict[str, Any]:
     key = str(path)
     try:
-        mtime = path.stat().st_mtime_ns
-        raw = path.read_text(encoding="utf-8")
+        signature = _backtest_signature(path)
     except OSError:
         return {}
     hit = _bt_mem.get(key)
-    if hit and hit[0] == mtime:
+    if hit and hit[0] == signature:
         return hit[1]
     try:
-        payload = json.loads(raw)
-    except (json.JSONDecodeError, UnicodeError):
-        return {}
-    if not isinstance(payload, dict):
-        payload = {}
+        payload = read_state_json(path)
+    except (OSError, ValueError):
+        raise ValueError('CRYPTO_BACKTEST_STATE_CORRUPT') from None
     slim = _slim_backtest(payload)
-    _bt_mem[key] = (mtime, slim)
+    _bt_mem[key] = (signature, slim)
     return slim
 
 
@@ -1268,16 +1267,11 @@ def save_backtest(payload: dict[str, Any]) -> dict[str, Any]:
     prev = _backtest_prev_path()
     if path.is_file():
         try:
-            old = path.read_text(encoding="utf-8")
-            prev.write_text(old, encoding="utf-8")
-            prev.chmod(0o600)
-        except OSError:
-            pass
-    path.write_text(json.dumps(payload, separators=(",", ":")) + "\n", encoding="utf-8")
-    try:
-        path.chmod(0o600)
-    except OSError:
-        pass
+            old = read_state_json(path)
+        except (OSError, ValueError):
+            raise ValueError('CRYPTO_BACKTEST_STATE_CORRUPT') from None
+        write_state_json(prev, old)
+    write_state_json(path, payload)
     _bt_mem.pop(str(path), None)
     _bt_mem.pop(str(prev), None)
     return payload

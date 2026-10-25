@@ -176,8 +176,8 @@ def main() -> int:
         raise AssertionError("bot tape views missing")
     if "BACKTEST 1" not in qml or "BACKTEST 2" not in qml:
         raise AssertionError("last two backtests not switchable")
-    if "CryptoChart" not in qml:
-        raise AssertionError("portfolio tape missing CryptoChart")
+    # Actual portfolio rendering and interaction are exercised by
+    # test_crypto_ui_refresh.py; the unused WebEngine placeholder was removed.
     if "start_backtest_trader" not in host_src or "threading.Thread" not in host_src:
         raise AssertionError("backtest still blocks the UI thread")
     if "_UI_BACKTEST_TF" not in host_src or "backtestRunning" not in qml:
@@ -192,8 +192,8 @@ def main() -> int:
         raise AssertionError("backtest PnL currency fields missing")
     if "bt.weeks" not in qml:
         raise AssertionError("weekly buy/sell tape missing")
-    if "equity: root.botEquity" not in qml:
-        raise AssertionError("SOL equity overlay not wired")
+    # The former equity binding belonged to an always-hidden 0x0 WebEngine.
+    # Active Canvas and optional equity-series behavior have executable UI tests.
     if "cryptoSetBook" not in qml or "trader.books" not in qml:
         raise AssertionError("book switch not on the CRYPTO surface")
     hole = (PROJECT / "qml" / "crypto-hole" / "index.html").read_text(encoding="utf-8")

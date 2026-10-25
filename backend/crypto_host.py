@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 from backend.crypto_keys import (
     ensure_test_wallet,
     has_signer,
+    signer_for,
     import_solana_keypair,
     load_test_pubkey,
 )
@@ -37,6 +38,8 @@ from backend.crypto_contract import (
     RPC_ALLOWLIST,
     append_ledger,
     clear_wallet,
+    write_state_json,
+    read_state_json,
     decorate_ledger_row,
     format_sol,
     format_units,
@@ -65,6 +68,73 @@ _RPC_TTL = 20.0
 _rpc_bundle: dict[tuple[str, str], tuple[float, int | None, list[dict[str, Any]]]] = {}
 _rpc_lock = threading.Lock()
 _rpc_inflight: set[tuple[str, str]] = set()
+_rpc_errors: dict[tuple[str, str], str] = {}
+_rpc_retry_after: dict[tuple[str, str], float] = {}
+_rpc_generation = 0
+_RPC_RESPONSE_LIMIT = 8 * 1024 * 1024
+_pump_research = None
+_pump_research_lock = threading.Lock()
+
+
+def pump_service():
+    global _pump_research
+    with _pump_research_lock:
+        if _pump_research is None:
+            from backend.crypto_pump import PumpResearch
+            _pump_research = PumpResearch(rpc_call)
+        return _pump_research
+
+
+def pump_inspect(mint: str, pool: str = ""):
+    return pump_service().inspect(mint, pool)
+
+
+def pump_quote(side: str, amount: str, slippage: str = "100"):
+    return pump_service().quote(side, amount, slippage)
+
+
+def pump_simulate():
+    pubkey = str(load_wallet().get("pubkey") or "")
+    network = load_network()
+    if not pubkey:
+        raise ValueError("PUMP_WATCH_WALLET_REQUIRED")
+    service = pump_service()
+    result = service.simulate(pubkey, wallet_network=network)
+    if str(load_wallet().get("pubkey") or "") != pubkey or load_network() != network:
+        service.bind_wallet(str(load_wallet().get("pubkey") or ""), load_network())
+        raise ValueError("PUMP_WALLET_CHANGED")
+    return result
+
+
+def pump_paper_trade():
+    return pump_service().paper_trade()
+
+
+def pump_paper_reset():
+    return pump_service().paper_reset()
+
+
+def pump_refresh():
+    return pump_service().refresh()
+
+
+def pump_heartbeat():
+    if not _pump_research_lock.acquire(blocking=False):
+        return
+    try:
+        service = _pump_research
+    finally:
+        _pump_research_lock.release()
+    if service is not None:
+        service.heartbeat()
+
+
+def close_pump():
+    global _pump_research
+    with _pump_research_lock:
+        service, _pump_research = _pump_research, None
+    if service is not None:
+        service.close()
 
 
 def _rpc_url(network: str) -> str:
@@ -72,6 +142,8 @@ def _rpc_url(network: str) -> str:
 
 
 def fetch_balance(pubkey: str, network: str = NETWORK_DEFAULT) -> int | None:
+    if network not in RPC_ALLOWLIST:
+        return None
     url = _rpc_url(network)
     host = urlparse(url).hostname or ""
     allowed = {urlparse(item).hostname for item in RPC_ALLOWLIST.values()}
@@ -94,57 +166,85 @@ def fetch_balance(pubkey: str, network: str = NETWORK_DEFAULT) -> int | None:
     try:
         timeout = 5
         with urllib.request.urlopen(request, timeout=timeout) as response:
-            payload = json.loads(response.read().decode("utf-8"))
+            raw = response.read(_RPC_RESPONSE_LIMIT + 1)
+            if len(raw) > _RPC_RESPONSE_LIMIT:
+                return None
+            payload = json.loads(raw.decode("utf-8"))
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError):
         return None
     result = payload.get("result") if isinstance(payload, dict) else None
     value = result.get("value") if isinstance(result, dict) else None
-    try:
-        return int(value)
-    except (TypeError, ValueError):
-        return None
+    return value if type(value) is int and 0 <= value < 2**64 else None
 
 
-def _refresh_bundle(pubkey: str, network: str) -> None:
+def _refresh_bundle(pubkey: str, network: str, generation: int | None = None) -> None:
     key = (pubkey, network)
     try:
         lamports = fetch_balance(pubkey, network)
-        tokens = fetch_tokens(pubkey, network)
-        _rpc_bundle[key] = (time.monotonic(), lamports, tokens)
+        tokens = fetch_tokens(pubkey, network, strict=True)
+        if lamports is None:
+            raise RuntimeError("RPC_UNREACHABLE")
+        with _rpc_lock:
+            if generation is not None and generation != _rpc_generation:
+                return
+            _rpc_bundle[key] = (time.monotonic(), lamports, tokens)
+            _rpc_errors.pop(key, None)
+            _rpc_retry_after.pop(key, None)
+            while len(_rpc_bundle) > 32:
+                oldest = min(_rpc_bundle, key=lambda item: _rpc_bundle[item][0])
+                _rpc_bundle.pop(oldest, None)
+                _rpc_errors.pop(oldest, None)
     except Exception:
-        return
+        with _rpc_lock:
+            if generation is None or generation == _rpc_generation:
+                _rpc_errors[key] = "RPC_UNREACHABLE"
+                _rpc_retry_after[key] = time.monotonic() + _RPC_TTL
     finally:
         with _rpc_lock:
-            _rpc_inflight.discard(key)
+            if generation is None or generation == _rpc_generation:
+                _rpc_inflight.discard(key)
 
 
 def _bundle(pubkey: str, network: str, force: bool = False) -> tuple[int | None, list[dict[str, Any]]]:
     """UI path never waits on RPC. force=True is for an explicit user action."""
     key = (pubkey, network)
     now = time.monotonic()
-    hit = _rpc_bundle.get(key)
+    with _rpc_lock:
+        hit = _rpc_bundle.get(key)
     if not force and hit is not None and now - hit[0] < _RPC_TTL:
         return hit[1], hit[2]
     if force:
         lamports = fetch_balance(pubkey, network)
-        tokens = fetch_tokens(pubkey, network)
-        _rpc_bundle[key] = (now, lamports, tokens)
+        tokens = fetch_tokens(pubkey, network, strict=True)
+        with _rpc_lock:
+            _rpc_bundle[key] = (time.monotonic(), lamports, tokens)
         return lamports, tokens
     with _rpc_lock:
-        if key not in _rpc_inflight:
+        if key not in _rpc_inflight and len(_rpc_inflight) < 4 and now >= _rpc_retry_after.get(key, 0):
             _rpc_inflight.add(key)
-            threading.Thread(
-                target=_refresh_bundle,
-                args=(pubkey, network),
-                daemon=True,
-            ).start()
+            try:
+                threading.Thread(
+                    target=_refresh_bundle,
+                    args=(pubkey, network, _rpc_generation),
+                    daemon=True,
+                ).start()
+            except Exception:
+                _rpc_inflight.discard(key)
+                _rpc_errors[key] = "CRYPTO_WORKER_START"
+                _rpc_retry_after[key] = now + 1.0
     if hit is not None:
         return hit[1], hit[2]
     return None, []
 
 
 def invalidate_rpc_cache() -> None:
-    _rpc_bundle.clear()
+    global _rpc_generation
+    with _rpc_lock:
+        _rpc_generation += 1
+        _rpc_bundle.clear()
+        _rpc_errors.clear()
+        _rpc_retry_after.clear()
+        _rpc_inflight.clear()
 
 
 def _lab_gate(wait_s: float = 0.0) -> tuple[bool, str]:
@@ -174,7 +274,7 @@ def _wait_balance_at_least(
     return last
 
 
-def fetch_tokens(pubkey: str, network: str = NETWORK_DEFAULT) -> list[dict[str, Any]]:
+def fetch_tokens(pubkey: str, network: str = NETWORK_DEFAULT, *, strict: bool = False) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for program in (TOKEN_PROGRAM, TOKEN_2022_PROGRAM):
         payload = rpc_call(
@@ -182,19 +282,30 @@ def fetch_tokens(pubkey: str, network: str = NETWORK_DEFAULT) -> list[dict[str, 
             [
                 pubkey,
                 {"programId": program},
-                {"encoding": "jsonParsed"},
+                {"encoding": "jsonParsed", "commitment": "confirmed"},
             ],
             network,
         )
-        if not payload or not isinstance(payload.get("result"), dict):
+        if not payload or not isinstance(payload.get("result"), dict) or not isinstance(payload["result"].get("value"), list):
+            if strict:
+                raise RuntimeError("RPC_UNREACHABLE")
             continue
         for item in payload["result"].get("value") or []:
             if not isinstance(item, dict):
                 continue
             account = item.get("account") or {}
-            data = (account.get("data") or {}).get("parsed") or {}
+            if not isinstance(account, dict):
+                continue
+            account_data = account.get("data") or {}
+            if not isinstance(account_data, dict):
+                continue
+            data = account_data.get("parsed") or {}
+            if not isinstance(data, dict) or not isinstance(data.get("info"), dict):
+                continue
             info = data.get("info") or {}
             amount = (info.get("tokenAmount") or {})
+            if not isinstance(amount, dict):
+                continue
             mint = str(info.get("mint") or "")
             raw = str(amount.get("amount") or "0")
             try:
@@ -202,7 +313,7 @@ def fetch_tokens(pubkey: str, network: str = NETWORK_DEFAULT) -> list[dict[str, 
                 decimals = int(amount.get("decimals") or 0)
             except (TypeError, ValueError):
                 continue
-            if not mint or atomic <= 0:
+            if not mint or atomic <= 0 or atomic >= 2**64 or not 0 <= decimals <= 255:
                 continue
             symbol = KNOWN_MINTS.get(mint, mint[:4] + "…" + mint[-4:])
             display = format_units(atomic, decimals)
@@ -241,6 +352,7 @@ def rpc_call(method: str, params: list[Any], network: str | None = None) -> dict
         "getLatestBlockhash", "getSignatureStatuses", "getTransaction",
         "getSlot", "getBlockHeight", "getHealth", "getVersion",
         "getFeeForMessage", "isBlockhashValid", "simulateTransaction",
+        "getMultipleAccounts", "getEpochInfo", "getMinimumBalanceForRentExemption",
     }
     if method not in read_methods and (chain != "testnet" or load_network() != "testnet"):
         return {"error": {"code": -32001, "message": "MAINNET_OBSERVE_ONLY"}}
@@ -262,10 +374,16 @@ def rpc_call(method: str, params: list[Any], network: str | None = None) -> dict
     )
     try:
         with urllib.request.urlopen(request, timeout=12) as response:
-            payload = json.loads(response.read().decode("utf-8"))
+            raw = response.read(_RPC_RESPONSE_LIMIT + 1)
+            if len(raw) > _RPC_RESPONSE_LIMIT:
+                return {"error": {"code": -32000, "message": "CRYPTO_RPC_RESPONSE_LIMIT"}}
+            payload = json.loads(raw.decode("utf-8"))
     except urllib.error.HTTPError as exc:
         try:
-            payload = json.loads(exc.read().decode("utf-8", errors="replace"))
+            raw = exc.read(_RPC_RESPONSE_LIMIT + 1)
+            if len(raw) > _RPC_RESPONSE_LIMIT:
+                return {"error": {"code": exc.code, "message": "CRYPTO_RPC_RESPONSE_LIMIT"}}
+            payload = json.loads(raw.decode("utf-8", errors="replace"))
         except (json.JSONDecodeError, UnicodeError, OSError):
             return {
                 "error": {
@@ -305,7 +423,7 @@ def create_test_wallet() -> dict[str, Any]:
 def airdrop_testnet(lamports: int = LAB_AIRDROP_LAMPORTS) -> dict[str, Any]:
     invalidate_rpc_cache()
     save_network("testnet")
-    pubkey = load_test_pubkey() or str(load_wallet().get("pubkey") or "")
+    pubkey = str(load_wallet().get("pubkey") or "") or load_test_pubkey()
     if not pubkey:
         pubkey = ensure_test_wallet()
         save_wallet(pubkey, None, "testnet")
@@ -328,7 +446,7 @@ def airdrop_testnet(lamports: int = LAB_AIRDROP_LAMPORTS) -> dict[str, Any]:
         append_ledger(row)
         wallet = load_wallet()
         wallet["airdrop"] = decorate_ledger_row(row)
-        wallet["signer"] = has_signer()
+        wallet["signer"] = signer_for(pubkey)
         return wallet
     before = fetch_balance(pubkey, "testnet")
     if before is None:
@@ -392,7 +510,7 @@ def airdrop_testnet(lamports: int = LAB_AIRDROP_LAMPORTS) -> dict[str, Any]:
         wallet = save_wallet(pubkey, bal, "testnet")
     append_ledger(row)
     wallet["airdrop"] = decorate_ledger_row(row)
-    wallet["signer"] = has_signer()
+    wallet["signer"] = signer_for(pubkey)
     wallet["balance_sol"] = format_sol(wallet.get("balance_lamports"))
     return wallet
 
@@ -426,7 +544,7 @@ def ingest_paper_signal(raw: str) -> dict[str, Any]:
         row["hint"] = human_error("MAINNET_OBSERVE_ONLY")
         append_ledger(row)
         return decorate_ledger_row(row)
-    if not has_signer():
+    if not signer_for(pubkey):
         row["error"] = "NO_SIGNER"
         row["hint"] = human_error("NO_SIGNER")
         append_ledger(row)
@@ -460,7 +578,7 @@ def ingest_paper_signal(raw: str) -> dict[str, Any]:
     if send_lamports > lamports - 5000:
         send_lamports = 1
     try:
-        sent = send_self_transfer(_lab_rpc, send_lamports)
+        sent = send_self_transfer(_lab_rpc, send_lamports, expected_pubkey=pubkey)
         row["txid"] = sent["txid"]
         row["status"] = sent["status"]
         row["size_sol"] = send_lamports / 1_000_000_000
@@ -493,6 +611,17 @@ _strategy_factory_job: dict[str, Any] = {
     "started": 0.0,
     "result": crypto_strategy_factory.empty_snapshot(),
 }
+
+
+def _launch_job_thread(target, name: str, lock, job: dict[str, Any], args=()) -> None:
+    try:
+        threading.Thread(target=target, name=name, args=args, daemon=True).start()
+    except Exception:
+        with lock:
+            job.update(state="error", note="CRYPTO_WORKER_START")
+            if isinstance(job.get("result"), dict):
+                job["result"] = dict(job["result"], state="ERROR", note="CRYPTO_WORKER_START")
+        raise RuntimeError("CRYPTO_WORKER_START") from None
 
 
 def strategy_factory_status() -> dict[str, Any]:
@@ -565,11 +694,8 @@ def start_strategy_factory() -> dict[str, Any]:
             }
             launch = True
     if launch:
-        threading.Thread(
-            target=_run_strategy_factory_job,
-            name="gg-crypto-strategy-factory",
-            daemon=True,
-        ).start()
+        _launch_job_thread(_run_strategy_factory_job, "gg-crypto-strategy-factory",
+                           _strategy_factory_lock, _strategy_factory_job)
     payload = status_payload()
     payload["strategy_factory_job"] = strategy_factory_status()
     return payload
@@ -577,12 +703,11 @@ def start_strategy_factory() -> dict[str, Any]:
 
 def reset_strategy_factory() -> dict[str, Any]:
     with _strategy_factory_lock:
-        if str(_strategy_factory_job.get("state") or "") == "running":
-            return status_payload()
-        _strategy_factory_job["state"] = "idle"
-        _strategy_factory_job["note"] = ""
-        _strategy_factory_job["started"] = 0.0
-        _strategy_factory_job["result"] = crypto_strategy_factory.empty_snapshot()
+        if str(_strategy_factory_job.get("state") or "") != "running":
+            _strategy_factory_job["state"] = "idle"
+            _strategy_factory_job["note"] = ""
+            _strategy_factory_job["started"] = 0.0
+            _strategy_factory_job["result"] = crypto_strategy_factory.empty_snapshot()
     return status_payload()
 
 
@@ -636,11 +761,7 @@ def start_desk() -> dict[str, Any]:
             }
             launch = True
     if launch:
-        threading.Thread(
-            target=_run_desk_job,
-            name="gg-crypto-desk",
-            daemon=True,
-        ).start()
+        _launch_job_thread(_run_desk_job, "gg-crypto-desk", _desk_lock, _desk_job)
     payload = status_payload()
     payload["desk_job"] = desk_status()
     return payload
@@ -648,12 +769,11 @@ def start_desk() -> dict[str, Any]:
 
 def reset_desk() -> dict[str, Any]:
     with _desk_lock:
-        if str(_desk_job.get("state") or "") == "running":
-            return status_payload()
-        _desk_job["state"] = "idle"
-        _desk_job["note"] = ""
-        _desk_job["started"] = 0.0
-        _desk_job["result"] = crypto_desk.empty_snapshot()
+        if str(_desk_job.get("state") or "") != "running":
+            _desk_job["state"] = "idle"
+            _desk_job["note"] = ""
+            _desk_job["started"] = 0.0
+            _desk_job["result"] = crypto_desk.empty_snapshot()
     return status_payload()
 
 
@@ -698,6 +818,11 @@ def status_payload(rail: bool = False) -> dict[str, Any]:
             wallet["balance_lamports"] = lamports
     wallet["balance_sol"] = format_sol(wallet.get("balance_lamports"))
     wallet["tokens"] = tokens
+    with _rpc_lock:
+        wallet["rpc_error"] = _rpc_errors.get((pubkey, chain), "") if pubkey else ""
+        hit = _rpc_bundle.get((pubkey, chain))
+        wallet["rpc_loading"] = (pubkey, chain) in _rpc_inflight
+        wallet["rpc_stale"] = bool(pubkey and (hit is None or time.monotonic() - hit[0] >= _RPC_TTL))
     pyusd = next((t for t in tokens if t.get("symbol") == "PYUSD"), None)
     if pyusd:
         wallet["pyusd"] = pyusd.get("display")
@@ -716,10 +841,9 @@ def status_payload(rail: bool = False) -> dict[str, Any]:
             }
         )
         holdings.extend(tokens)
+    pump_service().bind_wallet(pubkey, chain)
+    pump = pump_service().snapshot()
     if rail:
-        from backend.crypto_lab import running_pid
-
-        pid = running_pid()
         return {
             "wallet": {
                 "pubkey": pubkey,
@@ -728,15 +852,11 @@ def status_payload(rail: bool = False) -> dict[str, Any]:
                 "network": chain,
             },
             "legend": legend,
-            "signer": has_signer(),
+            "signer": signer_for(pubkey),
             "accounts": account_catalog(),
             "holdings": holdings[:8],
-            "lab": {
-                "running": pid is not None,
-                "healthy": False,
-                "pid": pid,
-                "label": "LAB STARTING" if pid is not None else "LAB OFF",
-            },
+            "lab": lab_status(),
+            "pump": {key: pump.get(key) for key in ("mint", "state", "loading", "stale", "slot", "error")},
         }
     paper = paper_snapshot()
     ledger = [decorate_ledger_row(item) for item in read_ledger(16)]
@@ -794,6 +914,9 @@ def status_payload(rail: bool = False) -> dict[str, Any]:
         holdings[0]["sek"] = quote.get("sek")
     kaspa = kaspa_covenant.snapshot()
     kas_chart = kas_chart_snapshot()
+    holdings = pump_service().enrich_holdings(holdings, chart.get("price") or ((chart.get("closes") or [None])[-1]), wallet_network=chain)
+    tokens = [row for row in holdings if row.get("mint") != "native"]
+    wallet["tokens"] = tokens
     portfolio = {
         "asset": portfolio_asset(),
         "sol": crypto_portfolio.summarize(holdings, chart, usd_sek=quote.get("usd_sek")),
@@ -807,7 +930,7 @@ def status_payload(rail: bool = False) -> dict[str, Any]:
         "legend": legend,
         "mainnet_observe": chain == "mainnet",
         "rpc": rpc,
-        "signer": has_signer(),
+        "signer": signer_for(pubkey),
         "accounts": account_catalog(),
         "tokens": tokens,
         "holdings": holdings,
@@ -833,6 +956,7 @@ def status_payload(rail: bool = False) -> dict[str, Any]:
         "kaspa": kaspa,
         "kas_chart": kas_chart,
         "portfolio": portfolio,
+        "pump": pump,
         "proven": load_proven(),
         "bots": [
             {
@@ -881,6 +1005,7 @@ def import_keypair_file(path: str) -> dict[str, Any]:
 
 
 def disconnect() -> dict[str, Any]:
+    invalidate_rpc_cache()
     return clear_wallet()
 
 
@@ -955,9 +1080,10 @@ def run_flash_arb(usd_units: str | None = None) -> dict[str, Any]:
         return payload
     mark_proven("arb")
     lab = lab_status()
-    if lab.get("healthy") and has_signer():
+    pubkey = str(load_wallet().get("pubkey") or "")
+    if lab.get("healthy") and signer_for(pubkey):
         try:
-            sent = send_self_transfer(_lab_rpc, 10_000)
+            sent = send_self_transfer(_lab_rpc, 10_000, expected_pubkey=pubkey)
             row["txid"] = sent["txid"]
             row["chain_status"] = sent["status"]
             row["hint"] = "Simulated CPMM result; confirmed localnet self-transfer diagnostic."
@@ -1082,7 +1208,7 @@ def load_bot() -> dict[str, Any]:
 
 def save_bot(payload: dict[str, Any]) -> dict[str, Any]:
     path = _bot_path()
-    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    write_state_json(path, payload)
     path.chmod(0o600)
     return load_bot()
 
@@ -1437,6 +1563,8 @@ def quote_for_wallet(wallet: dict[str, Any]) -> dict[str, Any]:
         "usd": format_usd(usd) if px > 0 else "",
         "sek": format_sek(sek) if px > 0 and usd_sek > 0 else "",
         "source": str(snap.get("source") or ""),
+        "quote_currency": str(snap.get("quote_currency") or "USD"),
+        "usd_estimate": snap.get("quote_currency") == "USDT",
     }
 
 
@@ -1446,44 +1574,46 @@ def _chart_path():
     return ensure_state_dir() / "sol-chart.json"
 
 
+def _chart_disk_state(path, cap: int) -> dict[str, Any] | None:
+    try:
+        payload = read_state_json(path, max_bytes=2 * 1024 * 1024)
+        rows = payload.get("closes")
+        if not isinstance(rows, list) or len(rows) < 2:
+            return None
+        rows = rows[-cap:]
+        if any(isinstance(item, bool) for item in rows):
+            return None
+        closes = [float(item) for item in rows]
+        if any(not math.isfinite(item) or item <= 0 for item in closes):
+            return None
+        stamps = payload.get("times")
+        stamps = stamps[-cap:] if isinstance(stamps, list) else []
+        times = [int(item) for item in stamps] if len(stamps) == len(rows) else []
+        if any(isinstance(item, bool) or float(item) != int(item) for item in stamps):
+            times = []
+        if times and (times[0] <= 0 or any(b <= a for a, b in zip(times, times[1:]))):
+            times = []
+        fetched_at = float(payload.get("fetched_at") or 0)
+        if not times or not math.isfinite(fetched_at) or not 0 < fetched_at <= time.time() + 5:
+            fetched_at = 0.0
+        usd_sek = float(payload.get("usd_sek") or 0)
+        if not math.isfinite(usd_sek) or usd_sek <= 0:
+            usd_sek = 0.0
+        interval = str(payload.get("interval") or "")
+        requested = str(payload.get("requested_interval") or interval or "15m")
+        return {"closes": closes, "times": times, "price": str(closes[-1]),
+                "source": str(payload.get("source") or "")[:64],
+                "interval": interval if interval in _CHART_TFS else "",
+                "requested_interval": requested if requested in _CHART_TFS else "15m",
+                "fetched_at": fetched_at, "usd_sek": usd_sek, "ts": 0.0, "error": ""}
+    except (OSError, ValueError, TypeError, OverflowError, AttributeError):
+        return None
+
+
 def _load_chart_disk() -> None:
-    path = _chart_path()
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError, UnicodeError):
-        return
-    if not isinstance(payload, dict):
-        return
-    rows = payload.get("closes")
-    if not isinstance(rows, list) or len(rows) < 2:
-        return
-    stamps = payload.get("times")
-    if not isinstance(stamps, list) or len(stamps) != len(rows):
-        stamps = [0] * len(rows)
-    closes: list[float] = []
-    times: list[int] = []
-    for item, stamp in list(zip(rows, stamps))[-5000:]:
-        try:
-            closes.append(float(item))
-            times.append(int(stamp or 0))
-        except (TypeError, ValueError):
-            continue
-    if len(closes) < 2:
-        return
-    if any(stamp <= 0 for stamp in times):
-        times = []
-    _chart_cache["closes"] = closes
-    _chart_cache["times"] = times
-    _chart_cache["price"] = str(payload.get("price") or closes[-1])
-    _chart_cache["source"] = str(payload.get("source") or "")
-    _chart_cache["interval"] = str(payload.get("interval") or "")
-    _chart_cache.setdefault("requested_interval", str(payload.get("requested_interval") or payload.get("interval") or "15m"))
-    _chart_cache["fetched_at"] = float(payload.get("fetched_at") or 0)
-    try:
-        _chart_cache["usd_sek"] = float(payload.get("usd_sek") or 0)
-    except (TypeError, ValueError):
-        _chart_cache["usd_sek"] = 0.0
-    _chart_cache["ts"] = 0.0
+    payload = _chart_disk_state(_chart_path(), 5000)
+    if payload is not None:
+        _chart_cache.update(payload)
 
 
 def _save_chart_disk() -> None:
@@ -1501,7 +1631,7 @@ def _save_chart_disk() -> None:
         },
         separators=(",", ":"),
     )
-    path.write_text(blob + "\n", encoding="utf-8")
+    write_state_json(path, json.loads(blob))
     try:
         path.chmod(0o600)
     except OSError:
@@ -1511,14 +1641,19 @@ def _save_chart_disk() -> None:
 def chart_snapshot() -> dict[str, Any]:
     if not _chart_cache.get("closes"):
         _load_chart_disk()
+    cache = dict(_chart_cache)
     return {
-        **crypto_data.freshness(_chart_cache, _CHART_TTL),
-        "closes": list(_chart_cache.get("closes") or []),
-        "times": list(_chart_cache.get("times") or []),
-        "price": str(_chart_cache.get("price") or ""),
-        "source": str(_chart_cache.get("source") or ""),
-        "interval": str(_chart_cache.get("interval") or ""),
-        "usd_sek": float(_chart_cache.get("usd_sek") or 0),
+        **crypto_data.freshness(cache, _CHART_TTL),
+        "closes": list(cache.get("closes") or []),
+        "times": list(cache.get("times") or []),
+        "price": str(cache.get("price") or ""),
+        "source": str(cache.get("source") or ""),
+        "interval": str(cache.get("interval") or ""),
+        "requested_interval": chart_interval(),
+        "quote_currency": "USDT" if cache.get("source") in ("binance", "gate-spot") else "USD",
+        "refreshing": "SOL" in _chart_refresh_running,
+        "error": str(cache.get("error") or ""),
+        "usd_sek": float(cache.get("usd_sek") or 0),
     }
 
 
@@ -1528,6 +1663,7 @@ def _set_live_chart(
     source: str,
     interval: str = "15m",
     live: float | None = None,
+    fetched_for_interval: str | None = None,
 ) -> None:
     if len(closes) < 2:
         return
@@ -1544,15 +1680,9 @@ def _set_live_chart(
                 out[-1] = px
         except (TypeError, ValueError):
             pass
-    _chart_cache["closes"] = out
-    _chart_cache["times"] = stamps
-    _chart_cache["price"] = str(out[-1])
-    _chart_cache["source"] = source
-    _chart_cache["interval"] = interval
-    _chart_cache["history_end"] = False
-    _chart_cache["ts"] = time.monotonic()
-    _chart_cache["fetched_at"] = time.time()
-    _chart_cache["error"] = ""
+    _chart_cache.update(closes=out, times=stamps, price=str(out[-1]), source=source,
+                        interval=interval, history_end=False, ts=time.monotonic(),
+                        fetched_at=time.time(), error="", fetched_for_interval=fetched_for_interval or interval)
     _save_chart_disk()
 
 
@@ -1560,7 +1690,7 @@ def _ingest_spark(
     frames: dict[str, tuple[list[float], list[float], list[float], list[float]]],
     live: float | None = None,
 ) -> None:
-    for tf in ("15m", "5m", "1h"):
+    for tf in (chart_interval(),):
         got = frames.get(tf)
         if got is None or len(got[2]) < 8:
             continue
@@ -1585,8 +1715,11 @@ def set_chart_interval(interval: str) -> dict[str, Any]:
     tf = str(interval or "").strip()
     if tf not in _CHART_TFS:
         tf = "15m"
-    _chart_cache["requested_interval"] = tf
-    _chart_cache["ts"] = 0.0
+    if not _chart_cache.get("closes"):
+        _load_chart_disk()
+    with _chart_refresh_lock:
+        _chart_cache["requested_interval"] = tf
+        _chart_cache["ts"] = 0.0
     request_chart_refresh("SOL")
     return status_payload()
 
@@ -1599,6 +1732,7 @@ def cached_sol_chart() -> dict[str, Any]:
         isinstance(cached, list)
         and cached
         and len(stamps) == len(cached)
+        and _chart_cache.get("fetched_for_interval") == chart_interval()
         and now - float(_chart_cache["ts"] or 0) < _CHART_TTL
     ):
         return chart_snapshot()
@@ -1609,6 +1743,7 @@ def cached_sol_chart() -> dict[str, Any]:
     times: list[int] = []
     source = ""
     interval = chart_interval()
+    requested = interval
     try:
         _highs, _lows, raw, _vols = fetch_klines(interval, 1000, timeout=8.0, closed_only=False)
         closes = [round(float(item), 4) for item in raw[-1000:]]
@@ -1630,7 +1765,10 @@ def cached_sol_chart() -> dict[str, Any]:
                 _chart_cache["error"] = "NO_MARKET_DATA"
                 return chart_snapshot()
     if closes:
-        _set_live_chart(closes, times, source, interval=interval)
+        with _chart_refresh_lock:
+            if chart_interval() != requested:
+                return chart_snapshot()
+            _set_live_chart(closes, times, source, interval=interval, fetched_for_interval=requested)
         try:
             rate = _usd_sek_rate()
             if rate > 0:
@@ -1644,6 +1782,7 @@ def cached_sol_chart() -> dict[str, Any]:
 _chart_refresh_lock = threading.RLock()
 _chart_refresh_running: set[str] = set()
 _chart_refresh_pending: set[str] = set()
+_chart_refresh_tokens: dict[str, object] = {}
 
 
 def request_chart_refresh(asset: str = "SOL") -> None:
@@ -1654,18 +1793,33 @@ def request_chart_refresh(asset: str = "SOL") -> None:
             _chart_refresh_pending.add(asset)
             return
         _chart_refresh_running.add(asset)
+        token = object()
+        _chart_refresh_tokens[asset] = token
     def run():
         try:
             while True:
                 (cached_kas_chart if asset == "KAS" else cached_sol_chart)()
                 with _chart_refresh_lock:
                     if asset not in _chart_refresh_pending:
-                        break
+                        _chart_refresh_running.discard(asset)
+                        _chart_refresh_tokens.pop(asset, None)
+                        return
                     _chart_refresh_pending.discard(asset)
         finally:
             with _chart_refresh_lock:
+                if _chart_refresh_tokens.get(asset) is token:
+                    _chart_refresh_running.discard(asset)
+                    _chart_refresh_pending.discard(asset)
+                    _chart_refresh_tokens.pop(asset, None)
+    try:
+        threading.Thread(target=run, name="crypto-chart-" + asset, daemon=True).start()
+    except Exception:
+        with _chart_refresh_lock:
+            if _chart_refresh_tokens.get(asset) is token:
                 _chart_refresh_running.discard(asset)
-    threading.Thread(target=run, name="crypto-chart-" + asset, daemon=True).start()
+                _chart_refresh_pending.discard(asset)
+                _chart_refresh_tokens.pop(asset, None)
+        raise RuntimeError("CRYPTO_CHART_WORKER_START") from None
 
 
 def _merge_bars(
@@ -1781,53 +1935,26 @@ def _kas_px(value: float) -> float:
 def kas_chart_snapshot() -> dict[str, Any]:
     if not _kas_chart_cache.get("closes"):
         _load_kas_chart_disk()
+    cache = dict(_kas_chart_cache)
     return {
-        **crypto_data.freshness(_kas_chart_cache, _CHART_TTL),
+        **crypto_data.freshness(cache, _CHART_TTL),
         "symbol": "KASUSDT",
-        "closes": list(_kas_chart_cache.get("closes") or []),
-        "times": list(_kas_chart_cache.get("times") or []),
-        "price": str(_kas_chart_cache.get("price") or ""),
-        "source": str(_kas_chart_cache.get("source") or ""),
-        "interval": str(_kas_chart_cache.get("interval") or ""),
-        "error": str(_kas_chart_cache.get("error") or ""),
+        "closes": list(cache.get("closes") or []),
+        "times": list(cache.get("times") or []),
+        "price": str(cache.get("price") or ""),
+        "source": str(cache.get("source") or ""),
+        "interval": str(cache.get("interval") or ""),
+        "requested_interval": str(cache.get("requested_interval") or cache.get("interval") or "15m"),
+        "quote_currency": "USDT" if cache.get("source") in ("binance", "gate-spot") else "USD",
+        "refreshing": "KAS" in _chart_refresh_running,
+        "error": str(cache.get("error") or ""),
     }
 
 
 def _load_kas_chart_disk() -> None:
-    path = _kas_chart_path()
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError, UnicodeError):
-        return
-    if not isinstance(payload, dict):
-        return
-    rows = payload.get("closes")
-    if not isinstance(rows, list) or len(rows) < 2:
-        return
-    stamps = payload.get("times")
-    if not isinstance(stamps, list) or len(stamps) != len(rows):
-        stamps = [0] * len(rows)
-    closes: list[float] = []
-    times: list[int] = []
-    for item, stamp in list(zip(rows, stamps))[-2000:]:
-        try:
-            closes.append(float(item))
-            times.append(int(stamp or 0))
-        except (TypeError, ValueError):
-            continue
-    if len(closes) < 2:
-        return
-    if any(stamp <= 0 for stamp in times):
-        times = []
-    _kas_chart_cache["closes"] = closes
-    _kas_chart_cache["times"] = times
-    _kas_chart_cache["price"] = str(payload.get("price") or closes[-1])
-    _kas_chart_cache["source"] = str(payload.get("source") or "")
-    _kas_chart_cache["interval"] = str(payload.get("interval") or "15m")
-    _kas_chart_cache.setdefault("requested_interval", str(payload.get("requested_interval") or payload.get("interval") or "15m"))
-    _kas_chart_cache["fetched_at"] = float(payload.get("fetched_at") or 0)
-    _kas_chart_cache["error"] = ""
-    _kas_chart_cache["ts"] = 0.0
+    payload = _chart_disk_state(_kas_chart_path(), 2000)
+    if payload is not None:
+        _kas_chart_cache.update(payload)
 
 
 def _save_kas_chart_disk() -> None:
@@ -1844,7 +1971,7 @@ def _save_kas_chart_disk() -> None:
         },
         separators=(",", ":"),
     )
-    path.write_text(blob + "\n", encoding="utf-8")
+    write_state_json(path, json.loads(blob))
     try:
         path.chmod(0o600)
     except OSError:
@@ -1856,6 +1983,7 @@ def _set_kas_chart(
     times: list[int],
     source: str,
     interval: str = "15m",
+    fetched_for_interval: str | None = None,
 ) -> None:
     if len(closes) < 2:
         return
@@ -1865,14 +1993,9 @@ def _set_kas_chart(
     stamps = [int(item) for item in times[-len(out):]] if times else []
     if stamps and len(stamps) != len(out):
         stamps = []
-    _kas_chart_cache["closes"] = out
-    _kas_chart_cache["times"] = stamps
-    _kas_chart_cache["price"] = str(out[-1])
-    _kas_chart_cache["source"] = source
-    _kas_chart_cache["interval"] = interval
-    _kas_chart_cache["error"] = ""
-    _kas_chart_cache["ts"] = time.monotonic()
-    _kas_chart_cache["fetched_at"] = time.time()
+    _kas_chart_cache.update(closes=out, times=stamps, price=str(out[-1]), source=source,
+                            interval=interval, error="", ts=time.monotonic(), fetched_at=time.time(),
+                            fetched_for_interval=fetched_for_interval or interval)
     _save_kas_chart_disk()
 
 
@@ -1950,6 +2073,7 @@ def cached_kas_chart() -> dict[str, Any]:
         isinstance(cached, list)
         and len(cached) > 1
         and len(stamps) == len(cached)
+        and _kas_chart_cache.get("fetched_for_interval") == str(_kas_chart_cache.get("requested_interval") or _kas_chart_cache.get("interval") or "15m")
         and now - float(_kas_chart_cache.get("ts") or 0) < _CHART_TTL
     ):
         return kas_chart_snapshot()
@@ -1962,13 +2086,14 @@ def cached_kas_chart() -> dict[str, Any]:
     interval = str(_kas_chart_cache.get("requested_interval") or _kas_chart_cache.get("interval") or "15m")
     if interval not in _CHART_TFS:
         interval = "15m"
+    requested = interval
+    fetched_at = None
     try:
-        _highs, _lows, raw, _vols = fetch_klines(
-            interval, 120, timeout=3.0, symbol="KASUSDT"
-        )
-        closes = [_kas_px(item) for item in raw[-120:]]
-        times = [int(item) for item in (_kas_kline_times.get(interval) or [])[-len(closes):]]
-        source = "binance"
+        frame = crypto_market.recent("KASUSDT", interval)
+        closes = [_kas_px(item) for item in frame["closes"]]
+        times = list(frame["times"])
+        source = str(frame["source"])
+        fetched_at = frame.get("fetched_at")
     except (OSError, RuntimeError, TypeError, ValueError, urllib.error.URLError, json.JSONDecodeError):
         try:
             closes, times, interval = _coingecko_kas_chart(interval)
@@ -1977,7 +2102,14 @@ def cached_kas_chart() -> dict[str, Any]:
             _kas_chart_cache["error"] = "NO_MARKET_DATA"
             return kas_chart_snapshot()
     if len(closes) > 1:
-        _set_kas_chart(closes, times, source, interval=interval)
+        with _chart_refresh_lock:
+            current = str(_kas_chart_cache.get("requested_interval") or _kas_chart_cache.get("interval") or "15m")
+            if current != requested:
+                return kas_chart_snapshot()
+            _set_kas_chart(closes, times, source, interval=interval, fetched_for_interval=requested)
+            if fetched_at:
+                _kas_chart_cache["fetched_at"] = fetched_at
+                _save_kas_chart_disk()
     else:
         _kas_chart_cache["error"] = "NO_MARKET_DATA"
     return kas_chart_snapshot()
@@ -1994,9 +2126,12 @@ def set_kas_chart_interval(interval: str) -> dict[str, Any]:
     tf = str(interval or "").strip()
     if tf not in _CHART_TFS:
         tf = "15m"
-    _kas_chart_cache["requested_interval"] = tf
-    _kas_chart_cache["history_end"] = False
-    _kas_chart_cache["ts"] = 0.0
+    if not _kas_chart_cache.get("closes"):
+        _load_kas_chart_disk()
+    with _chart_refresh_lock:
+        _kas_chart_cache["requested_interval"] = tf
+        _kas_chart_cache["history_end"] = False
+        _kas_chart_cache["ts"] = 0.0
     request_chart_refresh("KAS")
     return status_payload()
 
@@ -2005,10 +2140,7 @@ def set_portfolio_asset(asset: str) -> dict[str, Any]:
     """One portfolio. SOL and KAS are wallets on it, not separate pages."""
     chosen = "KAS" if str(asset or "").strip().upper() in ("KAS", "KASPA") else "SOL"
     path = _portfolio_path()
-    path.write_text(
-        json.dumps({"asset": chosen}) + "\n",
-        encoding="utf-8",
-    )
+    write_state_json(path, {"asset": chosen})
     try:
         path.chmod(0o600)
     except OSError:
@@ -2217,7 +2349,7 @@ def start_paper_tick(kind: str = "trader") -> dict[str, Any]:
             job = {"state": "error", "note": short_error(str(exc)[:160])}
         with _paper_tick_lock:
             _paper_tick_jobs[kind] = job
-    threading.Thread(target=run, name="crypto-paper-" + kind, daemon=True).start()
+    _launch_job_thread(run, "crypto-paper-" + kind, _paper_tick_lock, _paper_tick_jobs[kind])
     return status_payload()
 
 
@@ -2247,9 +2379,8 @@ def start_backtest_trader() -> dict[str, Any]:
             _backtest_job["started"] = time.time()
             launch = True
     if launch:
-        threading.Thread(
-            target=_run_backtest_job, args=(paper_pair(), crypto_bots.selected()), name="gg-crypto-backtest", daemon=True
-        ).start()
+        _launch_job_thread(_run_backtest_job, "gg-crypto-backtest", _backtest_lock,
+                           _backtest_job, args=(paper_pair(), crypto_bots.selected()))
     payload = status_payload()
     payload["backtest_job"] = backtest_job()
     return payload

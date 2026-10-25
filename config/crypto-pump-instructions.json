@@ -1,0 +1,533 @@
+{
+  "schema": "gg.crypto.pump-interface-facts.v1",
+  "source": "https://github.com/pump-fun/pump-public-docs",
+  "commit": "639b87fb45c3adeffa6f7c4a1bf0cb85e392bf22",
+  "interface_facts_only": true,
+  "programs": {
+    "curve": {
+      "address": "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P",
+      "source": "https://raw.githubusercontent.com/pump-fun/pump-public-docs/639b87fb45c3adeffa6f7c4a1bf0cb85e392bf22/idl/pump.json",
+      "source_sha256": "7616681ea557975f9f623ac211080f22a93060781eaf4765b0a488d980997207",
+      "instructions": {
+        "buy_v2": {
+          "discriminator": [
+            184,
+            23,
+            238,
+            97,
+            103,
+            197,
+            211,
+            61
+          ],
+          "accounts": [
+            {
+              "name": "global"
+            },
+            {
+              "name": "base_mint"
+            },
+            {
+              "name": "quote_mint"
+            },
+            {
+              "name": "base_token_program"
+            },
+            {
+              "name": "quote_token_program"
+            },
+            {
+              "name": "associated_token_program",
+              "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+            },
+            {
+              "name": "fee_recipient",
+              "writable": true
+            },
+            {
+              "name": "associated_quote_fee_recipient",
+              "writable": true
+            },
+            {
+              "name": "buyback_fee_recipient",
+              "writable": true
+            },
+            {
+              "name": "associated_quote_buyback_fee_recipient",
+              "writable": true
+            },
+            {
+              "name": "bonding_curve",
+              "writable": true
+            },
+            {
+              "name": "associated_base_bonding_curve",
+              "writable": true
+            },
+            {
+              "name": "associated_quote_bonding_curve",
+              "writable": true
+            },
+            {
+              "name": "user",
+              "writable": true,
+              "signer": true
+            },
+            {
+              "name": "associated_base_user",
+              "writable": true
+            },
+            {
+              "name": "associated_quote_user",
+              "writable": true
+            },
+            {
+              "name": "creator_vault",
+              "writable": true
+            },
+            {
+              "name": "associated_creator_vault",
+              "writable": true
+            },
+            {
+              "name": "sharing_config"
+            },
+            {
+              "name": "global_volume_accumulator"
+            },
+            {
+              "name": "user_volume_accumulator",
+              "writable": true
+            },
+            {
+              "name": "associated_user_volume_accumulator",
+              "writable": true
+            },
+            {
+              "name": "fee_config"
+            },
+            {
+              "name": "fee_program",
+              "address": "pfeeUxB6jkeY1Hxd7CsFCAjcbHA9rWtchMGdZ6VojVZ"
+            },
+            {
+              "name": "system_program",
+              "address": "11111111111111111111111111111111"
+            },
+            {
+              "name": "event_authority"
+            },
+            {
+              "name": "program",
+              "address": "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
+            }
+          ],
+          "args": [
+            {
+              "name": "amount",
+              "type": "u64"
+            },
+            {
+              "name": "max_sol_cost",
+              "type": "u64"
+            },
+            {
+              "name": "partial_fill",
+              "type": {
+                "defined": {
+                  "name": "OptionBool"
+                }
+              }
+            }
+          ]
+        },
+        "sell_v2": {
+          "discriminator": [
+            93,
+            246,
+            130,
+            60,
+            231,
+            233,
+            64,
+            178
+          ],
+          "accounts": [
+            {
+              "name": "global"
+            },
+            {
+              "name": "base_mint"
+            },
+            {
+              "name": "quote_mint"
+            },
+            {
+              "name": "base_token_program"
+            },
+            {
+              "name": "quote_token_program"
+            },
+            {
+              "name": "associated_token_program",
+              "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+            },
+            {
+              "name": "fee_recipient",
+              "writable": true
+            },
+            {
+              "name": "associated_quote_fee_recipient",
+              "writable": true
+            },
+            {
+              "name": "buyback_fee_recipient",
+              "writable": true
+            },
+            {
+              "name": "associated_quote_buyback_fee_recipient",
+              "writable": true
+            },
+            {
+              "name": "bonding_curve",
+              "writable": true
+            },
+            {
+              "name": "associated_base_bonding_curve",
+              "writable": true
+            },
+            {
+              "name": "associated_quote_bonding_curve",
+              "writable": true
+            },
+            {
+              "name": "user",
+              "writable": true,
+              "signer": true
+            },
+            {
+              "name": "associated_base_user",
+              "writable": true
+            },
+            {
+              "name": "associated_quote_user",
+              "writable": true
+            },
+            {
+              "name": "creator_vault",
+              "writable": true
+            },
+            {
+              "name": "associated_creator_vault",
+              "writable": true
+            },
+            {
+              "name": "sharing_config"
+            },
+            {
+              "name": "user_volume_accumulator",
+              "writable": true
+            },
+            {
+              "name": "associated_user_volume_accumulator",
+              "writable": true
+            },
+            {
+              "name": "fee_config"
+            },
+            {
+              "name": "fee_program",
+              "address": "pfeeUxB6jkeY1Hxd7CsFCAjcbHA9rWtchMGdZ6VojVZ"
+            },
+            {
+              "name": "system_program",
+              "address": "11111111111111111111111111111111"
+            },
+            {
+              "name": "event_authority"
+            },
+            {
+              "name": "program",
+              "address": "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
+            }
+          ],
+          "args": [
+            {
+              "name": "amount",
+              "type": "u64"
+            },
+            {
+              "name": "min_sol_output",
+              "type": "u64"
+            }
+          ]
+        }
+      }
+    },
+    "amm": {
+      "address": "pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA",
+      "source": "https://raw.githubusercontent.com/pump-fun/pump-public-docs/639b87fb45c3adeffa6f7c4a1bf0cb85e392bf22/idl/pump_amm.json",
+      "source_sha256": "b7d8c57a4d9c4dd0109a9ab893052352333252d4eedced10ac091d4d66cab89b",
+      "instructions": {
+        "buy_exact_quote_in_v2": {
+          "discriminator": [
+            194,
+            171,
+            28,
+            70,
+            104,
+            77,
+            91,
+            47
+          ],
+          "accounts": [
+            {
+              "name": "pool",
+              "writable": true
+            },
+            {
+              "name": "user",
+              "writable": true,
+              "signer": true
+            },
+            {
+              "name": "global_config"
+            },
+            {
+              "name": "base_mint"
+            },
+            {
+              "name": "quote_mint"
+            },
+            {
+              "name": "user_base_token_account",
+              "writable": true
+            },
+            {
+              "name": "user_quote_token_account",
+              "writable": true
+            },
+            {
+              "name": "pool_base_token_account",
+              "writable": true
+            },
+            {
+              "name": "pool_quote_token_account",
+              "writable": true
+            },
+            {
+              "name": "base_token_program"
+            },
+            {
+              "name": "quote_token_program"
+            },
+            {
+              "name": "system_program",
+              "address": "11111111111111111111111111111111"
+            },
+            {
+              "name": "user_volume_accumulator",
+              "writable": true
+            },
+            {
+              "name": "fee_config"
+            },
+            {
+              "name": "buyback_fee_recipient",
+              "writable": true
+            },
+            {
+              "name": "event_authority"
+            },
+            {
+              "name": "program",
+              "address": "pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA"
+            }
+          ],
+          "args": [
+            {
+              "name": "spendable_quote_in",
+              "type": "u64"
+            },
+            {
+              "name": "min_base_amount_out",
+              "type": "u64"
+            }
+          ]
+        },
+        "buy_v2": {
+          "discriminator": [
+            184,
+            23,
+            238,
+            97,
+            103,
+            197,
+            211,
+            61
+          ],
+          "accounts": [
+            {
+              "name": "pool",
+              "writable": true
+            },
+            {
+              "name": "user",
+              "writable": true,
+              "signer": true
+            },
+            {
+              "name": "global_config"
+            },
+            {
+              "name": "base_mint"
+            },
+            {
+              "name": "quote_mint"
+            },
+            {
+              "name": "user_base_token_account",
+              "writable": true
+            },
+            {
+              "name": "user_quote_token_account",
+              "writable": true
+            },
+            {
+              "name": "pool_base_token_account",
+              "writable": true
+            },
+            {
+              "name": "pool_quote_token_account",
+              "writable": true
+            },
+            {
+              "name": "base_token_program"
+            },
+            {
+              "name": "quote_token_program"
+            },
+            {
+              "name": "system_program",
+              "address": "11111111111111111111111111111111"
+            },
+            {
+              "name": "user_volume_accumulator",
+              "writable": true
+            },
+            {
+              "name": "fee_config"
+            },
+            {
+              "name": "buyback_fee_recipient",
+              "writable": true
+            },
+            {
+              "name": "event_authority"
+            },
+            {
+              "name": "program",
+              "address": "pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA"
+            }
+          ],
+          "args": [
+            {
+              "name": "base_amount_out",
+              "type": "u64"
+            },
+            {
+              "name": "max_quote_amount_in",
+              "type": "u64"
+            }
+          ]
+        },
+        "sell_v2": {
+          "discriminator": [
+            93,
+            246,
+            130,
+            60,
+            231,
+            233,
+            64,
+            178
+          ],
+          "accounts": [
+            {
+              "name": "pool",
+              "writable": true
+            },
+            {
+              "name": "user",
+              "writable": true,
+              "signer": true
+            },
+            {
+              "name": "global_config"
+            },
+            {
+              "name": "base_mint"
+            },
+            {
+              "name": "quote_mint"
+            },
+            {
+              "name": "user_base_token_account",
+              "writable": true
+            },
+            {
+              "name": "user_quote_token_account",
+              "writable": true
+            },
+            {
+              "name": "pool_base_token_account",
+              "writable": true
+            },
+            {
+              "name": "pool_quote_token_account",
+              "writable": true
+            },
+            {
+              "name": "base_token_program"
+            },
+            {
+              "name": "quote_token_program"
+            },
+            {
+              "name": "system_program",
+              "address": "11111111111111111111111111111111"
+            },
+            {
+              "name": "user_volume_accumulator",
+              "writable": true
+            },
+            {
+              "name": "fee_config"
+            },
+            {
+              "name": "buyback_fee_recipient",
+              "writable": true
+            },
+            {
+              "name": "event_authority"
+            },
+            {
+              "name": "program",
+              "address": "pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA"
+            }
+          ],
+          "args": [
+            {
+              "name": "base_amount_in",
+              "type": "u64"
+            },
+            {
+              "name": "min_quote_amount_out",
+              "type": "u64"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

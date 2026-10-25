@@ -1,0 +1,78 @@
+GG AI DESKTOP - bounded memory, shutdown and background activity
+2026-10-25
+
+PROBLEM AND RESULT
+Desktop shutdown could retain a windowless process while Qt quit callbacks
+or Python executor joins remained blocked. Terminal workers could also queue
+repeated full screen/scrollback snapshots when a GUI consumer stopped keeping
+up. The release bounds these paths and preserves real background activity
+when the desktop is covered, unfocused or minimized.
+
+LIFECYCLE
+A shutdown guard is installed before backend quit handlers. Normal cleanup
+runs first. After an accepted primary-desktop close/quit, a daemon watchdog
+permits 15 seconds before exiting its own process with a timeout status. It
+stays armed through interpreter joins. Minimize, hide and a rejected close do
+not arm it. Closing the primary desktop also quits if a secondary window is
+still present.
+
+Shared-host timers stop before cleanup can enter nested event loops. Cleanup
+continues after individual child exceptions; diagnostics contain fixed step
+names and exception classes only. Reentrant shutdown does not repeat cleanup.
+Idle model-server retirement preserves the application-owned shared host and
+its live services; final desktop shutdown closes them.
+
+TERMINAL BACKPRESSURE
+Only one full VT screen/scrollback snapshot may await a GUI receipt. Dirty
+state remains in the bounded current VT. A matching generation and delivery
+receipt enables one latest snapshot. Stale-session snapshots are acknowledged
+without applying them to the current session.
+
+Host PTY drains limit unapplied input to 192 KiB and drain bounded chunks of
+48 KiB. Excess input stays in the pipe for normal operating-system
+backpressure. Exited-child and broken-pipe tails are delivered before resource
+close, including when the remaining drain budget is small.
+
+BACKGROUND ACTIVITY AND AUDIO
+Desktop-owned hardware sampling continues independently of visible consumers,
+using the existing worker lane and latest-value storage. Expensive process
+and service inventories remain demand-driven. Host shutdown stops sampling.
+
+Activity lamps use current CPU/GPU/disk/network and chat data rather than
+keyboard focus. Pending, failed and stale measurements do not masquerade as
+current activity. Covered active audio meters retain their usual cadence.
+Hidden/minimized audio data remains current while unnecessary Canvas painting
+waits. Silent or unchanged spectra stop repainting after settling. Restoration
+requests the latest state instead of replaying a paint backlog.
+
+VALIDATION
+Isolated tests cover normal and blocked shutdown, executor joins, secondary
+windows, rejected close, minimize/hide, ordered best-effort cleanup and
+reentrancy. Terminal tests cover one queued snapshot, stale/matching receipts,
+session reset, resumed exact screen/history/byte counts, bounded raw input,
+exited-child tails and broken-pipe tails.
+
+Offscreen QML fixtures verify that activity lamps continue reacting while a
+different window holds focus. Audio fixtures verify active background updates,
+zero painting while minimized/hidden, settled unchanged data and a single
+fresh paint on restoration. Producer tests cover UI-independent telemetry,
+one in-flight blocked probe and final shutdown. Windows ConPTY, terminal
+replay, startup restore, window controls and full-desktop startup checks are
+also included in the release verification.
+
+LIMITS
+The reproduced queue and lifecycle defects do not establish the cause of
+every high-memory condition. Resident memory and committed memory are different
+quantities; overlapping shared pages cannot safely be summed as private use.
+A Python watchdog cannot run while native code permanently holds the Python
+GIL. Bounded tests are not proof of leak-free operation over days or flawless
+physical display timing.
+
+The legacy resident-chat contract test imports a Linux-only live-proof
+controller that calls os.getuid during import. That unchanged script cannot
+run on Windows. The release records this limitation separately from passing
+Windows lifecycle and integration checks.
+
+Source changes require a full application restart. Workstation measurements,
+private session history, process inventories and local configuration are not
+included in this public report.

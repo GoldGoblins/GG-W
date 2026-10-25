@@ -1,4 +1,5 @@
 import QtQuick
+import "LiveEyesStatus.js" as EyesStatus
 import QtQuick.Controls
 
 Item {
@@ -19,6 +20,7 @@ Item {
     property string chatSessionsJson: "[]"
     property string activeChatSession: ""
     property string cryptoStatusJson: "{}"
+    property var cryptoSnapshot: null
     signal snippetChosen(string path)
     signal chatSessionChosen(string sessionId, string engine)
     signal cryptoAccountChosen(string pubkey)
@@ -82,21 +84,21 @@ Item {
 
     readonly property var crypto: {
         var empty = {
-            "legend": "TESTNET",
+            "legend": "",
             "signer": false,
             "accounts": [],
             "holdings": [],
             "wallet": {}
         }
         try {
-            var parsed = JSON.parse(root.cryptoStatusJson || "{}")
-            if (!parsed || typeof parsed !== "object")
+            var parsed = root.cryptoSnapshot || JSON.parse(root.cryptoStatusJson || "{}")
+            if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
                 return empty
-            if (!parsed.holdings)
-                parsed.holdings = []
-            if (!parsed.wallet)
-                parsed.wallet = {}
-            return parsed
+            return Object.assign({}, parsed, {
+                holdings: Array.isArray(parsed.holdings) ? parsed.holdings : [],
+                accounts: Array.isArray(parsed.accounts) ? parsed.accounts : [],
+                wallet: parsed.wallet || ({})
+            })
         } catch (err) {
             return empty
         }
@@ -152,22 +154,14 @@ Item {
                     objectName: "grokWallet"
 
                     Text {
+                        objectName: "liveEyesTelemetry"
                         width: parent.width
                         visible: root.eyes.state !== "off"
                         wrapMode: Text.WordWrap
+                        textFormat: Text.PlainText
                         font.pixelSize: 11
-                        color: root.eyes.state === "live" && root.eyes.frame_age_ms <= 2000 ? "#9ed5a4" : "#e4c06a"
-                        text: {
-                            if (root.eyes.state === "live") {
-                                var delivered = root.eyes.last_delivered_age_ms
-                                return "ÖGON · " + (root.eyes.received_fps || 0) + " fps\n"
-                                    + (delivered === null || delivered === undefined
-                                       ? "Ingen bild hämtad av AI ännu"
-                                       : "Bild hämtad " + Math.round(delivered / 1000) + " s sedan")
-                                    + "\nRAM " + ((root.eyes.buffer_bytes || 0) / 1048576).toFixed(1) + " MiB"
-                            }
-                            return "ÖGON · " + (root.eyes.reason || "Väntar på skärmdelning")
-                        }
+                        color: EyesStatus.fresh(root.eyes) ? "#9ed5a4" : "#e4c06a"
+                        text: EyesStatus.details(root.eyes)
                     }
 
                     Text {
@@ -446,7 +440,7 @@ Item {
         anchors.topMargin: 10
         anchors.bottom: parent.bottom
         leftLegend: "CRYPTO"
-        rightLegend: String(root.crypto.legend || "TESTNET")
+        rightLegend: String(root.crypto.legend || "—")
         backgroundColor: "#161616"
         borderColor: root.frameBorder
         radius: root.frameRadius
@@ -466,97 +460,136 @@ Item {
             Column {
                 id: cryptoColumn
                 width: cryptoFlick.width
-                spacing: 4
+                spacing: 8
+                readonly property var wallet: root.crypto.wallet || ({})
+                readonly property bool connected: String(wallet.pubkey || "").length > 12
+                readonly property bool observe: ["MAINNET", "OBSERVE"].indexOf(String(root.crypto.legend || "")) >= 0
+                    || String(wallet.network || "").toLowerCase() === "mainnet"
 
                 Text {
                     width: parent.width
-                    visible: (root.crypto.accounts || []).length === 0
-                    text: {
-                        var w = root.crypto.wallet || {}
-                        if (!w.pubkey)
-                            return "DISCONNECTED"
-                        var key = String(w.pubkey)
-                        if (key.length > 12)
-                            return key.slice(0, 4) + "…" + key.slice(-4)
-                        return key
+                    text: cryptoColumn.observe ? "MAINNET · READ ONLY"
+                        : ["LOCALNET", "TESTNET"].indexOf(String(root.crypto.legend || "")) >= 0 ? "PAPER / LAB"
+                        : "NÄTVERK OKÄNT"
+                    color: "#e6edf3"
+                    font.family: "monospace"; font.pixelSize: 10
+                    elide: Text.ElideRight
+                }
+                Rectangle {
+                    width: parent.width; height: railBalance.height + 18
+                    color: "#161616"; radius: 3; border.color: "#6a6a6a"
+                    Column {
+                        id: railBalance
+                        x: 8; y: 9; width: parent.width - 16; spacing: 4
+                        Text {
+                            width: parent.width
+                            text: cryptoColumn.connected
+                                ? String(cryptoColumn.wallet.pubkey).slice(0, 4) + "…" + String(cryptoColumn.wallet.pubkey).slice(-4)
+                                : "INGET KONTO"
+                            color: cryptoColumn.connected ? "#e6edf3" : "#9aa3ad"
+                            font.family: "monospace"; font.pixelSize: 11; font.bold: true
+                            elide: Text.ElideMiddle; textFormat: Text.PlainText
+                        }
+                        Text {
+                            objectName: "cryptoRailBalance"
+                            width: parent.width; visible: cryptoColumn.connected
+                            text: String(cryptoColumn.wallet.balance_sol === undefined || cryptoColumn.wallet.balance_sol === null
+                                ? "—" : cryptoColumn.wallet.balance_sol) + " SOL"
+                            color: "#c8cdd4"
+                            font.family: "monospace"; font.pixelSize: 11
+                            elide: Text.ElideRight; textFormat: Text.PlainText
+                        }
                     }
-                    color: (root.crypto.wallet && root.crypto.wallet.pubkey)
-                        ? "#8db89a"
-                        : "#6a6a6a"
-                    font.family: "monospace"
-                    font.pixelSize: 12
-                    wrapMode: Text.NoWrap
-                    elide: Text.ElideMiddle
                 }
 
                 Repeater {
                     model: root.crypto.accounts || []
-                    delegate: Text {
+                    delegate: CryptoButton {
+                        id: accountButton
                         required property var modelData
-                        width: cryptoColumn.width
-                        text: String(modelData.short || "")
-                        color: modelData.active ? "#8db89a" : "#8b949e"
-                        font.family: "monospace"
-                        font.pixelSize: 12
+                        width: cryptoColumn.width; height: 26
+                        enabled: String((root.crypto.ui_operation || {}).state || "") !== "running"
+                        hoverEnabled: true; activeFocusOnTab: true
+                        Accessible.name: "Välj kryptokonto " + String(modelData.short || "")
+                        tip: String(modelData.pubkey || "")
+                        text: (modelData.active ? "● " : "  ") + String(modelData.short || "Konto")
+                        color: modelData.active ? "#e6edf3" : "#9aa3ad"
+                        checked: Boolean(modelData.active)
+                        font.family: "monospace"; font.pixelSize: 10
                         font.bold: Boolean(modelData.active)
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                var key = String(modelData.pubkey || "")
-                                if (key)
-                                    root.cryptoAccountChosen(key)
-                            }
+                        horizontalAlignment: Text.AlignLeft
+                        onClicked: {
+                            var key = String(modelData.pubkey || "")
+                            if (key && !modelData.active) root.cryptoAccountChosen(key)
                         }
                     }
                 }
 
                 Text {
                     width: parent.width
-                    text: String((root.crypto.lab && root.crypto.lab.label) || "LAB OFF")
-                    color: (root.crypto.lab && root.crypto.lab.running)
-                        ? "#8db89a"
-                        : "#8b949e"
-                    font.family: "monospace"
-                    font.pixelSize: 12
+                    text: String((root.crypto.lab && root.crypto.lab.label) || "LAB · OKÄND")
+                    color: (root.crypto.lab && root.crypto.lab.healthy) ? "#8db89a" : "#9aa3ad"
+                    font.family: "monospace"; font.pixelSize: 10
+                    elide: Text.ElideRight; textFormat: Text.PlainText
                 }
-
+                Text {
+                    objectName: "cryptoRailPumpState"
+                    width: parent.width
+                    readonly property var pump: root.crypto.pump || ({})
+                    visible: String(pump.mint || "").length > 0
+                    text: "PUMP · " + String(pump.state || "idle").toUpperCase()
+                        + (pump.stale === true ? " · STALE" : "") + "\nMAINNET · READ ONLY"
+                    color: pump.error ? "#c98989" : "#c8cdd4"
+                    font.family: "monospace"; font.pixelSize: 10
+                    wrapMode: Text.WrapAnywhere; textFormat: Text.PlainText
+                }
+                Text {
+                    objectName: "cryptoRailRpcStatus"
+                    width: parent.width
+                    visible: cryptoColumn.connected && (cryptoColumn.wallet.rpc_loading === true
+                        || cryptoColumn.wallet.rpc_stale === true || String(cryptoColumn.wallet.rpc_error || "").length > 0)
+                    text: cryptoColumn.wallet.rpc_loading ? "HÄMTAR SALDO…"
+                        : cryptoColumn.wallet.rpc_error ? "HÄMTNING MISSLYCKADES" : "SENAST HÄMTADE SALDO"
+                    color: "#c8a97e"
+                    font.family: "monospace"; font.pixelSize: 10; wrapMode: Text.WordWrap
+                }
+                Rectangle { width: parent.width; height: 1; color: "#6a6a6a" }
                 Text {
                     width: parent.width
-                    visible: root.crypto.holdings.length === 0
-                    text: "NO TOKENS"
-                    color: "#a8b0b8"
-                    font.family: "monospace"
-                    font.pixelSize: 12
+                    text: "TILLGÅNGAR · " + root.crypto.holdings.length
+                    color: "#9aa3ad"
+                    font.family: "monospace"; font.pixelSize: 10
                 }
-
+                Text {
+                    width: parent.width; visible: root.crypto.holdings.length === 0
+                    text: !cryptoColumn.connected ? "Anslut en plånbok"
+                        : root.crypto.refreshing || cryptoColumn.wallet.rpc_loading ? "Hämtar tillgångar…"
+                        : cryptoColumn.wallet.rpc_error ? "Tillgångar ej tillgängliga" : "Inga tillgångar"
+                    color: "#9aa3ad"
+                    font.family: "monospace"; font.pixelSize: 11; wrapMode: Text.WordWrap
+                }
                 Repeater {
                     model: root.crypto.holdings
-
-                    delegate: Column {
+                    delegate: Item {
                         required property var modelData
-                        width: cryptoColumn.width
-                        spacing: 0
-
+                        width: cryptoColumn.width; height: 34
                         Text {
                             width: parent.width
-                            text: String(modelData.symbol || "")
+                            text: String(modelData.symbol || "TOKEN")
                             color: "#c8cdd4"
-                            font.family: "monospace"
-                            font.pixelSize: 12
+                            font.family: "monospace"; font.pixelSize: 10; font.bold: true
+                            elide: Text.ElideRight; textFormat: Text.PlainText
                         }
                         Text {
-                            width: parent.width
-                            text: String(modelData.display || "")
-                            color: "#d8dee9"
-                            font.family: "monospace"
-                            font.pixelSize: 12
-                            wrapMode: Text.WrapAnywhere
+                            y: 16; width: parent.width
+                            text: String(modelData.display === undefined || modelData.display === null ? "—" : modelData.display)
+                            color: "#e6edf3"
+                            font.family: "monospace"; font.pixelSize: 11
+                            elide: Text.ElideRight; textFormat: Text.PlainText
                         }
                     }
                 }
             }
-
             ScrollBar.vertical: GgScrollBar {}
         }
     }

@@ -26,10 +26,13 @@
     var lastCount = 0;
     var lastW = 0;
     var lastH = 0;
+    var lastPoints = [];
+    var lastEquity = [];
+    var lastMarkers = "";
 
     function unixSeconds(raw) {
       var t = Number(raw || 0);
-      if (!(t > 0))
+      if (!(t > 0) || !isFinite(t))
         return 0;
       if (t > 1e12)
         t = Math.floor(t / 1000);
@@ -44,7 +47,7 @@
         var row = rows[i] || {};
         var t = unixSeconds(row.time);
         var v = Number(row.value || 0);
-        if (!(t > 0) || !(v > 0))
+        if (!(t > 0) || !(v > 0) || !isFinite(v))
           continue;
         sorted.push({ time: t, value: v });
       }
@@ -60,6 +63,24 @@
         out.push(point);
       }
       return out;
+    }
+
+    function samePoint(a, b) {
+      return a && b && a.time === b.time && a.value === b.value;
+    }
+
+    function publishPoints(target, next, previous) {
+      if (JSON.stringify(next) === JSON.stringify(previous))
+        return;
+      var simple = previous.length > 0 && next.length >= previous.length;
+      for (var i = 0; simple && i < previous.length - 1; i++)
+        simple = samePoint(next[i], previous[i]);
+      if (simple && next[previous.length - 1].time === previous[previous.length - 1].time) {
+        for (var j = previous.length - 1; j < next.length; j++)
+          target.update(next[j]);
+      } else {
+        target.setData(next);
+      }
     }
 
     function boot() {
@@ -124,11 +145,20 @@
       var points = uniqPoints(payload.points || []);
       var markers = payload.markers || [];
       var eq = uniqPoints(payload.equity || []);
-      var sig = points.length + ":" + (points.length ? points[0].time : 0)
-        + ":" + (points.length ? points[points.length - 1].time : 0)
-        + ":" + (points.length ? points[points.length - 1].value : 0)
-        + ":" + markers.length + ":" + eq.length
-        + ":" + (eq.length ? eq[eq.length - 1].value : 0);
+      var cleanMarks = [];
+      for (var mi = 0; mi < markers.length; mi++) {
+        var mark = markers[mi] || {};
+        var mt = unixSeconds(mark.time);
+        if (!(mt > 0))
+          continue;
+        cleanMarks.push({
+          time: mt, position: mark.position || "aboveBar",
+          color: mark.color || "#c8a97e", shape: mark.shape || "circle"
+        });
+      }
+      cleanMarks.sort(function(a, b) { return a.time - b.time; });
+      var markerSig = JSON.stringify(cleanMarks);
+      var sig = JSON.stringify([points, cleanMarks, eq]);
       if (sig === lastSig && points.length === lastCount && viewW === lastW && viewH === lastH)
         return points.length;
       lastSig = sig;
@@ -141,34 +171,24 @@
           topColor: up ? "rgba(141,184,154,0.28)" : "rgba(201,137,137,0.24)",
           bottomColor: up ? "rgba(28,42,34,0.55)" : "rgba(36,24,24,0.55)"
         });
-        series.setData(points);
-        var cleanMarks = [];
-        var mi;
-        for (mi = 0; mi < markers.length; mi++) {
-          var mark = markers[mi] || {};
-          var mt = unixSeconds(mark.time);
-          if (!(mt > 0))
-            continue;
-          cleanMarks.push({
-            time: mt,
-            position: mark.position || "aboveBar",
-            color: mark.color || "#c8a97e",
-            shape: mark.shape || "circle"
-          });
-        }
-        series.setMarkers(cleanMarks);
+        publishPoints(series, points, lastPoints);
+        if (markerSig !== lastMarkers)
+          series.setMarkers(cleanMarks);
         if (equitySeries) {
-          equitySeries.setData(eq);
+          publishPoints(equitySeries, eq, lastEquity);
           if (chart)
             chart.priceScale("left").applyOptions({ visible: eq.length > 1 });
         }
-        if (chart && points.length)
+        if (chart && points.length && !lastCount)
           chart.timeScale().fitContent();
       } catch (err) {
         lastSig = "";
         return 0;
       }
       lastCount = points.length;
+      lastPoints = points;
+      lastEquity = eq;
+      lastMarkers = markerSig;
       pending = null;
       return points.length;
     }
@@ -182,8 +202,6 @@
       if (w < 8 || h < 8)
         return 0;
       chart.resize(w, h);
-      if (lastCount)
-        chart.timeScale().fitContent();
       lastW = w;
       lastH = h;
       return lastCount;

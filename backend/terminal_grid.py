@@ -65,16 +65,35 @@ class _VtHost(QObject):
         self._dirty = False
         self._history_sent_version = -1
         self._bytes_processed = 0
+        self._generation = 0
+        self._snapshot_serial = 0
+        self._snapshot_in_flight: tuple[int, int] | None = None
+        self._closed = False
 
     @Slot()
     def start(self) -> None:
+        if self._closed or self._pulse is not None:
+            return
         pulse = QTimer(self)
         pulse.setInterval(_VT_SNAP_MS)
+        pulse.setSingleShot(True)
         pulse.timeout.connect(self._emit_snapshot)
         self._pulse = pulse
+        self._schedule_snapshot()
+
+    def _schedule_snapshot(self) -> None:
+        # The GUI owns at most one full snapshot. Keep parsing into the VT
+        # while it is busy, then publish the latest state after its receipt.
+        pulse = self._pulse
+        if (not self._closed and self._dirty
+                and self._snapshot_in_flight is None
+                and pulse is not None and not pulse.isActive()):
+            pulse.start()
 
     @Slot(object)
     def feed(self, raw: object) -> None:
+        if self._closed:
+            return
         blob = raw if isinstance(raw, (bytes, bytearray)) else b""
         if blob:
             text = self._decoder.decode(bytes(blob))
@@ -87,36 +106,44 @@ class _VtHost(QObject):
                 if reply:
                     self.repliesReady.emit(reply)
         self._dirty = True
-        pulse = self._pulse
-        if pulse is not None and not pulse.isActive():
-            pulse.start()
+        self._schedule_snapshot()
 
     @Slot(int, int)
     def resize(self, rows: int, cols: int) -> None:
+        if self._closed:
+            return
         self._vt.resize(int(rows), int(cols))
         self._dirty = True
-        pulse = self._pulse
-        if pulse is not None and not pulse.isActive():
-            pulse.start()
+        self._schedule_snapshot()
 
-    @Slot()
-    def reset(self) -> None:
+    @Slot(int)
+    def reset(self, generation: int) -> None:
         """Clear the renderer before it is attached to another PTY."""
+        if self._closed:
+            return
+        self._generation = generation
         self._vt.reset()
         self._vt.out.clear()
         self._decoder = codecs.getincrementaldecoder("utf-8")("replace")
         self._history_sent_version = -1
         self._dirty = True
-        pulse = self._pulse
-        if pulse is not None and not pulse.isActive():
-            pulse.start()
+        # An older delivery still occupies the GUI queue until acknowledged.
+        # Do not create a second full snapshot when a session resets.
+        self._schedule_snapshot()
+
+    @Slot(int, int)
+    def acknowledge(self, generation: int, serial: int) -> None:
+        if self._closed or self._snapshot_in_flight != (generation, serial):
+            return
+        self._snapshot_in_flight = None
+        self._schedule_snapshot()
 
     @Slot()
     def _emit_snapshot(self) -> None:
-        if not self._dirty:
-            pulse = self._pulse
-            if pulse is not None:
-                pulse.stop()
+        pulse = self._pulse
+        if pulse is not None:
+            pulse.stop()
+        if self._closed or not self._dirty or self._snapshot_in_flight is not None:
             return
         self._dirty = False
         vt = self._vt
@@ -124,8 +151,12 @@ class _VtHost(QObject):
         if vt.history_version != self._history_sent_version:
             history = [row[:] for row in vt.history]
             self._history_sent_version = vt.history_version
+        self._snapshot_serial += 1
+        self._snapshot_in_flight = (self._generation, self._snapshot_serial)
         self.snapshotReady.emit(
             {
+                "generation": self._generation,
+                "serial": self._snapshot_serial,
                 "buf": [row[:] for row in vt.buf],
                 "bytes_processed": self._bytes_processed,
                 "history": history,
@@ -145,6 +176,9 @@ class _VtHost(QObject):
 
     @Slot()
     def shutdown(self) -> None:
+        self._closed = True
+        self._dirty = False
+        self._snapshot_in_flight = None
         pulse = self._pulse
         self._pulse = None
         if pulse is not None:
@@ -168,7 +202,8 @@ class TerminalGrid(QQuickPaintedItem):
     ready = Signal()
     _bytesIn = Signal(object)
     _resizeTo = Signal(int, int)
-    _reset = Signal()
+    _reset = Signal(int)
+    _snapshotApplied = Signal(int, int)
 
     def __init__(self, parent: QQuickItem | None = None, *,
                  retain_session_size: bool = False,
@@ -200,6 +235,7 @@ class TerminalGrid(QQuickPaintedItem):
         self._snap: dict | None = None
         self._bytes_submitted = 0
         self._bytes_applied = 0
+        self._snapshot_generation = 0
         self._replay_hidden = False
         self._selection_anchor: tuple[int, int] | None = None
         self._selection_cursor: tuple[int, int] | None = None
@@ -252,6 +288,7 @@ class TerminalGrid(QQuickPaintedItem):
         self._bytesIn.connect(self._host.feed, Qt.ConnectionType.QueuedConnection)
         self._resizeTo.connect(self._host.resize, Qt.ConnectionType.QueuedConnection)
         self._reset.connect(self._host.reset, Qt.ConnectionType.QueuedConnection)
+        self._snapshotApplied.connect(self._host.acknowledge, Qt.ConnectionType.QueuedConnection)
         self._host.snapshotReady.connect(self._apply_snapshot)
         self._host.repliesReady.connect(self.terminalReplyProduced.emit)
         self._thread.started.connect(self._host.start)
@@ -272,6 +309,7 @@ class TerminalGrid(QQuickPaintedItem):
 
     def reset_terminal(self) -> None:
         """Drop all visible state before reusing this grid for a new PTY."""
+        self._snapshot_generation += 1
         self._vt.reset()
         self._vt.out.clear()
         self._decoder = codecs.getincrementaldecoder("utf-8")("replace")
@@ -285,7 +323,7 @@ class TerminalGrid(QQuickPaintedItem):
         self._selection_passthrough_click = False
         self._cursor_on = True
         if self._thread is not None and self._thread.isRunning():
-            self._reset.emit()
+            self._reset.emit(self._snapshot_generation)
         self._emit_scroll_metrics()
         self._touch()
 
@@ -721,6 +759,10 @@ class TerminalGrid(QQuickPaintedItem):
         """Wait for queued parsing and the final coalesced paint request."""
         return self._bytes_applied < self._bytes_submitted or self._coalesce.isActive()
 
+    def pending_input_bytes(self) -> int:
+        """Bytes not yet represented by a GUI-applied worker snapshot."""
+        return max(0, self._bytes_submitted - self._bytes_applied)
+
     def hide_replay(self, hidden: bool) -> None:
         """Suppress replay in the native painter as well as the QML overlay."""
         self._replay_hidden = bool(hidden)
@@ -755,6 +797,18 @@ class TerminalGrid(QQuickPaintedItem):
     def _apply_snapshot(self, snap: object) -> None:
         if not isinstance(snap, dict):
             return
+        generation, serial = snap.get("generation"), snap.get("serial")
+        try:
+            if self._thread is None or generation != self._snapshot_generation:
+                return
+            self._apply_current_snapshot(snap)
+        finally:
+            # A reset rejects old contents, but must still release that exact
+            # delivery so the worker can publish the new session's state.
+            if self._thread is not None and isinstance(generation, int) and isinstance(serial, int):
+                self._snapshotApplied.emit(generation, serial)
+
+    def _apply_current_snapshot(self, snap: dict) -> None:
         self._bytes_applied = int(snap.get("bytes_processed", self._bytes_applied))
         previous = self._snap
         if snap.get("history") is None and previous is not None:

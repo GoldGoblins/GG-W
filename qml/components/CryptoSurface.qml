@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
+import QtQuick.Window
 
 Item {
     id: root
@@ -18,12 +19,49 @@ Item {
     readonly property color ledgerGold: "#c8a97e"
     readonly property color ledgerGreen: "#8db89a"
     property bool sidebarCollapsed: false
+    readonly property bool compactSidebar: root.sidebarCollapsed || root.width < 880
     property string statusJson: "{}"
     property string botTab: "trader"
     property string botTape: "live"
     property string page: "PORTFOLIO"
     property string assetPick: ""
     property bool walletToolsOpen: false
+    property bool activityErrorsOnly: false
+    readonly property var activityRows: {
+        if (!root.activityErrorsOnly) return root.ledger
+        return root.ledger.filter(function(row) {
+            return !!row.error || ["failed", "error", "unconfirmed", "rejected"].indexOf(String(row.status || "").toLowerCase()) >= 0
+        })
+    }
+    function pageHint() {
+        var hints = {
+            "PORTFOLIO": "Saldo, marknadsöversikt och tillgångar",
+            "BACKTEST": "Jämför strategier på historiska prisserier",
+            "TRADER": "Papperskonton · följ strategier utan riktiga affärer",
+            "PUMP": "Inspektera token → offert → simulering eller paper",
+            "SIGNAL": "Strategysignaler och diagnostik",
+            "ARB": "Lokal poolsimulering · kostnader och nettoresultat",
+            "ACTIVITY": "Spårbar historik över händelser och resultat",
+            "FACTORY": "Hypotes → validering → oberoende test → paper",
+            "DESK": "Sex analysroller · gemensam riskbedömning",
+            "POLY": "Prognosmarknader · läs och analysera arkivdata"
+        }
+        return hints[root.page] || ""
+    }
+    function networkLabel() {
+        if (root.page === "PUMP") return "MAINNET · LÄSLÄGE"
+        if (root.page === "POLY") return "ARKIV · LÄSLÄGE"
+        if (["FACTORY", "DESK", "BACKTEST"].indexOf(root.page) >= 0) return "RESEARCH · PAPER"
+        if (root.asset === "KAS") return "KAS · " + String(root.kaspa.network || "paper").toUpperCase()
+        var network = String(root.wallet.network || "").toUpperCase()
+        return (network || root.legend) + (root.legend === "OBSERVE" ? " · LÄSLÄGE" : " · PAPER")
+    }
+    function inspectToken(mint) {
+        if (!mint || !root.surfaceHost || !root.surfaceHost.cryptoPumpInspect || root.operationBusy)
+            return
+        root.page = "PUMP"
+        root.statusJson = root.surfaceHost.cryptoPumpInspect(String(mint), "")
+    }
     readonly property var portfolioView: (root.status.portfolio || {})[root.asset === "KAS" ? "kas" : "sol"] || ({})
     readonly property string asset: {
         if (root.assetPick === "SOL" || root.assetPick === "KAS")
@@ -34,6 +72,7 @@ Item {
         "PORTFOLIO",
         "BACKTEST",
         "TRADER",
+        "PUMP",
         "SIGNAL",
         "ARB",
         "ACTIVITY",
@@ -42,11 +81,26 @@ Item {
         "POLY"
     ]
     readonly property bool backtestRunning: String((root.status.backtest_job || {}).state || "") === "running"
+    readonly property bool activeView: root.visible && (!root.Window.window
+        || (root.Window.window.visible && root.Window.window.visibility !== Window.Minimized))
+    readonly property var operation: root.status.ui_operation || ({})
+    readonly property bool operationBusy: String(root.operation.state || "") === "running"
+    readonly property bool activeJobs: root.backtestRunning || root.paperTickRunning || root.polyRunning
+        || root.strategyFactoryRunning || root.deskRunning || root.operationBusy
+        || (root.status.pump || {}).loading === true
+        || ["running", "loading"].indexOf(String((root.status.pump || {}).state || "")) >= 0
+        || root.status.refreshing === true || root.wallet.rpc_loading === true
+        || (root.asset === "KAS" ? root.status.kas_chart || {} : root.liveChart).refreshing === true
+        || String(root.lab.label || "") === "LAB STARTING"
+        || String(((root.status.paper_jobs || {}).bot || {}).state || "") === "running"
+    property real lastSolChartRequest: 0
+    property real lastKasChartRequest: 0
     signal walletLabelChanged(string label)
 
     readonly property var status: {
         try {
-            return JSON.parse(root.statusJson || "{}")
+            var parsed = JSON.parse(root.statusJson || "{}")
+            return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : ({})
         } catch (err) {
             return {}
         }
@@ -128,43 +182,13 @@ Item {
         return []
     }
     readonly property var tradeMarks: root.buildTradeMarks(root.sparkChart, false)
-    readonly property var chartPoints: root.buildChartPoints(root.sparkChart)
-    readonly property var chartMarkers: []
-    readonly property bool chartHasTimes: root.chartTimes.length === root.closes.length
-        && root.closes.length > 1
-    readonly property var botPoints: root.buildChartPoints(root.botTapeChart)
-    readonly property var botMarkers: root.buildChartMarkers(
-        root.botTapeChart,
-        root.botTape === "live"
-            ? root.buildTradeMarks(root.botTapeChart, false)
-            : root.buildTradeMarks(root.botTapeChart, true)
-    )
-    readonly property bool botHasTimes: {
-        var c = (root.botTapeChart || {}).closes || []
-        var t = (root.botTapeChart || {}).times || []
-        return t.length === c.length && c.length > 1
-    }
-    readonly property var botEquity: {
-        var rows = (root.botTapeChart || {}).equity || []
-        var out = []
-        var i
-        if (!rows || !rows.length)
-            return out
-        for (i = 0; i < rows.length; i++) {
-            var row = rows[i] || {}
-            var ts = Number(row.time || row.ts || 0)
-            var val = Number(row.value || row.sol || 0)
-            if (ts > 0 && val > 0)
-                out.push({ "time": ts, "value": val })
-        }
-        return out
-    }
 
     function navLabel(value) {
         var labels = {
             "PORTFOLIO": "Portfolio",
             "BACKTEST": "Backtest",
             "TRADER": "Trader",
+            "PUMP": "Pump",
             "KASPA": "Kaspa",
             "SIGNAL": "Signal",
             "ARB": "Flash arb",
@@ -181,6 +205,7 @@ Item {
             "PORTFOLIO": "⌂",
             "BACKTEST": "◒",
             "TRADER": "▥",
+            "PUMP": "◉",
             "KASPA": "◆",
             "SIGNAL": "∿",
             "ARB": "ϟ",
@@ -283,27 +308,43 @@ Item {
     }
 
     function refresh() {
-        if (!root.surfaceHost)
+        if (!root.activeView || !root.surfaceHost || !root.surfaceHost.cryptoStatus)
             return
         var raw = root.surfaceHost.cryptoStatus()
-        if (raw === root.statusJson)
-            return
-        root.statusJson = raw
+        if (raw && raw !== root.statusJson)
+            root.statusJson = raw
         if (root.assetPick === String((root.status.portfolio || {}).asset || "SOL")
                 || (root.assetPick === "SOL" && String((root.status.portfolio || {}).asset || "SOL") !== "KAS"))
             root.assetPick = ""
-        var w = root.status.wallet || {}
-        root.walletLabelChanged(String(w.label || "WALLET · DISCONNECTED"))
+        if (["PORTFOLIO", "TRADER", "SIGNAL", "ARB", "BACKTEST"].indexOf(root.page) < 0)
+            return
+        var now = Date.now()
         if (root.asset === "KAS") {
             var kcloses = ((root.status.kas_chart || {}).closes) || []
-            if ((kcloses.length < 2 || (root.status.kas_chart || {}).stale) && root.surfaceHost.cryptoRefreshKasChart)
+            if ((kcloses.length < 2 || (root.status.kas_chart || {}).stale)
+                    && now - root.lastKasChartRequest >= 20000 && root.surfaceHost.cryptoRefreshKasChart)
                 Qt.callLater(root.pullKasChart)
             return
         }
         if (root.surfaceHost.cryptoRefreshChart
                 && (root.closes.length < 2
-                    || root.chartTimes.length !== root.closes.length || root.liveChart.stale))
+                    || root.chartTimes.length !== root.closes.length || root.liveChart.stale)
+                && now - root.lastSolChartRequest >= 20000)
             Qt.callLater(root.pullChart)
+    }
+
+    onStatusJsonChanged: {
+        var w = root.status.wallet || {}
+        root.walletLabelChanged(String(w.label || "WALLET · DISCONNECTED"))
+    }
+
+    Connections {
+        target: root.surfaceHost
+        ignoreUnknownSignals: true
+        function onCryptoStatusUpdated(raw) {
+            if (root.activeView && raw && raw !== root.statusJson)
+                root.statusJson = raw
+        }
     }
 
     function pullOlderBars() {
@@ -346,8 +387,9 @@ Item {
     }
 
     function pullKasChart() {
-        if (!root.surfaceHost || !root.surfaceHost.cryptoRefreshKasChart)
+        if (!root.activeView || !root.surfaceHost || !root.surfaceHost.cryptoRefreshKasChart)
             return
+        root.lastKasChartRequest = Date.now()
         var raw = root.surfaceHost.cryptoRefreshKasChart()
         try {
             var parsed = JSON.parse(raw || "{}")
@@ -386,8 +428,9 @@ Item {
     }
 
     function pullChart() {
-        if (!root.surfaceHost || !root.surfaceHost.cryptoRefreshChart)
+        if (!root.activeView || !root.surfaceHost || !root.surfaceHost.cryptoRefreshChart)
             return
+        root.lastSolChartRequest = Date.now()
         var raw = root.surfaceHost.cryptoRefreshChart()
         try {
             var parsed = JSON.parse(raw || "{}")
@@ -471,6 +514,10 @@ Item {
     }
 
     function dataStatus() {
+        if (root.operationBusy)
+            return "ARBETAR… · " + String(root.operation.name || "CRYPTO")
+        if (root.operation.error)
+            return String(root.operation.error)
         var chart = root.asset === "KAS" ? (root.status.kas_chart || {}) : root.liveChart
         if (root.page === "PORTFOLIO") {
             var actual = String(chart.actual_interval || chart.interval || "—")
@@ -482,6 +529,7 @@ Item {
                 + (actual !== requested ? " (begärt " + requested + ")" : "") + " · "
                 + (chart.age_seconds === undefined || chart.age_seconds === null ? stamp : "hämtad för " + stamp + " sedan")
                 + (chart.stale ? " · ÄLDRE / ERSÄTTNINGSDATA" : "")
+                + (String(chart.quote_currency || "").toUpperCase() === "USDT" ? " · USDT ≈ USD" : "")
                 + (chart.error ? " · prisfel" : "")
         }
         var age = chart.age_seconds === undefined || chart.age_seconds === null ? "unknown age" : String(Math.round(chart.age_seconds)) + "s old"
@@ -546,7 +594,7 @@ Item {
     }
 
     function tokenColor(index) {
-        var colors = ["#c8a97e", "#6aa8c8", "#8db89a", "#b6a6c8", "#c98989", "#d4c84a"]
+        var colors = ["#c8a97e", "#6aa8c8", "#8db89a", root.ledgerGold, "#c98989", "#d4c84a"]
         return colors[index % colors.length]
     }
 
@@ -791,20 +839,18 @@ Item {
     }
 
     Timer {
-        interval: 20000
-        running: root.visible
-        repeat: true
-        onTriggered: root.refresh()
-    }
-
-    Timer {
-        interval: 1000
-        running: root.visible && root.backtestRunning
+        objectName: "cryptoStatusRefreshTimer"
+        interval: root.activeJobs ? 1000 : 20000
+        running: root.activeView
         repeat: true
         onTriggered: {
-            root.refresh()
+            var wasBacktestRunning = root.backtestRunning
+            if (root.page === "POLY" && root.polyRunning)
+                root.pollPolymarketQuery()
+            else
+                root.refresh()
             var st = String((root.status.backtest_job || {}).state || "")
-            if (st === "done") {
+            if (wasBacktestRunning && st === "done") {
                 root.page = "BACKTEST"
                 root.botTab = "trader"
                 root.botTape = "bt0"
@@ -813,44 +859,8 @@ Item {
     }
 
     Timer {
-        interval: 1000
-        running: root.visible && (root.paperTickRunning || String(((root.status.paper_jobs || {}).bot || {}).state || "") === "running")
-        repeat: true
-        onTriggered: root.refresh()
-    }
-
-    Timer {
-        interval: 1000
-        running: root.visible && root.page === "POLY" && root.polyRunning
-        repeat: true
-        onTriggered: root.pollPolymarketQuery()
-    }
-
-    Timer {
-        interval: 1000
-        running: root.visible && root.page === "FACTORY"
-            && root.strategyFactoryRunning
-        repeat: true
-        onTriggered: root.refresh()
-    }
-
-    Timer {
-        interval: 1000
-        running: root.visible && root.page === "DESK" && root.deskRunning
-        repeat: true
-        onTriggered: root.refresh()
-    }
-
-    Timer {
-        interval: 1000
-        running: root.visible && String(root.lab.label || "") === "LAB STARTING"
-        repeat: true
-        onTriggered: root.refresh()
-    }
-
-    Timer {
         interval: 30000
-        running: root.visible && root.bot.armed === true
+        running: root.activeView && root.bot.armed === true && !root.operationBusy
         repeat: true
         onTriggered: {
             if (root.surfaceHost)
@@ -861,7 +871,7 @@ Item {
 
     Timer {
         interval: 15000
-        running: root.visible && root.trader.armed === true
+        running: root.activeView && root.trader.armed === true && !root.operationBusy
         repeat: true
         onTriggered: {
             if (root.surfaceHost)
@@ -870,9 +880,11 @@ Item {
         }
     }
 
-    onVisibleChanged: {
-        if (visible)
-            root.refresh()
+    onActiveViewChanged: {
+        if (root.activeView) {
+            Qt.callLater(root.refresh)
+            Qt.callLater(solPlot.updateRenderData)
+        }
     }
     Component.onCompleted: Qt.callLater(root.refresh)
 
@@ -917,7 +929,9 @@ Item {
         Rectangle {
             anchors.fill: parent
             color: "#161616"
-            border.width: 0
+            border.color: root.frameBorder
+            border.width: 1
+            radius: root.frameRadius
         }
 
         Rectangle {
@@ -925,10 +939,12 @@ Item {
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.bottom: parent.bottom
-            width: root.sidebarCollapsed ? 48 : Math.max(168, Math.min(220, parent.width * 0.18))
+            objectName: "cryptoNavigation"
+            width: root.compactSidebar ? 48 : Math.max(164, Math.min(196, parent.width * 0.18))
             color: root.panel
-            border.width: 0
-            radius: 0
+            border.color: "#4a4a4a"
+            border.width: 1
+            radius: root.frameRadius
 
             Behavior on width {
                 NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
@@ -940,109 +956,66 @@ Item {
                     id: group
                     required property string modelData
                     width: navCol.width
-                    spacing: 1
+                    spacing: 3
                     readonly property var kids: root.menuKids(modelData)
-                    readonly property bool opened: !root.sidebarCollapsed
-                        && root.page === modelData
-                        && kids.length > 0
-
-                    Item {
+                    readonly property bool opened: !root.compactSidebar && root.page === modelData && kids.length > 0
+                    CryptoButton {
+                        id: navButton
+                        objectName: "cryptoNav" + group.modelData
                         width: parent.width
-                        height: 29
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: 3
-                            color: root.page === group.modelData
-                                ? root.selectedPanel
-                                : (navHit.containsMouse ? "#2a2a2a" : "transparent")
-                        }
-                        Text {
-                            visible: !root.sidebarCollapsed
-                            anchors.left: parent.left
-                            anchors.leftMargin: 10
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: root.navIcon(group.modelData)
-                            color: root.page === group.modelData ? root.ledgerGold : root.muted
-                            font.family: "monospace"
-                            font.pixelSize: 13
-                        }
-                        Text {
-                            visible: !root.sidebarCollapsed
-                            anchors.left: parent.left
-                            anchors.leftMargin: 32
-                            anchors.right: caretMark.left
-                            anchors.rightMargin: 4
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: root.navLabel(group.modelData)
-                            color: root.page === group.modelData ? root.ink : root.text
-                            font.family: "monospace"
-                            font.pixelSize: 12
-                            font.bold: root.page === group.modelData
-                            elide: Text.ElideRight
-                        }
-                        Text {
-                            id: caretMark
-                            visible: !root.sidebarCollapsed && group.kids.length > 0
-                            anchors.right: parent.right
-                            anchors.rightMargin: 6
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: group.opened ? "▾" : "▸"
-                            color: root.muted
-                            font.family: "monospace"
-                            font.pixelSize: 12
-                        }
-                        Text {
-                            visible: root.sidebarCollapsed
-                            anchors.centerIn: parent
-                            text: root.navIcon(group.modelData)
-                            color: root.page === group.modelData ? root.ledgerGold : root.muted
-                            font.family: "monospace"
-                            font.pixelSize: 14
-                        }
-                        MouseArea {
-                            id: navHit
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.page = group.modelData
-                        }
-                    }
-
-                    Repeater {
-                        model: group.opened ? group.kids : []
-                        delegate: Item {
-                            required property var modelData
-                            width: group.width
-                            height: 22
-                            readonly property var kid: modelData
-                            readonly property bool on: root.kidActive(group.modelData, kid)
-                            Rectangle {
-                                anchors.fill: parent
-                                radius: 3
-                                color: parent.on
-                                    ? "#2a2e33"
-                                    : (kidHit.containsMouse ? "#222222" : "transparent")
+                        height: 30
+                        flat: true
+                        checked: root.page === group.modelData
+                        horizontalAlignment: root.compactSidebar ? Text.AlignHCenter : Text.AlignLeft
+                        leftPadding: root.compactSidebar ? 2 : 11
+                        rightPadding: root.compactSidebar ? 2 : 10
+                        text: root.navLabel(group.modelData)
+                        contentItem: Item {
+                            Text {
+                                anchors.left: root.compactSidebar ? undefined : parent.left
+                                anchors.leftMargin: root.compactSidebar ? 0 : 3
+                                anchors.horizontalCenter: root.compactSidebar ? parent.horizontalCenter : undefined
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: root.navIcon(group.modelData)
+                                textFormat: Text.PlainText
+                                font.family: "monospace"; font.pixelSize: 14
+                                color: navButton.checked ? root.ledgerGold : root.muted
                             }
                             Text {
-                                anchors.left: parent.left
-                                anchors.leftMargin: 32
-                                anchors.right: parent.right
-                                anchors.rightMargin: 6
+                                visible: !root.compactSidebar
+                                x: 27; width: Math.max(0, parent.width - 39)
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: String((parent.kid && parent.kid.name) || "")
-                                color: parent.on ? root.ledgerGold : root.muted
-                                font.family: "monospace"
-                                font.pixelSize: 12
-                                font.bold: parent.on
-                                elide: Text.ElideRight
+                                text: navButton.text; textFormat: Text.PlainText
+                                color: navButton.checked ? root.ink : root.text
+                                font: navButton.font; elide: Text.ElideRight
                             }
-                            MouseArea {
-                                id: kidHit
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.pickChild(group.modelData, parent.kid)
+                            Text {
+                                visible: !root.compactSidebar && group.kids.length > 0
+                                anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
+                                text: group.opened ? "▾" : "▸"; color: root.muted
+                                font.family: "monospace"; font.pixelSize: 12
                             }
+                        }
+                        Accessible.name: root.navLabel(group.modelData)
+                        tip: root.navLabel(group.modelData)
+                        font.bold: checked
+                        onClicked: root.page = group.modelData
+                    }
+                    Repeater {
+                        model: group.opened ? group.kids : []
+                        delegate: CryptoButton {
+                            required property var modelData
+                            width: group.width - 10
+                            x: 10
+                            height: 27
+                            flat: true
+                            readonly property var kid: modelData
+                            checked: root.kidActive(group.modelData, kid)
+                            text: String(kid.name || kid.id || "")
+                            horizontalAlignment: Text.AlignLeft
+                            font.pixelSize: 12
+                            color: checked ? root.ink : root.muted
+                            onClicked: root.pickChild(group.modelData, kid)
                         }
                     }
                 }
@@ -1066,25 +1039,21 @@ Item {
                     width: navFlick.width
                     spacing: 3
 
-                    Item {
+                    CryptoButton {
+                        objectName: "cryptoNavigationToggle"
                         width: navCol.width
-                        height: 30
-                        Text {
-                            anchors.centerIn: parent
-                            text: "☰"
-                            color: root.ink
-                            font.family: "monospace"
-                            font.pixelSize: 19
-                        }
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.sidebarCollapsed = !root.sidebarCollapsed
-                        }
+                        height: 32
+                        flat: true
+                        text: "☰"
+                        font.pixelSize: 20
+                        horizontalAlignment: Text.AlignHCenter
+                        Accessible.name: "Fäll ihop eller öppna kryptomenyn"
+                        tip: "Fäll ihop eller öppna menyn"
+                        onClicked: root.sidebarCollapsed = !root.sidebarCollapsed
                     }
 
                     Repeater {
-                        model: root.nav.slice(0, 3)
+                        model: root.nav.slice(0, 4)
                         delegate: navEntry
                     }
 
@@ -1097,8 +1066,10 @@ Item {
                     }
 
                     Text {
+
+                        textFormat: Text.PlainText
                         width: navCol.width
-                        text: root.sidebarCollapsed ? "" : "LAB"
+                        text: root.compactSidebar ? "" : "RESEARCH & LAB"
                         color: root.ledgerGold
                         font.family: "monospace"
                         font.pixelSize: 10
@@ -1109,7 +1080,7 @@ Item {
                     }
 
                     Repeater {
-                        model: root.nav.slice(3)
+                        model: root.nav.slice(4)
                         delegate: navEntry
                     }
                 }
@@ -1120,7 +1091,7 @@ Item {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                height: root.sidebarCollapsed ? 50 : 74
+                height: root.compactSidebar ? 50 : 74
 
                 Rectangle {
                     anchors.left: parent.left
@@ -1130,7 +1101,8 @@ Item {
                     color: "#3a3a3a"
                 }
                 Text {
-                    visible: !root.sidebarCollapsed
+                    textFormat: Text.PlainText
+                    visible: !root.compactSidebar
                     anchors.left: parent.left
                     anchors.leftMargin: 14
                     anchors.bottom: parent.bottom
@@ -1143,18 +1115,20 @@ Item {
                     font.letterSpacing: 1.2
                 }
                 Text {
-                    visible: !root.sidebarCollapsed
+                    textFormat: Text.PlainText
+                    visible: !root.compactSidebar
                     anchors.left: parent.left
                     anchors.leftMargin: 14
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: 14
-                    text: root.legend === "OBSERVE" ? "MAINNET · OBSERVE" : "PAPER · LOCALNET"
+                    text: root.legend === "OBSERVE" ? "MAINNET · LÄSLÄGE" : "PAPER / TESTNÄT"
                     color: root.muted
                     font.family: "monospace"
                     font.pixelSize: 10
                 }
                 Text {
-                    visible: root.sidebarCollapsed
+                    textFormat: Text.PlainText
+                    visible: root.compactSidebar
                     anchors.centerIn: parent
                     text: "◈"
                     color: root.ledgerGold
@@ -1167,7 +1141,7 @@ Item {
         Rectangle {
             id: navSep
             anchors.left: sidebar.right
-            anchors.leftMargin: 12
+            anchors.leftMargin: root.compactSidebar ? 6 : 12
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             width: 1
@@ -1176,100 +1150,104 @@ Item {
 
         Item {
             id: mainHeader
+            objectName: "cryptoPageHeader"
             anchors.left: navSep.right
-            anchors.leftMargin: 18
+            anchors.leftMargin: root.compactSidebar ? 10 : 18
             anchors.right: parent.right
+            anchors.rightMargin: 10
             anchors.top: parent.top
-            height: 76
-
+            height: width < 440 ? 104 : 86
             Text {
-                anchors.left: parent.left
-                anchors.top: parent.top
-                anchors.topMargin: 5
-                text: "GG / CRYPTO · " + root.asset + " · "
-                    + (root.asset === "KAS"
-                        ? String(root.kaspa.legend || "PAPER")
-                        : (root.legend === "OBSERVE" ? "OBSERVE" : "PAPER"))
-                color: root.muted
-                font.family: "monospace"
-                font.pixelSize: 12
+                textFormat: Text.PlainText
+                anchors.left: parent.left; anchors.top: parent.top; anchors.topMargin: 4
+                text: "GG / CRYPTO"
+                color: root.muted; font.family: "monospace"; font.pixelSize: 10
             }
             Text {
-                anchors.left: parent.left
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 24
+                textFormat: Text.PlainText
+                id: pageTitle
+                anchors.left: parent.left; y: 23
+                width: parent.width - (parent.width > 540 ? headerActions.width + 12 : 0)
                 text: root.navLabel(root.page).toUpperCase()
-                color: root.ink
-                font.family: "monospace"
-                font.pixelSize: 18
+                color: root.ink; font.family: "monospace"; font.pixelSize: 18
+                font.bold: false; elide: Text.ElideRight
             }
-
-            Text {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 4
-                text: root.dataStatus()
-                color: (root.asset === "KAS" ? (root.status.kas_chart || {}).stale : root.liveChart.stale) ? root.ledgerGold : root.muted
-                font.family: "monospace"
-                font.pixelSize: 12
-                elide: Text.ElideRight
-            }
-
             Row {
+                id: headerActions
                 anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 8
-
-                BufferMark {
-                    objectName: "cryptoBuffer"
-                    anchors.verticalCenter: parent.verticalCenter
-                    active: root.backtestRunning
-                        || String(root.lab.label || "") === "LAB STARTING"
-                        || root.strategyFactoryRunning
-                    cell: 5
-                }
-
+                y: mainHeader.width > 540 ? 22 : 0
+                spacing: 6
                 Rectangle {
-                    width: labLabel.implicitWidth + 22
-                    height: 27
-                    color: "#181b1f"
-                    border.color: root.lab.healthy ? root.ledgerGreen : "#3c444d"
-                    border.width: 1
-                    radius: 3
+                    width: networkText.implicitWidth + 16; height: 28; radius: 3
+                    color: "#161616"; border.color: root.frameBorder
                     Text {
-                        id: labLabel
-                        anchors.centerIn: parent
-                        text: String(root.lab.label || (root.lab.healthy ? "LAB ON" : "LAB OFF"))
-                        color: root.lab.healthy ? root.ledgerGreen : root.ledgerGold
-                        font.family: "monospace"
-                        font.pixelSize: 10
+                        textFormat: Text.PlainText
+                        id: networkText
+                        anchors.centerIn: parent; text: root.networkLabel()
+                        color: root.text; font.family: "monospace"; font.pixelSize: 10
                     }
-                    MouseArea {
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            if (!root.surfaceHost)
-                                return
-                            root.statusJson = root.lab.running
-                                ? root.surfaceHost.cryptoLabOff()
-                                : root.surfaceHost.cryptoLabOn()
-                            root.refresh()
-                        }
+                }
+                CryptoButton {
+                    visible: root.page !== "PUMP"
+                    objectName: "cryptoLabToggle"
+                    text: String(root.lab.label || (root.lab.healthy ? "LAB ON" : "LAB OFF"))
+                    height: 28; font.pixelSize: 9
+                    color: root.lab.healthy ? root.ledgerGreen : root.muted
+                    enabled: !root.operationBusy && !!root.surfaceHost
+                    tip: "Starta eller stoppa den lokala testmiljön"
+                    onClicked: {
+                        root.statusJson = root.lab.running ? root.surfaceHost.cryptoLabOff() : root.surfaceHost.cryptoLabOn()
+                        root.refresh()
                     }
                 }
             }
+            Text {
+                textFormat: Text.PlainText
+                anchors.left: parent.left; anchors.right: parent.right
+                y: 53
+                text: root.pageHint()
+                color: root.text; font.family: "monospace"; font.pixelSize: 11
+                wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight
+            }
+            Text {
+                textFormat: Text.PlainText
+                objectName: "cryptoDataContext"
+                anchors.left: parent.left; anchors.right: cryptoBusy.left; anchors.rightMargin: 8
+                anchors.bottom: parent.bottom; anchors.bottomMargin: 7
+                text: root.operationBusy ? "BEARBETAR · " + String(root.operation.label || root.operation.name || "Åtgärd pågår")
+                    : root.page === "PUMP" ? "SOLANA · OFFERT / OSIGNERAD SIMULERING / PAPER"
+                    : ["PORTFOLIO", "BACKTEST", "TRADER", "SIGNAL", "ARB"].indexOf(root.page) >= 0 ? root.dataStatus()
+                    : "ANALYS · " + (root.activeJobs ? "BEARBETAR" : "REDO")
+                color: root.operationBusy || (root.asset === "KAS" ? (root.status.kas_chart || {}).stale : root.liveChart.stale) ? root.ledgerGold : root.muted
+                font.family: "monospace"; font.pixelSize: 10; elide: Text.ElideRight
+            }
+            BufferMark {
+                id: cryptoBusy; objectName: "cryptoBuffer"
+                anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.bottomMargin: 9
+                active: root.activeJobs; cell: 4
+            }
+            Rectangle { width: parent.width; height: 1; anchors.bottom: parent.bottom; color: root.frameBorder }
         }
 
         Item {
             id: field
             anchors.left: navSep.right
-            anchors.leftMargin: 18
+            anchors.leftMargin: root.compactSidebar ? 10 : 18
             anchors.right: parent.right
+            anchors.rightMargin: 10
             anchors.top: mainHeader.bottom
-            anchors.topMargin: 4
+            anchors.topMargin: 12
             anchors.bottom: parent.bottom
+            anchors.bottomMargin: 8
+
+            CryptoPumpPanel {
+                anchors.fill: parent
+                visible: root.page === "PUMP"
+                snapshot: root.status.pump || ({})
+                operation: root.operation
+                surfaceHost: root.surfaceHost
+                onStatusReturned: function(raw) { root.statusJson = raw }
+            }
 
             Column {
                 id: portHead
@@ -1281,376 +1259,337 @@ Item {
                     width: parent.width
                     snapshot: root.portfolioView
                     symbol: root.asset
-                    mode: root.asset === "KAS" ? "SIMULERAT · KAS COVENANT" : root.legend === "OBSERVE" ? "SOLANA · OBSERVE" : "SIMULERAT · LOCALNET"
-                    quantity: root.asset === "KAS" ? String(root.kaspa.value_kas || "0") : String(root.wallet.balance_sol || "—")
+                    mode: root.asset === "KAS" ? "SIMULERAT · KAS COVENANT"
+                        : root.legend === "OBSERVE" || root.legend === "MAINNET" || String(root.wallet.network || "").toLowerCase() === "mainnet"
+                            ? "SOLANA · LÄSLÄGE" : "SIMULERAT · " + String(root.wallet.network || root.legend || "NÄT SAKNAS").toUpperCase()
+                    quantity: {
+                        var balance = root.asset === "KAS" ? root.kaspa.value_kas : root.wallet.balance_sol
+                        return balance === undefined || balance === null ? "—" : String(balance)
+                    }
+                    quoteCurrency: String((root.asset === "KAS" ? root.status.kas_chart || {} : root.liveChart).quote_currency || "USD")
                 }
                 Flow {
-                    width: parent.width
-                    spacing: 6
+                    width: parent.width; spacing: 5
                     Repeater {
                         model: ["SOL", "KAS"]
-                        delegate: Rectangle {
+                        delegate: CryptoButton {
                             required property var modelData
-                            width: 44; height: 20; radius: 3
-                            color: root.asset === String(modelData) ? root.selectedPanel : root.panel
-                            border.color: root.asset === String(modelData) ? root.ledgerGold : "#494949"
-                            Text {
-                                anchors.centerIn: parent; text: String(modelData)
-                                color: root.asset === String(modelData) ? root.ink : root.muted
-                                font.family: "monospace"; font.pixelSize: 12
-                            }
-                            MouseArea {
-                                anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                                onClicked: root.pickAsset(String(modelData))
-                            }
+                            objectName: "cryptoAsset" + modelData
+                            width: 45; height: 28
+                            text: String(modelData); checked: root.asset === String(modelData)
+                            tip: "Visa " + modelData
+                            onClicked: root.pickAsset(String(modelData))
                         }
-                    }
-                    Text {
-                        text: "PRISGRAF · ljusintervall"; height: 20; verticalAlignment: Text.AlignVCenter
-                        color: root.muted; font.family: "monospace"; font.pixelSize: 10
-                        visible: portHead.width > 650
                     }
                     Repeater {
                         model: ["1m", "5m", "15m", "1h", "4h", "1d"]
-                        delegate: Rectangle {
+                        delegate: CryptoButton {
                             required property var modelData
-                            readonly property bool on: root.activeTf === String(modelData)
-                            width: tfHead.implicitWidth + 14
-                            height: 20
-                            radius: 3
-                            color: on ? root.selectedPanel : root.panel
-                            border.width: 1
-                            border.color: on ? root.ledgerGold : root.frameBorder
-                            Text {
-                                id: tfHead
-                                anchors.centerIn: parent
-                                text: String(modelData)
-                                color: parent.on ? root.ink : root.muted
-                                font.family: "monospace"
-                                font.pixelSize: 12
-                                font.bold: parent.on
-                            }
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.pickInterval(String(modelData))
-                            }
+                            objectName: "cryptoInterval" + modelData
+                            width: 34; height: 28
+                            leftPadding: 3; rightPadding: 3
+                            text: String(modelData); checked: root.activeTf === String(modelData)
+                            tip: "Prisintervall " + modelData
+                            onClicked: root.pickInterval(String(modelData))
                         }
                     }
-                    Text {
-                        visible: root.asset === "KAS"
-                        text: "Paper"
-                        color: String(root.kaspa.network || "paper") === "paper" ? root.ledgerGold : root.muted
-                        font.family: "monospace"
-                        font.pixelSize: 12
-                        font.bold: String(root.kaspa.network || "paper") === "paper"
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.pickKasNetwork("paper")
-                        }
+                    CryptoButton {
+                        objectName: "cryptoChartFit"
+                        text: "Återställ graf"; height: 28
+                        tip: "Visa senaste perioden. Dra grafen för att panorera, scrolla för att zooma."
+                        onClicked: solPlot.fitEnd()
                     }
-                    Text {
+                    CryptoButton {
                         visible: root.asset === "KAS"
-                        text: "Kaspa TN"
-                        color: String(root.kaspa.network || "") === "testnet" ? root.ledgerGold : root.muted
-                        font.family: "monospace"
-                        font.pixelSize: 12
-                        font.bold: String(root.kaspa.network || "") === "testnet"
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.pickKasNetwork("testnet")
-                        }
+                        text: "Paper"; height: 28; checked: String(root.kaspa.network || "paper") === "paper"
+                        onClicked: root.pickKasNetwork("paper")
                     }
-                    Text {
+                    CryptoButton {
                         visible: root.asset === "KAS"
-                        text: "Kaspa live"
-                        color: String(root.kaspa.network || "") === "mainnet" ? root.ledgerGold : root.muted
-                        font.family: "monospace"
-                        font.pixelSize: 12
-                        font.bold: String(root.kaspa.network || "") === "mainnet"
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.pickKasNetwork("mainnet")
-                        }
+                        text: "Testnet"; height: 28; checked: String(root.kaspa.network || "") === "testnet"
+                        onClicked: root.pickKasNetwork("testnet")
+                    }
+                    CryptoButton {
+                        visible: root.asset === "KAS"
+                        text: "Mainnet"; height: 28; checked: String(root.kaspa.network || "") === "mainnet"
+                        onClicked: root.pickKasNetwork("mainnet")
                     }
                 }
             }
 
-            Column {
+            Flickable {
                 id: btHead
+                objectName: "cryptoBacktestDetails"
                 width: parent.width
-                spacing: 4
+                height: Math.min(btContent.height, Math.max(100, field.height * 0.58))
                 visible: root.page === "BACKTEST"
-                Row {
-                    spacing: 10
-                    Text {
-                        text: "LIVE"
-                        color: root.botTape === "live" ? "#d8dee9" : "#a8b0b8"
-                        font.family: "monospace"
-                        font.pixelSize: 12
-                        font.bold: root.botTape === "live"
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
+                clip: true
+                contentWidth: width
+                contentHeight: btContent.height
+                boundsBehavior: Flickable.StopAtBounds
+                ScrollBar.vertical: GgScrollBar {}
+                Column {
+                    id: btContent
+                    width: parent.width
+                    spacing: 4
+                    Flow {
+                        width: parent.width
+                        spacing: 6
+                        CryptoButton {
+                            text: "LIVE"
+                            color: root.botTape === "live" ? "#d8dee9" : "#a8b0b8"
+                            font.family: "monospace"
+                            font.pixelSize: 12
+                            font.bold: root.botTape === "live"
+                            enabled: !root.operationBusy
                             onClicked: root.botTape = "live"
                         }
-                    }
-                    Text {
-                        visible: (((root.trader.backtest || {}).chart || {}).closes || []).length > 1
-                        text: {
-                            var t = String((root.trader.backtest || {}).ran_at || "")
-                            return "BACKTEST 1  " + String((root.trader.backtest || {}).book || "").toUpperCase() + " " + t
-                        }
-                        color: root.botTape === "bt0" ? "#d8dee9" : "#a8b0b8"
-                        font.family: "monospace"
-                        font.pixelSize: 12
-                        font.bold: root.botTape === "bt0"
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
+                        CryptoButton {
+                            visible: (((root.trader.backtest || {}).chart || {}).closes || []).length > 1
+                            text: {
+                                var t = String((root.trader.backtest || {}).ran_at || "")
+                                return "BACKTEST 1  " + String((root.trader.backtest || {}).book || "").toUpperCase() + " " + t
+                            }
+                            color: root.botTape === "bt0" ? "#d8dee9" : "#a8b0b8"
+                            font.family: "monospace"
+                            font.pixelSize: 12
+                            font.bold: root.botTape === "bt0"
+                            enabled: !root.operationBusy
                             onClicked: root.botTape = "bt0"
                         }
-                    }
-                    Text {
-                        visible: (((root.trader.backtest_prev || {}).chart || {}).closes || []).length > 1
-                        text: {
-                            var t = String((root.trader.backtest_prev || {}).ran_at || "")
-                            return "BACKTEST 2  " + String((root.trader.backtest_prev || {}).book || "").toUpperCase() + " " + t
-                        }
-                        color: root.botTape === "bt1" ? "#d8dee9" : "#a8b0b8"
-                        font.family: "monospace"
-                        font.pixelSize: 12
-                        font.bold: root.botTape === "bt1"
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
+                        CryptoButton {
+                            visible: (((root.trader.backtest_prev || {}).chart || {}).closes || []).length > 1
+                            text: {
+                                var t = String((root.trader.backtest_prev || {}).ran_at || "")
+                                return "BACKTEST 2  " + String((root.trader.backtest_prev || {}).book || "").toUpperCase() + " " + t
+                            }
+                            color: root.botTape === "bt1" ? "#d8dee9" : "#a8b0b8"
+                            font.family: "monospace"
+                            font.pixelSize: 12
+                            font.bold: root.botTape === "bt1"
+                            enabled: !root.operationBusy
                             onClicked: root.botTape = "bt1"
                         }
+                        CryptoButton {
+                            text: root.backtestRunning
+                                ? "BACKTEST…"
+                                : ("RUN  " + String(root.trader.book || "gg").toUpperCase())
+                            color: root.backtestRunning ? "#c8a97e" : "#8db89a"
+                            font.family: "monospace"
+                            font.pixelSize: 12
+                            font.bold: true
+                            enabled: !root.operationBusy
+                            onClicked: {
+                                    if (!root.surfaceHost || !root.surfaceHost.cryptoBacktestTrader)
+                                        return
+                                    if (root.backtestRunning)
+                                        return
+                                    root.botTape = "live"
+                                    root.statusJson = root.surfaceHost.cryptoBacktestTrader()
+                                }
+                        }
+                    }
+                    Flow {
+                        width: parent.width
+                        spacing: 6
+                        CryptoButton {
+                            text: root.trader.armed ? "TRADER OFF" : (root.traderAvailable ? "STARTA VALD BOT" : "OBSERVE")
+                            color: root.trader.armed ? "#c8a97e" : "#8db89a"
+                            font.family: "monospace"
+                            font.pixelSize: 12
+                            font.bold: true
+                            enabled: (root.traderAvailable) && !root.operationBusy
+                            onClicked: {
+                                    if (!root.surfaceHost)
+                                        return
+                                    root.statusJson = root.surfaceHost.cryptoArmTrader(!root.trader.armed)
+                                    root.refresh()
+                                }
+                        }
+                        CryptoButton {
+                            text: root.paperTickRunning ? "TICK…" : "TICK"
+                            color: "#c8a97e"
+                            font.family: "monospace"
+                            font.pixelSize: 12
+                            enabled: !root.operationBusy
+                            onClicked: {
+                                    if (root.surfaceHost)
+                                        root.statusJson = root.surfaceHost.cryptoTickTrader()
+                                    root.refresh()
+                                }
+                        }
+                        CryptoButton {
+                            text: "RESET BOOK"
+                            color: "#c8cdd4"
+                            font.family: "monospace"
+                            font.pixelSize: 12
+                            enabled: !root.operationBusy
+                            destructive: true
+                            onClicked: {
+                                    if (root.surfaceHost)
+                                        root.statusJson = root.surfaceHost.cryptoResetTrader()
+                                    root.refresh()
+                                }
+                        }
+                        Text {
+                            textFormat: Text.PlainText
+                            text: root.trader.armed
+                                ? "paper ticks 15s · " + String(root.trader.book || "gg")
+                                : String(root.trader.book || "gg") + " · paper only"
+                            color: "#a8b0b8"
+                            font.family: "monospace"
+                            font.pixelSize: 12
+                        }
                     }
                     Text {
+                        textFormat: Text.PlainText
+                        width: parent.width
+                        visible: root.backtestRunning
+                            || String((root.status.backtest_job || {}).state || "") === "error"
                         text: root.backtestRunning
-                            ? "BACKTEST…"
-                            : ("RUN  " + String(root.trader.book || "gg").toUpperCase())
-                        color: root.backtestRunning ? "#c8a97e" : "#8db89a"
+                            ? String((root.status.backtest_job || {}).note || "BACKTEST…")
+                            : String((root.status.backtest_job || {}).note || "backtest failed")
+                        color: root.backtestRunning ? "#c8a97e" : "#c98989"
                         font.family: "monospace"
                         font.pixelSize: 12
-                        font.bold: true
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                if (!root.surfaceHost || !root.surfaceHost.cryptoBacktestTrader)
-                                    return
-                                if (root.backtestRunning)
-                                    return
-                                root.botTape = "live"
-                                root.statusJson = root.surfaceHost.cryptoBacktestTrader()
-                            }
-                        }
+                        wrapMode: Text.WordWrap
                     }
-                }
-                Row {
-                    spacing: 14
                     Text {
-                        text: root.trader.armed ? "TRADER OFF" : (root.traderAvailable ? "STARTA VALD BOT" : "OBSERVE")
-                        color: root.trader.armed ? "#c8a97e" : "#8db89a"
+                        textFormat: Text.PlainText
+                        width: parent.width
+                        visible: ((root.trader.backtest || {}).comparison || []).length > 0
+                        text: root.comparisonText()
+                        color: root.text
                         font.family: "monospace"
                         font.pixelSize: 12
-                        font.bold: true
-                        MouseArea {
-                            enabled: root.traderAvailable
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                if (!root.surfaceHost)
-                                    return
-                                root.statusJson = root.surfaceHost.cryptoArmTrader(!root.trader.armed)
-                                root.refresh()
-                            }
-                        }
+                        wrapMode: Text.WordWrap
                     }
                     Text {
-                        text: root.paperTickRunning ? "TICK…" : "TICK"
-                        color: "#c8a97e"
+                        textFormat: Text.PlainText
+                        width: parent.width
+                        visible: String((root.trader.backtest || {}).tokens || "").length > 0
+                            && ((root.trader.backtest || {}).comparison || []).length === 0
+                        text: {
+                            var bt = root.trader.backtest || {}
+                            var best = bt.best_trade || {}
+                            var worst = bt.worst_trade || {}
+                            var currency = String(bt.quote_currency || "SOL")
+                            return String(bt.verdict || "")
+                                + "  " + String(bt.fills || 0) + " fills"
+                                + "  vault " + String(bt.banked_sol || "") + " " + root.asset
+                                + "  win " + String(bt.win_rate || "0") + "%"
+                                + "  avg " + String(bt.avg_fills_day || "") + "/d"
+                                + (best.profit ? ("  best " + String(best.profit) + " " + currency) : "")
+                                + (worst.profit ? ("  worst " + String(worst.profit) + " " + currency) : "")
+                                + (bt.pnl_usd
+                                    ? ("  pnl " + String(bt.pnl_usd) + " " + String(bt.quote_currency || "USDT"))
+                                    : (bt.pnl_sol ? ("  pnl " + String(bt.pnl_sol) + " " + root.asset) : ""))
+                                + (bt.max_drawdown_usd
+                                    ? ("  maxDD " + String(bt.max_drawdown_usd) + " " + String(bt.quote_currency || "USDT")) : "")
+                                + (bt.range ? ("  " + String(bt.range)) : "")
+                        }
+                        color: String((root.trader.backtest || {}).verdict || "") === "GOOD"
+                            ? "#8db89a"
+                            : (String((root.trader.backtest || {}).verdict || "") === "WEAK"
+                                ? "#c98989"
+                                : "#c8a97e")
                         font.family: "monospace"
                         font.pixelSize: 12
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                if (root.surfaceHost)
-                                    root.statusJson = root.surfaceHost.cryptoTickTrader()
-                                root.refresh()
-                            }
-                        }
+                        wrapMode: Text.WordWrap
                     }
                     Text {
-                        text: "RESET BOOK"
-                        color: "#c8cdd4"
-                        font.family: "monospace"
-                        font.pixelSize: 12
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                if (root.surfaceHost)
-                                    root.statusJson = root.surfaceHost.cryptoResetTrader()
-                                root.refresh()
+                        textFormat: Text.PlainText
+                        width: parent.width
+                        visible: (((root.trader.backtest || {}).weeks || []).length > 0
+                            || ((root.trader.backtest || {}).years || []).length > 0)
+                            && ((root.trader.backtest || {}).comparison || []).length === 0
+                        text: {
+                            var bt = root.trader.backtest || {}
+                            var start = String(bt.start_sol || "2.000000000")
+                            var end = String(bt.equity_sol || bt.tokens || "")
+                            var pnl = String(bt.pnl_sol || "")
+                            var startUsd = String(bt.start_usd || "")
+                            var endUsd = String(bt.end_usd || "")
+                            var pnlUsd = String(bt.pnl_usd || "")
+                            var usd = String(bt.usd || "")
+                            var headline = startUsd
+                                ? ("start " + startUsd + " → " + endUsd + " " + String(bt.quote_currency || "USDT") + "  pnl " + pnlUsd
+                                    + (bt.return_pct !== undefined ? (" (" + String(bt.return_pct) + "%)") : ""))
+                                : ("start " + start + " → " + end + " " + root.asset + "  pnl " + pnl + " " + root.asset)
+                            if (bt.max_drawdown_usd)
+                                headline += "  maxDD $" + String(bt.max_drawdown_usd)
+                            if (usd)
+                                headline += "  powder $" + usd
+                            var parts = [headline]
+                            var years = bt.years || []
+                            var yp = []
+                            var i
+                            for (i = 0; i < years.length; i++) {
+                                var y = years[i] || {}
+                                yp.push(String(y.year || "") + " Δ" + String(y.pnl_sol || "") + " f" + String(y.fills || 0))
                             }
+                            if (yp.length)
+                                parts.push(yp.join("  ·  "))
+                            var gaps = bt.gaps || []
+                            var gp = []
+                            for (i = 0; i < gaps.length; i++) {
+                                var g = gaps[i] || {}
+                                gp.push(String(g.from || "") + "…" + String(g.to || "") + " idle " + String(g.months || 0) + "mo")
+                            }
+                            if (gp.length)
+                                parts.push("gaps " + gp.join("  ·  "))
+                            var weeks = bt.weeks || []
+                            var from = Math.max(0, weeks.length - 12)
+                            var wp = []
+                            for (i = from; i < weeks.length; i++) {
+                                var w = weeks[i] || {}
+                                wp.push(String(w.week || "") + " b" + String(w.buys || 0) + "/s" + String(w.sells || 0) + " Δ" + String(w.pnl_sol || "0"))
+                            }
+                            if (wp.length)
+                                parts.push(wp.join("  ·  "))
+                            return parts.join("\n")
                         }
-                    }
-                    Text {
-                        text: root.trader.armed
-                            ? "paper ticks 15s · " + String(root.trader.book || "gg")
-                            : String(root.trader.book || "gg") + " · paper only"
                         color: "#a8b0b8"
                         font.family: "monospace"
                         font.pixelSize: 12
+                        wrapMode: Text.WordWrap
                     }
-                }
-                Text {
-                    width: parent.width
-                    visible: root.backtestRunning
-                        || String((root.status.backtest_job || {}).state || "") === "error"
-                    text: root.backtestRunning
-                        ? String((root.status.backtest_job || {}).note || "BACKTEST…")
-                        : String((root.status.backtest_job || {}).note || "backtest failed")
-                    color: root.backtestRunning ? "#c8a97e" : "#c98989"
-                    font.family: "monospace"
-                    font.pixelSize: 12
-                    wrapMode: Text.WordWrap
-                }
-                Text {
-                    width: parent.width
-                    visible: ((root.trader.backtest || {}).comparison || []).length > 0
-                    text: root.comparisonText()
-                    color: root.text
-                    font.family: "monospace"
-                    font.pixelSize: 12
-                    wrapMode: Text.WordWrap
-                }
-                Text {
-                    width: parent.width
-                    visible: String((root.trader.backtest || {}).tokens || "").length > 0
-                        && ((root.trader.backtest || {}).comparison || []).length === 0
-                    text: {
-                        var bt = root.trader.backtest || {}
-                        var best = bt.best_trade || {}
-                        var worst = bt.worst_trade || {}
-                        var currency = String(bt.quote_currency || "SOL")
-                        return String(bt.verdict || "")
-                            + "  " + String(bt.fills || 0) + " fills"
-                            + "  vault " + String(bt.banked_sol || "") + " " + root.asset
-                            + "  win " + String(bt.win_rate || "0") + "%"
-                            + "  avg " + String(bt.avg_fills_day || "") + "/d"
-                            + (best.profit ? ("  best " + String(best.profit) + " " + currency) : "")
-                            + (worst.profit ? ("  worst " + String(worst.profit) + " " + currency) : "")
-                            + (bt.pnl_usd
-                                ? ("  pnl " + String(bt.pnl_usd) + " " + String(bt.quote_currency || "USDT"))
-                                : (bt.pnl_sol ? ("  pnl " + String(bt.pnl_sol) + " " + root.asset) : ""))
-                            + (bt.max_drawdown_usd
-                                ? ("  maxDD " + String(bt.max_drawdown_usd) + " " + String(bt.quote_currency || "USDT")) : "")
-                            + (bt.range ? ("  " + String(bt.range)) : "")
-                    }
-                    color: String((root.trader.backtest || {}).verdict || "") === "GOOD"
-                        ? "#8db89a"
-                        : (String((root.trader.backtest || {}).verdict || "") === "WEAK"
-                            ? "#c98989"
-                            : "#c8a97e")
-                    font.family: "monospace"
-                    font.pixelSize: 12
-                    wrapMode: Text.WordWrap
-                }
-                Text {
-                    width: parent.width
-                    visible: (((root.trader.backtest || {}).weeks || []).length > 0
-                        || ((root.trader.backtest || {}).years || []).length > 0)
-                        && ((root.trader.backtest || {}).comparison || []).length === 0
-                    text: {
-                        var bt = root.trader.backtest || {}
-                        var start = String(bt.start_sol || "2.000000000")
-                        var end = String(bt.equity_sol || bt.tokens || "")
-                        var pnl = String(bt.pnl_sol || "")
-                        var startUsd = String(bt.start_usd || "")
-                        var endUsd = String(bt.end_usd || "")
-                        var pnlUsd = String(bt.pnl_usd || "")
-                        var usd = String(bt.usd || "")
-                        var headline = startUsd
-                            ? ("start " + startUsd + " → " + endUsd + " " + String(bt.quote_currency || "USDT") + "  pnl " + pnlUsd
-                                + (bt.return_pct !== undefined ? (" (" + String(bt.return_pct) + "%)") : ""))
-                            : ("start " + start + " → " + end + " " + root.asset + "  pnl " + pnl + " " + root.asset)
-                        if (bt.max_drawdown_usd)
-                            headline += "  maxDD $" + String(bt.max_drawdown_usd)
-                        if (usd)
-                            headline += "  powder $" + usd
-                        var parts = [headline]
-                        var years = bt.years || []
-                        var yp = []
-                        var i
-                        for (i = 0; i < years.length; i++) {
-                            var y = years[i] || {}
-                            yp.push(String(y.year || "") + " Δ" + String(y.pnl_sol || "") + " f" + String(y.fills || 0))
-                        }
-                        if (yp.length)
-                            parts.push(yp.join("  ·  "))
-                        var gaps = bt.gaps || []
-                        var gp = []
-                        for (i = 0; i < gaps.length; i++) {
-                            var g = gaps[i] || {}
-                            gp.push(String(g.from || "") + "…" + String(g.to || "") + " idle " + String(g.months || 0) + "mo")
-                        }
-                        if (gp.length)
-                            parts.push("gaps " + gp.join("  ·  "))
-                        var weeks = bt.weeks || []
-                        var from = Math.max(0, weeks.length - 12)
-                        var wp = []
-                        for (i = from; i < weeks.length; i++) {
-                            var w = weeks[i] || {}
-                            wp.push(String(w.week || "") + " b" + String(w.buys || 0) + "/s" + String(w.sells || 0) + " Δ" + String(w.pnl_sol || "0"))
-                        }
-                        if (wp.length)
-                            parts.push(wp.join("  ·  "))
-                        return parts.join("\n")
-                    }
-                    color: "#a8b0b8"
-                    font.family: "monospace"
-                    font.pixelSize: 12
-                    wrapMode: Text.WordWrap
                 }
             }
 
             Item {
                 id: tapeLoader
                 visible: root.page === "PORTFOLIO" || root.page === "BACKTEST"
-                clip: true
+                clip: false
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
-                anchors.topMargin: (root.page === "BACKTEST" ? btHead.height : portHead.height) + 6
+                anchors.topMargin: (root.page === "BACKTEST" ? btHead.height : portHead.height) + 14
                 anchors.bottom: parent.bottom
                 objectName: "cryptoPortfolioChart"
-                // Reserve about half of the old chart's height for the holdings below.
+                // Keep a full holdings row reachable, including with narrow wallet tools.
                 anchors.bottomMargin: root.page === "PORTFOLIO"
-                    ? Math.max(0, field.height - anchors.topMargin - Math.min(210, Math.max(110, field.height * 0.32)))
+                    ? Math.max(0, field.height - anchors.topMargin
+                        - Math.max(root.walletToolsOpen ? 55 : 70, Math.min(210, field.height * 0.32,
+                            field.height - anchors.topMargin - (root.walletToolsOpen ? 280 : 180))))
                     : 0
 
-                CryptoChart {
-                    id: webTape
-                    live: false
-                    visible: false
-                    width: 0
-                    height: 0
-                    equity: root.botEquity
+                GgFrame {
+                    anchors.fill: parent
+                    leftLegend: "PRISGRAF · " + root.asset
+                    rightLegend: root.activeTf
+                    backgroundColor: "#161616"
+                    borderColor: root.frameBorder
+                    radius: root.frameRadius
                 }
-
                 Canvas {
                     id: solPlot
+                    objectName: "cryptoPortfolioCanvas"
                     anchors.fill: parent
+                    anchors.margins: 8
+                    anchors.topMargin: 16
                     renderTarget: Canvas.Image
-                    renderStrategy: Canvas.Cooperative
+                    renderStrategy: Canvas.Threaded
                     antialiasing: true
                     property bool fromZero: false
                     property string tapeAsset: root.page === "BACKTEST" ? "BT" : root.asset
@@ -1691,6 +1630,61 @@ Item {
                     readonly property int padR: 68
                     readonly property int padT: 10
                     readonly property int padB: 22
+                    property var priceRange: null
+                    property var renderIndices: []
+                    property bool renderDataDirty: true
+
+                    function schedulePlotUpdate() {
+                        renderDataDirty = true
+                        Qt.callLater(updateRenderData)
+                    }
+
+                    function updateRenderData() {
+                        if (!root.activeView || !visible)
+                            return
+                        priceRange = visibleRange()
+                        renderIndices = sampledIndices()
+                        renderDataDirty = false
+                        requestPaint()
+                    }
+
+                    // Cache per-pixel extrema when the view changes. Hovering
+                    // keeps exact source samples without rebuilding every point.
+                    function sampledIndices() {
+                        var pts = series || []
+                        var bounds = viewBounds()
+                        if (bounds.n < 2)
+                            return []
+                        var columns = Math.max(1, Math.floor(width - padL - padR))
+                        var count = bounds.i1 - bounds.i0 + 1
+                        var out = []
+                        function add(i) {
+                            if (!out.length || out[out.length - 1] !== i)
+                                out.push(i)
+                        }
+                        add(bounds.i0)
+                        if (count <= columns * 2) {
+                            for (var i = bounds.i0 + 1; i <= bounds.i1; i++)
+                                add(i)
+                            return out
+                        }
+                        for (var bucket = 0; bucket < columns; bucket++) {
+                            var first = bounds.i0 + Math.floor(bucket * count / columns)
+                            var last = Math.min(bounds.i1, bounds.i0 + Math.floor((bucket + 1) * count / columns) - 1)
+                            var low = first
+                            var high = first
+                            for (var j = first + 1; j <= last; j++) {
+                                if (Number(pts[j]) < Number(pts[low]))
+                                    low = j
+                                if (Number(pts[j]) > Number(pts[high]))
+                                    high = j
+                            }
+                            add(Math.min(low, high))
+                            add(Math.max(low, high))
+                        }
+                        add(bounds.i1)
+                        return out
+                    }
 
                     function seriesKey() {
                         if (root.page === "BACKTEST")
@@ -1795,7 +1789,7 @@ Item {
                             fitEnd()
                         else
                             restoreView()
-                        requestPaint()
+                        schedulePlotUpdate()
                     }
 
                     function indexAt(x) {
@@ -1852,7 +1846,7 @@ Item {
                         var shift = dy / plotH * span
                         var nextMax = priceMax + shift
                         var nextMin = priceMin + shift
-                        var ranged = visibleRange()
+                        var ranged = renderDataDirty ? visibleRange() : priceRange
                         if (ranged) {
                             var band = Math.max(span, ranged.dataSpan)
                             var bandMin = ranged.minv - band
@@ -1915,7 +1909,7 @@ Item {
                     function ensurePriceScale() {
                         if (priceManual && priceMax > priceMin)
                             return
-                        var ranged = visibleRange()
+                        var ranged = priceRange
                         if (!ranged)
                             return
                         priceMin = ranged.minv
@@ -1924,7 +1918,7 @@ Item {
                     }
 
                     function clampPriceSpan(next) {
-                        var ranged = visibleRange()
+                        var ranged = priceRange
                         var dataSpan = ranged ? ranged.dataSpan : Math.max(next, 1)
                         var floor = Math.max(dataSpan * 0.01, 1e-8)
                         var ceil = Math.max(dataSpan * 80, floor * 4)
@@ -1949,7 +1943,7 @@ Item {
                         var span = priceMax - priceMin
                         var t = (priceMax - last) / span
                         if (!(last <= priceMax && last >= priceMin)) {
-                            var ranged = visibleRange()
+                            var ranged = priceRange
                             if (ranged && ranged.maxv > ranged.minv)
                                 t = (ranged.maxv - last) / (ranged.maxv - ranged.minv)
                             else
@@ -2043,20 +2037,21 @@ Item {
                         aim = 0
                         panning = false
                         pricePanning = false
-                        requestPaint()
+                        schedulePlotUpdate()
                     }
                     onSeriesChanged: noteSeries()
-                    onViewFromChanged: requestPaint()
-                    onViewToChanged: requestPaint()
+                    onViewFromChanged: schedulePlotUpdate()
+                    onViewToChanged: schedulePlotUpdate()
+                    onViewReadyChanged: schedulePlotUpdate()
                     onStampsChanged: requestPaint()
                     onMarksChanged: requestPaint()
                     onHoverIndexChanged: requestPaint()
                     onPriceManualChanged: requestPaint()
                     onPriceMinChanged: requestPaint()
                     onPriceMaxChanged: requestPaint()
-                    onWidthChanged: requestPaint()
+                    onWidthChanged: schedulePlotUpdate()
                     onHeightChanged: requestPaint()
-                    onVisibleChanged: if (visible) requestPaint()
+                    onVisibleChanged: if (visible) schedulePlotUpdate()
                     onPaint: {
                         var ctx = getContext("2d")
                         var w = width
@@ -2074,7 +2069,7 @@ Item {
                         var times = stamps || []
                         ctx.fillStyle = "#161616"
                         ctx.fillRect(0, 0, w, h)
-                        ctx.strokeStyle = "#242424"
+                        ctx.strokeStyle = "#2b2b2b"
                         ctx.lineWidth = 1
                         var g
                         for (g = 0; g <= 4; g++) {
@@ -2098,7 +2093,7 @@ Item {
                         var right = bounds.right
                         var i0 = bounds.i0
                         var i1 = bounds.i1
-                        var ranged = visibleRange()
+                        var ranged = priceRange
                         if (!ranged)
                             return
                         var minv = ranged.minv
@@ -2178,16 +2173,17 @@ Item {
                         ctx.beginPath()
                         ctx.moveTo(xAt(i0), padT + plotH)
                         ctx.lineTo(xAt(i0), yAt(pts[i0]))
-                        for (i = i0 + 1; i <= i1; i++)
-                            ctx.lineTo(xAt(i), yAt(pts[i]))
+                        var lineIndices = renderIndices
+                        for (i = 1; i < lineIndices.length; i++)
+                            ctx.lineTo(xAt(lineIndices[i]), yAt(pts[lineIndices[i]]))
                         ctx.lineTo(xAt(i1), padT + plotH)
                         ctx.closePath()
                         ctx.fillStyle = up ? "rgba(141,184,154,0.18)" : "rgba(201,137,137,0.16)"
                         ctx.fill()
                         ctx.beginPath()
                         ctx.moveTo(xAt(i0), yAt(pts[i0]))
-                        for (i = i0 + 1; i <= i1; i++)
-                            ctx.lineTo(xAt(i), yAt(pts[i]))
+                        for (i = 1; i < lineIndices.length; i++)
+                            ctx.lineTo(xAt(lineIndices[i]), yAt(pts[lineIndices[i]]))
                         ctx.strokeStyle = up ? "#8db89a" : "#c98989"
                         ctx.lineWidth = 1.6
                         ctx.stroke()
@@ -2422,21 +2418,39 @@ Item {
                     }
                 }
 
-                Text {
+                Column {
+                    objectName: "cryptoChartEmptyState"
                     anchors.centerIn: parent
+                    width: Math.min(parent.width - 24, 380)
+                    spacing: 8
                     visible: root.page === "PORTFOLIO" && (
                         root.asset === "KAS"
                             ? (((root.status.kas_chart || {}).closes || []).length < 2)
                             : root.closes.length < 2
                     )
-                    text: root.asset === "KAS"
-                        ? (String((root.status.kas_chart || {}).error || "").length
-                            ? "KAS-tape saknas"
-                            : "Hämtar KAS-tape…")
-                        : (String((root.liveChart || {}).error || "").length ? "SOL-prisdata saknas" : "Hämtar SOL-prisdata…")
-                    color: root.muted
-                    font.family: "monospace"
-                    font.pixelSize: 13
+                    Text {
+                        textFormat: Text.PlainText
+                        width: parent.width
+                        text: (root.asset === "KAS" ? root.status.kas_chart || {} : root.liveChart).refreshing
+                            || root.status.refreshing ? "Hämtar " + root.asset + "-prisdata…"
+                            : root.asset + "-prisdata saknas"
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.WordWrap
+                        color: root.muted
+                        font.family: "monospace"
+                        font.pixelSize: 13
+                    }
+                    CryptoButton {
+                        width: parent.width
+                        text: "FÖRSÖK IGEN"
+                        horizontalAlignment: Text.AlignHCenter
+                        color: root.ledgerGold
+                        font.family: "monospace"
+                        font.pixelSize: 11
+                        enabled: (!root.operationBusy) && !root.operationBusy
+                        objectName: "cryptoChartRetryArea"
+                        onClicked: root.asset === "KAS" ? root.pullKasChart() : root.pullChart()
+                    }
                 }
             }
 
@@ -2456,18 +2470,21 @@ Item {
                     assets: root.portfolioView.assets || []
                     selectedSymbol: root.asset
                     onAssetSelected: function(symbol) { root.pickAsset(symbol) }
+                    tokenInspectionEnabled: root.asset === "SOL" && !root.operationBusy
+                    onTokenSelected: function(mint) { root.inspectToken(mint) }
                 }
                 Item {
                     id: recentActivity
                     readonly property real freeHeight: portfolioBottom.height - walletTools.height - walletBar.height - 8
                     visible: root.asset === "SOL" && root.connected && root.ledger.length > 0
-                        && (root.portfolioView.assets || []).length <= 2 && freeHeight > 230
+                        && (root.portfolioView.assets || []).length <= 2 && freeHeight > 260
                     anchors.left: parent.left; anchors.right: parent.right
                     anchors.bottom: walletTools.top; anchors.bottomMargin: 2
                     height: visible ? 132 : 0
                     Column {
                         width: parent.width; spacing: 9
                         Text {
+                            textFormat: Text.PlainText
                             text: "SENASTE AKTIVITET"; color: root.ledgerGold
                             font.family: "monospace"; font.pixelSize: 11; font.bold: true
                         }
@@ -2477,12 +2494,14 @@ Item {
                                 width: recentActivity.width; spacing: 3
                                 readonly property var row: root.ledger[index] || {}
                                 Text {
+                                    textFormat: Text.PlainText
                                     width: parent.width; elide: Text.ElideRight
                                     text: String(parent.row.side || "EVENT").toUpperCase() + " · " + String(parent.row.mode || "") + " · " + String(parent.row.status || "")
                                     color: parent.row.error ? "#c98989" : root.ink
                                     font.family: "monospace"; font.pixelSize: 11
                                 }
                                 Text {
+                                    textFormat: Text.PlainText
                                     width: parent.width; elide: Text.ElideRight
                                     text: String(parent.row.hint || parent.row.error || "")
                                     color: root.muted; font.family: "monospace"; font.pixelSize: 11
@@ -2498,7 +2517,7 @@ Item {
                     anchors.right: parent.right
                     anchors.bottom: walletBar.top
                     anchors.bottomMargin: 6
-                    height: root.walletToolsOpen ? Math.min(contentHeight + 6, 146, portfolioBottom.height * 0.52) : 0
+                    height: root.walletToolsOpen ? Math.max(0, Math.min(contentHeight + 6, 146, portfolioBottom.height - 158)) : 0
                     visible: root.walletToolsOpen
                     clip: true
                     contentHeight: root.asset === "KAS" ? kasFoot.height : portFoot.height
@@ -2512,85 +2531,70 @@ Item {
                 Row {
                     spacing: 8
                     width: parent.width
-                    GgField {
+                    CryptoField {
                         id: pubkeyField
-                        width: Math.max(120, parent.width - 80)
+                        width: Math.max(80, parent.width - 108)
                         height: 26
                         placeholderText: "Solana pubkey"
                         text: String(root.wallet.pubkey || "")
                     }
-                    Text {
+                    CryptoButton {
                         text: "CONNECT"
                         color: "#c8a97e"
                         font.family: "monospace"
                         font.pixelSize: 12
                         font.bold: true
                         anchors.verticalCenter: parent.verticalCenter
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.connectWatch()
-                        }
+                        enabled: !root.operationBusy
+                        onClicked: root.connectWatch()
                     }
                 }
                 Flow {
                     width: parent.width
                     spacing: 12
-                    Text {
+                    CryptoButton {
                         text: "CREATE TEST WALLET"
                         color: "#c8a97e"
                         font.family: "monospace"
                         font.pixelSize: 12
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
+                        enabled: !root.operationBusy
+                        onClicked: {
                                 if (root.surfaceHost)
                                     root.surfaceHost.cryptoCreateTestWallet()
                                 root.refresh()
                             }
-                        }
                     }
-                    Text {
+                    CryptoButton {
                         text: "AIRDROP 100 SOL"
                         color: "#8db89a"
                         font.family: "monospace"
                         font.pixelSize: 12
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
+                        enabled: !root.operationBusy
+                        onClicked: {
                                 if (root.surfaceHost)
                                     root.surfaceHost.cryptoAirdrop()
                                 root.refresh()
                             }
-                        }
                     }
-                    Text {
+                    CryptoButton {
                         text: "IMPORT KEYPAIR"
                         color: "#c8a97e"
                         font.family: "monospace"
                         font.pixelSize: 12
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: keypairDialog.open()
-                        }
+                        enabled: !root.operationBusy
+                        onClicked: keypairDialog.open()
                     }
-                    Text {
+                    CryptoButton {
                         text: "DISCONNECT"
                         color: "#c8cdd4"
                         font.family: "monospace"
                         font.pixelSize: 12
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
+                        enabled: !root.operationBusy
+                        onClicked: {
                                 if (root.surfaceHost)
                                     root.surfaceHost.cryptoDisconnect()
                                 root.refresh()
                             }
-                        }
                     }
                 }
             }
@@ -2603,68 +2607,57 @@ Item {
                 Flow {
                     width: parent.width
                     spacing: 14
-                    Text {
+                    CryptoButton {
                         text: "GENESIS"
                         color: "#8db89a"
                         font.family: "monospace"
                         font.pixelSize: 12
                         font.bold: true
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
+                        enabled: !root.operationBusy
+                        onClicked: {
                                 if (root.surfaceHost && root.surfaceHost.cryptoKaspaGenesis)
                                     root.statusJson = root.surfaceHost.cryptoKaspaGenesis()
                             }
-                        }
                     }
-                    Text {
+                    CryptoButton {
                         text: "ADD 5"
                         color: "#8db89a"
                         font.family: "monospace"
                         font.pixelSize: 12
                         font.bold: true
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
+                        enabled: !root.operationBusy
+                        onClicked: {
                                 if (root.surfaceHost && root.surfaceHost.cryptoKaspaTransition)
                                     root.statusJson = root.surfaceHost.cryptoKaspaTransition("add", 5)
                             }
-                        }
                     }
-                    Text {
+                    CryptoButton {
                         text: "SUB 3"
                         color: "#c8a97e"
                         font.family: "monospace"
                         font.pixelSize: 12
                         font.bold: true
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
+                        enabled: !root.operationBusy
+                        onClicked: {
                                 if (root.surfaceHost && root.surfaceHost.cryptoKaspaTransition)
                                     root.statusJson = root.surfaceHost.cryptoKaspaTransition("subtract", 3)
                             }
-                        }
                     }
-                    Text {
+                    CryptoButton {
                         text: "SILVERC"
-                        color: "#b6a6c8"
+                        color: root.ledgerGold
                         font.family: "monospace"
                         font.pixelSize: 12
                         font.bold: true
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
+                        enabled: !root.operationBusy
+                        onClicked: {
                                 if (root.surfaceHost && root.surfaceHost.cryptoKaspaCompile)
                                     root.statusJson = root.surfaceHost.cryptoKaspaCompile()
                             }
-                        }
                     }
                 }
                 Text {
+                    textFormat: Text.PlainText
                     width: parent.width
                     text: String(root.kaspa.address || "No covenant yet. GENESIS funds 1 KAS on paper.")
                     color: "#c8cdd4"
@@ -2673,6 +2666,7 @@ Item {
                     elide: Text.ElideMiddle
                 }
                 Text {
+                    textFormat: Text.PlainText
                     width: parent.width
                     visible: String(root.kaspa.covenant_id || "").length > 0
                     text: "cov  " + String(root.kaspa.covenant_id || "")
@@ -2682,6 +2676,7 @@ Item {
                     elide: Text.ElideMiddle
                 }
                 Text {
+                    textFormat: Text.PlainText
                     width: parent.width
                     visible: root.kaspa.mainnet_observe === true
                     text: "Mainnet is observe-only. Covenant steps stay on paper."
@@ -2691,6 +2686,7 @@ Item {
                     elide: Text.ElideRight
                 }
                 Text {
+                    textFormat: Text.PlainText
                     width: parent.width
                     visible: String(root.kaspa.compile_note || "").length > 0
                     text: String(root.kaspa.compile_note || "")
@@ -2700,6 +2696,7 @@ Item {
                     elide: Text.ElideRight
                 }
                 Text {
+                    textFormat: Text.PlainText
                     width: parent.width
                     visible: (root.kaspa.history || []).length === 0
                     text: String(root.kaspa.hint || "Covenant id stays. Address changes with count.")
@@ -2711,6 +2708,7 @@ Item {
                 Repeater {
                     model: Math.min(3, (root.kaspa.history || []).length)
                     delegate: Text {
+                    textFormat: Text.PlainText
                         width: kasFoot.width
                         readonly property var row: (root.kaspa.history || [])[
                             (root.kaspa.history || []).length - 1 - index
@@ -2729,10 +2727,11 @@ Item {
                 }
                 Item {
                     id: walletBar
-                    width: parent.width; height: 28
+                    width: parent.width; height: 34
                     anchors.bottom: parent.bottom
                     Rectangle { width: parent.width; height: 1; color: "#353535" }
                     Text {
+                        textFormat: Text.PlainText
                         anchors.left: parent.left; anchors.right: walletLinks.left; anchors.rightMargin: 12
                         anchors.verticalCenter: parent.verticalCenter
                         text: root.asset === "KAS" ? "KAS covenant · simulerat saldo" : root.connected ? root.shortKey(root.wallet.pubkey) + " · " + String(root.wallet.network || root.legend)
@@ -2743,15 +2742,18 @@ Item {
                     Row {
                         id: walletLinks
                         anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-                        spacing: 18
-                        Text {
-                            text: "AKTIVITET"; color: root.ledgerGold; font.family: "monospace"; font.pixelSize: 11
-                            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.page = "ACTIVITY" }
+                        spacing: 5
+                        CryptoButton {
+                            height: 26; font.pixelSize: 10
+                            text: "AKTIVITET"; color: root.ledgerGold; font.family: "monospace"
+                            enabled: !root.operationBusy
+                            onClicked: root.page = "ACTIVITY"
                         }
-                        Text {
+                        CryptoButton {
                             text: (root.walletToolsOpen ? "▾ " : "▸ ") + (root.asset === "KAS" ? "COVENANT" : "PLÅNBOK")
-                            color: root.ledgerGold; font.family: "monospace"; font.pixelSize: 11
-                            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.walletToolsOpen = !root.walletToolsOpen }
+                            color: root.ledgerGold; font.family: "monospace"
+                            enabled: !root.operationBusy
+                            onClicked: root.walletToolsOpen = !root.walletToolsOpen
                         }
                     }
                 }
@@ -2770,48 +2772,39 @@ Item {
                     Flow {
                         width: parent.width
                         spacing: 14
-                        Text {
+                        CryptoButton {
                             text: root.trader.armed ? "TRADER OFF" : (root.traderAvailable ? "STARTA VALD BOT" : "OBSERVE")
                             color: root.trader.armed ? "#c8a97e" : "#8db89a"
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: true
-                            MouseArea {
-                                enabled: root.traderAvailable
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
+                            enabled: (root.traderAvailable) && !root.operationBusy
+                            onClicked: {
                                     if (!root.surfaceHost)
                                         return
                                     root.statusJson = root.surfaceHost.cryptoArmTrader(!root.trader.armed)
                                     root.refresh()
                                 }
-                            }
                         }
-                        Text {
+                        CryptoButton {
                             text: root.paperTickRunning ? "TICK…" : (root.traderAvailable ? "UPPDATERA ALLA" : "OBSERVE")
                             color: "#c8a97e"
                             font.family: "monospace"
                             font.pixelSize: 12
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
+                            enabled: !root.operationBusy
+                            onClicked: {
                                     if (root.surfaceHost)
                                         root.statusJson = root.surfaceHost.cryptoTickTrader()
                                     root.refresh()
                                 }
-                            }
                         }
-                        Text {
+                        CryptoButton {
                             text: root.backtestRunning ? "BACKTEST…" : "BACKTEST"
                             color: root.backtestRunning ? "#c8a97e" : "#8db89a"
                             font.family: "monospace"
                             font.pixelSize: 12
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
+                            enabled: !root.operationBusy
+                            onClicked: {
                                     if (!root.surfaceHost || !root.surfaceHost.cryptoBacktestTrader)
                                         return
                                     if (root.backtestRunning)
@@ -2820,32 +2813,31 @@ Item {
                                     root.botTape = "live"
                                     root.statusJson = root.surfaceHost.cryptoBacktestTrader()
                                 }
-                            }
                         }
-                        Text {
+                        CryptoButton {
                             text: "RESET"
                             color: "#c8cdd4"
                             font.family: "monospace"
                             font.pixelSize: 12
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
+                            enabled: !root.operationBusy
+                            destructive: true
+                            onClicked: {
                                     if (root.surfaceHost)
                                         root.statusJson = root.surfaceHost.cryptoResetTrader()
                                     root.refresh()
                                 }
-                            }
                         }
                     }
                     CryptoPaperAccounts {
                         width: parent.width
                         engine: root.status.paper_engine || ({})
                         canStart: root.traderAvailable
+                        busy: root.operationBusy
                         surfaceHost: root.surfaceHost
                         onStatusChanged: function(json) { root.statusJson = json; root.refresh() }
                     }
                     Text {
+                        textFormat: Text.PlainText
                         width: parent.width
                         text: "Välj bot i menyn ovan. RESET återställer endast vald bots papperskonto; resultatet sparas som en tidigare körning."
                         color: "#a8b0b8"
@@ -2854,6 +2846,7 @@ Item {
                         wrapMode: Text.WordWrap
                     }
                     Text {
+                        textFormat: Text.PlainText
                         width: parent.width
                         text: "KEEP / WATCH / PARK are editorial labels. Compare measured results in Backtest. All six books support persistent paper execution. Live venue execution still requires its own integration."
                         color: "#8b949e"
@@ -2864,6 +2857,7 @@ Item {
                     Repeater {
                         model: root.trader.books || []
                         delegate: Text {
+                    textFormat: Text.PlainText
                             required property var modelData
                             width: traderCol.width
                             text: String(modelData.name || modelData.id || "")
@@ -2885,198 +2879,213 @@ Item {
                 }
             }
 
-            Column {
+            Flickable {
                 anchors.fill: parent
                 visible: root.page === "SIGNAL"
-                spacing: 8
-                Text {
+                clip: true
+                contentWidth: width
+                contentHeight: signalContent.height
+                boundsBehavior: Flickable.StopAtBounds
+                ScrollBar.vertical: GgScrollBar {}
+                Column {
+                    id: signalContent
                     width: parent.width
-                    text: String(root.bot.symbol || "SOLUSDT") + "  5m  ·  size " + String(root.bot.size_sol || "0.01") + " SOL"
-                    color: "#d8dee9"
-                    font.family: "monospace"
-                    font.pixelSize: 12
-                }
-                Text {
-                    width: parent.width
-                    text: {
-                        var last = root.bot.last || {}
-                        var side = String(last.super || "none")
-                        if (side === "none" && !last.buy_votes && !last.sell_votes)
-                            return "NO SUPER"
-                        var line = side.toUpperCase() + "   votes " + String(last.buy_votes || 0) + "/" + String(last.sell_votes || 0)
-                        var rsi = last.rsi14
-                        if (rsi !== undefined && rsi !== null && rsi !== "")
-                            line += "   RSI " + Number(rsi).toFixed(1)
-                        return line
-                    }
-                    color: String((root.bot.last || {}).super || "") === "buy"
-                        ? "#8db89a"
-                        : (String((root.bot.last || {}).super || "") === "sell" ? "#c98989" : "#8b949e")
-                    font.family: "monospace"
-                    font.pixelSize: 12
-                    wrapMode: Text.WordWrap
-                }
-                Text {
-                    width: parent.width
-                    visible: ((root.bot.last || {}).notes || []).length > 0
-                    text: ((root.bot.last || {}).notes || []).join(" · ")
-                    color: "#a8b0b8"
-                    font.family: "monospace"
-                    font.pixelSize: 12
-                    wrapMode: Text.WordWrap
-                }
-                Row {
-                    spacing: 14
+                    spacing: 8
                     Text {
-                        text: "EVAL SIGNALS"
-                        color: "#c8a97e"
+                        textFormat: Text.PlainText
+                        width: parent.width
+                        text: String(root.bot.symbol || "SOLUSDT") + "  5m  ·  size " + String(root.bot.size_sol || "0.01") + " SOL"
+                        color: "#d8dee9"
                         font.family: "monospace"
                         font.pixelSize: 12
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                if (root.surfaceHost)
-                                    root.surfaceHost.cryptoEvalSignals()
-                                root.refresh()
-                            }
+                    }
+                    Text {
+                        textFormat: Text.PlainText
+                        width: parent.width
+                        text: {
+                            var last = root.bot.last || {}
+                            var side = String(last.super || "none")
+                            if (side === "none" && !last.buy_votes && !last.sell_votes)
+                                return "NO SUPER"
+                            var line = side.toUpperCase() + "   votes " + String(last.buy_votes || 0) + "/" + String(last.sell_votes || 0)
+                            var rsi = last.rsi14
+                            if (rsi !== undefined && rsi !== null && rsi !== "")
+                                line += "   RSI " + Number(rsi).toFixed(1)
+                            return line
                         }
-                    }
-                    Text {
-                        text: root.bot.armed ? "DISARM" : "ARM BOT"
-                        color: root.bot.armed ? "#c8a97e" : "#8db89a"
+                        color: String((root.bot.last || {}).super || "") === "buy"
+                            ? "#8db89a"
+                            : (String((root.bot.last || {}).super || "") === "sell" ? "#c98989" : "#8b949e")
                         font.family: "monospace"
                         font.pixelSize: 12
-                        font.bold: true
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
+                        wrapMode: Text.WordWrap
+                    }
+                    Text {
+                        textFormat: Text.PlainText
+                        width: parent.width
+                        visible: ((root.bot.last || {}).notes || []).length > 0
+                        text: ((root.bot.last || {}).notes || []).join(" · ")
+                        color: "#a8b0b8"
+                        font.family: "monospace"
+                        font.pixelSize: 12
+                        wrapMode: Text.WordWrap
+                    }
+                    Flow {
+                        width: parent.width
+                        spacing: 6
+                        CryptoButton {
+                            text: "EVAL SIGNALS"
+                            color: "#c8a97e"
+                            font.family: "monospace"
+                            font.pixelSize: 12
+                            enabled: !root.operationBusy
+                            primary: true
                             onClicked: {
-                                if (!root.surfaceHost)
-                                    return
-                                root.statusJson = root.surfaceHost.cryptoArmBot(!root.bot.armed)
-                                root.refresh()
-                            }
+                                    if (root.surfaceHost)
+                                        root.surfaceHost.cryptoEvalSignals()
+                                    root.refresh()
+                                }
                         }
-                    }
-                    Text {
-                        text: "TEST BUY 0.01 SOL"
-                        color: "#8db89a"
-                        font.family: "monospace"
-                        font.pixelSize: 12
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
+                        CryptoButton {
+                            text: root.bot.armed ? "DISARM" : "ARM BOT"
+                            color: root.bot.armed ? "#c8a97e" : "#8db89a"
+                            font.family: "monospace"
+                            font.pixelSize: 12
+                            font.bold: true
+                            enabled: !root.operationBusy
+                            onClicked: {
+                                    if (!root.surfaceHost)
+                                        return
+                                    root.statusJson = root.surfaceHost.cryptoArmBot(!root.bot.armed)
+                                    root.refresh()
+                                }
+                        }
+                        CryptoButton {
+                            text: "TEST BUY 0.01 SOL"
+                            color: "#8db89a"
+                            font.family: "monospace"
+                            font.pixelSize: 12
+                            enabled: !root.operationBusy
                             onClicked: root.paperSignal()
                         }
                     }
-                }
-                Text {
-                    text: root.bot.armed
-                        ? "Ticks every 30s. Lab fill on super buy/sell."
-                        : (root.connected
-                            ? "Strategy004 on SOLUSDT. EVAL then ARM for lab fills."
-                            : "CREATE TEST WALLET, then AIRDROP 100 SOL.")
-                    color: "#a8b0b8"
-                    font.family: "monospace"
-                    font.pixelSize: 12
-                }
+                    Text {
+                        textFormat: Text.PlainText
+                        text: root.bot.armed
+                            ? "Ticks every 30s. Lab fill on super buy/sell."
+                            : (root.connected
+                                ? "Strategy004 on SOLUSDT. EVAL then ARM for lab fills."
+                                : "CREATE TEST WALLET, then AIRDROP 100 SOL.")
+                        color: "#a8b0b8"
+                        font.family: "monospace"
+                        font.pixelSize: 12
+                    }
+                            }
             }
 
-            Column {
+            Flickable {
                 anchors.fill: parent
                 visible: root.page === "ARB"
-                spacing: 8
-                Text {
+                clip: true
+                contentWidth: width
+                contentHeight: arbContent.height
+                boundsBehavior: Flickable.StopAtBounds
+                ScrollBar.vertical: GgScrollBar {}
+                Column {
+                    id: arbContent
                     width: parent.width
-                    text: "A " + String(root.arb.price_a || "—") + "    B " + String(root.arb.price_b || "—") + "    USDC/SOL"
-                    color: "#d8dee9"
-                    font.family: "monospace"
-                    font.pixelSize: 12
-                    wrapMode: Text.WordWrap
-                }
-                Text {
-                    width: parent.width
-                    text: {
-                        var fire = root.arb.optimal_ok ? "FIRE" : "DROP"
-                        var line = fire
-                            + "  size " + String(root.arb.optimal_usd || "—")
-                            + "  tip " + String(root.arb.optimal_tip || "—")
-                            + "  net " + String(root.arb.optimal_net || "—")
-                        var drop = String(root.arb.optimal_drop || "")
-                        if (drop.length)
-                            line += "  " + drop
-                        var buy = String(root.arb.buy_pool || "")
-                        var sell = String(root.arb.sell_pool || "")
-                        if (buy.length && sell.length)
-                            line += "  buy " + buy + " sell " + sell
-                        return line
-                    }
-                    color: root.arb.optimal_ok ? "#8db89a" : "#c98989"
-                    font.family: "monospace"
-                    font.pixelSize: 12
-                    wrapMode: Text.WordWrap
-                }
-                Text {
-                    width: parent.width
-                    visible: String((root.status.arb_last || {}).txid || "").length > 0
-                        || String((root.status.arb_last || {}).error || "").length > 0
-                    text: {
-                        var last = root.status.arb_last || {}
-                        var line = String(last.txid || "")
-                        if (last.profit)
-                            line += "   profit " + String(last.profit)
-                        if (last.error)
-                            line += "   " + String(last.error)
-                        return line
-                    }
-                    color: (root.status.arb_last || {}).error ? "#c98989" : "#8db89a"
-                    font.family: "monospace"
-                    font.pixelSize: 12
-                    wrapMode: Text.WrapAnywhere
-                }
-                Row {
-                    spacing: 14
+                    spacing: 8
                     Text {
-                        text: "FLASH ARB"
-                        color: "#8db89a"
+                        textFormat: Text.PlainText
+                        width: parent.width
+                        text: "A " + String(root.arb.price_a || "—") + "    B " + String(root.arb.price_b || "—") + "    USDC/SOL"
+                        color: "#d8dee9"
                         font.family: "monospace"
                         font.pixelSize: 12
-                        font.bold: true
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
+                        wrapMode: Text.WordWrap
+                    }
+                    Text {
+                        textFormat: Text.PlainText
+                        width: parent.width
+                        text: {
+                            var fire = root.arb.optimal_ok ? "FIRE" : "DROP"
+                            var line = fire
+                                + "  size " + String(root.arb.optimal_usd || "—")
+                                + "  tip " + String(root.arb.optimal_tip || "—")
+                                + "  net " + String(root.arb.optimal_net || "—")
+                            var drop = String(root.arb.optimal_drop || "")
+                            if (drop.length)
+                                line += "  " + drop
+                            var buy = String(root.arb.buy_pool || "")
+                            var sell = String(root.arb.sell_pool || "")
+                            if (buy.length && sell.length)
+                                line += "  buy " + buy + " sell " + sell
+                            return line
+                        }
+                        color: root.arb.optimal_ok ? "#8db89a" : "#c98989"
+                        font.family: "monospace"
+                        font.pixelSize: 12
+                        wrapMode: Text.WordWrap
+                    }
+                    Text {
+                        textFormat: Text.PlainText
+                        width: parent.width
+                        visible: String((root.status.arb_last || {}).txid || "").length > 0
+                            || String((root.status.arb_last || {}).error || "").length > 0
+                        text: {
+                            var last = root.status.arb_last || {}
+                            var line = String(last.txid || "")
+                            if (last.profit)
+                                line += "   profit " + String(last.profit)
+                            if (last.error)
+                                line += "   " + String(last.error)
+                            return line
+                        }
+                        color: (root.status.arb_last || {}).error ? "#c98989" : "#8db89a"
+                        font.family: "monospace"
+                        font.pixelSize: 12
+                        wrapMode: Text.WrapAnywhere
+                    }
+                    Flow {
+                        width: parent.width
+                        spacing: 6
+                        CryptoButton {
+                            text: "FLASH ARB"
+                            color: "#8db89a"
+                            font.family: "monospace"
+                            font.pixelSize: 12
+                            font.bold: true
+                            enabled: !root.operationBusy
                             onClicked: {
-                                if (root.surfaceHost)
-                                    root.statusJson = root.surfaceHost.cryptoFlashArb()
-                                root.refresh()
-                            }
+                                    if (root.surfaceHost)
+                                        root.statusJson = root.surfaceHost.cryptoFlashArb()
+                                    root.refresh()
+                                }
+                        }
+                        CryptoButton {
+                            text: "RESET POOLS"
+                            color: "#c8a97e"
+                            font.family: "monospace"
+                            font.pixelSize: 12
+                            enabled: !root.operationBusy
+                            destructive: true
+                            onClicked: {
+                                    if (root.surfaceHost)
+                                        root.statusJson = root.surfaceHost.cryptoFlashArbReset()
+                                    root.refresh()
+                                }
                         }
                     }
                     Text {
-                        text: "RESET POOLS"
-                        color: "#c8a97e"
+                        textFormat: Text.PlainText
+                        width: parent.width
+                        text: "Paper CPMM. Tip is half the gross, where a Jito auction starts. The bundle drops when the tip eats the edge. Not a live searcher. Mainnet stays observe-only."
+                        color: "#a8b0b8"
                         font.family: "monospace"
                         font.pixelSize: 12
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                if (root.surfaceHost)
-                                    root.statusJson = root.surfaceHost.cryptoFlashArbReset()
-                                root.refresh()
-                            }
-                        }
+                        wrapMode: Text.WordWrap
                     }
-                }
-                Text {
-                    width: parent.width
-                    text: "Paper CPMM. Tip is half the gross, where a Jito auction starts. The bundle drops when the tip eats the edge. Not a live searcher. Mainnet stays observe-only."
-                    color: "#a8b0b8"
-                    font.family: "monospace"
-                    font.pixelSize: 12
-                    wrapMode: Text.WordWrap
-                }
+                            }
             }
 
             Flickable {
@@ -3096,18 +3105,22 @@ Item {
                     spacing: 8
 
                     Text {
+
+                        textFormat: Text.PlainText
                         text: "STRATEGY FACTORY"
-                        color: "#b6a6c8"
+                        color: root.ledgerGold
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
                     Text {
+                        textFormat: Text.PlainText
                         text: "ECC LOOP  ·  BOUNDED WORKERS  ·  PAPER ONLY"
-                        color: "#b6a6c8"
+                        color: root.ledgerGold
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
                     Text {
+                        textFormat: Text.PlainText
                         width: factoryCol.width
                         text: "Hypothesis → backtest → validation → paper review. "
                             + "This surface never places orders and never arms a wallet."
@@ -3116,44 +3129,42 @@ Item {
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
-                    Row {
-                        spacing: 14
-                        Text {
+                    Flow {
+                        width: parent.width
+                        spacing: 6
+                        CryptoButton {
                             text: root.strategyFactoryRunning ? "RUNNING…" : "RUN FACTORY"
                             color: root.strategyFactoryRunning ? "#c8a97e" : "#8db89a"
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: true
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
+                            enabled: !root.operationBusy
+                            primary: true
+                            onClicked: {
                                     if (root.strategyFactoryRunning
                                             || !root.surfaceHost
                                             || !root.surfaceHost.cryptoStrategyFactory)
                                         return
                                     root.statusJson = root.surfaceHost.cryptoStrategyFactory()
                                 }
-                            }
                         }
-                        Text {
+                        CryptoButton {
                             text: "RESET"
                             color: "#c8a97e"
                             font.family: "monospace"
                             font.pixelSize: 12
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
+                            enabled: !root.operationBusy
+                            destructive: true
+                            onClicked: {
                                     if (!root.surfaceHost
                                             || !root.surfaceHost.cryptoStrategyFactoryReset)
                                         return
                                     root.statusJson = root.surfaceHost.cryptoStrategyFactoryReset()
                                 }
-                            }
                         }
                     }
                     Text {
+                        textFormat: Text.PlainText
                         width: factoryCol.width
                         text: "STATE · "
                             + String(root.strategyFactoryJob.state || "idle").toUpperCase()
@@ -3164,6 +3175,7 @@ Item {
                         wrapMode: Text.WordWrap
                     }
                     Text {
+                        textFormat: Text.PlainText
                         width: factoryCol.width
                         visible: root.strategyFactoryResult.source !== undefined
                         text: {
@@ -3185,6 +3197,7 @@ Item {
                         wrapMode: Text.WordWrap
                     }
                     Text {
+                        textFormat: Text.PlainText
                         width: factoryCol.width
                         text: "ROLES · " + root.factoryRolesText()
                             + "\nGATES · " + (((root.strategyFactoryResult.orchestration || {}).gates || []).join("  ·  "))
@@ -3195,23 +3208,25 @@ Item {
                     }
                     Repeater {
                         model: (root.strategyFactoryResult.candidates || []).length
-                        delegate: Rectangle {
+                        delegate: Item {
                             required property int index
                             width: factoryCol.width
-                            height: candidateBody.implicitHeight + 16
-                            color: "#121212"
-                            border.width: 1
-                            border.color: "#4c4c4c"
-                            radius: 2
-
+                            height: candidateBody.implicitHeight + 32
+                            GgFrame {
+                                anchors.fill: parent
+                                leftLegend: "CANDIDATE " + (index + 1)
+                                backgroundColor: "#161616"
+                                borderColor: root.frameBorder
+                                radius: root.frameRadius
+                            }
                             Column {
                                 id: candidateBody
-                                anchors.fill: parent
-                                anchors.margins: 8
+                                x: 8; y: 20; width: parent.width - 16
                                 spacing: 4
                                 readonly property var row:
                                     (root.strategyFactoryResult.candidates || [])[index] || {}
                                 Text {
+                                    textFormat: Text.PlainText
                                     width: candidateBody.width
                                     text: String(candidateBody.row.label || candidateBody.row.id || "CANDIDATE")
                                         + "  [" + String(candidateBody.row.verdict || "—") + "]"
@@ -3224,6 +3239,7 @@ Item {
                                     font.bold: true
                                 }
                                 Text {
+                                    textFormat: Text.PlainText
                                     width: candidateBody.width
                                     text: String(candidateBody.row.hypothesis || "")
                                     color: "#a8b0b8"
@@ -3232,6 +3248,7 @@ Item {
                                     wrapMode: Text.WordWrap
                                 }
                                 Text {
+                                    textFormat: Text.PlainText
                                     width: candidateBody.width
                                     text: "TRAIN  " + root.factoryMetric(candidateBody.row.train)
                                         + "\nVALID  " + root.factoryMetric(candidateBody.row.validation)
@@ -3242,6 +3259,7 @@ Item {
                                     wrapMode: Text.WordWrap
                                 }
                                 Text {
+                                    textFormat: Text.PlainText
                                     width: candidateBody.width
                                     text: String(candidateBody.row.gate_reason || "")
                                     color: "#7f8994"
@@ -3253,6 +3271,7 @@ Item {
                         }
                     }
                     Text {
+                        textFormat: Text.PlainText
                         width: factoryCol.width
                         visible: (root.strategyFactoryResult.candidates || []).length === 0
                         text: "No factory result yet. Run the bounded local research loop."
@@ -3262,6 +3281,7 @@ Item {
                         wrapMode: Text.WordWrap
                     }
                     Text {
+                        textFormat: Text.PlainText
                         width: factoryCol.width
                         visible: ((root.strategyFactoryResult.graveyard || []).length > 0)
                         text: "GRAVEYARD · negative results kept · "
@@ -3273,6 +3293,7 @@ Item {
                         wrapMode: Text.WordWrap
                     }
                     Text {
+                        textFormat: Text.PlainText
                         width: factoryCol.width
                         visible: (root.strategyFactoryResult.autoresearch || {}).steps !== undefined
                         text: "AUTORESEARCH · KEEP/REVERT  best buffer "
@@ -3286,6 +3307,112 @@ Item {
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
+                    }
+                    Item {
+                        id: factoryQualityCard
+                        objectName: "cryptoFactoryResearchQuality"
+                        width: factoryCol.width
+                        height: qualityBody.implicitHeight + 32
+                        visible: root.strategyFactoryResult.research_quality !== undefined
+                        GgFrame {
+                            anchors.fill: parent
+                            leftLegend: "RESEARCH QUALITY"
+                            backgroundColor: "#161616"
+                            borderColor: root.frameBorder
+                            radius: root.frameRadius
+                        }
+                        readonly property var report: root.strategyFactoryResult.research_quality || ({})
+                        readonly property var bootstrap: report.bootstrap || ({})
+                        readonly property var causality: report.causality || ({})
+
+                        function percent(value) {
+                            if (value === undefined || value === null || value === "" || typeof value === "boolean")
+                                return "—"
+                            var number = Number(value)
+                            return isFinite(number) ? (number * 100).toFixed(2) + "%" : "—"
+                        }
+
+                        function range(key) {
+                            var interval = (factoryQualityCard.bootstrap.intervals || {})[key] || ({})
+                            return factoryQualityCard.percent(interval.lower) + " to " + factoryQualityCard.percent(interval.upper)
+                        }
+
+                        Column {
+                            id: qualityBody
+                            x: 8
+                            y: 20
+                            width: parent.width - 16
+                            spacing: 5
+                            Text {
+                                textFormat: Text.PlainText
+                                width: parent.width
+                                text: "RESEARCH RELIABILITY"
+
+                                color: "#e6edf3"
+                                font.family: "monospace"
+                                font.pixelSize: 12
+                                font.bold: true
+                                wrapMode: Text.Wrap
+                            }
+                            Text {
+                                textFormat: Text.PlainText
+                                objectName: "cryptoFactoryPrefixAudit"
+                                width: parent.width
+                                text: "PREFIX AUDIT · " + (factoryQualityCard.causality.passed === true ? "PASS"
+                                    : factoryQualityCard.causality.passed === false ? "FAILED" : "UNKNOWN")
+                                    + " · " + String((factoryQualityCard.causality.checks || []).length) + " checks"
+
+                                color: factoryQualityCard.causality.passed === false ? "#ffb3b3" : "#c8cdd4"
+                                font.family: "monospace"
+                                font.pixelSize: 12
+                                wrapMode: Text.Wrap
+                            }
+                            Text {
+                                textFormat: Text.PlainText
+                                objectName: "cryptoFactoryBootstrapRanges"
+                                width: parent.width
+                                text: {
+                                    var bootstrap = factoryQualityCard.bootstrap
+                                    if (bootstrap.available !== true)
+                                        return "RESAMPLING UNAVAILABLE · " + String(bootstrap.reason || "No historical sample supplied")
+                                    return "EMPIRICAL 95% RESAMPLE RANGES"
+                                        + "\nReturn: " + factoryQualityCard.range("total_return")
+                                        + "\nMax drawdown: " + factoryQualityCard.range("max_drawdown")
+                                        + "\nObserved return: " + factoryQualityCard.percent((bootstrap.observed || {}).total_return)
+                                        + " · drawdown: " + factoryQualityCard.percent((bootstrap.observed || {}).max_drawdown)
+                                }
+
+                                color: "#c8cdd4"
+                                font.family: "monospace"
+                                font.pixelSize: 12
+                                wrapMode: Text.Wrap
+                            }
+                            Text {
+                                textFormat: Text.PlainText
+                                objectName: "cryptoFactoryBootstrapSamples"
+                                width: parent.width
+                                text: "Returns: " + String(factoryQualityCard.bootstrap.sample_count === undefined ? "—" : factoryQualityCard.bootstrap.sample_count)
+                                    + " · Block: " + String(factoryQualityCard.bootstrap.block_size === undefined || factoryQualityCard.bootstrap.block_size === null ? "—" : factoryQualityCard.bootstrap.block_size)
+                                    + " · Replicas: " + String(factoryQualityCard.bootstrap.replicas === undefined ? "—" : factoryQualityCard.bootstrap.replicas)
+
+                                color: "#b8c1ca"
+                                font.family: "monospace"
+                                font.pixelSize: 12
+                                wrapMode: Text.Wrap
+                            }
+                            Text {
+                                textFormat: Text.PlainText
+                                width: parent.width
+                                text: "Historical resampling uncertainty; these ranges are not forecasts. The prefix audit covers only its tested input changes."
+                                    + (((factoryQualityCard.bootstrap.limits || []).concat(factoryQualityCard.causality.limits || [])).length > 0
+                                       ? "\n" + (factoryQualityCard.bootstrap.limits || []).concat(factoryQualityCard.causality.limits || []).slice(0, 6).join("\n") : "")
+
+                                color: "#b8c1ca"
+                                font.family: "monospace"
+                                font.pixelSize: 12
+                                wrapMode: Text.Wrap
+                            }
+                        }
                     }
                 }
             }
@@ -3306,18 +3433,22 @@ Item {
                     spacing: 8
 
                     Text {
+
+                        textFormat: Text.PlainText
                         text: "PAPER DESK"
-                        color: "#b6a6c8"
+                        color: root.ledgerGold
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
                     Text {
+                        textFormat: Text.PlainText
                         text: "SIX SEATS  ·  FRONT MAN IN CODE  ·  OBSERVE ONLY"
-                        color: "#b6a6c8"
+                        color: root.ledgerGold
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
                     Text {
+                        textFormat: Text.PlainText
                         width: deskCol.width
                         text: "456 volume-leads-price. 067 crowd spike. 218 vol size. "
                             + "240 invalidation. 001 reports only. Front Man is a hard veto, not a prompt."
@@ -3326,43 +3457,41 @@ Item {
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
-                    Row {
-                        spacing: 14
-                        Text {
+                    Flow {
+                        width: parent.width
+                        spacing: 6
+                        CryptoButton {
                             text: root.deskRunning ? "RUNNING…" : "SIT THE DESK"
                             color: root.deskRunning ? "#c8a97e" : "#8db89a"
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: true
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
+                            enabled: !root.operationBusy
+                            primary: true
+                            onClicked: {
                                     if (root.deskRunning
                                             || !root.surfaceHost
                                             || !root.surfaceHost.cryptoDesk)
                                         return
                                     root.statusJson = root.surfaceHost.cryptoDesk()
                                 }
-                            }
                         }
-                        Text {
+                        CryptoButton {
                             text: "RESET"
                             color: "#c8a97e"
                             font.family: "monospace"
                             font.pixelSize: 12
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
+                            enabled: !root.operationBusy
+                            destructive: true
+                            onClicked: {
                                     if (!root.surfaceHost || !root.surfaceHost.cryptoDeskReset)
                                         return
                                     root.statusJson = root.surfaceHost.cryptoDeskReset()
                                 }
-                            }
                         }
                     }
                     Text {
+                        textFormat: Text.PlainText
                         width: deskCol.width
                         text: "STATE · " + String(root.deskJob.state || "idle").toUpperCase()
                             + "  ·  LIGHT "
@@ -3377,6 +3506,7 @@ Item {
                         wrapMode: Text.WordWrap
                     }
                     Text {
+                        textFormat: Text.PlainText
                         width: deskCol.width
                         text: "VOL · HMM "
                             + String(((root.desk.vol || {}).hmm || {}).last_state || "UNKNOWN")
@@ -3390,22 +3520,25 @@ Item {
                     }
                     Repeater {
                         model: (root.desk.seats || []).length
-                        delegate: Rectangle {
+                        delegate: Item {
                             required property int index
                             width: deskCol.width
-                            height: seatBody.implicitHeight + 14
-                            color: "#121212"
-                            border.width: 1
-                            border.color: "#4c4c4c"
-                            radius: 2
+                            height: seatBody.implicitHeight + 32
+                            GgFrame {
+                                anchors.fill: parent
+                                leftLegend: "SEAT " + (index + 1)
+                                backgroundColor: "#161616"
+                                borderColor: root.frameBorder
+                                radius: root.frameRadius
+                            }
                             Column {
                                 id: seatBody
-                                anchors.fill: parent
-                                anchors.margins: 8
+                                x: 8; y: 20; width: parent.width - 16
                                 spacing: 2
                                 readonly property var row:
                                     (root.desk.seats || [])[index] || {}
                                 Text {
+                                    textFormat: Text.PlainText
                                     width: seatBody.width
                                     text: String(seatBody.row.id || "SEAT")
                                         + "  " + String(seatBody.row.job || "")
@@ -3416,6 +3549,7 @@ Item {
                                     font.bold: true
                                 }
                                 Text {
+                                    textFormat: Text.PlainText
                                     width: seatBody.width
                                     text: {
                                         var r = seatBody.row
@@ -3438,6 +3572,7 @@ Item {
                         }
                     }
                     Text {
+                        textFormat: Text.PlainText
                         width: deskCol.width
                         visible: ((root.desk.front_man || {}).reasons || []).length > 0
                         text: "FRONT MAN · "
@@ -3448,6 +3583,7 @@ Item {
                         wrapMode: Text.WordWrap
                     }
                     Text {
+                        textFormat: Text.PlainText
                         width: deskCol.width
                         visible: (root.desk.seats || []).length === 0
                         text: "No sitting yet. Paper only. Kill switch is in code."
@@ -3475,18 +3611,22 @@ Item {
                     spacing: 8
 
                     Text {
+
+                        textFormat: Text.PlainText
                         text: "POLYMARKET RESEARCH"
-                        color: "#b6a6c8"
+                        color: root.ledgerGold
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
                     Text {
+                        textFormat: Text.PlainText
                         text: "PENDULUMFLOW V3  ·  REMOTE PARQUET  ·  READ ONLY"
-                        color: "#b6a6c8"
+                        color: root.ledgerGold
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
                     Text {
+                        textFormat: Text.PlainText
                         width: polyCol.width
                         text: "One UTC hour per query. No wallet, order placement or automatic archive sync is connected."
                         color: "#a8b0b8"
@@ -3499,20 +3639,21 @@ Item {
                         width: polyCol.width
                         spacing: 8
                         Text {
+                            textFormat: Text.PlainText
                             text: "UTC"
                             color: "#a8b0b8"
                             font.family: "monospace"
                             font.pixelSize: 12
                             anchors.verticalCenter: parent.verticalCenter
                         }
-                        GgField {
+                        CryptoField {
                             id: polyDateField
                             width: 112
                             height: 26
                             placeholderText: "YYYY-MM-DD"
                             text: root.polyDate
                         }
-                        GgField {
+                        CryptoField {
                             id: polyHourField
                             width: 54
                             height: 26
@@ -3521,56 +3662,44 @@ Item {
                         }
                     }
 
-                    Row {
+                    Flow {
                         width: polyCol.width
-                        spacing: 12
-                        Text {
+                        spacing: 6
+                        CryptoButton {
                             text: "SUMMARY"
                             color: root.polyPreset === "SUMMARY" ? "#d8dee9" : "#a8b0b8"
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: root.polyPreset === "SUMMARY"
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.polyPreset = "SUMMARY"
-                            }
+                            enabled: !root.operationBusy
+                            onClicked: root.polyPreset = "SUMMARY"
                         }
-                        Text {
+                        CryptoButton {
                             text: "TRADES"
                             color: root.polyPreset === "TRADES" ? "#d8dee9" : "#a8b0b8"
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: root.polyPreset === "TRADES"
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.polyPreset = "TRADES"
-                            }
+                            enabled: !root.operationBusy
+                            onClicked: root.polyPreset = "TRADES"
                         }
-                        Text {
+                        CryptoButton {
                             text: "TOUCH"
                             color: root.polyPreset === "TOUCH" ? "#d8dee9" : "#a8b0b8"
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: root.polyPreset === "TOUCH"
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.polyPreset = "TOUCH"
-                            }
+                            enabled: !root.operationBusy
+                            onClicked: root.polyPreset = "TOUCH"
                         }
-                        Text {
+                        CryptoButton {
                             text: "SCAN"
                             color: root.polyPreset === "SCAN" ? "#d8dee9" : "#a8b0b8"
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: root.polyPreset === "SCAN"
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.polyPreset = "SCAN"
-                            }
+                            enabled: !root.operationBusy
+                            onClicked: root.polyPreset = "SCAN"
                         }
                     }
 
@@ -3578,13 +3707,14 @@ Item {
                         width: polyCol.width
                         spacing: 8
                         Text {
+                            textFormat: Text.PlainText
                             text: "SLUG"
                             color: root.polyPreset === "TOUCH" ? "#c8cdd4" : "#5d6670"
                             font.family: "monospace"
                             font.pixelSize: 12
                             anchors.verticalCenter: parent.verticalCenter
                         }
-                        GgField {
+                        CryptoField {
                             id: polySlugField
                             width: Math.max(120, polyCol.width - 58)
                             height: 26
@@ -3594,34 +3724,33 @@ Item {
                         }
                     }
 
-                    Row {
-                        spacing: 14
-                        Text {
+                    Flow {
+                        width: parent.width
+                        spacing: 6
+                        CryptoButton {
                             text: root.polyRunning ? "READING…" : "RUN QUERY"
                             color: root.polyRunning ? "#c8a97e" : "#8db89a"
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: true
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.runPolymarketQuery()
-                            }
+                            enabled: !root.operationBusy
+                            primary: true
+                            onClicked: root.runPolymarketQuery()
                         }
-                        Text {
+                        CryptoButton {
                             text: root.polyRunning ? "CANCEL QUERY" : "RESET"
                             color: "#c8a97e"
                             font.family: "monospace"
                             font.pixelSize: 12
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.resetPolymarketQuery()
-                            }
+                            enabled: !root.operationBusy || root.polyRunning
+                            destructive: true
+                            onClicked: root.resetPolymarketQuery()
                         }
                     }
 
                     Text {
+
+                        textFormat: Text.PlainText
                         width: polyCol.width
                         text: {
                             var state = String(root.polymarket.state || "IDLE").toUpperCase()
@@ -3633,6 +3762,7 @@ Item {
                         font.pixelSize: 12
                     }
                     Text {
+                        textFormat: Text.PlainText
                         width: polyCol.width
                         text: String(root.polymarket.note || "")
                         visible: text.length > 0
@@ -3642,6 +3772,7 @@ Item {
                         wrapMode: Text.WordWrap
                     }
                     Text {
+                        textFormat: Text.PlainText
                         width: polyCol.width
                         text: "BUDGET · 512 MiB · 2 threads · 30s SQL timeout · 2 GiB source limit · 240 result rows"
                             + "\nOutcomes are grouped separately by asset. TOUCH resolves the market outside the selected archive hour."
@@ -3653,6 +3784,7 @@ Item {
                         wrapMode: Text.WordWrap
                     }
                     Text {
+                        textFormat: Text.PlainText
                         width: polyCol.width
                         text: "ARCHIVE · " + String(root.polymarket.url || "")
                         visible: String(root.polymarket.url || "").length > 0
@@ -3662,6 +3794,7 @@ Item {
                         wrapMode: Text.WrapAnywhere
                     }
                     Text {
+                        textFormat: Text.PlainText
                         width: polyCol.width
                         text: "SQL PREVIEW\n" + String(root.polymarket.sql || "")
                         visible: String(root.polymarket.sql || "").length > 0
@@ -3671,6 +3804,7 @@ Item {
                         wrapMode: Text.WrapAnywhere
                     }
                     Text {
+                        textFormat: Text.PlainText
                         width: polyCol.width
                         text: ((root.polyResult || {}).lines || []).join("\n")
                         visible: ((root.polyResult || {}).lines || []).length > 0
@@ -3680,6 +3814,7 @@ Item {
                         wrapMode: Text.WrapAnywhere
                     }
                     Text {
+                        textFormat: Text.PlainText
                         width: polyCol.width
                         visible: !root.polyRunning
                             && ((root.polyResult || {}).lines || []).length === 0
@@ -3691,6 +3826,7 @@ Item {
                         wrapMode: Text.WordWrap
                     }
                     Text {
+                        textFormat: Text.PlainText
                         width: polyCol.width
                         text: "POLY_DATA · " + String((root.polymarket.poly_data || {}).state || "OPTIONAL")
                             + "\n" + String((root.polymarket.poly_data || {}).note || "")
@@ -3703,58 +3839,98 @@ Item {
             }
 
             Flickable {
+                objectName: "cryptoActivityScroll"
                 anchors.fill: parent
                 visible: root.page === "ACTIVITY"
                 clip: true
-                boundsBehavior: Flickable.StopAtBounds
+                contentWidth: width
                 contentHeight: ledCol.height
+                boundsBehavior: Flickable.StopAtBounds
+                ScrollBar.vertical: GgScrollBar {}
                 Column {
                     id: ledCol
                     width: parent.width
-                    spacing: 6
+                    spacing: 8
+                    Flow {
+                        width: parent.width; spacing: 6
+                        CryptoButton {
+                            text: "Alla händelser · " + root.ledger.length
+                            checked: !root.activityErrorsOnly
+                            onClicked: root.activityErrorsOnly = false
+                        }
+                        CryptoButton {
+                            text: "Fel och avvikelser"
+                            checked: root.activityErrorsOnly
+                            onClicked: root.activityErrorsOnly = true
+                        }
+                    }
                     Text {
-                        visible: root.ledger.length === 0
-                        text: "No fills yet."
-                        color: "#a8b0b8"
-                        font.family: "monospace"
-                        font.pixelSize: 12
+                        textFormat: Text.PlainText
+                        width: parent.width; topPadding: 20
+                        visible: root.activityRows.length === 0
+                        text: root.activityErrorsOnly ? "Inga registrerade fel i historiken." : "Ingen aktivitet ännu. Genomförda händelser visas här med läge och resultat."
+                        color: root.muted; font.family: "monospace"; font.pixelSize: 12
+                        wrapMode: Text.WordWrap
                     }
                     Repeater {
-                        model: root.ledger.length
-                        delegate: Row {
+                        model: root.activityRows
+                        delegate: Item {
+                            id: activityCard
+                            required property var modelData
+                            readonly property var row: modelData || ({})
                             width: ledCol.width
-                            spacing: 10
-                            readonly property var row: root.ledger[index] || {}
-                            Text {
-                                width: 64
-                                text: String(row.side || "").toUpperCase()
-                                color: row.error ? "#c98989" : (String(row.side || "") === "buy" ? "#8db89a" : "#c8a97e")
-                                font.family: "monospace"
-                                font.pixelSize: 12
-                                font.bold: true
+                            height: eventBody.implicitHeight + 32
+                            GgFrame {
+                                anchors.fill: parent
+                                leftLegend: "EVENT"
+                                radius: root.frameRadius
+                                backgroundColor: "#161616"; borderColor: root.frameBorder
                             }
-                            Text {
-                                width: parent.width - 74
-                                text: {
-                                    var hint = String(row.hint || "")
-                                    var modes = {"PAPER":"Paper", "LOCALNET_DIAGNOSTIC":"Localnet self-transfer", "TESTNET":"Legacy localnet", "OBSERVE":"Observe"}
-                                    var mode = modes[String(row.mode || "")] || "Mode not recorded"
-                                    var state = String(row.status || "unrecorded confirmation")
-                                    var chain = row.chain_status ? " · localnet diagnostic " + String(row.chain_status) : ""
-                                    var prefix = mode + " · " + state + chain + " · "
-                                    if (hint.length)
-                                        return prefix + hint
-                                    if (row.error)
-                                        return prefix + String(row.error)
-                                    var tx = String(row.txid || "")
-                                    if (tx.length > 20)
-                                        return prefix + tx.substring(0, 8) + "…" + tx.substring(tx.length - 6)
-                                    return prefix + tx
+                            Rectangle {
+                                width: 2; height: parent.height - 16; y: 8
+                                color: activityCard.row.error ? "#c98989" : "#8a8a8a"
+                            }
+                            Column {
+                                id: eventBody
+                                x: 12; y: 20; width: parent.width - 24; spacing: 6
+                                Text {
+                                    textFormat: Text.PlainText
+                                    width: parent.width
+                                    text: String(activityCard.row.side || "HÄNDELSE").toUpperCase() + " · " + String(activityCard.row.status || "Resultat saknas")
+                                    color: activityCard.row.error ? "#c98989" : root.ink
+                                    font.family: "monospace"; font.pixelSize: 12; font.bold: true
+                                    wrapMode: Text.WordWrap
                                 }
-                                color: row.error ? "#c98989" : "#c8cdd4"
-                                font.family: "monospace"
-                                font.pixelSize: 12
-                                wrapMode: Text.WordWrap
+                                Text {
+                                    textFormat: Text.PlainText
+                                    width: parent.width
+                                    text: {
+                                        var row = activityCard.row
+                                        var modes = {"PAPER":"PAPER", "LOCALNET_DIAGNOSTIC":"LOCALNET · SJÄLVÖVERFÖRING", "TESTNET":"ÄLDRE LOCALNET", "OBSERVE":"LÄSLÄGE"}
+                                        var stamp = row.ts ? new Date(Number(row.ts) * (Number(row.ts) < 100000000000 ? 1000 : 1)) : null
+                                        var time = stamp && isFinite(stamp.getTime()) ? stamp.toISOString().replace("T", " ").slice(0,19) + " UTC" : "Tid saknas"
+                                        return (modes[String(row.mode || "")] || "Läge saknas") + " · " + time
+                                    }
+                                    color: root.ledgerGold; font.family: "monospace"; font.pixelSize: 10
+                                    wrapMode: Text.WordWrap
+                                }
+                                Text {
+                                    textFormat: Text.PlainText
+                                    width: parent.width
+                                    text: String(activityCard.row.hint || activityCard.row.error || "Ingen ytterligare information")
+                                    color: root.text; font.family: "monospace"; font.pixelSize: 12
+                                    wrapMode: Text.WrapAnywhere
+                                }
+                                TextEdit {
+                                    width: parent.width
+                                    visible: String(activityCard.row.txid || "").length > 0
+                                    text: String(activityCard.row.txid || "")
+                                    readOnly: true; selectByMouse: true; textFormat: TextEdit.PlainText
+                                    color: root.muted; selectionColor: "#3a3a3a"
+                                    font.family: "monospace"; font.pixelSize: 10
+                                    wrapMode: TextEdit.WrapAnywhere
+                                    Accessible.name: "Transaktionsreferens"
+                                }
                             }
                         }
                     }

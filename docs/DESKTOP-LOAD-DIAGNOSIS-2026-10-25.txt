@@ -1,0 +1,65 @@
+GG AI DESKTOP - Windows sensor sampling and TMOG presentation
+2026-10-25
+
+CURRENT BEHAVIOR
+TMOG retains its established approximately 60 Hz presentation, damped motion,
+120-point presentation history, logarithmic graph spacing and existing Canvas
+renderers. TmogSpark and TmogHistoryGraph are unchanged. No replacement graph
+renderer, shifted texture, linear time axis or lower graph presentation rate
+is part of this release.
+
+CPU and per-core presentation now use the existing springFollow function,
+with independent velocity state. Its equations and rise/fall omega values
+12/9 are unchanged. This is the same damping already used for disk/network.
+Other metric damping and graph invocation geometry remain unchanged.
+
+Numeric labels are validated independently from plotted presentation values.
+CPU/core labels display the current successful measurement, preserve a real
+zero, and show -- for pending, failed, invalid or expired readings. Unknown
+Windows cached/buffers/shared/slab fields remain unknown rather than becoming
+zero. Frequency is rounded to whole MHz and power to one decimal. Process
+counts are labelled as processes; system temperature and package power are
+not attributed to GPU sensors. Compact core headers retain the graph body.
+
+WINDOWS SAMPLING
+Short CPU-percent intervals can produce coarse per-core readings. The Windows
+sampler therefore requires at least 100 ms between CPU observations. The first
+read establishes a baseline and reports CPU as pending until a real interval
+exists. Genuine zero and full utilization remain valid results.
+
+Hardware probe work is bounded independently of presentation:
+- CPU and IO: at least 100 ms.
+- Memory: 250 ms.
+- CPU frequency: one second.
+- Battery and interface discovery: five seconds.
+
+Successful fields retain their own monotonic observation timestamps. Failed
+probes do not refresh a successful timestamp or fabricate zero. CPU recovery
+re-primes its baseline; topology and clock resets are handled explicitly.
+History records use actual field observation times and remain bounded.
+
+The continuous desktop sampler remains independent of keyboard focus and
+visible QML consumers. Covered or minimized windows do not imply hardware
+idle. ContextComposer rejects stale CPU/IO observations after partial failures.
+Expensive inventories remain demand-driven. Host shutdown stops the sampler.
+
+VALIDATION
+Windows sampling tests cover minimum observation intervals, initial pending
+state, finite/range/count validation, partial failure, recovery, topology
+changes, timestamp preservation and clock resets. QML checks cover the
+existing damping equations, per-display-frame history, the 120-point bound,
+current numeric labels, true zero versus unknown, compact core headers and
+background activity. Full Windows startup uses isolated temporary user state.
+The final numeric/damping check set contains 24 passing test cases, including
+startup. Later live-eyes verification also reran background and idle checks.
+
+LIMITS
+These checks are bounded regressions. They do not prove flawless physical
+frame timing, leak-free operation over days, a particular CPU temperature or
+fan speed. Source changes require a full application restart. This source
+patch does not modify a recipient's Windows power plan or OS configuration.
+
+PUBLICATION PRIVACY
+This report contains implementation and reproducible test information only.
+Workstation measurements, running-process inventories, private sessions and
+machine configuration are intentionally outside the source distribution.

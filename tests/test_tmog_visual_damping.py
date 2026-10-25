@@ -78,6 +78,31 @@ class TmogVisualDampingTests(unittest.TestCase):
         })()""")
         self.assertLess(difference, 0.000001)
 
+    def test_original_damped_histories_advance_each_display_frame(self):
+        result = self.js("""(function() {
+            meter.page = "PERFORMANCE";
+            meter.liveTicks = 1;
+            var cpu = [], disk = [], net = [];
+            for (var i = 0; i < 12; ++i) {
+                meter.applyPulse({cpu_busy:80, mem_used_kb:50, mem_total_kb:100,
+                    disk_read_bps:65536, disk_write_bps:0,
+                    net_rx_bps:131072, net_tx_bps:0, cores:[i === 0 ? 100 : 0]}, 1/60);
+                cpu.push(meter.liveCpu);
+                disk.push(meter.liveDiskRead / 1024);
+                net.push(meter.liveNetRx / 1024);
+            }
+            return {cpu:cpu,disk:disk,net:net,cpuHist:meter.liveCpuHist,
+                diskHist:meter.liveDiskHist,netHist:meter.liveNetHist,
+                coreHist:meter.liveCoreHists[0]};
+        })()""")
+        for key in ("cpu", "disk", "net"):
+            self.assertEqual(len(result[key + "Hist"]), 12)
+            for actual, displayed in zip(result[key + "Hist"], result[key]):
+                self.assertAlmostEqual(actual, displayed, places=5)
+            self.assertTrue(all(a < b for a, b in zip(result[key], result[key][1:])))
+        self.assertEqual(len(result["coreHist"]), 12)
+        self.assertTrue(all(a > b > 0 for a, b in zip(result["coreHist"], result["coreHist"][1:])))
+
     def test_io_spring_is_stable_with_uneven_frame_spacing(self):
         values = self.js("""(function() {
             var state = [0, 0], readings = [];

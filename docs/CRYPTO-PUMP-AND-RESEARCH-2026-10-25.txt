@@ -1,0 +1,160 @@
+GG AI DESKTOP — Pump integration and trading-research source review
+Date: 2026-10-25
+
+ORIGINAL INTENT AND ACCEPTED STEERING
+Use the Pump reconstruction research linked by Shaw to substantially improve
+CRYPTO, its wallet/portfolio, costs, simulations and paper research. The user
+approved implementation and later added two carm1nee posts, explicitly requiring
+code inspection before downloading/installing software and a coherent system
+matching the existing desktop. Existing responsiveness and live-background
+indicator requirements continue to apply.
+
+SOURCE REVIEW — FACTS
+https://x.com/shawmakesmagic/status/2114236095475118296
+links to https://github.com/lalalune/pumpfun-source . The post was read through
+public FxTwitter metadata after X denied direct reading. Identity and exact post
+ID/link were checked. The inspected reconstruction checkpoint was
+5e8c06e8bacfd9bb119e6e79c31874b7d89e7dfe, dated 2026-10-25.
+
+The reconstruction records useful account/build/receipt provenance and bounded
+differential tests, but reports zero of four whole core binaries identical and
+an unresolved sell_v2 quote-transfer-fee mismatch. Handler-count coverage is not
+overall completion or security certification. No clear reuse license was found
+for copying its recovered materials. GG does not bundle that code, binaries,
+fixtures, imported private research, or an execution runtime from it.
+
+Implemented interface facts instead come from official Pump documentation/IDLs:
+https://github.com/pump-fun/pump-public-docs/tree/639b87fb45c3adeffa6f7c4a1bf0cb85e392bf22
+and source-reviewed official SDK arithmetic, including:
+https://unpkg.com/@pump-fun/pump-sdk@4.3.1/src/bondingCurve.ts
+https://unpkg.com/@pump-fun/pump-swap-sdk@2.2.0/src/sdk/buy.ts
+https://unpkg.com/@pump-fun/pump-swap-sdk@2.2.0/src/sdk/sell.ts
+https://unpkg.com/@pump-fun/pump-swap-sdk@2.2.0/src/sdk/fees.ts
+https://unpkg.com/@pump-fun/pump-swap-sdk@2.2.0/src/sdk/offlinePumpAmm.ts
+Token-2022 interface provenance is recorded in config/crypto-pump-protocol.json.
+These URLs were read as source text; no SDK package was installed or executed.
+
+https://x.com/carm1nee/status/2113257064352915664
+links to https://x.com/i/article/2113219739837243392 . The article names
+TradingAgents, ai-hedge-fund, daily_stock_analysis, Kronos, Qlib/RD-Agent,
+OpenBB, ccxt, NautilusTrader, freqtrade and hummingbot.
+https://x.com/carm1nee/status/2113765239674032262
+describes HKUDS/Vibe-Trading; its package/repository identity was cross-checked
+against https://pypi.org/pypi/vibe-trading-ai/json and its pyproject.toml.
+
+Targeted implementation review included:
+https://github.com/HKUDS/Vibe-Trading/blob/main/agent/backtest/validation.py
+https://github.com/HKUDS/Vibe-Trading/blob/main/agent/backtest/run_card.py
+https://github.com/HKUDS/Vibe-Trading/blob/main/agent/backtest/runner.py
+https://github.com/HKUDS/Vibe-Trading/blob/main/SECURITY.md
+https://github.com/HKUDS/Vibe-Trading/blob/main/agent/src/providers/claude_cli_policy.py
+https://github.com/HKUDS/Vibe-Trading/blob/main/agent/src/providers/claude_cli.py
+https://github.com/nautechsystems/nautilus_trader/blob/develop/crates/execution/tests/integration/matching_engine/fill_models.rs
+https://github.com/freqtrade/freqtrade/blob/develop/freqtrade/optimize/analysis/lookahead.py
+https://github.com/freqtrade/freqtrade/blob/develop/freqtrade/optimize/analysis/recursive.py
+https://github.com/virattt/ai-hedge-fund/blob/main/hedge_fund/paper/ledger.py
+
+FINDINGS AND DECISIONS
+Vibe's windowed walk_forward_analysis partitions an already-computed equity
+curve; it does not retrain and rerun a held-out strategy in each window. Its
+trade-PnL shuffle stresses ordering, not future returns. Independent return
+bootstrap ignores serial dependence. Its generated Python runner remains
+network-capable; AST filters are not a runtime sandbox. Software being open
+source does not make model access/data services free. Licenses and dependency
+stacks differ between the listed projects.
+
+GG therefore keeps its existing strategy engine, two-worker factory,
+expanding-history validation and frozen final holdout. Independently written
+bounded stress, evidence receipts, circular block resampling and executable
+prefix comparisons adopt the useful principles without importing those stacks
+or executing generated/foreign strategies. This was a targeted source review,
+not an exhaustive security audit of every listed repository.
+
+IMPLEMENTATION
+- Strict pure account decoders and dependency-free PDA derivation bind mint,
+  token program, owner, discriminator, curve/pool address and vaults. Known
+  legacy appended fields are handled at complete field boundaries. Unknown
+  layouts/extensions cannot silently supply a trusted quote.
+- Public mainnet testing exposed known account allocations not represented by
+  compact synthetic fixtures: Pool has a documented 300-byte allocation around
+  its 287 serialized bytes; only the known zero tail is accepted. FeeConfig
+  gates stable/exotic fields by explicit 2512/4073/4097 allocation versions and
+  ignores documented stale unused allocation bytes. Future versions fail closed.
+- Signed PumpSwap virtual quote reserves are added to raw vault holdings once;
+  retained fee balances are not counted twice. Epoch-specific transfer fees,
+  canonical fee tiers, creator overrides and per-component integer rounding
+  remain explicit. Generic arb now respects an intentional zero fee.
+- A selected inspector uses one bounded asynchronous network lane, at most one
+  latest pending selection, confirmed account batches (maximum24 addresses),
+  explicit slot/deployment metadata and no executable-byte downloads. The
+  desktop heartbeat schedules selected refreshes independent of focus/painting.
+  Both GUI-facing lock attempts are nonblocking. Quotes expire; old selections,
+  revisions and closed jobs cannot publish against a newer target.
+- Local estimates have wallet debit/credit, minimum/maximum bounds, fee rows,
+  price impact and six deterministic reserve/price/fee scenarios. A scenario is
+  an assumption, not an assigned probability or price prediction.
+- Simulation uses pinned instruction facts, public selected-wallet addresses,
+  zero signatures and simulateTransaction only. Solana messages have one payer,
+  checked account metas, u64 bounds and a1232-byte wire limit. AMM SOL preparation
+  creates the required WSOL account and wraps only a missing cap balance in the
+  simulated message; existing accounts are not closed. No signer/key API is
+  imported. A wallet/network change invalidates the result.
+- Paper state is separate from wallet state. Exact atom balances, costs, limits,
+  positions and executable liquidation marks are recorded with slot/program/fee
+  receipts. Duplicate and concurrent use of one observation is rejected. Atomic
+  publication has a matching1MiB preflight/read limit. Corrupt state is preserved.
+  Missing prices after restart remain unknown until a fresh observation.
+- PUMP is integrated into the existing CryptoSurface, wallet token Inspect
+  controls and status rail. Money crosses QML as exact strings. Views use the
+  existing shared adaptive poll rather than new frame-rate network calls.
+  Text/logs are plain text and bounded; controls support keyboard/narrow layouts.
+- Factory uncertainty runs once on the frozen winner's actual final-holdout
+  normalized equity, including initial equity and costs. Circular blocks retain
+  within-block order with at most256 replicas and4096 equity observations; no
+  path matrix is retained. Three executable prefixes use at most256 bars each.
+  Results never influence selection and private equity arrays are not published.
+
+VERIFICATION AND EVIDENCE
+Offline checks cover malformed layouts, official PDA vectors, fee/epoch and
+rounding boundaries, reserve conservation, quote/paper accounting, unsigned wire
+decoding, coherent account bindings, stale/target/revision races, atomic storage
+overflow, corrupt-state preservation, wallet switching, GUI-lock contention,
+bootstrap/prefix behavior and 430px real-QML controls.
+The real-service QML integration feeds actual decoded/quoted/simulated/paper
+outputs into the panel, checking displayed addresses, decimal balances, fills
+and timestamps rather than using only hand-authored UI JSON.
+
+A read-only public mainnet check successfully inspected the official sample
+mint's canonical PumpSwap pool at observed slot461207208. A0.01 SOL local
+estimate returned54115.018303 token units and six stress rows. These are one
+historical data check, not current prices or a transaction settlement result.
+No user wallet, key or account login was accessed, no package was installed,
+and no transaction was signed or broadcast during that check.
+
+Final test results and source metadata are recorded in WINDOWS-PORT.json.
+The private .runtime evidence/log files remain excluded from distributable code.
+
+LIMITS / UNRESOLVED SCOPE
+Mainnet remains observe/simulate-only. No real-funds settlement or guarantee of
+inclusion was established. Program IDs/loader metadata/RPC slots do not establish
+bytecode identity or independent consensus. Before/simulated balances can come
+from different slots; they are labelled accordingly. Reserve spot valuations
+are estimates, not guaranteed liquidation proceeds or an independently fetched
+USD oracle. Selected SOL token valuations use the existing labelled SOL/USD
+approximation; unsupported quote assets are not assigned a made-up USD price.
+
+Mayhem, cashback, curve-v3 synthetic migration, multi-hop/quote-chain paths and
+unknown token extensions are explicitly unsupported by current quotes. AMM
+base transfer-fee network simulation is withheld pending verified net/gross
+semantics; plain Token-2022 bases and local labelled estimates remain supported.
+Paper cash is denominated in SOL; other quote assets do not share that ledger.
+Estimates exclude network fees, rent and MEV; RPC network-fee estimates are
+reported separately. There is no automatic profitability claim.
+
+Historical bootstrap intervals assume stationarity and depend on block length,
+sample size, costs and fixed strategy selection; they are not future forecasts.
+Passing a few signal-rule prefixes is limited evidence, not proof of global
+absence of lookahead or recursive state leakage. Extra validation work is capped.
+
+The source update is local, with no GitHub publication in this task. The current
+chat process was preserved; a full desktop restart loads Python/root-QML changes.

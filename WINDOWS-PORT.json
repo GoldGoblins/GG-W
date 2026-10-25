@@ -20,11 +20,11 @@
     },
     "README.md": {
       "upstream_sha256": "1fa0f62e802aa8e200ac4de9147d20d5777b395dd14ba58299be28e2b9f50eae",
-      "windows_sha256": "05e2d326dfe1e661f353c0ccd1defb242a89e2580c8837242cdc4cedf4c48909"
+      "windows_sha256": "e9b4ece763594bd25ed22d779f619713ab84bc6cb7f1f8dbf593be519c8df7aa"
     },
     "backend/app_audio.py": {
       "upstream_sha256": null,
-      "windows_sha256": "074a2c9aa75c5da710cd01f742e4b957ce6ba5b0a8663a856addb305f355e2aa"
+      "windows_sha256": "8526d7e773b710281dc6777ccb816ca300fbaa5d5fcc6897608ca43aca69a675"
     },
     "backend/application_paths.py": {
       "upstream_sha256": "20ec0345b0b2415f2586b8e08a1df58efba42b8e818dfd45345f601a5d56a2c1",
@@ -44,7 +44,7 @@
     },
     "backend/chat_surface_host.py": {
       "upstream_sha256": "51ddab5617c74e707efdcd1f0ea11ae0a753f920051fdf00cfdea1e9ecfafa0f",
-      "windows_sha256": "0762432f52886d044151f16bbdde3001eb555d8992f3ab51f5fd277f3483b385"
+      "windows_sha256": "5fafa167e0e59fe5a2158339878d4da0e1e2336767b3d8df705805513d3bc571"
     },
     "backend/codex_image_storage.py": {
       "upstream_sha256": "4ba52652bc8898c0f998a81085076ca3a69d7578ad564b7e6080439636dbfa5c",
@@ -56,7 +56,7 @@
     },
     "backend/crypto_paper.py": {
       "upstream_sha256": "8d91497bfc41d7263c8bbecd65981dc2e3deca6c2039e70a52a3caf659eed53c",
-      "windows_sha256": "2dcbefeff47200fc2cf130d9d2b6b497c9162da6297d9f2907cd976ca0d2ca20"
+      "windows_sha256": "d450c5dc3c8e5d42e385aecd62a765c6addacbcac45b06ac1c8749da87f28a5c"
     },
     "backend/desktop_operator.py": {
       "upstream_sha256": "bcd7d129bb736ae6b3e4cdfd1684b8b6d5231364ba101551abeaedd18213aee3",
@@ -112,7 +112,7 @@
     },
     "backend/live_vision.py": {
       "upstream_sha256": "241341e32215abb43812af09f6ab169a72c53cb78905ea3deb7e0d908f168016",
-      "windows_sha256": "09af1be7307a3b94b8c858ec21ac7fa5dafe04d032a42bb644b3dec520ba84e7"
+      "windows_sha256": "2767775b292ceba3137ab3181d49aee7b1916234bcce47496adc95ce48465de8"
     },
     "backend/media_hls.py": {
       "upstream_sha256": null,
@@ -188,11 +188,11 @@
     },
     "backend/windows_telemetry.py": {
       "upstream_sha256": null,
-      "windows_sha256": "63c91501f454f814d65b255ca67327eb1f52db73384d7841078229e7afb71a97"
+      "windows_sha256": "697279b734e9216856addee3874ee9321ab43adb04e438076e8ad9db4041f53f"
     },
     "backend/windows_vision.py": {
       "upstream_sha256": null,
-      "windows_sha256": "4ec543c1bce3c4c5dff4ac2c88aa68ec28530f4f24564f983d14ec992e69925f"
+      "windows_sha256": "7a6eb489c7b03035d81729b05c0a02e2badbc1f44e2ca6798eaefcfdec1b4d46"
     },
     "backend/windows_webview.py": {
       "upstream_sha256": null,
@@ -204,7 +204,7 @@
     },
     "config/dependencies.json": {
       "upstream_sha256": null,
-      "windows_sha256": "da151120933daea7b03055e17268599cafee012357a70748cc710616a9d20a87"
+      "windows_sha256": "c09a63804bdc520f82369f57ba631cf519246c3151df92e26704ee3e94bf5089"
     },
     "gg-blender": {
       "upstream_sha256": null,
@@ -216,7 +216,7 @@
     },
     "gg-eyes": {
       "upstream_sha256": null,
-      "windows_sha256": "90d993d67af46c36a015acb5375225d5095efce6673726225151376df26ccdff"
+      "windows_sha256": "b02a7b819a073cd1c714fcd9aa4bd9be29072e7bd04103474b245185def83418"
     },
     "gg-setup": {
       "upstream_sha256": "ca873fb523cb2197133b351daf60be4f21eec8d2b58266162503d073fd78cb40",
@@ -224,7 +224,7 @@
     },
     "main.py": {
       "upstream_sha256": "905990b7b4ca4ded093c13d91e003b7bdc99fa97d3fcf7022cab0bd343043e07",
-      "windows_sha256": "8bbbad84cbb0a7108519ef0db1b8ada2e4fafa602c03b6f05b8192431d286e9b"
+      "windows_sha256": "1fed1c4acb844f9d017afdc8e8866aa8849e48150e1f422de5b01b9db17b22fd"
     },
     "native/audio/gg_app_audio.cpp": {
       "upstream_sha256": null,
@@ -252,11 +252,11 @@
     },
     "packaging/source-base.json": {
       "upstream_sha256": null,
-      "windows_sha256": "6588d92fe30aabe178bcabbd87c456bfc10b83f193ddd9455466d8558336d0ee"
+      "windows_sha256": "3aa7882a908f9288341b267399d37a19440d354bdb38d12fd026f50229faa4e4"
     },
     "qml/Main.qml": {
       "upstream_sha256": null,
-      "windows_sha256": "beb32f8bf7876550bbe7e2ff5b4f86ddd6185a62277dc4c6612db020301c7f04"
+      "windows_sha256": "96c2c3cfe3f06aba89eb04909b2cd38f4a78d4b13c8c9006dcee4194861aabdd"
     },
     "qml/components/GameEnchantingControls.qml": {
       "upstream_sha256": "cf29cc3e7238cb1ee9429e8a92b36ee0d8a0f00ab398532113882316ce837d0b",
@@ -292,11 +292,11 @@
     },
     "qml/components/TmogSurface.qml": {
       "upstream_sha256": "5fa5e25d13465aa6201fa91caa90b7bf85a33666d82ff9ed09c77b43874c5a63",
-      "windows_sha256": "33209a99207054a0c6603ed84845b91c5cc2f6506971558fdfa6fed846e236ff"
+      "windows_sha256": "4ea029286116c51d5739eccbefdf347ff56e45d9643def583b2cc771233ba559"
     },
     "qml/components/UtilitySurface.qml": {
       "upstream_sha256": null,
-      "windows_sha256": "823f26f26c9197fd317ecf67290ce3137ca691180a1959bb988fc88430c904b8"
+      "windows_sha256": "9c14b36fc4594df58840d775e01054da6ee9ee8821d6cc5a73ea8bb3fec47ff0"
     },
     "qml/components/WebPane.qml": {
       "upstream_sha256": null,
@@ -308,7 +308,7 @@
     },
     "qml/components/WorkspaceSurface.qml": {
       "upstream_sha256": null,
-      "windows_sha256": "a7926f291f34d1e4e729405d6e8cf6c06a8facffaa3a760b37a6d7eba28ad19b"
+      "windows_sha256": "a61e78f2dfbb3fd557f78721008559936e941a15ad0f4f8705b69328606de5c7"
     },
     "qml/components/engine/FlailPhysics.js": {
       "upstream_sha256": null,
@@ -340,11 +340,11 @@
     },
     "skills/gg-live-eyes/SKILL.md": {
       "upstream_sha256": null,
-      "windows_sha256": "e0704011c2f219654eae08111a4c2198e6d7ec6f1b8aa4822ce73bc79cc94c0a"
+      "windows_sha256": "bb10e5198138d932279206b56b55e559210fa8f302d085bf27ecefa050dfb94b"
     },
     "startup.py": {
       "upstream_sha256": "6f9be0d9073b57b79d111221b6a4320230890606704a1e77a89dae953e7155d3",
-      "windows_sha256": "913dc265b83a99edd0b95050e1d6363fbff534c9d247eba3b2ee2a2fbb837187"
+      "windows_sha256": "69302d8d2cc41872bfc54e8ef3eee2bf888179c4dcdc2f5dfe6f80e820afa6c4"
     },
     "tests/test_app_audio.py": {
       "upstream_sha256": null,
@@ -432,7 +432,7 @@
     },
     "tests/test_tmog_visual_damping.py": {
       "upstream_sha256": null,
-      "windows_sha256": "e024db54f870aeee0a8b319fb3b1d6cb516dc6646db7a0f19e8cd14ea443f757"
+      "windows_sha256": "9e66628668c461f330bfd6b2e992522fd192e6c326eae863af464ebd04bec8ab"
     },
     "tests/test_web_content_blocker.py": {
       "upstream_sha256": null,
@@ -456,7 +456,7 @@
     },
     "tests/test_windows_vision.py": {
       "upstream_sha256": null,
-      "windows_sha256": "cd448e05f7f61502ec5fa300a638cef33c5735692256d1cfbdb00b9b0f13a3e1"
+      "windows_sha256": "e3a28d999b9903ec856fe128ae8d9ab05698c9f7dcde9792a954de02ea4d952c"
     },
     "tests/test_windows_webview.py": {
       "upstream_sha256": null,
@@ -760,7 +760,355 @@
     },
     "backend/terminal_grid.py": {
       "upstream_sha256": null,
-      "windows_sha256": "2870ca52d97c9c71b78ea4843368853d16f8978e143daefbed9198bd6bbbe6a1"
+      "windows_sha256": "534fe705ca020f933a0ec586040a5c4aed534d4dcfccb9cf40dc2ce0c7dea51e"
+    },
+    "backend/crypto_ui_runtime.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "01c32a57857b747df127166cea5b926603dd8824dd6cbd7b9c290b1e459d0e69"
+    },
+    "backend/crypto_host.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "2778ac35b66004961ffd10b1262de656ee8d1a5f2341049e2da1140125bf98eb"
+    },
+    "backend/crypto_market.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "748addbfa07f1819faf81414b1ab21ba2ae929392b5308c863303945cdb2ea74"
+    },
+    "backend/crypto_data.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "ff9940d0fe2058ccc078e3ee4c80115a51a524d842f17495b188032630d9f3e4"
+    },
+    "backend/crypto_keys.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "3ebba56ea994d9c7f52b6cb01f1736bbb03d05e15d33ba86e7d95ca9d2b8c33e"
+    },
+    "backend/crypto_contract.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "d64f14a7c33d528b57728b93564cf178504d3e38ad3eed82dadf75b0db8ca5f6"
+    },
+    "backend/crypto_lab.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "f9e3f2b37689a8a019b76f117896159b6a2349ade1d1fac0aa3b9f159425b530"
+    },
+    "backend/crypto_tx.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "d6c480c666549947ed7a439ca93551e08ec8d3dc612fcdbddcd2c553663fbdae"
+    },
+    "backend/crypto_trader.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "287e99a9abce2e0e2457ab3f0d0168a83daf5fe3bccdba58fca9f2a7c428c914"
+    },
+    "backend/crypto_flash_arb.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "2e4c5240851a31d827aeaae2a2d5eedc9d0a7ae8bf28f440ac56e8cec7d65a54"
+    },
+    "backend/kaspa_contract.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "cfbd8b99a9596c0d2487ee4b827544da3ed5689ac9af1d903d1cab5d73742a93"
+    },
+    "qml/components/CryptoSurface.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "fa03bc1617a9375cf3998da1ce8eaedeec032bc483d63d2112cbbd3374a4680d"
+    },
+    "qml/components/CryptoChart.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "2248bdd8edec48be81bf8cb4d88c36e7762a7cab1efc371ef93201b1ff0abd91"
+    },
+    "qml/components/CryptoPortfolioSummary.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "498d43a130164be52163032a3b9183921d9d55495ba372a319c4991fdf478432"
+    },
+    "qml/components/WalletPopup.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "00c74694d00a13b30a68a4fcac49ae07d11febd1533773dc82c85a2b9d6b89f8"
+    },
+    "qml/components/TelemetryRail.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "169b249b10d0c1ad0a41e4624f3e87ed4a28c93abdd3c0863e7032cee431d0c8"
+    },
+    "qml/crypto-hole/index.html": {
+      "upstream_sha256": null,
+      "windows_sha256": "1fe5b3310c4c39fc5b2d780b4d35239724e64f6f79a41283b8c70c14c86d4484"
+    },
+    "tests/test_crypto_host.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "43896f7d6b939ffa8509dfe5977809d6a026097944ff6a744cfb7fa6604ac8e7"
+    },
+    "tests/test_crypto_ui_refresh.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "6f62baeef7bf221151b2a9266b9c05779b84169f0151dbca4b4e75c581f07e4e"
+    },
+    "tests/test_crypto_ui_runtime.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "36a06ce9413e427fc39e3da63b2a8b70aa662bdacc1fffb6eaed562c51a6c243"
+    },
+    "tests/test_crypto_market_refresh.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "95ff62bd3e917e0d418cedb5735d3136bd9ee6a7316b7e71a1f2edfa7d852d86"
+    },
+    "tests/test_crypto_chart_lifecycle.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "670d428eaecff4873a9795457edfdcd4a56b2f20edbec102a9dd69399c05f332"
+    },
+    "tests/test_crypto_keys_windows.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "f84c6e77f465522fc5b7dc5538b1b1ed9b74eae4322de43dfed4f38d18ee100a"
+    },
+    "tests/test_crypto_state_atomic.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "89fe4ef9a3cbb44ae9a590ffd073a5d8b0e77e35267605a7ccbfcc63edf0aac6"
+    },
+    "tests/test_crypto_lab_windows.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "9bc72d7f828257d9c5735803486e9462573f84850a665da471ea3e936239fdb1"
+    },
+    "tests/test_crypto_engine_state.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "e52f63c91de13fffb9208e8739d1ec45e3fc846744a774f61d2542df5414b8a2"
+    },
+    "docs/CRYPTO-RESEARCH-2026-10-24.txt": {
+      "upstream_sha256": null,
+      "windows_sha256": "9b245238774465af76fbba6e4e6f4ef9f2a99692752d4f019c73d2a98937a05e"
+    },
+    "qml/components/ContextComposer.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "684fa2427271d810d4d106a4ad70f5f57c69c04b7fc0aabba5a8e469ce168434"
+    },
+    "tests/test_app_audio_idle.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "f10902201ed6113e885ed82e7516a4ac88577017efc0e0bd7836a5f59e848500"
+    },
+    "tests/test_utility_idle_load.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "1cf07f41ab33d9d5fa65303e52071c69a421194053bb9f31970a9c6ccc13e333"
+    },
+    "tests/test_desktop_idle_load.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "07e9868f128db6f507612873510418b36ae3fddbf94fcee2f2405d41998d5c75"
+    },
+    "backend/tmog_sampler.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "50a9346eea174d92be407b562b14e368f96a42833265db651791dde08d567e0e"
+    },
+    "backend/resident_chat_qt.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "733c3c3d5e163a463344f8466d2d3b737597af3420837b90e3d4979ad695c9c2"
+    },
+    "tests/test_startup_shutdown.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "7794519cabb02a55421fe5b520dde5aa9677faf2b928a30811381712de911a2d"
+    },
+    "tests/test_chat_shutdown.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "c5e1a555a521fb32b4826f7c73589361a4d0256f4ba23b719b706512bb7b5b74"
+    },
+    "tests/test_terminal_snapshot_backpressure.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "1493bd0035529e0f7ee71d1e3657e98b70f95c07cc3a2fef68c9b4e2aee83757"
+    },
+    "tests/test_terminal_input_backpressure.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "7ba6a0e1e7751c1f930785f99f1a1dc244644f9a9ffbdf0cc829459e71fd5e07"
+    },
+    "tests/test_tmog_background_activity.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "3a0bea9ed7db3ee27c606f21d06b73b12e56b8b4211eb5b42e226d42ed799728"
+    },
+    "tests/test_resident_chat_lifecycle.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "06508686be8332ed159b47138bae47656b0ba5052b89ef6529d8000ebe6e2f6f"
+    },
+    "docs/DESKTOP-MEMORY-AND-BACKGROUND-2026-10-25.txt": {
+      "upstream_sha256": null,
+      "windows_sha256": "872fff1eaa53a9409db552386d004a6e18d6d6c7fdc300e092289d8d5a1e18eb"
+    },
+    "backend/crypto_pump.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "42f6228b0821846328dbc7f77a0d585f4459efd7ba36bc71051b435b99781393"
+    },
+    "backend/crypto_pump_accounts.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "138ae32674d633c32cc5eefa3e83b518b2c2019f96b5c0f7baa0ddbb0e8a60ac"
+    },
+    "backend/crypto_pump_quotes.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "e0ef0133cd77ce4f4aa40c577e16250c8f421eb018898e71284cb40eafc658f0"
+    },
+    "backend/crypto_pump_paper.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "82255cb03f10b63d0c08f1505c7b2197e284e4cd244c422d072c9edde0329cce"
+    },
+    "backend/crypto_pump_tx.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "aaab032fe4c4dba5555525880b28bf0c792f95fb24e505d1905d128c70e7b029"
+    },
+    "backend/crypto_pump_stress.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "d206f1b572a940b31a4f46478de8c8b921fb58c565ae99c61e407f2a202114c0"
+    },
+    "backend/crypto_research_quality.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "747c4d1cb7d63979fab2add6b2654f0bdb57564c97755ffe39aca654a27b4002"
+    },
+    "backend/crypto_strategy_factory.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "883417d93b746c956c0fc55a3d5c1a86238d6f6de1d56f52ae204f44c36b4242"
+    },
+    "qml/components/CryptoPumpPanel.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "9825471735f6db774c4e14bf4f660fb752dd3ef6d784d1e9658e8248ef5c3b61"
+    },
+    "config/crypto-pump-protocol.json": {
+      "upstream_sha256": null,
+      "windows_sha256": "433adc3544c94672a0243c3ab7d6d7d14fde99c3c60ec8e881b50de723eb626e"
+    },
+    "config/crypto-pump-instructions.json": {
+      "upstream_sha256": null,
+      "windows_sha256": "a540352acaa187ba85bb914b5fc96d3658b027db18ade501201376a1a304a09c"
+    },
+    "tests/test_crypto_pump_accounts.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "1842e644004f909321fe30aea8df39aa08b447f9fbf91dd45fcd36ba0120b129"
+    },
+    "tests/test_crypto_pump_quotes.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "69c51f918f7d9eefd7894d2a88ce9142c57e2c3c2255846a90b5ce600f5d3c97"
+    },
+    "tests/test_crypto_pump_paper.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "00d33c8b5f09b205fd318e4125a20ecb0e66b81276bb8b477b8e4d17b9960f9d"
+    },
+    "tests/test_crypto_pump_tx.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "73d888dc34610dbd657a06c2aedecdff411fbc4811fd4c48b0b4df3132897558"
+    },
+    "tests/test_crypto_pump_runtime.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "f28ee22df3f91a88c2fb9b09733b30c817ecbeec78dfbc14a337d63d33d0595a"
+    },
+    "tests/test_crypto_pump_ui.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "2f6337f92739784db96f5e94224b481108d5534411b85643ec7249b3c2ef574b"
+    },
+    "tests/test_crypto_pump_integration.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "9c1b0f24b04bd35fec25fafa9bcae4aaae4e6f1b75f91e88f6f7a762e17549c2"
+    },
+    "tests/test_crypto_pump_stress.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "ff4c6c45b85a04d728c02074be099f6880815bf6089f7c0e915ded1d3d026b5b"
+    },
+    "tests/test_crypto_research_quality.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "fa2a3969352bf7cd6a2f8870e257536f421a9806ed2930491d6ba90a1d191771"
+    },
+    "tests/test_crypto_research_quality_factory.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "9e3d7412a8a723783f332f8ab1b3903f3ad041dbf73770db7f115d5c16a74ba8"
+    },
+    "tests/test_crypto_flash_arb.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "7479d2f3a40343184b1b96c8fc33a36ee720c35de54da8aad79a51470b888e70"
+    },
+    "tests/run_crypto_checks.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "608c01a9224cf9efcc5c1472df553bf6cacabdebbed84e740cf1b24ed5bf2d05"
+    },
+    "docs/CRYPTO-PUMP-AND-RESEARCH-2026-10-25.txt": {
+      "upstream_sha256": null,
+      "windows_sha256": "8538b11a43f2261650a5466da6c0a58c8cfd2f03de909c65d484353ca008ceb3"
+    },
+    "qml/components/CryptoButton.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "0fbaaa8d43f5432092cf0cdbae2d792a5e2c96aff81939168964bb550c3705a6"
+    },
+    "qml/components/CryptoField.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "27ee1e273216bbad5e78877dd6a1411c0ca352447be78ee042f86724644c5933"
+    },
+    "qml/components/CryptoHoldings.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "551170fb4bf6fd6580fe3182936553ea20647ed416b32b24c3d0838b9919c9e0"
+    },
+    "qml/components/CryptoPaperAccounts.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "f1c414a0f6bf3c8a0c7dde892b5791262295de8ee7cf7c13cd8079a0f12b0e53"
+    },
+    "tests/test_crypto_design.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "d90ec3626147009a3ded45d112e44ccba47e17a636deec10b6239c3616dd6168"
+    },
+    "tests/preview_crypto_ui.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "e2ae5ddb020c6756f126f9cc534b4abace688258a77fc07ae9cacea838c307b7"
+    },
+    "docs/CRYPTO-LEDGER-DESIGN-2026-10-25.txt": {
+      "upstream_sha256": null,
+      "windows_sha256": "a999802318f5f0a0ec071a1762ac29d8b5f5de83622f036d95512eb62c336ff3"
+    },
+    "qml/components/TmogSpark.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "655b4864f11ad5861d1259d4b63aca470ca9fd8456245b2f63d66b8fa0af8970"
+    },
+    "tests/test_windows_telemetry.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "e561302482b3589d390ac9617ad0c7ab180e67f5c6eccb5cf4ee36e57ab2fe9c"
+    },
+    "tests/test_windows_telemetry_sampling.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "e373b9c3f7a8c7c92d00eb73946140276beb9f0cc680c7ac01be58a22c8e371c"
+    },
+    "tests/test_tmog_responsiveness.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "916195b092ea4b2a52e6d0cb1541fba0e9ddcd04b56e4f1d8801455c8a4a325b"
+    },
+    "docs/DESKTOP-LOAD-DIAGNOSIS-2026-10-25.txt": {
+      "upstream_sha256": null,
+      "windows_sha256": "e4b18387d8ae95319d8d5de08a4b2fee53c990638714e3fb25914d9a6ddea848"
+    },
+    "qml/components/TmogHistoryGraph.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "f6d87ae7759ed519e8be09fa82e63b5d0263740072bc9976b81d7f20f78e4359"
+    },
+    "qml/components/TmogCard.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "e092d6ce80897a7cd03919668edc38e6e17d53f2d0b34f0449a214bbf100442b"
+    },
+    "qml/components/TmogReadings.js": {
+      "upstream_sha256": null,
+      "windows_sha256": "e0b25f8fc7b982e5141ce16db9f7311977e492a3fd365198de056de2a02a3f90"
+    },
+    "tests/test_tmog_numeric_readings.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "452e7697126bdd523acb92dd6d1ced25f6341bcdca6ca1802dc5226dc2650bc9"
+    },
+    "tests/test_tmog_numeric_labels.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "5511f40909411831777a845b3312555ccca2783f12bbdd4c8ca00a67e5bd9f4c"
+    },
+    "backend/windows_vision_activity.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "8ca0e93209d1b696e1ffcab2e66aa478946c66f87ba66047b8383e4104422304"
+    },
+    "qml/components/LiveEyesStatus.js": {
+      "upstream_sha256": null,
+      "windows_sha256": "83087fc24b2c32650980f8fa84127988dccaae1fdb6ba19b2423c0bf371f6818"
+    },
+    "tests/test_windows_vision_activity.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "652bd40da654f0250068d203ab8f441c1051120bed7c06aac406065d2163816d"
+    },
+    "tests/test_live_eyes_status_ui.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "1a327e8741134968ae110b304e83b75d88d35f0ac147a180e5b04a87752a3c24"
+    },
+    "tests/test_live_eyes_video_activity.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "71bd2ec625b7442aa8cbcff0fa63fef76e727b0d27c0b10c094de318d9f67d24"
+    },
+    "docs/LIVE-EYES-INDICATOR-2026-10-25.txt": {
+      "upstream_sha256": null,
+      "windows_sha256": "9a018f5152c0011b8f7098e5345c18c0098945c5a55d29c380cbaa92560fc0c5"
     }
   },
   "container_runtime": {
@@ -783,6 +1131,25 @@
     "backend/chat_clipboard.py",
     "backend/chat_surface_host.py",
     "backend/container_platform.py",
+    "backend/crypto_contract.py",
+    "backend/crypto_data.py",
+    "backend/crypto_flash_arb.py",
+    "backend/crypto_host.py",
+    "backend/crypto_keys.py",
+    "backend/crypto_lab.py",
+    "backend/crypto_market.py",
+    "backend/crypto_paper.py",
+    "backend/crypto_pump.py",
+    "backend/crypto_pump_accounts.py",
+    "backend/crypto_pump_paper.py",
+    "backend/crypto_pump_quotes.py",
+    "backend/crypto_pump_stress.py",
+    "backend/crypto_pump_tx.py",
+    "backend/crypto_research_quality.py",
+    "backend/crypto_strategy_factory.py",
+    "backend/crypto_trader.py",
+    "backend/crypto_tx.py",
+    "backend/crypto_ui_runtime.py",
     "backend/desktop_shell.py",
     "backend/game_asset_resources.py",
     "backend/game_engine_adapter_asset_worker.py",
@@ -799,6 +1166,7 @@
     "backend/game_workflow_scout.py",
     "backend/game_workflow_verify.py",
     "backend/image_admission.py",
+    "backend/kaspa_contract.py",
     "backend/live_vision.py",
     "backend/local_ai_platform.py",
     "backend/media_hls.py",
@@ -821,6 +1189,7 @@
     "backend/research_jobs.py",
     "backend/research_lab.py",
     "backend/research_learning.py",
+    "backend/resident_chat_qt.py",
     "backend/site_database.py",
     "backend/site_database_vault.py",
     "backend/site_jobs.py",
@@ -838,13 +1207,23 @@
     "backend/windows_research_setup.py",
     "backend/windows_telemetry.py",
     "backend/windows_vision.py",
+    "backend/windows_vision_activity.py",
     "backend/windows_webview.py",
     "backend/windows_windows.py",
+    "config/crypto-pump-instructions.json",
+    "config/crypto-pump-protocol.json",
     "config/dependencies.json",
+    "docs/CRYPTO-LEDGER-DESIGN-2026-10-25.txt",
+    "docs/CRYPTO-PUMP-AND-RESEARCH-2026-10-25.txt",
+    "docs/CRYPTO-RESEARCH-2026-10-24.txt",
+    "docs/DESKTOP-LOAD-DIAGNOSIS-2026-10-25.txt",
+    "docs/DESKTOP-MEMORY-AND-BACKGROUND-2026-10-25.txt",
+    "docs/LIVE-EYES-INDICATOR-2026-10-25.txt",
     "gg-blender",
     "gg-blender.cmd",
     "gg-eyes",
     "gg-research",
+    "main.py",
     "native/audio/gg_app_audio.cpp",
     "native/webview/MICROSOFT-LICENSE.txt",
     "native/webview/MICROSOFT-NOTICE.txt",
@@ -853,33 +1232,77 @@
     "packaging/catalog.py",
     "packaging/source-base.json",
     "qml/Main.qml",
+    "qml/components/ContextComposer.qml",
+    "qml/components/CryptoButton.qml",
+    "qml/components/CryptoChart.qml",
+    "qml/components/CryptoField.qml",
+    "qml/components/CryptoHoldings.qml",
+    "qml/components/CryptoPaperAccounts.qml",
+    "qml/components/CryptoPortfolioSummary.qml",
+    "qml/components/CryptoPumpPanel.qml",
+    "qml/components/CryptoSurface.qml",
     "qml/components/GgWindowChrome.qml",
     "qml/components/GrokTuiHole.qml",
+    "qml/components/LiveEyesStatus.js",
     "qml/components/MediaSurface.qml",
     "qml/components/QipSurface.qml",
     "qml/components/ResearchGamesSurface.qml",
     "qml/components/ResearchReverseSurface.qml",
     "qml/components/ResearchSurface.qml",
+    "qml/components/TelemetryRail.qml",
+    "qml/components/TmogCard.qml",
+    "qml/components/TmogHistoryGraph.qml",
+    "qml/components/TmogReadings.js",
     "qml/components/TmogSpark.qml",
     "qml/components/TmogSurface.qml",
     "qml/components/UtilitySurface.qml",
+    "qml/components/WalletPopup.qml",
     "qml/components/WebPane.qml",
     "qml/components/WindowsFilteredWebView.qml",
     "qml/components/WindowsWebView.qml",
     "qml/components/WorkspaceSurface.qml",
+    "qml/crypto-hole/index.html",
     "skills/gg-live-eyes/SKILL.md",
     "startup.py",
+    "tests/preview_crypto_ui.py",
+    "tests/run_crypto_checks.py",
     "tests/test_app_audio.py",
+    "tests/test_app_audio_idle.py",
     "tests/test_asset_failure_recovery.py",
     "tests/test_blender_agent_input.py",
     "tests/test_blender_contract.py",
     "tests/test_blender_windows.py",
     "tests/test_chat_clipboard.py",
+    "tests/test_chat_shutdown.py",
+    "tests/test_crypto_chart_lifecycle.py",
+    "tests/test_crypto_design.py",
+    "tests/test_crypto_engine_state.py",
+    "tests/test_crypto_flash_arb.py",
+    "tests/test_crypto_host.py",
+    "tests/test_crypto_keys_windows.py",
+    "tests/test_crypto_lab_windows.py",
+    "tests/test_crypto_market_refresh.py",
+    "tests/test_crypto_pump_accounts.py",
+    "tests/test_crypto_pump_integration.py",
+    "tests/test_crypto_pump_paper.py",
+    "tests/test_crypto_pump_quotes.py",
+    "tests/test_crypto_pump_runtime.py",
+    "tests/test_crypto_pump_stress.py",
+    "tests/test_crypto_pump_tx.py",
+    "tests/test_crypto_pump_ui.py",
+    "tests/test_crypto_research_quality.py",
+    "tests/test_crypto_research_quality_factory.py",
+    "tests/test_crypto_state_atomic.py",
+    "tests/test_crypto_ui_refresh.py",
+    "tests/test_crypto_ui_runtime.py",
+    "tests/test_desktop_idle_load.py",
     "tests/test_game_asset_workflow_improvements.py",
     "tests/test_game_engine_adapter_archives.py",
     "tests/test_game_engine_audio_compatibility.py",
     "tests/test_game_workflows.py",
     "tests/test_game_workflows_engine.py",
+    "tests/test_live_eyes_status_ui.py",
+    "tests/test_live_eyes_video_activity.py",
     "tests/test_media_hls.py",
     "tests/test_media_qt_audio.py",
     "tests/test_media_reconnect.py",
@@ -894,14 +1317,22 @@
     "tests/test_research_jobs.py",
     "tests/test_research_lab.py",
     "tests/test_research_workspace.py",
+    "tests/test_resident_chat_lifecycle.py",
     "tests/test_site_database_vault.py",
     "tests/test_site_resilience.py",
     "tests/test_site_runtime_setup.py",
     "tests/test_site_runtime_windows.py",
+    "tests/test_startup_shutdown.py",
     "tests/test_terminal_grid.py",
+    "tests/test_terminal_input_backpressure.py",
+    "tests/test_terminal_snapshot_backpressure.py",
     "tests/test_terminal_window_state.py",
+    "tests/test_tmog_background_activity.py",
+    "tests/test_tmog_numeric_labels.py",
+    "tests/test_tmog_numeric_readings.py",
     "tests/test_tmog_responsiveness.py",
     "tests/test_tmog_visual_damping.py",
+    "tests/test_utility_idle_load.py",
     "tests/test_web_content_blocker.py",
     "tests/test_web_operator_lifecycle.py",
     "tests/test_web_operator_qml_lifecycle.py",
@@ -918,7 +1349,9 @@
     "tests/test_windows_research_ui.py",
     "tests/test_windows_runtime.py",
     "tests/test_windows_telemetry.py",
+    "tests/test_windows_telemetry_sampling.py",
     "tests/test_windows_vision.py",
+    "tests/test_windows_vision_activity.py",
     "tests/test_windows_webview.py",
     "tools/blender/gg_blender_mcp.py",
     "tools/blender/gg_blender_sidecar.py",
@@ -967,6 +1400,11 @@
       "state": "VERIFIED_LOCAL_RUNTIME",
       "installation": "%LOCALAPPDATA%/GoldGoblins/site-tools/mariadb",
       "service_registration": false
+    },
+    "crypto_openssl": {
+      "version": "3.5.7",
+      "provider": "Installed Git for Windows",
+      "state": "VERIFIED_RFC8032_SYNTHETIC_SIGNING"
     }
   },
   "limitations": [
@@ -1830,6 +2268,1308 @@
       "source_integrity": "Every copied source matches the shared workspace; previous GG-W documentation and executable mode preserved",
       "distribution": "Installers and verifier included; no credentials, local state or external vendor runtime binaries bundled",
       "restart": "Full desktop restart required to load changed Python backend"
+    },
+    "crypto_windows_responsiveness": {
+      "date": "2026-10-24",
+      "status": "PASS_SCOPED_RUNTIME_AND_RENDER_CHECKS",
+      "scope": "CRYPTO workspace, upper-right wallet and lower-right rail",
+      "research_record": "docs/CRYPTO-RESEARCH-2026-10-24.txt",
+      "checks": {
+        "offline_crypto_and_polymarket_scripts": 23,
+        "offline_result": "PASS",
+        "test_windows_desktop.py": "PASS 22.862 seconds",
+        "test_chat_surface_host.py": "PASS",
+        "new_behavior_cases": {
+          "market_refresh": 16,
+          "chart_lifecycle": 8,
+          "ui_runtime": 8,
+          "ui_qml_js": 2,
+          "keys": 8,
+          "atomic_state": 8,
+          "lab_ownership": 9,
+          "engine_state": 8
+        }
+      },
+      "ui_backend_latency": {
+        "reads": 1000,
+        "p95_ms": 0.0008,
+        "max_ms": 0.0035,
+        "scope": "Prepared cached calls while background serialization is deliberately blocked"
+      },
+      "native_window": {
+        "native_render": "PASS",
+        "platform": "windows",
+        "graphics_api": "Direct3D11",
+        "exposed_during_measurement": true,
+        "frames": 795,
+        "duration_seconds": 5.197,
+        "observed_hz": 152.78,
+        "frame_gap_p95_ms": 12.415,
+        "frame_gap_p99_ms": 17.671,
+        "frame_gap_max_ms": 29.808,
+        "interaction_p95_ms": 0.303,
+        "interaction_max_ms": 2.656,
+        "foreground_preserved": true
+      },
+      "native_timing_method": "Queued frameSwapped callbacks measured in real QApplication event loop; not hardware presentation timestamps",
+      "public_spot_feeds": [
+        {
+          "pair": "SOLUSDT",
+          "state": "READY",
+          "bars": 399,
+          "source": "binance-spot",
+          "quote_currency": "USDT",
+          "closed_only": true
+        },
+        {
+          "pair": "KASUSDT",
+          "state": "READY",
+          "bars": 399,
+          "source": "gate-spot",
+          "quote_currency": "USDT",
+          "closed_only": true
+        }
+      ],
+      "public_chart_integration": {
+        "scope": "ISOLATED_PUBLIC_CHART_INTEGRATION",
+        "sol": {
+          "state": "READY",
+          "points": 1000,
+          "source": "binance",
+          "quote_currency": "USDT"
+        },
+        "kas": {
+          "state": "READY",
+          "points": 399,
+          "source": "gate-spot",
+          "quote_currency": "USDT"
+        },
+        "wallet_connected": false,
+        "lab_label": "LAB UNAVAILABLE",
+        "usd_estimate": true
+      },
+      "previews": {
+        "generated_geometry_and_warning_checked": 17,
+        "visually_inspected": [
+          "missing-price portfolio",
+          "narrow portfolio",
+          "trader"
+        ]
+      },
+      "independent_review": "Snapshot serialization lock, interval races, worker-start rollback and signer binding findings corrected and regression tested",
+      "limitations": [
+        "Validator absent; actual LAB start requires separate supported Windows/WSL setup and remains unverified",
+        "Qt frame callback measurements include outliers and do not guarantee flawless timing under every workload",
+        "No real wallet, private key, funds, order or validator process was used or changed",
+        "Public quote services can change availability; USDT-based USD values are labelled estimates",
+        "Full desktop restart required to load changed backend code"
+      ]
+    },
+    "desktop_idle_load_2026_10_24": {
+      "date": "2026-10-24",
+      "status": "PASS_FOCUSED_IDLE_WORK_REDUCTION",
+      "reported_problem": "Continuous fan noise even when the user leaves GG idle",
+      "attribution": "Static CRYPTO fixtures go idle in software and native D3D11 probes. Concrete global utility/audio/editor/background lamp costs were measured; the full physical fan cause was not established.",
+      "changes": [
+        "Dirty/settling-only visible Utility Canvas painting, including constant audible level release",
+        "No background/hidden/minimized Utility painting; low-rate status preserves playback and gain",
+        "Exact digital silence skips FFT and clears old spectrum once",
+        "Chat lamps stop requesting 60 Hz telemetry when their window is inactive or minimized",
+        "Editor cursor updates follow text/cursor/load events, removing an unchanged-buffer scan timer"
+      ],
+      "before_after": {
+        "silent_paused_canvas_paints_per_second_each": {
+          "before": 62,
+          "after": 0
+        },
+        "silent_fft_calls_per_10_status_reads": {
+          "before": 10,
+          "after": 0
+        },
+        "idle_editor_recalculations_per_350ms": {
+          "before": 21,
+          "after": 0
+        },
+        "foreground_chat_polls_per_250ms": 15,
+        "background_chat_polls_per_350ms": 0,
+        "foreground_changing_audio_paints_per_second": 62,
+        "background_hidden_minimized_canvas_paints_per_second": 0,
+        "background_hidden_minimized_status_polls_per_second": 1
+      },
+      "tests": {
+        "test_app_audio_idle.py": "5 PASS",
+        "test_utility_idle_load.py": "1 staged real-QML synthetic test PASS",
+        "test_desktop_idle_load.py": "1 real-QML event/cadence test PASS",
+        "NativeAppAudioTests": "3 PASS",
+        "UtilityAudioControlTests": "PASS",
+        "test_windows_desktop.py": "PASS 12.035 seconds"
+      },
+      "independent_review": "PASS after reproducing and correcting constant audible level/peak settling; hidden frequency changes and silence resume also checked",
+      "limits": [
+        "Live hardware fan/temperature response after restart is unverified",
+        "No live process was terminated or user playback/wallet changed",
+        "Full desktop restart required to load the updated Python audio module"
+      ],
+      "current_validation": false,
+      "superseded_by": "desktop_memory_background_2026_10_25"
+    },
+    "desktop_memory_background_2026_10_25": {
+      "date": "2026-10-25",
+      "status": "PASS_FOCUSED_LIFECYCLE_AND_REAL_BACKGROUND_ACTIVITY",
+      "report": "docs/DESKTOP-MEMORY-AND-BACKGROUND-2026-10-25.txt",
+      "reported_problems": [
+        "RAM exhausted and disk paging",
+        "Activity indicators freeze when unfocused or covered"
+      ],
+      "changes": [
+        "Graceful teardown followed by process-local 15-second Python watchdog for stuck exit",
+        "Stop all owned timers before best-effort resource cleanup; reentrant-safe and safe diagnostics",
+        "Idle model retirement preserves app-owned shared surfaces and continuous telemetry",
+        "One expanded terminal snapshot in flight with matching generation/delivery receipt",
+        "192 KiB unapplied terminal input limit; excess remains in pipe without dropped bytes",
+        "Exited-child and broken-pipe output tails delivered before final close",
+        "Single latest-value hardware sampler independent of Qt visibility/focus",
+        "Unfocused/covered activity lamps and audio meters stay current; invisible/unchanged canvases do not repaint"
+      ],
+      "tests": {
+        "test_startup_shutdown.py": "7 PASS isolated processes",
+        "test_chat_shutdown.py": "4 PASS",
+        "test_terminal_snapshot_backpressure.py": "7 PASS including real QThread/GUI blocked consumer",
+        "test_terminal_input_backpressure.py": "4 PASS including exited-child and broken-pipe tails",
+        "test_tmog_background_activity.py": "2 PASS without GUI consumers",
+        "test_resident_chat_lifecycle.py": "7 PASS with real QProcess and ticking QTimer fixtures",
+        "test_desktop_idle_load.py": "1 PASS offscreen focus/cover and real activity changes",
+        "test_utility_idle_load.py": "3 PASS real QML, zero warnings",
+        "test_tmog_responsiveness.py": "7 PASS including real Windows workers and cleanup",
+        "test_chat_surface_host.py": "PASS real Windows ConPTY PowerShell in isolated state",
+        "test_windows_desktop.py": "PASS 13.000 seconds final source",
+        "test_window_chrome.py": "1 PASS",
+        "test_startup_chat_restore.py": "17 PASS",
+        "StartupChatTests": "15 PASS terminal replay/reset/scrollback",
+        "test_terminal_grid_layout.py": "3 PASS",
+        "test_terminal_grid.py": "PASS",
+        "test_mini_vt.py": "PASS"
+      },
+      "legacy_platform_check": {
+        "test_resident_chat_contract.py": "NOT_WINDOWS_COMPATIBLE: existing Linux live-proof controller calls os.getuid at import"
+      },
+      "measurements": {
+        "blocked_snapshot_deliveries": {
+          "before": 12,
+          "after": 1
+        },
+        "active_lamp_polls_foreground_per_250ms": 15,
+        "active_lamp_polls_background_per_350ms": 22,
+        "covered_active_audio_updates_per_second": 62,
+        "hidden_minimized_audio_updates_per_second": [
+          62,
+          63
+        ],
+        "hidden_canvas_paints": 0,
+        "unchanged_settled_canvas_paints": 0,
+        "idle_editor_recalculations_per_350ms": 0
+      },
+      "independent_review": "PASS after discovering and correcting exited-child tail loss and idle transport/shared-surface lifetime coupling",
+      "supersedes": "Previous focus-based background lamp pause and audio status throttling; silent FFT/dirty paint/editor event improvements retained",
+      "limits": [
+        "Live workstation and private session observations are excluded from the public source release.",
+        "Python watchdog cannot run while native code permanently holds the GIL",
+        "Long-duration leak-free behavior and hardware fan response not established",
+        "Current live app preserved; full restart required for Python and root QML changes",
+        "Local source changes only; no new GitHub publication in this task"
+      ]
+    },
+    "crypto_pump_research_2026_10_25": {
+      "date": "2026-10-25",
+      "status": "PASS_OFFLINE_AND_PUBLIC_READ_ONLY",
+      "report": "docs/CRYPTO-PUMP-AND-RESEARCH-2026-10-25.txt",
+      "scope": [
+        "Pump/Token2022 account inspection, net quote estimates, risk explanations and wallet integration",
+        "Unsigned RPC simulation, isolated paper ledger and replay receipts",
+        "Six bounded cost/liquidity stress scenarios",
+        "Frozen-winner historical bootstrap and executable prefix diagnostics"
+      ],
+      "runtime_dependencies_added": [],
+      "external_code_execution_or_installation": false,
+      "research_posts": [
+        "https://x.com/shawmakesmagic/status/2114236095475118296",
+        "https://x.com/carm1nee/status/2113257064352915664",
+        "https://x.com/carm1nee/status/2113765239674032262"
+      ],
+      "facts": {
+        "official_pump_docs_commit": "639b87fb45c3adeffa6f7c4a1bf0cb85e392bf22",
+        "official_pump_sdk_arithmetic_reference": "4.3.1",
+        "official_pump_swap_sdk_arithmetic_reference": "2.2.0",
+        "pool_serialized_and_allocated_bytes": [
+          287,
+          300
+        ],
+        "fee_config_version_allocations": [
+          2512,
+          4073,
+          4097
+        ]
+      },
+      "tests": {
+        "all_crypto_scripts": "33 PASS isolated temporary state/sockets blocked",
+        "offline_suite_seconds": 31.574,
+        "test_windows_desktop.py": "PASS 13.169 seconds",
+        "test_crypto_pump_accounts.py": "18 PASS",
+        "test_crypto_pump_quotes.py_and_test_crypto_pump_paper.py": "18 PASS",
+        "test_crypto_pump_tx.py": "8 PASS independent unsigned wire decode",
+        "test_crypto_pump_runtime.py": "25 PASS",
+        "test_crypto_pump_stress.py": "6 PASS",
+        "test_crypto_research_quality.py": "8 PASS",
+        "test_crypto_research_quality_factory.py": "7 PASS plus existing Factory check",
+        "test_crypto_pump_ui.py": "PASS 8 staged Qt actions, 430px, zero QML warnings",
+        "test_crypto_pump_integration.py": "PASS real-service outputs in actual QML at 430px, offline RPC",
+        "existing_ui_refresh": "PASS coalesced shared polling and 20000-sample chart",
+        "ui_cached_reads": "Existing prepared-read/blocked-serializer regression PASS"
+      },
+      "public_mainnet_read_only_probe": {
+        "check": "PUBLIC_MAINNET_READ_ONLY",
+        "state": "ready",
+        "error": "",
+        "slot": 461207208,
+        "kind": "amm",
+        "unsupported": [],
+        "wallet_access": false,
+        "signed_or_sent": false,
+        "installed_packages": false,
+        "quote_supported": true,
+        "debit": "0.01 SOL",
+        "received": "54115.018303 TOKEN",
+        "stress_rows": 6
+      },
+      "visual_review": "Synthetic wide/narrow Pump, wallet and stress previews inspected; no live user screen capture",
+      "independent_review": "PASS after correcting storage overflow, wallet report binding, row adapters, same-generation quote races and nonblocking heartbeat locks",
+      "bounds": {
+        "network_workers": 1,
+        "pending_selections": 1,
+        "max_batch_accounts": 24,
+        "selected_refresh_seconds": 20,
+        "quote_stale_seconds": 45,
+        "desktop_heartbeat_seconds": 5,
+        "heartbeat_lock_wait": "nonblocking",
+        "paper_file_bytes": 1048576,
+        "paper_fill_limit": 2000,
+        "quote_stress_rows": 6,
+        "bootstrap_max_replicas": 256,
+        "bootstrap_max_equity_values": 4096,
+        "prefix_max_bars": 256,
+        "prefix_max_cutoffs": 3,
+        "simulation_max_transaction_bytes": 1232
+      },
+      "boundaries": [
+        "Mainnet remains observe/simulate-only; no new sign/send path",
+        "Simulation carries zero signatures; no key file imported or read by the new path",
+        "Public mainnet data check did not access a user wallet or submit a transaction",
+        "No trading framework/model/executable installed or executed",
+        "Only official interface facts bundled; recovered third-party implementation not copied"
+      ],
+      "limits": [
+        "Synthetic migration, Mayhem, cashback and multihop/quote-chain routes unsupported by current quotes",
+        "AMM active base transfer-fee RPC simulation is withheld pending verified net/gross semantics",
+        "Network fee/rent/MEV excluded from local quotes; RPC fee estimate shown separately",
+        "Different before/simulation slots are recorded; inclusion/real settlement not established",
+        "RPC program metadata does not prove independent consensus or bytecode identity",
+        "Historical uncertainty/prefix checks/stress scenarios are bounded diagnostics, not predictions",
+        "Current application preserved; full restart required",
+        "Local source update; no GitHub publication requested in this task"
+      ]
+    },
+    "crypto_ledger_design_2026_10_25": {
+      "date": "2026-10-25",
+      "status": "PASS_LOCAL_QML_AND_WINDOWS_STARTUP",
+      "report": "docs/CRYPTO-LEDGER-DESIGN-2026-10-25.txt",
+      "sources": [
+        "https://www.coinbase.com/advanced-trade/tutorials",
+        "https://support.kraken.com/articles/kraken-pro-trading-interface-guide?mode=consumerapp",
+        "https://www.binance.com/en/academy/articles/your-guide-to-binance-spot-trading",
+        "https://www.tradingview.com/support/solutions/43000786671-how-to-place-an-order-on-tradingview/",
+        "https://phantom.com/learn/blog/charts-in-phantom",
+        "https://academy.jup.ag/lessons/jupiter-swap",
+        "https://blog.uniswap.org/new-token-warnings"
+      ],
+      "changes": [
+        "Scoped native Ledger buttons/fields; responsive keyboard navigation",
+        "Portfolio summary, stable holdings filter/sort and exact quantity details",
+        "Holdings-to-Pump inspection binding and busy state guards",
+        "Grouped token risks, net quotes, cost stress, unsigned simulation and paper history",
+        "Wallet popup and compact CRYPTO rail grouping",
+        "Activity cards, UTC time, references and errors filter",
+        "Scrollable backtest details and narrow portfolio/chart/wallet allocation"
+      ],
+      "tests": {
+        "isolated_scripts": [
+          "test_crypto_design.py",
+          "test_crypto_ui_refresh.py",
+          "test_crypto_pump_ui.py",
+          "test_crypto_pump_integration.py",
+          "test_crypto_portfolio.py"
+        ],
+        "seconds": 15.578,
+        "all_ten_pages_total_width_px": 430,
+        "portfolio_geometry_heights_px": [
+          620,
+          650
+        ],
+        "portfolio_minimum_visible_row_px": 62,
+        "portfolio_geometry_wallet_tools": [
+          "closed",
+          "open"
+        ],
+        "long_backtest_details": "Real wheel events reach footer; chart remains at least100px",
+        "synthetic_preview_variants": 23,
+        "qml_warnings": 0,
+        "wallet_widths_px": [
+          260,
+          328
+        ],
+        "standalone_portfolio_widths_px": [
+          300,
+          324,
+          430,
+          720
+        ],
+        "shared_polls_2_2_seconds": 2,
+        "chart_source_samples": 20000,
+        "chart_paint_samples": 1556,
+        "windows_startup_seconds": 11.586
+      },
+      "runtime_dependencies_added": [],
+      "external_ui_assets_bundled": false,
+      "backend_or_signing_changes": false,
+      "new_continuous_poll_or_paint_loop": false,
+      "visual_review": "Official product imagery and synthetic native QML previews; no user wallet capture",
+      "limits": [
+        "Mainnet remains read/simulate only; Kaspa remains local covenant simulation",
+        "Synthetic previews do not guarantee fixed presentation frame rate on every screen",
+        "Local source update only; no GitHub publishing in this task",
+        "Full restart loads both workspace and persistent wallet/rail components"
+      ],
+      "visual_style_followup": "crypto_gray_norad_2026_10_25"
+    },
+    "crypto_gray_norad_2026_10_25": {
+      "date": "2026-10-25",
+      "status": "PASS_LOCAL_GRAY_NORAD_CORRECTION",
+      "report": "docs/CRYPTO-LEDGER-DESIGN-2026-10-25.txt",
+      "original_intent": "Unify all CRYPTO surfaces with the existing gray Obsidian/Ledger application",
+      "user_refinement": "NORAD1960s, lightgray frames, white monospace legends, neutral controls; accents only text/small elements/data",
+      "authoritative_local_references": [
+        "qml/components/GgFrame.qml",
+        "qml/components/GgButton.qml",
+        "qml/components/GgField.qml",
+        "qml/components/TmogSurface.qml"
+      ],
+      "research_revisited": [
+        "Coinbase",
+        "Kraken",
+        "Binance",
+        "TradingView",
+        "Phantom",
+        "Jupiter",
+        "Uniswap"
+      ],
+      "kaspa_directory": "https://kaspa.org/hodl",
+      "kaspa_directory_entries": 11,
+      "kaspa_coverage": [
+        "CLI",
+        "NG desktop",
+        "NG web",
+        "KDX historical",
+        "legacy WebWallet",
+        "Kaspium",
+        "KasWare",
+        "Kastle",
+        "KaspaCom",
+        "Ledger",
+        "OneKey",
+        "SafePal",
+        "Tangem"
+      ],
+      "closest_aesthetic_reference": "https://aspectron.org/images/projects/kaspa-ng-screen-01.png",
+      "primary_theme_source": "https://raw.githubusercontent.com/aspectron/kaspa-ng/master/core/src/egui/theme/color.rs",
+      "wallet_identity": "KaspaNG closest visual inference; user memory not independently confirmed",
+      "changes": [
+        "Neutral button/input/selected/focus fills and gray outlines",
+        "TMOG-style flat icon navigation and18px normal monospace headings",
+        "Shared GgFrame floating legends for portfolio/chart/paper/Pump/research/activity",
+        "Neutral wallet controls and crypto rail sections",
+        "Persistent gray visual-language guidance in README"
+      ],
+      "tests": {
+        "targeted_scripts": [
+          "test_crypto_design.py",
+          "test_crypto_ui_refresh.py",
+          "test_crypto_pump_ui.py",
+          "test_crypto_pump_integration.py",
+          "test_crypto_portfolio.py"
+        ],
+        "resolved_design_rerun_seconds": 4.383,
+        "preview_variants": 23,
+        "qml_warnings": 0,
+        "all_ten_pages_width_px": 430,
+        "portfolio_heights_px": [
+          620,
+          650
+        ],
+        "minimum_visible_row_px": 62,
+        "button_states": [
+          "normal",
+          "primary",
+          "checked",
+          "hover",
+          "pressed",
+          "keyboard_focus",
+          "disabled",
+          "flat_selection"
+        ],
+        "actual_wallet_primary_and_paper_controls": "PASS",
+        "windows_startup_seconds": 14.56,
+        "shared_polls_2_2_seconds": 2,
+        "chart_source_samples": 20000,
+        "chart_paint_samples": 1504
+      },
+      "visual_review": "Native gray portfolio/trader/Factory/Pump430/wallet328/260 previews inspected; no live user-wallet capture",
+      "limits": [
+        "Public Kaspa/vendor coverage at overview depth; some full interactive views unavailable",
+        "No packages installed or wallet created/imported; public theme/image source only",
+        "No backend/sign/send changes or new continuous polling/paint loop",
+        "Synthetic previews do not guarantee fixed frame rate on every display",
+        "Local update; full restart loads persistent wallet and rail"
+      ]
+    },
+    "tmog_current_load_2026_10_25": {
+      "date": "2026-10-25",
+      "status": "BACKEND_PRESERVED_UI_GRAPH_CHANGES_REVERTED",
+      "report": "docs/DESKTOP-LOAD-DIAGNOSIS-2026-10-25.txt",
+      "intent": "Investigate fan/CPU/RAM load before restart; preserve current chat and real background indicators",
+      "sampling": {
+        "presentation_hz": 60,
+        "continuous_background_producer": true,
+        "windows_cpu_minimum_interval_ms": 100,
+        "memory_interval_ms": 250,
+        "frequency_interval_ms": 1000,
+        "battery_interval_ms": 5000,
+        "io_interval_ms": 100,
+        "plot_observation_max_hz": 10,
+        "history_points_max": 120,
+        "initial_cpu": "unknown until mature baseline interval",
+        "stale_or_failed_data": "Keep last value/time; no replayed history/current CPU claim",
+        "unsupported_windows_memory_breakdown": "None/unavailable displayed as --"
+      },
+      "tests": {
+        "targeted_test_cases": 28,
+        "scripts": [
+          {
+            "script": "test_windows_telemetry.py",
+            "exit_code": 0,
+            "seconds": 0.774
+          },
+          {
+            "script": "test_windows_telemetry_sampling.py",
+            "exit_code": 0,
+            "seconds": 0.24
+          },
+          {
+            "script": "test_tmog_responsiveness.py",
+            "exit_code": 0,
+            "seconds": 7.099
+          },
+          {
+            "script": "test_tmog_background_activity.py",
+            "exit_code": 0,
+            "seconds": 0.609
+          },
+          {
+            "script": "test_tmog_visual_damping.py",
+            "exit_code": 0,
+            "seconds": 0.924
+          },
+          {
+            "script": "test_tmog_plot_load.py",
+            "exit_code": 0,
+            "seconds": 5.708
+          },
+          {
+            "script": "test_desktop_idle_load.py",
+            "exit_code": 0,
+            "seconds": 2.627
+          }
+        ],
+        "suite_seconds": 17.982,
+        "qml_plot_fixture": {
+          "status": "PASS",
+          "display_ticks": 79,
+          "plot_observations": 12,
+          "canvases": 24,
+          "max_canvas_paints": 15,
+          "qml_warnings": 0
+        },
+        "background_lamp_fixture": {
+          "status": "PASS",
+          "idle_cursor_recalculations": 0,
+          "foreground_meter_polls": 15,
+          "background_meter_polls": 22,
+          "background_real_activity_changes": "PASS",
+          "cursor_text_events": "PASS"
+        },
+        "windows_desktop_startup": "PASS",
+        "startup_process_seconds": 15.659
+      },
+      "independent_review": "PASS; corrected whole-worker error, backward timestamp and fallback history replay",
+      "limits": [
+        "Current desktop not restarted; source changes load on full restart",
+        "Post-restart physical fan/CPU improvement remains to be measured",
+        "Real cores may still be idle or saturated; 100ms windows do not eliminate genuine0/100 values",
+        "Current-process allocation growth is not established as a memory leak",
+        "Exact hot stack in the already-running page worker not captured",
+        "No new packages, credentials, forced user-app termination or GitHub publication"
+      ],
+      "ui_superseded_by": "tmog_original_motion_restored_2026_10_25"
+    },
+    "tmog_smooth_retained_motion_2026_10_25": {
+      "date": "2026-10-25",
+      "status": "REVERTED_AT_EXPLICIT_USER_REQUEST",
+      "report": "docs/DESKTOP-LOAD-DIAGNOSIS-2026-10-25.txt",
+      "intent": "Restore smooth60Hz TMOG Summary/Performance charts after visible10Hz regression; keep reduced sampling load and gray design",
+      "implementation": {
+        "buffers_per_live_chart": 2,
+        "history_points_max": 120,
+        "pending_texture_limit": 1,
+        "curve_rasterization": "fresh real observations only, up to10Hz",
+        "flat_full_histories": "accept genuine observations without identical image uploads/animation",
+        "presentation": "retained x/vertical-scale transforms follow actual monitor cadence",
+        "coordinator_target_max_hz": 60,
+        "axis": "fixed linear sample positions with warmup range conversion",
+        "uneven_arrivals": "inherit actual current x/scale position before replacing texture",
+        "hidden_restore": "cancel presentation and show latest state once; no replay queue",
+        "backend_and_background_lamps": "preserved; no sampling or focus gating changes",
+        "static_and_marked_charts": "preserved opt-out path",
+        "crypto_wallet_gray_design": "preserved"
+      },
+      "tests": {
+        "status": "PASS",
+        "checks": [
+          {
+            "script": "tests/test_windows_telemetry.py",
+            "exit_code": 0,
+            "test_cases": 2,
+            "seconds": 0.638
+          },
+          {
+            "script": "tests/test_windows_telemetry_sampling.py",
+            "exit_code": 0,
+            "test_cases": 10,
+            "seconds": 0.225
+          },
+          {
+            "script": "tests/test_tmog_responsiveness.py",
+            "exit_code": 0,
+            "test_cases": 7,
+            "seconds": 5.758
+          },
+          {
+            "script": "tests/test_tmog_background_activity.py",
+            "exit_code": 0,
+            "test_cases": 2,
+            "seconds": 0.574
+          },
+          {
+            "script": "tests/test_tmog_visual_damping.py",
+            "exit_code": 0,
+            "test_cases": 5,
+            "seconds": 0.773
+          },
+          {
+            "script": "tests/test_tmog_plot_load.py",
+            "exit_code": 0,
+            "test_cases": 1,
+            "seconds": 5.65
+          },
+          {
+            "script": "tests/test_tmog_smooth_motion.py",
+            "exit_code": 0,
+            "test_cases": 1,
+            "seconds": 3.335
+          },
+          {
+            "script": "tests/test_desktop_idle_load.py",
+            "exit_code": 0,
+            "test_cases": 1,
+            "seconds": 2.64
+          },
+          {
+            "script": "tests/test_windows_desktop.py",
+            "exit_code": 0,
+            "test_cases": 1,
+            "seconds": 11.34
+          }
+        ],
+        "test_cases": 30,
+        "seconds": 30.935
+      },
+      "visual_preview_review": "PASS; isolated synthetic Summary and Performance images inspected",
+      "fresh_independent_review": "PASS; strengthened capped-history full-array/change-signal assertions",
+      "limits": [
+        "Native receipts measure isolated fixtures, not the already-running user desktop or physical scanout",
+        "Current app was not restarted; full restart loads QML changes",
+        "Curve interpolation introduces a short presentation delay; labels and real observations remain separate",
+        "Physical fan RPM, temperature and post-restart whole-app load not measured in this follow-up",
+        "No new packages, OS power changes, credentials or GitHub publication"
+      ],
+      "superseded_by": "tmog_original_motion_restored_2026_10_25",
+      "current_validation": false
+    },
+    "tmog_original_motion_restored_2026_10_25": {
+      "date": "2026-10-25",
+      "status": "PASS_ORIGINAL_UI_RESTORED",
+      "intent": "Explicit user rollback to original60Hz damped harmonic graph presentation; no invented motion/axis/renderer",
+      "report": "docs/DESKTOP-LOAD-DIAGNOSIS-2026-10-25.txt",
+      "original_ui_files_exact": [
+        "qml/components/TmogSurface.qml",
+        "qml/components/TmogSpark.qml",
+        "qml/components/TmogHistoryGraph.qml"
+      ],
+      "byte_equality_with_saved_versions": true,
+      "original_behavior": {
+        "timer_interval_ms": 16,
+        "visual_time_constant": 0.14,
+        "spring_omega_rise_fall": [
+          12,
+          9
+        ],
+        "history": "original per-display-frame damped history, max120points",
+        "renderer": "original threaded Canvas, log spacing and quadratic hills",
+        "range_selection": "original normalized selection"
+      },
+      "removed_replacement_files": [
+        "qml/components/TmogLiveTrace.qml",
+        "tests/test_tmog_smooth_motion.py",
+        "tests/test_tmog_plot_load.py"
+      ],
+      "preservation": {
+        "verified_unchanged_files": 93,
+        "crypto_wallet": "UNCHANGED",
+        "windows_sensor_sampling": "UNCHANGED",
+        "real_background_indicators": "UNCHANGED",
+        "power_plan": "NO_NEW_CHANGE"
+      },
+      "tests": {
+        "status": "PASS",
+        "checks": [
+          {
+            "script": "tests/test_tmog_visual_damping.py",
+            "exit_code": 0,
+            "seconds": 0.741,
+            "test_cases": 5
+          },
+          {
+            "script": "tests/test_tmog_background_activity.py",
+            "exit_code": 0,
+            "seconds": 0.611,
+            "test_cases": 2
+          },
+          {
+            "script": "tests/test_tmog_responsiveness.py",
+            "exit_code": 0,
+            "seconds": 5.935,
+            "test_cases": 7
+          },
+          {
+            "script": "tests/test_desktop_idle_load.py",
+            "exit_code": 0,
+            "seconds": 2.716,
+            "test_cases": 1
+          },
+          {
+            "script": "tests/test_windows_desktop.py",
+            "exit_code": 0,
+            "seconds": 11.226,
+            "test_cases": 1
+          }
+        ],
+        "test_cases": 16
+      },
+      "independent_exact_restore_audit": "PASS",
+      "limits": [
+        "The running desktop was not closed; full restart loads restoredQML",
+        "Original timing/geometry restored exactly; no physical scanout or postrestartfan measurement claimed",
+        "WholeSurface rollback also restores original labels and sensor-placeholder handling",
+        "No new packages, credentials, OS settings or GitHub publication"
+      ],
+      "later_user_approved_changes": "tmog_numeric_and_existing_cpu_spring_2026_10_25",
+      "validation_scope": "Historical exact rollback; later approved CPU spring and label changes tracked separately"
+    },
+    "tmog_numeric_and_existing_cpu_spring_2026_10_25": {
+      "date": "2026-10-25",
+      "status": "PASS_GRAPH_PRESERVING_NUMBERS_AND_APPROVED_CPU_SPRING",
+      "intent": "User accepts restored graph motion; improve numbers, keep graph geometry; CPU may use existing disk/network damping",
+      "explicit_clarification": "Asked whether CPU should use the existing disk/network damping with unchanged form/timeaxis60Hz; user answeredja",
+      "report": "docs/DESKTOP-LOAD-DIAGNOSIS-2026-10-25.txt",
+      "approved_cpu_change": {
+        "implementation": "reuse existing springFollow, separate aggregate/core velocities",
+        "spring_equations_and_omega_12_9": "UNCHANGED",
+        "other_metric_damping": "UNCHANGED"
+      },
+      "frozen_graphs": {
+        "TmogSpark": "BYTE_EQUAL",
+        "TmogHistoryGraph": "BYTE_EQUAL",
+        "spark_invocations": 7,
+        "history_invocations": 2,
+        "timer_interval_ms": 16,
+        "timer_block": "BYTE_EQUAL",
+        "axis_history_capacity_curve_geometry": "UNCHANGED",
+        "card_graph_body": "BYTE_EQUAL"
+      },
+      "numeric_labels": {
+        "current_pulse_values": true,
+        "valid_zero_preserved": true,
+        "missing_stale_errors": "--",
+        "MHz_digits": 0,
+        "watt_digits": 1,
+        "core_percent_digits": 1,
+        "compact_core_labels": "both index and percentage fit; card size/graph area unchanged",
+        "frequency_rows": "preserve per-core values and respect frequency probe errors",
+        "process_count_label": "processes",
+        "GPU_detail_attribution": "system temp/package power"
+      },
+      "tests": {
+        "status": "PASS",
+        "checks": [
+          {
+            "script": "tests/test_tmog_numeric_readings.py",
+            "exit_code": 0,
+            "seconds": 0.231,
+            "test_cases": 7
+          },
+          {
+            "script": "tests/test_tmog_numeric_labels.py",
+            "exit_code": 0,
+            "seconds": 0.704,
+            "test_cases": 1
+          },
+          {
+            "script": "tests/test_tmog_visual_damping.py",
+            "exit_code": 0,
+            "seconds": 0.686,
+            "test_cases": 5
+          },
+          {
+            "script": "tests/test_tmog_background_activity.py",
+            "exit_code": 0,
+            "seconds": 0.573,
+            "test_cases": 2
+          },
+          {
+            "script": "tests/test_tmog_responsiveness.py",
+            "exit_code": 0,
+            "seconds": 5.605,
+            "test_cases": 7
+          },
+          {
+            "script": "tests/test_desktop_idle_load.py",
+            "exit_code": 0,
+            "seconds": 2.644,
+            "test_cases": 1
+          },
+          {
+            "script": "tests/test_windows_desktop.py",
+            "exit_code": 0,
+            "seconds": 11.483,
+            "test_cases": 1
+          }
+        ],
+        "test_cases": 24,
+        "frozen_graph_files": 2,
+        "frozen_graph_invocations": 9,
+        "timer_unchanged": true,
+        "spring_equations_unchanged": true,
+        "other_frozen_functions": [
+          "springFollow",
+          "dampValue",
+          "pushHist",
+          "tick",
+          "arr",
+          "refresh",
+          "n"
+        ],
+        "graph_body_unchanged": true
+      },
+      "label_layout": "Windowless Windows native font database, compact and default typography; unchanged graph body dimensions",
+      "independent_read_only_review": "PASS; frequency metadata gap corrected",
+      "other_distributable_files_verified_unchanged": 2507,
+      "limits": [
+        "Full restart needed to load these QML changes; current user desktop not closed",
+        "No physical scanout, postrestartfan or whole-app CPU claims",
+        "No new renderer, timeline, graph layout, dependencies, OS settings, credentials or GitHub publication"
+      ]
+    },
+    "live_eyes_indicator_2026_10_25": {
+      "date": "2026-10-25",
+      "status": "PASS_REAL_OBSERVATION_ACTIVITY",
+      "intent": "Visual indicator follows gg-live-eyes use without changing established graph/UI theme",
+      "report": "docs/LIVE-EYES-INDICATOR-2026-10-25.txt",
+      "implementation": {
+        "windows_transport": "namedRAMmapping and bounded mutex, metadata only",
+        "metadata_bytes_max": 16384,
+        "active_requests_max": 8,
+        "recent_success_seconds": 3,
+        "ui_metadata_interval_ms": 250,
+        "ui_mutex_wait_ms": 0,
+        "writer_mutex_wait_ms": 50,
+        "screen_worker_deadline_seconds_max": 8,
+        "video_activity_deadline_seconds_max": 120,
+        "states": [
+          "off",
+          "capturing",
+          "observed",
+          "error"
+        ],
+        "captions": [
+          "ÖGON · FÅNGAR",
+          "ÖGON · VIDEO",
+          "ÖGON · NYSS",
+          "ÖGON · FEL"
+        ],
+        "completed_current_fps": 0,
+        "completed_current_frame_age": null,
+        "Linux_live_caption": "PRESERVED",
+        "capture_daemon_added": false,
+        "image_files_added": false,
+        "stop": "generation cancellation, owned helper/resolver/decoder only, late success suppressed"
+      },
+      "tests": {
+        "status": "PASS",
+        "checks": [
+          {
+            "script": "tests/test_windows_vision_activity.py",
+            "exit_code": 0,
+            "seconds": 1.182,
+            "test_cases": 15,
+            "bounded_reader_cache": "PASS"
+          },
+          {
+            "script": "tests/test_windows_vision.py",
+            "exit_code": 0,
+            "seconds": 1.262,
+            "test_cases": 14
+          },
+          {
+            "script": "tests/test_live_eyes_status_ui.py",
+            "exit_code": 0,
+            "seconds": 0.765,
+            "test_cases": 3
+          },
+          {
+            "script": "tests/test_live_eyes_video_activity.py",
+            "exit_code": 0,
+            "seconds": 0.467,
+            "test_cases": 11
+          },
+          {
+            "script": "tests/test_desktop_idle_load.py",
+            "exit_code": 0,
+            "seconds": 3.543,
+            "test_cases": 1
+          },
+          {
+            "script": "tests/test_tmog_background_activity.py",
+            "exit_code": 0,
+            "seconds": 0.667,
+            "test_cases": 2
+          },
+          {
+            "script": "tests/test_windows_desktop.py",
+            "exit_code": 0,
+            "seconds": 27.094,
+            "test_cases": 1
+          }
+        ],
+        "test_cases": 47
+      },
+      "real_cli_observation": {
+        "status": "PASS",
+        "provider": "windows-gdi",
+        "actual_cli_clip": true,
+        "observed_states": [
+          "off",
+          "capturing",
+          "observed"
+        ],
+        "captured_frames": 12,
+        "last_observation_fps": 22.4,
+        "post_completion_current_fps": 0,
+        "idle_after_recent_expiry": true,
+        "image_files_created": false,
+        "user_desktop_not_restarted": true
+      },
+      "real_stop_test": "PASS isolated32x32pixelclip interrupted after actualframe; no userappsignalled",
+      "video_tests": "Mocked media/resolver/processes; no network, installs or publicvideo retrieval",
+      "independent_fresh_review": "PASS; ownerIDoverflow and stale contended-cache expiry covered",
+      "other_distributable_files_verified_unchanged": 2504,
+      "limits": [
+        "Running userdesktop preserved; nextfullrestart loads newhost/QML statusbindings",
+        "Actual screen capture and crossprocess state exercised; oldrunningappbadge not claimed visuallyupgraded",
+        "Observation fps describes supplied images, not modelreasoning/audioanalysis",
+        "No credentials, packages, OSsettings or GitHubpublication"
+      ]
+    },
+    "ggw_complete_patch_2026_10_25": {
+      "date": "2026-10-25",
+      "result": "PASS",
+      "scope": "Complete final distributable delta since previous GG-W main patch",
+      "saved_sessions_reviewed": 3,
+      "changed_files": 108,
+      "checkout_regression_scripts": 57,
+      "regressions": [
+        {
+          "test": "test_crypto_bots.py",
+          "status": "PASS",
+          "tests": null,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_chart_lifecycle.py",
+          "status": "PASS",
+          "tests": 8,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_contract.py",
+          "status": "PASS",
+          "tests": null,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_design.py",
+          "status": "PASS",
+          "tests": 1,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_desk.py",
+          "status": "PASS",
+          "tests": null,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_engine_state.py",
+          "status": "PASS",
+          "tests": 8,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_flash_arb.py",
+          "status": "PASS",
+          "tests": null,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_host.py",
+          "status": "PASS",
+          "tests": null,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_hybrid.py",
+          "status": "PASS",
+          "tests": null,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_indicators.py",
+          "status": "PASS",
+          "tests": null,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_keys_windows.py",
+          "status": "PASS",
+          "tests": 8,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_lab_windows.py",
+          "status": "PASS",
+          "tests": 9,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_market_refresh.py",
+          "status": "PASS",
+          "tests": 16,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_optimal.py",
+          "status": "PASS",
+          "tests": null,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_paper.py",
+          "status": "PASS",
+          "tests": 14,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_portfolio.py",
+          "status": "PASS",
+          "tests": 11,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_pump_accounts.py",
+          "status": "PASS",
+          "tests": 18,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_pump_integration.py",
+          "status": "PASS",
+          "tests": 1,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_pump_paper.py",
+          "status": "PASS",
+          "tests": 6,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_pump_quotes.py",
+          "status": "PASS",
+          "tests": 12,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_pump_runtime.py",
+          "status": "PASS",
+          "tests": 25,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_pump_stress.py",
+          "status": "PASS",
+          "tests": 6,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_pump_tx.py",
+          "status": "PASS",
+          "tests": 8,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_pump_ui.py",
+          "status": "PASS",
+          "tests": 1,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_reliability.py",
+          "status": "PASS",
+          "tests": 17,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_research_quality.py",
+          "status": "PASS",
+          "tests": 8,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_research_quality_factory.py",
+          "status": "PASS",
+          "tests": 7,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_state_atomic.py",
+          "status": "PASS",
+          "tests": 8,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_strategy_factory.py",
+          "status": "PASS",
+          "tests": null,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_trader.py",
+          "status": "PASS",
+          "tests": null,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_ui_refresh.py",
+          "status": "PASS",
+          "tests": 2,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_ui_runtime.py",
+          "status": "PASS",
+          "tests": 8,
+          "skipped": 0
+        },
+        {
+          "test": "test_crypto_vol.py",
+          "status": "PASS",
+          "tests": null,
+          "skipped": 0
+        },
+        {
+          "test": "test_polymarket_research.py",
+          "status": "PASS",
+          "tests": null,
+          "skipped": 0
+        },
+        {
+          "test": "test_app_audio_idle.py",
+          "status": "PASS",
+          "tests": 5,
+          "skipped": 0
+        },
+        {
+          "test": "test_chat_shutdown.py",
+          "status": "PASS",
+          "tests": 4,
+          "skipped": 0
+        },
+        {
+          "test": "test_desktop_idle_load.py",
+          "status": "PASS",
+          "tests": 1,
+          "skipped": 0
+        },
+        {
+          "test": "test_resident_chat_lifecycle.py",
+          "status": "PASS",
+          "tests": 7,
+          "skipped": 0
+        },
+        {
+          "test": "test_startup_shutdown.py",
+          "status": "PASS",
+          "tests": 7,
+          "skipped": 0
+        },
+        {
+          "test": "test_terminal_input_backpressure.py",
+          "status": "PASS",
+          "tests": 4,
+          "skipped": 0
+        },
+        {
+          "test": "test_terminal_snapshot_backpressure.py",
+          "status": "PASS",
+          "tests": 7,
+          "skipped": 0
+        },
+        {
+          "test": "test_utility_idle_load.py",
+          "status": "PASS",
+          "tests": 3,
+          "skipped": 0
+        },
+        {
+          "test": "test_windows_telemetry.py",
+          "status": "PASS",
+          "tests": 2,
+          "skipped": 0
+        },
+        {
+          "test": "test_windows_telemetry_sampling.py",
+          "status": "PASS",
+          "tests": 10,
+          "skipped": 0
+        },
+        {
+          "test": "test_tmog_responsiveness.py",
+          "status": "PASS",
+          "tests": 7,
+          "skipped": 0
+        },
+        {
+          "test": "test_tmog_visual_damping.py",
+          "status": "PASS",
+          "tests": 5,
+          "skipped": 0
+        },
+        {
+          "test": "test_tmog_background_activity.py",
+          "status": "PASS",
+          "tests": 2,
+          "skipped": 0
+        },
+        {
+          "test": "test_tmog_numeric_labels.py",
+          "status": "PASS",
+          "tests": 1,
+          "skipped": 0
+        },
+        {
+          "test": "test_tmog_numeric_readings.py",
+          "status": "PASS",
+          "tests": 7,
+          "skipped": 0
+        },
+        {
+          "test": "test_windows_vision_activity.py",
+          "status": "PASS",
+          "tests": 15,
+          "skipped": 0
+        },
+        {
+          "test": "test_windows_vision.py",
+          "status": "PASS",
+          "tests": 14,
+          "skipped": 0
+        },
+        {
+          "test": "test_live_eyes_status_ui.py",
+          "status": "PASS",
+          "tests": 3,
+          "skipped": 0
+        },
+        {
+          "test": "test_live_eyes_video_activity.py",
+          "status": "PASS",
+          "tests": 11,
+          "skipped": 0
+        },
+        {
+          "test": "test_chat_surface_host.py",
+          "status": "PASS",
+          "tests": null,
+          "skipped": 0
+        },
+        {
+          "test": "test_terminal_grid.py",
+          "status": "PASS",
+          "tests": null,
+          "skipped": 0
+        },
+        {
+          "test": "test_window_chrome.py",
+          "status": "PASS",
+          "tests": 1,
+          "skipped": 0
+        },
+        {
+          "test": "test_windows_desktop.py",
+          "status": "PASS",
+          "tests": 1,
+          "skipped": 0
+        }
+      ],
+      "source_integrity": "All non-metadata application sources match shared workspace; original TMOG renderer files unchanged",
+      "distribution": "Catalog allowlist only; no sessions, credentials, captures, local measurements, external installations or OS settings",
+      "restart": "Full application restart required; running user desktop remains open"
     }
   },
   "verification_before_2026_10_21": {

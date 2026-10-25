@@ -367,5 +367,35 @@
     },
     "native_libraries": "backend/native/windows-x86_64 or windows-arm64",
     "linux_workers": "Configured Podman Linux VM; no host fallback without isolation"
+  },
+  "crypto_runtime": {
+    "openssl": {
+      "discovery": "GG_OPENSSL_BINARY, PATH, installed Git for Windows",
+      "observed_version": "3.5.7",
+      "source": "https://docs.openssl.org/3.0/man1/openssl-pkeyutl/"
+    },
+    "solana_validator": {
+      "windows_status": "NOT_INSTALLED_NOT_VERIFIED",
+      "windows_installation": "https://solana.com/docs/intro/installation",
+      "scope": "Optional WSL/Linux local validator; not installed by CRYPTO optimization"
+    },
+    "public_spot_data": {
+      "SOLUSDT": "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints",
+      "KASUSDT": "https://www.gate.com/en-us/docs/developers/apiv4/#market-candlesticks",
+      "quote_currency": "USDT; USD valuations are labelled estimates"
+    },
+    "pump_research": {
+      "implementation": "Independent Python; no installed trading SDK/framework",
+      "official_interface_commit": "639b87fb45c3adeffa6f7c4a1bf0cb85e392bf22",
+      "interface_facts": "config/crypto-pump-instructions.json",
+      "protocol_provenance": "config/crypto-pump-protocol.json",
+      "arithmetic_references": {
+        "pump-sdk": "4.3.1",
+        "pump-swap-sdk": "2.2.0"
+      },
+      "rpc": "Read-only https://api.mainnet-beta.solana.com; unsigned simulateTransaction; no send/sign",
+      "research_review": "docs/CRYPTO-PUMP-AND-RESEARCH-2026-10-25.txt",
+      "new_runtime_dependencies": []
+    }
   }
 }

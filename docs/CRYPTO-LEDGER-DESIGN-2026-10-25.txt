@@ -1,0 +1,185 @@
+GG AI DESKTOP — CRYPTO / OBSIDIAN LEDGER
+2026-10-25
+
+URSPRUNGLIG AVSIKT
+Gå igenom hela CRYPTO-ytan och dess wallet/statusruta. Studera etablerade
+kryptotjänsters bilder, UI och UX och förbättra den befintliga native-appen
+med ett sammanhängande Obsidian Ledger-uttryck och användbara funktioner.
+
+FASTSTÄLLD VISUELL RIKTNING
+Användarens precisering: samma grå Obsidian/Ledger-tema som hela programmet,
+med ljusa tunna ramar, vita monospaceramtexter och en känsla av NORAD på
+1960-talet. Flikar, rubriker och kontroller ska följa den befintliga appen.
+Färgad text, små indikatorer och grafdata får fungera som accenter. Hela
+knappar och större ytor ska inte fyllas med accentfärg.
+
+Beslut: GgFrame/GgButton/GgField och TMOG-vyn är lokala designreferenser.
+CryptoButton behåller native tangentbordsstöd men använder samma neutrala
+ytor och grå konturlinjer som appens andra knappar. Grå val-/fokusmarkering
+kontrolleras genom verkligt QML-rendrade kontrolltillstånd, inte bara en
+genomsökning av färgkonstanter.
+
+RESEARCH OCH FYND
+Ett representativt urval av handelsplattformar, wallets och swapverktyg studerades.
+Officiella guider och produktbilder från Coinbase, Kraken och Phantom granskades
+visuellt. Binance, TradingView, Jupiter och Uniswap bidrog med dokumenterade
+flöden för handel, marknadskontext, prisgränser och riskinformation.
+Detta är en designgenomgång, inte ett fullständigt test av dessa tjänster.
+Samtliga sju tidigare källsidor återbesöktes i den kompletterande rundan.
+
+- Coinbase Advanced: tydlig hierarki mellan valt instrument, marknadsdata,
+  prisgraf och handlingar. GG använder tydligare värde/prisfält och grupperade
+  arbetsytor; ingen orderbok fylls med påhittade data.
+  https://www.coinbase.com/advanced-trade/tutorials
+  Officiell produktbild:
+  https://images.ctfassets.net/o10es7wu5gm1/5fYI5wiCvQsuQnhY8Mi76W/6676911ec1f90eeff16e511f5c6b64e0/advanced_trading_2.png
+
+- Kraken Pro: beständig marknadskontext, tydliga balansfält och förklaringar
+  nära verktygen. GG visar nät/läge ovanför varje sida och använder namn och
+  verktygstips även när sidomenyn är hopfälld.
+  https://support.kraken.com/articles/kraken-pro-trading-interface-guide?mode=consumerapp
+  Officiell grafbild:
+  https://assets-cms.kraken.com/images/51n36hrp/facade/b5158704ab779af5df4d60499e7b62f7ea439c21-808x784.png?fit=min&w=1536
+
+- Binance Spot: separat instrumentval, graf, handlingar och historik.
+  GG låter kontroller radbrytas i smala fönster och håller historiken läsbar.
+  https://www.binance.com/en/academy/articles/your-guide-to-binance-spot-trading
+
+- TradingView: inmatning, förhandsgranskning och resultat är separata steg.
+  GG:s befintliga offert, osignerade simulering och paperåtgärd får egna tydliga
+  grupper. Ingen funktion för skarp orderläggning har lagts till.
+  https://www.tradingview.com/support/solutions/43000786671-how-to-place-an-order-on-tradingview/
+
+- Phantom: från tillgångslistan till tokendata, prisgraf och säkerhetsuppgifter.
+  GG:s tillgångar kan sökas efter symbol, namn eller mint och öppna samma
+  Pump-inspektion som walletmenyn använder.
+  https://phantom.com/learn/blog/charts-in-phantom
+  Officiell produktbild:
+  https://sanity-proxy-v2.phantom.app/images/3nm6d03a/production/5fd60b2d75a7f6dda6b0633e2bdd52595da1fcb6-2160x2160.png
+
+- Jupiter och Uniswap: tydligt netto, slippage, prisinverkan och riskuppgifter.
+  GG grupperar befintliga avgifter, gränser, stressrader och riskflaggor.
+  Risker beskriver observationer; en token framställs inte som säker genom en
+  dekorativ grön markering.
+  https://academy.jup.ag/lessons/jupiter-swap
+  https://support.jup.ag/
+  https://blog.uniswap.org/new-token-warnings
+  https://support.uniswap.org/hc/en-us/articles/8671539602317-What-is-price-impact
+
+KASPA — KOMPLETTERANDE RESEARCH
+Kaspa.orgs officiella wallet-finder har elva listposter: CLI, Kaspa NG desktop,
+Kaspa NG web, KaspaCom, Kaspium, Kastle, KasWare, Ledger, OneKey, SafePal och
+Tangem. Offentliga projekt-/dokumentationssidor granskades på översiktsnivå.
+Detta betyder inte att samtliga interaktiva wallets eller alla Kaspa-sidor på
+internet har testats. Inga plånböcker skapades, importerades eller installerades.
+https://kaspa.org/hodl
+
+Starkaste estetiska träffen är Kaspa NG:s officiella produktbild: grå ramar,
+mörka ytor, ljus text, diskreta flikar och begränsade färgade mätserier.
+Den officiella temakoden använder ljusgrå standardtext, vita starka värden,
+grå grafkonturer och ett neutralt markeringsläge. Slutsatsen att detta kan vara
+walletversionen användaren minns är en tolkning, inte en bekräftad identitet.
+https://aspectron.org/images/projects/kaspa-ng-screen-01.png
+https://raw.githubusercontent.com/aspectron/kaspa-ng/master/core/src/egui/theme/color.rs
+https://kaspa-ng.org/
+
+KDX och gamla Web Wallet bidrar med avgränsade flikar, saldon och servicefält.
+De granskade officiella bilderna visar ljust/turkost tema. Utvecklaren markerar
+dem som äldre, ej underhållna verktyg. De används här som historisk UI-referens.
+https://kdx.app/
+https://kdx.app/resources/images/kdx-ui-01.png
+https://aspectron.org/images/projects/kaspa-pwa-a.png
+https://aspectron.org/en/projects/kaspa.html
+
+Kaspiums mörka tema har grå grundytor/vit text men större turkosa accentfält.
+Grupperingen är användbar; dessa accentfyllda kontroller förs inte över till GG.
+https://kaspium.io/
+https://raw.githubusercontent.com/azbuky/kaspium_wallet/main/lib/themes/kaspium_dark_theme.dart
+
+KasWare, Kastle och KaspaCom ger referenser för konto-, token- och adressflöden.
+Deras fullständiga interaktiva UI var inte tillgängligt i alla publika vyer.
+KasWares officiella dokumentation anger www.kasware.xyz som webbplats.
+https://docs.kasware.xyz/wallet/readme.md
+https://www.kasware.xyz/
+https://kastle.cc/
+https://wallet.kaspa.com/
+
+Hårdvaruwallets granskades genom offentliga produktsidor; OneKeys appbild
+inspekterades. De är mindre relevanta för GG:s kontrollrumstema än Kaspa NG.
+https://www.ledger.com/
+https://onekey.so/
+https://www.safepal.com/
+https://tangem.com/
+
+BESLUT OCH GENOMFÖRDA ÄNDRINGAR
+- Native Qt Quick behålls. Inga nya paket, webbinbäddningar eller fjärrskript.
+  Produktbilderna används som researchreferenser och distribueras inte med appen.
+- Obsidian Ledger: svart/grå bakgrund, ljusgrå ramar och vita monospaceramtexter.
+  Valmarkeringar är grå. Accenttext och små mät-/statusdetaljer får behålla färg.
+- Gemensamma GgFrame används för portfölj, graf, Pump-sektioner, paperkonton,
+  kandidater, analysroller och aktivitet. Menyn har samma grå ikonrader som TMOG.
+- Primärknappar, walletens nätval och paperkontroller är neutrala även vid
+  hover, klick, val, fokus och inaktivt läge. Guld-/brunfyllda knappar har tagits bort.
+- Gemensamma CryptoButton/CryptoField begränsas till CRYPTO. Övriga appytors
+  delade kontroller ändras inte. Hover, synlig fokusram och tangentbord stöds.
+- Samtliga tio navvyer har gemensam rubrik, funktionsbeskrivning och lägesfält.
+  Menyn fälls ihop automatiskt i smala fönster. Aktivt menyval består även vid
+  upprepade klick på samma sida.
+- Portfölj: tydligare innehavsvärde, marknadspris och datatäckning. Okänt saldo
+  skiljs från numeriskt nollsaldo. TESTNET felmärks inte som LOCALNET.
+- Tillgångar: direkt sökning, symbol-/värdesortering, okända värden sist vid
+  värdesortering, full kvantitet i detaljtext och explicita prisstatusar.
+- Tokenval använder befintligt cryptoPumpInspect-anrop och förifyller mintfältet
+  när den auktoritativa datan ändras. Ändrad inmatning behåller offertskydden.
+- Portföljgrafens utrymme anpassas så att en hel tillgångsrad ryms vid de testade
+  smala storlekarna. Kontoverktyg och långa backtestdetaljer rullas separat.
+- Trader: tydligare paperkonton med kontovärde, resultat, innehav och kassa.
+  Start-/pausåtgärder respekterar gemensamt upptaget läge.
+- Pump: sektioner för inspektion, token/risk, nettoutfall, kostnadsstress,
+  osignerad simulering och paperhistorik. Tekniska adresser/loggar kan fällas ut.
+- Wallet: nät/läge, saldo, offentlig adress, tillgångar och kontohantering grupperas.
+  Kopiering ger återkoppling och samma statusbindning används genom hela flödet.
+- Höger CRYPTO-ruta visar kompakt saldo, konto, RPC-/Pump-status och tillgångar.
+  Ett saknat nät framställs inte som ett valt testnät.
+- Aktivitet: separata händelsekort med mode, UTC-tid, resultat och markerbar
+  transaktionsreferens. Filter visar fel och obekräftade/avvisade resultat.
+- Provideretiketter och diagnostik i huvudsidan visas som vanlig text.
+
+VERIFIERING
+- Ny isolerad test_crypto_design.py: riktiga QML-mus-/tangentbordshändelser,
+  upprepat menyval, sökning/Escape, sortering, exakt kvantitet, native asset- och
+  intervallval, tillgång→Pump, busy-skydd och saknade saldon.
+- Utökad kontroll av normal-, primär-, valt-, hover-, nedtryckt-, fokus- och
+  inaktivt knappläge. Verkliga wallet-/paperknappar och delade GgFrame-sektioner
+  ingår; grå ytor och synligt tangentbordsfokus bekräftas i körande QML.
+- Alla tio navsidor kontrolleras för horisontell åtkomst vid totalt 430px bredd.
+  Portföljens graf/lista/verktyg kontrolleras vid höjd 620 och 650px, med öppna
+  och stängda kontoverktyg. Långa backtestdetaljer behåller åtkomlig graf.
+- Befintliga test_crypto_ui_refresh.py, test_crypto_pump_ui.py,
+  test_crypto_pump_integration.py och test_crypto_portfolio.py används också.
+  Pump kontrolleras med riktig tjänst och offline-RPC; inga riktiga affärer.
+- Delad polling: två läsningar under 2,2 sekunder med flera samtidiga jobb.
+  Gömd CRYPTO-yta fortsätter inte med sin UI-polling. Bakgrundstjänsterna behåller
+  sin tidigare livscykel; inga nya ständiga poll- eller omritningsloopar införs.
+- Grafen behåller 20 000 källpunkter men skickar begränsat antal extrema
+  ritpunkter till den trådade Canvas-ytan. Exakta hoverdata bevaras.
+- Wallet kontrollerad vid 260/328px, portföljkomponenter vid 300–720px.
+- Förhandsvisningsverktyget laddar Windows-teckensnitt korrekt och renderar
+  23 syntetiska sid-/statusvarianter för visuell granskning utan användardata.
+- Full Windows-start med färsk isolerad användarstate godkänd: 14,560 sekunder
+  vid den avslutande grå temakontrollen.
+
+ANTAGANDEN OCH PRAKTISKA GRÄNSER
+Grå neutral kontrollrumsestetik och gemensamma ram-/textkomponenter är den
+fastställda Ledger-identiteten. Ingen extern visuell klon eller nya börs-/
+walletintegrationer behövdes för denna uppgift.
+Mainnet behåller sitt läs-/simuleringsläge. Risk-, offert- och signeringsgränser
+utökas inte av den nya utformningen. Kaspa-saldot är fortsatt den lokala
+covenantsimuleringen, inte ett bevis på en ansluten liveplånboks balans.
+
+Visuella kontroller använder syntetiska data och bevisar inte konstant 60Hz
+på varje dator eller skärm. Mätbar regressionskontroll och låg vilobelastning
+prioriteras framför löftet att allt alltid är felfritt. Inga nya inloggningar,
+credentials eller installationer behövdes. Uppdateringen är lokal; GitHub-
+publicering ingick inte i denna uppgift. Starta om GG helt för att få samtliga
+komponenter i huvudfönster, walletmeny och sidopanel samtidigt.

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from backend.application_paths import STATE_ROOT
+from backend.crypto_contract import write_state_json, read_state_json
 
 import json
 from pathlib import Path
@@ -51,22 +52,17 @@ def format_kas(sompi: int | None) -> str:
 def load_json(name: str, default: dict[str, Any] | None = None) -> dict[str, Any]:
     path = ensure_state_dir() / name
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError, UnicodeError):
+        payload = read_state_json(path, max_bytes=1024 * 1024)
+    except FileNotFoundError:
         return dict(default or {})
-    return payload if isinstance(payload, dict) else dict(default or {})
+    except (OSError, ValueError):
+        raise ValueError('KASPA_STATE_CORRUPT') from None
+    return payload
 
 
 def save_json(name: str, payload: dict[str, Any]) -> dict[str, Any]:
     path = ensure_state_dir() / name
-    path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    try:
-        path.chmod(0o600)
-    except OSError:
-        pass
+    write_state_json(path, payload)
     return payload
 
 

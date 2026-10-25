@@ -172,7 +172,8 @@ class TmogResponsivenessTests(unittest.TestCase):
     def test_isolated_workers_return_real_data_and_exit_on_shutdown(self):
         sampler = TmogSampler(isolate=True)
         try:
-            self.wait_until(lambda: json.loads(sampler.pulse()).get("mem_total_kb", 0) > 0, timeout=5)
+            self.wait_until(lambda: bool(json.loads(sampler.pulse()).get("cores"))
+                            and not json.loads(sampler.pulse()).get("cpu_pending", True), timeout=5)
             live = json.loads(sampler.pulse())
             self.assertEqual(live["platform"], "Windows")
             self.assertIn("cpu_busy", live)

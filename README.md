@@ -41,6 +41,7 @@ in 6.12.0 when a QObject-returning slot returns an absent optional object.
 The launcher uses UTF-8 and Qt's Windows platform plugin and Basic controls.
 The original Fedora launch scripts remain available.
 
+
 RESEARCH contains backlog, evidence, source/method memory, web-skill checks,
 SQL previews, recorded evaluations, WASM, reverse engineering and game workflows.
 Failed saves keep drafts, jobs support cancellation, and errors retain the last
@@ -131,8 +132,9 @@ TMOG's 60 Hz UI reads prepared telemetry instead of querying Windows from
 the render loop. Meter sampling and page inventories use separate bounded
 local workers on Windows, so even system calls that hold Python's GIL cannot
 freeze the desktop. IO rates use 100 ms counter windows; adapter names are
-cached. Diagram rasterization uses Qt's threaded Canvas path. Collection
-pauses without visible consumers and its workers stop with the desktop.
+cached. Diagram rasterization uses Qt's threaded Canvas path. Background
+collection stays current independent of focus; hidden painting can pause.
+Owned workers stop with the desktop.
 
 Windows uses ConPTY for terminals and psutil for CPU, memory, process,
 network and disk measurements. State defaults to
@@ -174,13 +176,16 @@ thread. Previews are at most 960×540; the image ring is bounded to 32 MiB and
 six seconds. The worker has a 256 MiB process memory limit and an eight-second
 deadline. CLI images use an inline MCP `content` envelope rather than disk
 paths. `--region X Y WIDTH HEIGHT` selects primary-screen physical pixels.
-`start` reports readiness; `status` is off between observations, and Windows
-does not retain frames for `--age`. The Linux capture service is unchanged.
+`start` reports readiness. The shared activity indicator shows active capture
+or video processing, then a three-second recent-observation cue. `stop` cancels
+owned work; Windows does not retain frames for `--age`. The Linux capture
+service is unchanged.
 
 TMOG keeps its existing 60 Hz telemetry and display scheduling, with a
 140 ms time constant for displayed meters (about 0.32 seconds to reach 90%
-of a new value). Disk/network motion uses a critically damped spring. Raw
-telemetry and backend recordings remain unchanged. An already open desktop
+of a new value). CPU/core and disk/network motion use the same existing
+critically damped spring. Windows hardware probes have separate bounded
+intervals; raw observations are kept distinct from display motion. An already open desktop
 loads the new QML after restarting the app.
 
 The Windows radio player reopens an interrupted live stream at most three
@@ -192,8 +197,7 @@ pending retries. Local music and downloaded files do not reconnect.
 
 **Remaining Windows work:** QML preflight and the Solana validator are not
 verified Windows features. RESEARCH uses the verified Windows AppContainer;
-SITE supports the separately installed and verified native PHP/MariaDB tools
-described in the patch notes. Podman's presence does not make local AI
+SITE supports separately installed and verified native PHP/MariaDB tools. Podman's presence does not make local AI
 or isolated tools ready: the configured immutable container images and model
 weights must also exist. External application discovery has Windows support;
 GIMP embedding has not been visually verified. Blender EXT now uses a Windows
@@ -242,6 +246,67 @@ PYTHON="$PWD/.venv/bin/python" ./run-gg-ai-desktop.sh
 Install and sign in to Codex for GPT TUI or Grok Build for GROK TUI. External
 provider plugins are cataloged in `config/dependencies.json` and installed
 through their respective provider clients.
+
+## Patch notes · 2026-10-25 · CRYPTO, background telemetry and live-eyes
+
+This patch includes the complete distributable source delta since the previous
+GG-W patch, checked against the three latest saved sessions and current GitHub
+sources. It ships the final implementations described below.
+
+- CRYPTO, the wallet menu and status rail share a bounded asynchronous lane.
+  Network requests and large serialization stay outside the GUI thread. Chart
+  refreshes discard superseded results, preserve extrema and expose stale/error
+  states. Account, signer, atomic-state and LAB process ownership checks recover
+  without erasing existing ledgers or silently substituting zero balances.
+- PUMP adds mint/curve/PumpSwap inspection, Token-2022 risk flags, exact wallet-net
+  quotes, dynamic fee/slippage bounds and six hypothetical stress scenarios.
+  Bounded unsigned RPC simulation is separate from an isolated paper ledger with
+  exact units, atomic saves and one-use observations. It never signs or broadcasts
+  mainnet transactions. Unsupported layouts/routes/extensions fail explicitly.
+  Factory research adds historical block-bootstrap uncertainty and executable
+  prefix checks after freezing strategy selection and its held-out result.
+- CRYPTO, wallet and rail follow the existing gray Obsidian/Ledger theme: light
+  frame legends, monospace labels, neutral controls and small data accents.
+  Holdings search/sort, token-to-Pump inspection, keyboard actions, narrow layouts
+  and scrollable reports use the shared native UI without a new package stack.
+- Desktop shutdown stops owned timers and resources, with a 15-second fallback
+  for a process stuck after an accepted close. Terminal output permits one
+  expanded snapshot in flight and bounds unread GUI delivery without dropping
+  UTF-8 or the final child output. Idle chat retirement keeps shared services.
+- Real telemetry, lamps and active audio meters keep updating while GG is
+  unfocused, covered or minimized. Hidden/unchanged canvases avoid redundant
+  paints, silent audio skips FFT work and editor position follows text/cursor
+  events. Background data production is independent of painting.
+- Windows probes have separate bounded sampling intervals and valid baselines.
+  TMOG retains its original approximately 60 Hz display timer, curve geometry,
+  history axis and damped motion. CPU/core plots reuse the existing disk/network
+  spring; its equations and constants remain unchanged. Numeric labels show
+  current measurements, preserve valid zero and show `--` for failed/stale data.
+  Compact core legends, MHz/watt precision and process/sensor labels are corrected.
+- The shared ÖGON indicator follows real Windows CLI/worker activity: FÅNGAR,
+  VIDEO, a three-second NYSS cue or FEL. Metadata uses a bounded RAM-only channel;
+  images retain RAM/stdout transport. Stop cancels owned work and late replies
+  cannot relight the indicator. Completed observations do not claim current fps.
+
+Research and implementation details: [CRYPTO runtime](docs/CRYPTO-RESEARCH-2026-10-24.txt),
+[Pump and research](docs/CRYPTO-PUMP-AND-RESEARCH-2026-10-25.txt),
+[Ledger design](docs/CRYPTO-LEDGER-DESIGN-2026-10-25.txt),
+[memory and background activity](docs/DESKTOP-MEMORY-AND-BACKGROUND-2026-10-25.txt),
+[TMOG sampling and labels](docs/DESKTOP-LOAD-DIAGNOSIS-2026-10-25.txt) and
+[live-eyes](docs/LIVE-EYES-INDICATOR-2026-10-25.txt).
+
+Verification uses isolated offline crypto/state/signing fixtures, real QML
+controls, shutdown/backpressure and telemetry regressions, Windows shared-memory
+activity tests and fresh full desktop startup. Screen observation/progress/stop
+were exercised with real capture; video tests use mocked media. Exact release
+check results are recorded in `WINDOWS-PORT.json`. Tests establish the stated
+behaviors, not flawless timing on every computer or live trading correctness.
+The optional local Solana validator remains unverified; no new framework or
+vendor runtime is bundled. No private sessions, workstation inventories, captures,
+credentials, personal assets or per-computer settings are published.
+
+Update with `git pull` in GG-W, then close and restart the entire desktop.
+RELOAD alone does not replace the Python backend or persistent window components.
 
 ## Patch notes · 2026-10-24 · Windows RESEARCH and chat clipboard
 

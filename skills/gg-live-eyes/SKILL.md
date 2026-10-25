@@ -48,8 +48,21 @@ Windows CLI images return an MCP-style `content` JSON envelope directly over
 stdout. Parse that result inside a tool adapter and display each image block
 with `image(...)`; print only the text metadata, never the base64 payload.
 Do not pass this output to a disk image file. MCP also delivers images directly.
-`start` reports `ready`, not `live`; `status` reports `off` between observations
-because no daemon is running. A delivered observation reports its actual fps,
+`start` reports `ready`, not `live`. During a request, `status` reports
+`capturing`; the app shows **ÖGON · FÅNGAR**. After a successful request it shows
+**ÖGON · NYSS** for three seconds (`observed`), then `off`. This short cue makes
+single-frame observations visible without pretending a capture daemon is live.
+Current fps/frame age are cleared after completion; explicitly named last-
+observation fields describe the completed request. A failed request briefly
+shows `error`. The stop control cancels active Windows screen workers and clears
+the cue; stopped requests cannot publish a late success.
+The desktop and CLI share at most 16 KiB of activity metadata in a named Windows
+RAM mapping. It contains no images, URLs or credentials and creates no image
+file or background capture service. The Windows video decoder workflow below
+also publishes activity as **ÖGON · VIDEO**; stop cancels its owned resolver/
+decoder. It is distinct from desktop screen capture and does not imply audio
+analysis or a continuously watched screen.
+A delivered observation reports its actual fps,
 coverage, gaps and capture timestamps. On Windows `--age` is unsupported since
 no frames survive the request. Inspect chronological clip sheets, or request a
 fresh detail frame instead.

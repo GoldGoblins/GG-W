@@ -102,12 +102,14 @@ def _pad32(raw: bytes) -> bytes:
     return raw
 
 
-def send_self_transfer(rpc_call, lamports: int) -> dict[str, Any]:
+def send_self_transfer(rpc_call, lamports: int, *, expected_pubkey: str | None = None) -> dict[str, Any]:
     if isinstance(lamports, bool) or not isinstance(lamports, int) or not 0 < lamports < 2**64:
         raise ValueError("CRYPTO_SIGNAL_SIZE")
     pubkey = load_test_pubkey()
     if not pubkey:
         raise RuntimeError("CRYPTO_NO_SIGNER")
+    if expected_pubkey is not None and str(expected_pubkey) != pubkey:
+        raise RuntimeError("CRYPTO_SIGNER_MISMATCH")
     from_pub = _pad32(b58decode(pubkey))
     last_fault = "CRYPTO_RPC"
     for attempt in range(6):

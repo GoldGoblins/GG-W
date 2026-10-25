@@ -4,6 +4,7 @@ from __future__ import annotations
 from collections import deque
 from functools import lru_cache
 import os
+import math
 import platform
 import socket
 import time
@@ -13,65 +14,203 @@ import psutil
 
 SCHEMA = "gg.ai-desktop.tmog-snapshot.v3"
 _samples: dict[str, deque] = {}
+_history_stamps: dict[str, float] = {}
+_history_clock: float | None = None
+_UNSTAMPED = object()
 _previous_io = None
 _io_rates = (0.0, 0.0, 0.0, 0.0)
-_last_pulse_at = 0.0
-_interface = (0.0, "")
+_last_pulse_at: float | None = None
+_interface = (None, "")
+_probe_cache: dict[str, dict[str, Any]] = {}
+CPU_SAMPLE_SECONDS = 0.1
+MEMORY_SAMPLE_SECONDS = 0.25
+FREQUENCY_SAMPLE_SECONDS = 1.0
+BATTERY_SAMPLE_SECONDS = 5.0
+IO_SAMPLE_SECONDS = 0.1
 _process_details: dict[int, tuple[float, float, dict]] = {}
 _cached_snapshot = None
 
 
-def _history(name: str, value: float) -> list[float]:
+def _history(name: str, value: float, *, sampled_at=_UNSTAMPED) -> list[float]:
     samples = _samples.setdefault(name, deque(maxlen=120))
+    if value is None or not math.isfinite(float(value)):
+        return list(samples)
+    if sampled_at is not _UNSTAMPED:
+        if (isinstance(sampled_at, bool) or not isinstance(sampled_at, (int, float))
+                or not math.isfinite(sampled_at) or sampled_at < 0):
+            return list(samples)
+        if _history_stamps.get(name) == sampled_at:
+            return list(samples)
+        _history_stamps[name] = float(sampled_at)
     samples.append(float(value))
     return list(samples)
 
 
-def pulse() -> dict[str, Any]:
-    global _previous_io, _io_rates, _last_pulse_at, _interface
-    now = time.monotonic()
+def _probe(name: str) -> dict[str, Any]:
+    return _probe_cache.setdefault(name, {
+        "value": None, "sampled_at": None, "attempted_at": None, "error": None,
+    })
+
+
+def _due(now: float, previous: float | None, period: float) -> bool:
+    # A tiny comparison tolerance includes exact decimal mock-clock boundaries.
+    return previous is None or now - previous + 1e-9 >= period
+
+
+def _read_probe(name: str, period: float, now: float, read) -> dict[str, Any]:
+    sample = _probe(name)
+    if _due(now, sample["attempted_at"], period):
+        sample["attempted_at"] = now
+        try:
+            value = read()
+        except (OSError, psutil.Error, ValueError, TypeError, AttributeError) as exc:
+            # Preserve the last successful observation and its timestamp.
+            sample["error"] = type(exc).__name__
+        else:
+            sample.update(value=value, sampled_at=now, error=None)
+    return sample
+
+
+def _read_cpu(now: float) -> dict[str, Any]:
+    sample = _probe("cpu")
+    if not _due(now, sample["attempted_at"], CPU_SAMPLE_SECONDS):
+        return sample
+    sample["attempted_at"] = now
+    try:
+        values = psutil.cpu_percent(interval=None, percpu=True)
+        if not isinstance(values, (list, tuple)) or not values or len(values) > 4096:
+            raise ValueError("INVALID_CPU_SAMPLE")
+        if any(isinstance(value, bool) or not isinstance(value, (int, float))
+               or not math.isfinite(value) or not 0 <= value <= 100 for value in values):
+            raise ValueError("INVALID_CPU_SAMPLE")
+    except (OSError, psutil.Error, ValueError, TypeError) as exc:
+        sample["error"] = type(exc).__name__
+        # A failed psutil read may have changed its hidden baseline. Prime it
+        # again on recovery instead of publishing a short/invalid interval.
+        sample["baseline_at"] = None
+        return sample
+    baseline_at = sample.get("baseline_at")
+    baseline_count = sample.get("baseline_count")
+    if baseline_count is not None and baseline_count != len(values):
+        sample.update(value=None, sampled_at=None)
+        baseline_at = None
+    if baseline_at is not None and _due(now, baseline_at, CPU_SAMPLE_SECONDS):
+        sample.update(value=list(values), sampled_at=now,
+                      interval_seconds=now - baseline_at)
+    sample.update(baseline_at=now, baseline_count=len(values), error=None)
+    return sample
+
+
+def _read_memory():
     memory = psutil.virtual_memory()
-    cores = psutil.cpu_percent(interval=None, percpu=True)
-    delta = now - _last_pulse_at if _last_pulse_at else 0.0
-    _last_pulse_at = now
-    # Windows adapter enumeration costs about a frame per call on this host.
-    # Read IO counters over a useful 100 ms rate window, then let the 60 Hz UI
-    # follow the measured rate. Adapter names change much less frequently.
-    if _previous_io is None or now - _previous_io[0] >= 0.1:
+    if (memory.total <= 0 or memory.used < 0 or not math.isfinite(memory.percent)
+            or not 0 <= memory.percent <= 100):
+        raise ValueError("INVALID_MEMORY_SAMPLE")
+    return memory
+
+
+def _read_frequency():
+    frequency = psutil.cpu_freq()
+    if frequency is not None and (not math.isfinite(frequency.current)
+            or not math.isfinite(frequency.max) or frequency.current < 0 or frequency.max < 0):
+        raise ValueError("INVALID_FREQUENCY_SAMPLE")
+    return frequency
+
+
+def _read_io(now: float) -> dict[str, Any]:
+    global _previous_io, _io_rates
+    sample = _probe("io")
+    if not _due(now, sample["attempted_at"], IO_SAMPLE_SECONDS):
+        return sample
+    sample["attempted_at"] = now
+    try:
         net = psutil.net_io_counters()
         disk = psutil.disk_io_counters()
         values = (net.bytes_recv, net.bytes_sent,
                   disk.read_bytes if disk else 0, disk.write_bytes if disk else 0)
+        if any(not isinstance(value, int) or isinstance(value, bool) or value < 0 for value in values):
+            raise ValueError("INVALID_IO_SAMPLE")
         io_delta = now - _previous_io[0] if _previous_io else 0.0
         if _previous_io and io_delta > 0:
             _io_rates = tuple(max(0, (value - old) / io_delta)
                               for value, old in zip(values, _previous_io[1]))
         _previous_io = now, values
-    if not _interface[0] or now - _interface[0] >= 5.0:
-        _interface = (now, next((name for name, info in psutil.net_if_stats().items()
-                                if info.isup and "loopback" not in name.lower()), ""))
-    frequency = psutil.cpu_freq()
-    battery = psutil.sensors_battery()
+    except (OSError, psutil.Error, ValueError, TypeError, AttributeError) as exc:
+        sample["error"] = type(exc).__name__
+    else:
+        sample.update(value=_io_rates, sampled_at=now, error=None)
+    return sample
+
+
+def pulse() -> dict[str, Any]:
+    global _previous_io, _io_rates, _last_pulse_at, _interface
+    now = time.monotonic()
+    if _last_pulse_at is not None and now < _last_pulse_at:
+        # Also supports monotonic-clock replacement in tests and driver recovery.
+        # Old future timestamps must not freeze probes or create negative rates.
+        _probe_cache.clear()
+        _previous_io = None
+        _io_rates = (0.0, 0.0, 0.0, 0.0)
+        _interface = (None, "")
+    delta = max(0.0, now - _last_pulse_at) if _last_pulse_at is not None else 0.0
+    _last_pulse_at = now
+    cpu_sample = _read_cpu(now)
+    memory_sample = _read_probe("memory", MEMORY_SAMPLE_SECONDS, now, _read_memory)
+    frequency_sample = _read_probe("frequency", FREQUENCY_SAMPLE_SECONDS, now, _read_frequency)
+    battery_sample = _read_probe("battery", BATTERY_SAMPLE_SECONDS, now, psutil.sensors_battery)
+    _read_io(now)
+    interface_sample = _read_probe("interface", 5.0, now, lambda: next(
+        (name for name, info in psutil.net_if_stats().items()
+         if info.isup and "loopback" not in name.lower()), ""))
+    if interface_sample["sampled_at"] is not None:
+        _interface = (interface_sample["sampled_at"], interface_sample["value"])
+    cores = cpu_sample["value"]
+    memory = memory_sample["value"]
+    frequency = frequency_sample["value"]
+    battery = battery_sample["value"]
+    unavailable = ["gpu_busy", "temp_c", "energy_w", "load_average"]
+    if cores is None:
+        unavailable.extend(("cpu_busy", "cores"))
+    if memory is None:
+        unavailable.extend(("mem_used_kb", "mem_total_kb", "mem_pct"))
+    if frequency is None:
+        unavailable.extend(("mhz", "mhz_max"))
+    if battery_sample["sampled_at"] is None:
+        energy_source = "UNKNOWN"
+    else:
+        plugged = True if battery is None else battery.power_plugged
+        energy_source = "AC" if plugged is True else "BATTERY" if plugged is False else "UNKNOWN"
+    sampled_at = {name: _probe(name)["sampled_at"]
+                  for name in ("cpu", "memory", "io", "frequency", "battery")}
     return {
         "schema": SCHEMA,
         "platform": "Windows",
-        "cpu_busy": round(sum(cores) / len(cores), 2) if cores else 0.0,
-        "cores": cores[:32],
-        "mhz": frequency.current if frequency else 0,
-        "mhz_max": frequency.max if frequency else 0,
+        "cpu_busy": round(sum(cores) / len(cores), 2) if cores is not None else None,
+        "cores": cores[:32] if cores is not None else [],
+        "cpu_pending": cores is None,
+        "cpu_sample_age_ms": round(max(0.0, now - sampled_at["cpu"]) * 1000, 3)
+            if sampled_at["cpu"] is not None else None,
+        "cpu_sample_interval_ms": round(cpu_sample["interval_seconds"] * 1000, 3)
+            if cpu_sample.get("interval_seconds") is not None else None,
+        "mhz": frequency.current if frequency is not None else None,
+        "mhz_max": frequency.max if frequency is not None else None,
         "temp_c": None,
-        "mem_used_kb": memory.used // 1024,
-        "mem_total_kb": memory.total // 1024,
-        "mem_pct": memory.percent,
+        "mem_used_kb": memory.used // 1024 if memory is not None else None,
+        "mem_total_kb": memory.total // 1024 if memory is not None else None,
+        "mem_pct": memory.percent if memory is not None else None,
         "load1": None, "load5": None, "load15": None,
         "net_iface": _interface[1],
         "net_rx_bps": _io_rates[0], "net_tx_bps": _io_rates[1],
         "disk_read_bps": _io_rates[2], "disk_write_bps": _io_rates[3],
         "gpu_busy": None,
         "energy_w": None,
-        "energy_source": "AC" if battery is None or battery.power_plugged else "BATTERY",
+        "energy_source": energy_source,
         "dt": round(delta, 4),
-        "unavailable": ["gpu_busy", "temp_c", "energy_w", "load_average"],
+        "sampled_at": sampled_at,
+        "sample_clock": "monotonic_seconds",
+        "sample_errors": {name: sample["error"] for name, sample in _probe_cache.items()
+                          if sample["error"] is not None},
+        "unavailable": unavailable,
     }
 
 
@@ -199,10 +338,11 @@ def _identity() -> dict[str, str]:
 
 
 def snapshot(page: str = "", *, live: dict[str, Any] | None = None) -> dict[str, Any]:
-    global _cached_snapshot
+    global _cached_snapshot, _history_clock
     kind = str(page or "").strip().upper()
     now = time.monotonic()
-    if _cached_snapshot and _cached_snapshot[1] == kind and now - _cached_snapshot[0] < 0.25:
+    if (_cached_snapshot and _cached_snapshot[1] == kind
+            and 0 <= now - _cached_snapshot[0] < 0.25):
         return _cached_snapshot[2]
     # The page worker reuses the meter lane's latest sample. It never steps
     # that lane's CPU/IO baselines or repeats Windows network enumeration.
@@ -219,8 +359,10 @@ def snapshot(page: str = "", *, live: dict[str, Any] | None = None) -> dict[str,
         "core_count": psutil.cpu_count() or 0,
         "cores": [{"id": index, "pct": pct, "mhz": data["mhz"]}
                   for index, pct in enumerate(data["cores"])],
-        "mem_cached_kb": 0, "mem_avail_kb": memory.available // 1024,
-        "mem_buffers_kb": 0, "mem_shared_kb": 0, "mem_slab_kb": 0,
+        "mem_cached_kb": None, "mem_avail_kb": memory.available // 1024,
+        "mem_buffers_kb": None, "mem_shared_kb": None, "mem_slab_kb": None,
+        "unavailable": list(dict.fromkeys([*(data.get("unavailable") or []),
+            "mem_cached_kb", "mem_buffers_kb", "mem_shared_kb", "mem_slab_kb"])),
         "swap_used_kb": swap.used // 1024, "swap_total_kb": swap.total // 1024,
         "energy": {"watts": None, "source": data["energy_source"]},
         "pressure": {}, "gpus": [], "temps": [], "drivers": [],
@@ -239,8 +381,26 @@ def snapshot(page: str = "", *, live: dict[str, Any] | None = None) -> dict[str,
               "net": (data["net_rx_bps"] + data["net_tx_bps"]) / 1024,
               "disk": (data["disk_read_bps"] + data["disk_write_bps"]) / 1024,
               "mhz": data["mhz"]}
-    for name, value in values.items():
-        data[name + "_hist"] = _history(name, value)
+    observed = data.get("sampled_at")
+    sources = {"cpu": "cpu", "mem": "memory", "net": "io", "disk": "io", "mhz": "frequency"}
+    if isinstance(observed, dict):
+        stamps = [stamp for key, stamp in observed.items() if key in sources.values()
+                  and not isinstance(stamp, bool) and isinstance(stamp, (int, float))
+                  and math.isfinite(stamp) and stamp >= 0]
+        if stamps:
+            clock = max(stamps)
+            if _history_clock is not None and clock < _history_clock:
+                # The isolated page worker may receive a newly primed meter
+                # generation after clock reset. Accept its first observations.
+                _history_stamps.clear()
+            _history_clock = clock
+        for name, value in values.items():
+            data[name + "_hist"] = _history(name, value, sampled_at=observed.get(sources[name]))
+    else:
+        # Older callers have no observation metadata; retain their established
+        # page-query history behavior instead of treating every value as missing.
+        for name, value in values.items():
+            data[name + "_hist"] = _history(name, value)
     for name in ("temp", "gpu", "energy"):
         data[name + "_hist"] = []
     _cached_snapshot = now, kind, data

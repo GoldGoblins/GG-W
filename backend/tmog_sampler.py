@@ -29,6 +29,7 @@ class TmogSampler:
         self._page_wake = threading.Event()
         self._meter_thread: threading.Thread | None = None
         self._page_thread: threading.Thread | None = None
+        self._continuous = False
         self._meter_requested = 0.0
         self._page_requested = 0.0
         self._page = "SUMMARY"
@@ -69,6 +70,21 @@ class TmogSampler:
                 target=self._meters, name="gg-tmog-meters", daemon=True)
             self._meter_thread.start()
 
+    def start(self) -> None:
+        """Keep real meter samples current until close, independent of QML.
+
+        Occluded/minimized windows may stop their Qt animation timers. The
+        desktop owns this single latest-value producer, rather than treating
+        keyboard focus or paint requests as evidence of hardware activity.
+        Expensive page inventories still follow their separate demand lane.
+        """
+        with self._lock:
+            if self._stop.is_set():
+                return
+            self._continuous = True
+            self._start_meters_locked()
+            self._meter_wake.set()
+
     def pulse(self) -> str:
         with self._lock:
             if not self._stop.is_set():
@@ -101,7 +117,7 @@ class TmogSampler:
         while not self._stop.is_set():
             began = time.monotonic()
             with self._lock:
-                active = began - self._meter_requested < IDLE_SECONDS
+                active = self._continuous or began - self._meter_requested < IDLE_SECONDS
             if not active:
                 self._meter_wake.wait(0.25)
                 self._meter_wake.clear()

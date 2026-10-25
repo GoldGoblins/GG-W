@@ -11,6 +11,8 @@ Item {
     property string lastPayload: ""
     property bool painted: false
     property bool live: false
+    property bool pushPending: false
+    property int engineEpoch: 0
 
     function payloadJson() {
         return JSON.stringify({
@@ -21,26 +23,34 @@ Item {
     }
 
     function push() {
-        if (!engineLoader.item)
+        if (!root.visible || !root.live || !engineLoader.item || root.pushPending)
             return
         var raw = root.payloadJson()
         if (raw === root.lastPayload && root.painted)
             return
-        engineLoader.item.runJavaScript(
+        var epoch = root.engineEpoch
+        var engine = engineLoader.item
+        root.pushPending = true
+        engine.runJavaScript(
             "(function(){ return window.setTape ? window.setTape(" + raw + ") : 0 })()",
             function(count) {
+                if (epoch !== root.engineEpoch || engine !== engineLoader.item)
+                    return
+                root.pushPending = false
                 var n = Number(count || 0)
                 root.painted = n > 1
                 if (n > 0)
                     root.lastPayload = raw
                 else
                     root.lastPayload = ""
+                if (raw !== root.payloadJson())
+                    Qt.callLater(root.push)
             }
         )
     }
 
     function fit() {
-        if (!engineLoader.item)
+        if (!root.visible || !root.live || !engineLoader.item)
             return
         engineLoader.item.runJavaScript("window.fitTape ? window.fitTape() : 0")
     }
@@ -73,9 +83,16 @@ Item {
     Loader {
         id: engineLoader
         anchors.fill: parent
-        active: root.live
+        active: root.live && root.visible && root.width > 8 && root.height > 8
         visible: root.visible && root.width > 8 && root.height > 8
         sourceComponent: tapeEngine
+        onActiveChanged: {
+            root.engineEpoch += 1
+            root.pushPending = false
+            root.lastPayload = ""
+            root.painted = false
+            fitBurst.ticks = 0
+        }
     }
 
     Component {

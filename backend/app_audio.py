@@ -85,6 +85,17 @@ class AppAudio:
             os.replace(temporary, self.preference_path)
         return self.status()
 
+    @staticmethod
+    def _accept_pcm(spectrum, samples, previous_at, now):
+        # Windows process loopback can keep delivering silent packets while
+        # no owned application is audible. Do not run an FFT for those packets.
+        if np.any(samples):
+            spectrum.push(samples, 48000)
+            return now
+        if previous_at:
+            spectrum.reset()
+        return 0.0
+
     def status(self):
         now = time.monotonic()
         if self._cached and now - self._status_at < .016:
@@ -95,8 +106,8 @@ class AppAudio:
                 self._samples.ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
                 PcmSpectrum.FRAMES, ctypes.byref(self._sequence))
             if frames:
-                self._spectrum.push(self._samples[:frames], 48000)
-                self._pcm_at = now
+                self._pcm_at = self._accept_pcm(
+                    self._spectrum, self._samples[:frames], self._pcm_at, now)
         fresh = now - self._pcm_at < .25 and bool(state & 2)
         # Process loopback already includes the Windows session gain. Applying
         # the master a second time would under-report the audible level.
@@ -122,8 +133,8 @@ class AppAudio:
                     capture["samples"].ctypes.data_as(ctypes.POINTER(ctypes.c_float)),
                     PcmSpectrum.FRAMES, ctypes.byref(capture["sequence"]))
                 if frames:
-                    capture["spectrum"].push(capture["samples"][:frames], 48000)
-                    capture["at"] = now
+                    capture["at"] = self._accept_pcm(
+                        capture["spectrum"], capture["samples"][:frames], capture["at"], now)
                 if self.volume and now - capture["at"] < .25:
                     own = capture["spectrum"].levels()
                     # Peak-per-band union avoids double-counting audio already

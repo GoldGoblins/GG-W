@@ -12431,10 +12431,12 @@ def main() -> int:
 
     root = roots[0]
     app._gg_qml_engine = engine  # type: ignore[attr-defined]
+    from startup import install_shutdown_guard, run_event_loop
+
+    install_shutdown_guard(app, root)
     root.showMaximized()
     initialize_loaded_window(root, app)
 
-    from startup import run_event_loop
     return run_event_loop(app, engine)
 
 if __name__ == "__main__":

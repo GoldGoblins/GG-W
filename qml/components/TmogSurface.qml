@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import "TmogReadings.js" as Readings
 
 Item {
     id: root
@@ -34,6 +35,13 @@ Item {
     readonly property real visualTimeConstant: 0.14
     property real lastVisualTickMs: 0
     property real liveCpu: 0
+    property real cpuVelocity: 0
+    property var coreVelocities: []
+    property var readingPulse: ({})
+    property bool hasReadingPulse: false
+    readonly property var pulseReadingFields: ["cpu_busy", "cores", "gpu_busy", "temp_c", "mhz", "mhz_max",
+        "mem_used_kb", "mem_total_kb", "disk_read_bps", "disk_write_bps",
+        "net_rx_bps", "net_tx_bps", "energy_w"]
     property real liveGpu: 0
     property real liveMemUsed: 0
     property real liveMemTotal: 0
@@ -403,10 +411,25 @@ Item {
     }
 
     function metricText(name, digits, suffix) {
-        var unavailable = root.status.unavailable || []
-        if (unavailable.indexOf(name) >= 0)
-            return "--"
-        return root.n(name).toFixed(digits) + suffix
+        return Readings.text(root.readingSource(name), name, digits, suffix)
+    }
+
+    function readingSource(name) {
+        return root.hasReadingPulse && root.pulseReadingFields.indexOf(name) >= 0 ? root.readingPulse : root.status
+    }
+
+    function metricKib(name) {
+        var value = Readings.value(root.readingSource(name), name)
+        return value === null ? "--" : root.kib(value)
+    }
+
+    function coreText(index) {
+        return Readings.coreText(root.readingSource("cores"), index, 1)
+    }
+
+    function energySource() {
+        return String(root.hasReadingPulse && root.readingPulse.energy_source !== undefined
+            ? root.readingPulse.energy_source : (root.energy.source || "UNKNOWN"))
     }
 
     function n(name, fallback) {
@@ -490,6 +513,8 @@ Item {
 
     function applyPulse(payload, elapsedSeconds) {
         var p = payload || {}
+        root.readingPulse = p
+        root.hasReadingPulse = true
         var dt = Number(elapsedSeconds || p.dt || 1 / 60)
         if (!isFinite(dt) || dt <= 0)
             dt = 1 / 60
@@ -507,7 +532,10 @@ Item {
         sprung = root.springFollow(root.diskWPos, root.diskWVel, p.disk_write_bps, dt)
         root.diskWPos = sprung[0]
         root.diskWVel = sprung[1]
-        root.liveCpu = root.dampValue(root.liveCpu, p.cpu_busy, dt)
+        // User-approved: use the existing disk/network spring, unchanged.
+        sprung = root.springFollow(root.liveCpu, root.cpuVelocity, p.cpu_busy, dt)
+        root.liveCpu = sprung[0]
+        root.cpuVelocity = sprung[1]
         root.liveGpu = root.dampValue(root.liveGpu, p.gpu_busy, dt)
         root.liveMemUsed = root.dampValue(root.liveMemUsed, p.mem_used_kb, dt)
         root.liveMemTotal = Number(p.mem_total_kb || 0)
@@ -563,12 +591,16 @@ Item {
         var rows = root.liveCoreHists && root.liveCoreHists.length
             ? root.liveCoreHists.slice()
             : []
+        var velocities = root.coreVelocities.slice(0, cores.length)
         var i
         for (i = 0; i < cores.length; i++) {
             var hist = rows[i] || []
             var previous = hist.length ? hist[hist.length - 1] : Number(cores[i] || 0)
-            rows[i] = root.pushHist(hist, root.dampValue(previous, cores[i], dt))
+            sprung = root.springFollow(previous, Number(velocities[i] || 0), cores[i], dt)
+            rows[i] = root.pushHist(hist, sprung[0])
+            velocities[i] = sprung[1]
         }
+        root.coreVelocities = velocities
         root.liveCoreHists = rows
     }
 
@@ -963,7 +995,7 @@ Item {
                             width: Math.max(128, parent.width * 0.18)
                             height: parent.height * 0.42
                             leftLegend: "SYS"
-                            rightLegend: root.n("cpu_busy").toFixed(1) + "%"
+                            rightLegend: root.metricText("cpu_busy", 1, "%")
 
                             Row {
                                 id: sysBars
@@ -1019,9 +1051,9 @@ Item {
                                             anchors.bottomMargin: 4
                                             anchors.horizontalCenter: parent.horizontalCenter
                                             text: index === 0
-                                                ? root.n("cpu_busy").toFixed(0) + "%"
+                                                ? root.metricText("cpu_busy", 0, "%")
                                                 : (index === 1
-                                                    ? root.n("mhz").toFixed(0)
+                                                    ? root.metricText("mhz", 0, "")
                                                     : (index === 2
                                                         ? root.metricText("temp_c", 0, "C")
                                                         : root.metricText("gpu_busy", 0, "%")))
@@ -1043,7 +1075,7 @@ Item {
                             anchors.top: parent.top
                             height: barsCard.height
                             leftLegend: "CPU OVERVIEW"
-                            rightLegend: root.n("cpu_busy").toFixed(1) + "%"
+                            rightLegend: root.metricText("cpu_busy", 1, "%")
 
                             Row {
                                 anchors.fill: parent
@@ -1291,10 +1323,8 @@ Item {
                                     }
                                     Text {
                                         width: parent.width
-                                        text: "TEMP " + root.n("temp_c").toFixed(0)
-                                            + " C · POWER "
-                                            + (root.energy.watts === null || root.energy.watts === undefined
-                                                ? "—" : String(root.energy.watts) + " W")
+                                        text: "SYS TEMP " + root.metricText("temp_c", 0, " C")
+                                            + " · PKG " + root.metricText("energy_w", 1, " W")
                                         color: root.muted
                                         font.family: "monospace"
                                         font.pixelSize: 10
@@ -1386,7 +1416,7 @@ Item {
                             anchors.bottom: parent.bottom
                             leftLegend: root.perfKey
                             rightLegend: root.perfKey === "CPU"
-                                ? root.n("cpu_busy").toFixed(1) + "%"
+                                ? root.metricText("cpu_busy", 1, "%")
                                 : (root.perfKey === "GPU"
                                     ? root.metricText("gpu_busy", 1, "%")
                                     : (root.perfKey === "MEMORY"
@@ -1397,9 +1427,9 @@ Item {
                                             ? root.bps(root.n("disk_read_bps"))
                                             : (root.perfKey === "NETWORK"
                                                 ? root.bps(root.n("net_rx_bps") + root.n("net_tx_bps"))
-                                                : (root.n("energy_w")
-                                                    ? String(root.n("energy_w")) + " W"
-                                                    : String(root.energy.source || "AC")))))))
+                                                : (Readings.value(root.readingSource("energy_w"), "energy_w") !== null
+                                                    ? root.metricText("energy_w", 1, " W")
+                                                    : root.energySource()))))))
 
                             Column {
                                 anchors.fill: parent
@@ -1535,8 +1565,9 @@ Item {
                                             required property int index
                                             width: 92
                                             height: 56
+                                            compactLegend: true
                                             leftLegend: "CPU " + modelData.id
-                                            rightLegend: String(modelData.pct) + "%"
+                                            rightLegend: root.coreText(Number(modelData.id))
                                             TmogSpark {
                                                 anchors.fill: parent
                                                 values: {
@@ -1562,20 +1593,20 @@ Item {
                                     text: root.perfKey === "CPU"
                                         ? (root.status.cpu_model || "")
                                             + "\n" + String(root.status.core_count || root.arr("cores").length) + " logical   "
-                                            + root.n("mhz") + " MHz   up "
+                                            + root.metricText("mhz", 0, "") + " MHz   up "
                                             + root.clock(root.n("uptime_s"))
-                                            + "   threads " + String(root.n("process_count"))
+                                            + "   processes " + String(root.n("process_count"))
                                         : (root.perfKey === "GPU"
                                             ? "gpu " + root.metricText("gpu_busy", 1, "%")
                                             : (root.perfKey === "MEMORY"
                                             ? "capacity " + root.kib(root.n("mem_total_kb"))
                                                 + "   used " + root.kib(root.n("mem_used_kb"))
                                                 + "   avail " + root.kib(root.n("mem_avail_kb"))
-                                                + "   cached " + root.kib(root.n("mem_cached_kb"))
+                                                + "   cached " + root.metricKib("mem_cached_kb")
                                                 + "\nswap " + root.kib(root.n("swap_used_kb"))
-                                                + "   buffers " + root.kib(root.n("mem_buffers_kb"))
-                                                + "   shared " + root.kib(root.n("mem_shared_kb"))
-                                                + "   slab " + root.kib(root.n("mem_slab_kb"))
+                                                + "   buffers " + root.metricKib("mem_buffers_kb")
+                                                + "   shared " + root.metricKib("mem_shared_kb")
+                                                + "   slab " + root.metricKib("mem_slab_kb")
                                             : (root.perfKey === "THERMALS"
                                                 ? "whole machine  " + root.metricText("temp_c", 1, " C")
                                                 : (root.perfKey === "DISK"
@@ -1585,10 +1616,10 @@ Item {
                                                         ? String(root.status.net_iface || "—")
                                                             + "   ↓ " + root.bps(root.n("net_rx_bps"))
                                                             + "   ↑ " + root.bps(root.n("net_tx_bps"))
-                                                        : String(root.energy.source || "AC")
-                                                            + (root.n("energy_w")
-                                                                ? "   " + String(root.n("energy_w")) + " W package"
-                                                                : "   desktop · no battery"))))))
+                                                        : root.energySource()
+                                                            + (Readings.value(root.readingSource("energy_w"), "energy_w") !== null
+                                                                ? "   " + root.metricText("energy_w", 1, " W package")
+                                                                : "   power --"))))))
                                 }
                             }
                         }
@@ -1740,7 +1771,7 @@ Item {
                                     + "\nKERNEL   " + (root.status.kernel || "—")
                                     + "\nCPU      " + (root.status.cpu_model || "—")
                                     + "\nCORES    " + String(root.status.core_count || 0)
-                                    + "   " + String(root.n("mhz")) + " MHz"
+                                    + "   " + root.metricText("mhz", 0, "") + " MHz"
                                     + "\nMEM      " + root.kib(root.n("mem_used_kb"))
                                     + " / " + root.kib(root.n("mem_total_kb"))
                                     + "\nLOAD     " + String(root.n("load1"))
@@ -1797,7 +1828,7 @@ Item {
                                     Row {
                                         spacing: 16
                                         Text {
-                                            text: "CPU " + root.n("cpu_busy").toFixed(1) + "%"
+                                            text: "CPU " + root.metricText("cpu_busy", 1, "%")
                                             color: root.ledgerGreen
                                             font.family: "monospace"
                                             font.pixelSize: 11
@@ -2067,8 +2098,9 @@ Item {
                                         height: 28
                                         Text {
                                             text: "CPU " + modelData.id
-                                                + "   " + modelData.mhz + " MHz   "
-                                                + modelData.pct + "%"
+                                                + "   " + (Readings.metadataAvailable(root.readingSource("mhz"), "mhz")
+                                                    ? Readings.text({mhz:modelData.mhz}, "mhz", 0, " MHz") : "--") + "   "
+                                                + root.coreText(Number(modelData.id))
                                             color: "#c8cdd4"
                                             font.family: "monospace"
                                             font.pixelSize: 12
@@ -2187,7 +2219,7 @@ Item {
                                         width: parent.width
                                         text: (root.status.cpu_model || "CPU") + "\n"
                                             + String(root.status.core_count || 0) + " logical cores · "
-                                            + String(root.n("mhz")) + " MHz\n"
+                                            + root.metricText("mhz", 0, "") + " MHz\n"
                                             + "memory " + root.kib(root.n("mem_used_kb"))
                                             + " / " + root.kib(root.n("mem_total_kb"))
                                         color: root.text
@@ -2204,8 +2236,8 @@ Item {
                                     }
                                     Text {
                                         width: parent.width
-                                        text: "CPU " + root.n("cpu_busy").toFixed(1) + "%  ·  "
-                                            + "TEMP " + root.n("temp_c").toFixed(1) + " C  ·  "
+                                        text: "CPU " + root.metricText("cpu_busy", 1, "%") + "  ·  "
+                                            + "TEMP " + root.metricText("temp_c", 1, " C") + "  ·  "
                                             + "GPU " + root.metricText("gpu_busy", 1, "%")
                                         color: root.muted
                                         font.family: "monospace"

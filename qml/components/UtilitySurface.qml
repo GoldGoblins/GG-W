@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Window
 
 Item {
     id: root
@@ -76,8 +77,16 @@ Item {
     readonly property real spectrumRelease: 2.4
     readonly property bool buffering:
         root.status.buffering === true && !root.playing && !root.paused
+    // Focus and occlusion do not stop live indicators. Only skip drawing when
+    // the utility or its window cannot be seen at all.
+    readonly property bool visualActive: root.visible && (!root.Window.window
+        || (root.Window.window.visible && root.Window.window.visibility !== Window.Minimized))
+    property bool spectrumSettling: false
+    property bool spectrumDirty: true
+    property string frequencyVisualKey: ""
+    property bool lastSpectrumActive: false
     readonly property bool liveMeters:
-        root.playing || root.paused || root.buffering || root.appAudioActive
+        root.meterActive || (root.visualActive && root.spectrumSettling)
     readonly property bool meterActive: root.appMeterReady ? root.appAudioActive : root.playing
     readonly property bool hasSpectrum: root.spectrum.length > 0
     readonly property string frameRightLegend: {
@@ -133,7 +142,7 @@ Item {
             root.statusJson = blob
     }
 
-    function refresh() {
+    function refresh(forceVisual) {
         var raw = root.pullLiveRaw()
         if (raw) {
             try {
@@ -142,10 +151,10 @@ Item {
                 return
             }
         }
-        root.refreshMeters(raw || "{}")
+        root.refreshMeters(raw || "{}", forceVisual === true)
     }
 
-    function refreshMeters(raw) {
+    function refreshMeters(raw, forceVisual) {
         var text = raw || root.pullLiveRaw() || "{}"
         var parsed
         try {
@@ -171,8 +180,15 @@ Item {
         }
         if (!spec || spec.length === undefined)
             spec = []
-        if (spectrumCanvas)
-            spectrumCanvas.levels = spec
+        var levelsChanged = false
+        if (spectrumCanvas) {
+            var before = spectrumCanvas.levels || []
+            levelsChanged = before.length !== spec.length
+            for (var i = 0; !levelsChanged && i < spec.length; i++)
+                levelsChanged = Number(before[i] || 0) !== Number(spec[i] || 0)
+            if (levelsChanged)
+                spectrumCanvas.levels = spec
+        }
         var clock = String(parsed.clock || "00:00")
         var length = String(parsed.length || "00:00")
         if (clock !== root.meterClock)
@@ -187,10 +203,18 @@ Item {
         root.liveRfLabel = String(rf.label || "NO RF")
         if (parsed.tuner && parsed.tuner.length !== undefined)
             root.liveMarks = parsed.tuner
-        if (spectrumCanvas)
-            spectrumCanvas.requestPaint()
-        if (freqCanvas)
-            freqCanvas.requestPaint()
+        var activeChanged = root.lastSpectrumActive !== root.meterActive
+        root.lastSpectrumActive = root.meterActive
+        root.spectrumDirty = root.spectrumDirty || levelsChanged || activeChanged
+        var frequencyKey = JSON.stringify([root.liveFreq, root.liveRf, root.liveRfLabel, root.liveMarks])
+        var frequencyChanged = frequencyKey !== root.frequencyVisualKey
+        root.frequencyVisualKey = frequencyKey
+        if (root.visualActive) {
+            if (spectrumCanvas && (forceVisual === true || root.spectrumDirty || root.spectrumSettling))
+                spectrumCanvas.requestPaint()
+            if (freqCanvas && (forceVisual === true || frequencyChanged))
+                freqCanvas.requestPaint()
+        }
     }
 
     function setMode(mode) {
@@ -350,7 +374,9 @@ Item {
     }
 
     Timer {
-        // Sample decoded audio levels and update the strip at its visual cadence.
+        objectName: "utilityActiveMeterTimer"
+        // Keep real audio data current even while hidden; refreshMeters only
+        // requests a visible, changed or settling Canvas to be painted.
         interval: 16
         running: root.liveMeters
         repeat: true
@@ -358,10 +384,16 @@ Item {
     }
 
     Timer {
-        interval: 400
+        objectName: "utilityIdleStatusTimer"
+        interval: root.visualActive ? 400 : 1000
         running: !root.liveMeters
         repeat: true
         onTriggered: root.refresh()
+    }
+
+    onVisualActiveChanged: {
+        if (root.visualActive)
+            root.refresh(true)
     }
 
     Component.onCompleted: root.refresh()
@@ -643,6 +675,7 @@ Item {
                             var litLevels = []
                             var peakLevels = []
                             var peakVisible = []
+                            var settling = false
                             for (i = 0; i < cols; i++) {
                                 var target = 0
                                 if (root.meterActive && rows && i < rows.length)
@@ -677,10 +710,16 @@ Item {
                                     peakSeg = 0
                                 peakLevels.push(peakSeg)
                                 peakVisible.push(peak > 0.02)
+                                // Unchanged input still needs frames until the
+                                // release and peak-hold display have converged.
+                                if (Math.abs(cur - target) > 0.002 || peak > level + 0.002)
+                                    settling = true
                                 x += colW + gapX
                                 if (x >= w)
                                     break
                             }
+                            root.spectrumSettling = settling
+                            root.spectrumDirty = false
                             // Paint row-wise with one fill style per LED color.
                             // Small square cells are intentionally used here:
                             // they read as crisp LED dots and avoid thousands

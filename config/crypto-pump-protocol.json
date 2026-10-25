@@ -1,0 +1,41 @@
+{
+  "schema": "gg.crypto.pump-protocol-facts.v1",
+  "reviewed_date": "2026-10-25",
+  "implementation": "Original bounded Python decoders and PDA derivation; no downloaded SDK or executable dependency",
+  "pump_docs_commit": "639b87fb45c3adeffa6f7c4a1bf0cb85e392bf22",
+  "token_2022_commit": "3f85f9cf0764a15869d4c11411cfe022eaa1d6ee",
+  "sources": [
+    "https://github.com/pump-fun/pump-public-docs/blob/639b87fb45c3adeffa6f7c4a1bf0cb85e392bf22/idl/pump.json",
+    "https://github.com/pump-fun/pump-public-docs/blob/639b87fb45c3adeffa6f7c4a1bf0cb85e392bf22/idl/pump_amm.json",
+    "https://github.com/pump-fun/pump-public-docs/blob/639b87fb45c3adeffa6f7c4a1bf0cb85e392bf22/idl/pump_fees.json",
+    "https://github.com/pump-fun/pump-public-docs/blob/639b87fb45c3adeffa6f7c4a1bf0cb85e392bf22/docs/PUMP_PROGRAM_README.md",
+    "https://github.com/pump-fun/pump-public-docs/blob/639b87fb45c3adeffa6f7c4a1bf0cb85e392bf22/docs/PUMP_SWAP_README.md",
+    "https://github.com/pump-fun/pump-public-docs/blob/639b87fb45c3adeffa6f7c4a1bf0cb85e392bf22/docs/NEGATIVE_VIRTUAL_QUOTE_RESERVES.md",
+    "https://github.com/pump-fun/pump-public-docs/blob/639b87fb45c3adeffa6f7c4a1bf0cb85e392bf22/docs/VIRTUAL_QUOTE_RESERVES_FEE_ADJUSTMENT.md",
+    "https://github.com/solana-program/token-2022/blob/3f85f9cf0764a15869d4c11411cfe022eaa1d6ee/interface/src/extension/mod.rs",
+    "https://github.com/solana-program/token-2022/blob/3f85f9cf0764a15869d4c11411cfe022eaa1d6ee/interface/src/extension/transfer_fee/mod.rs",
+    "https://github.com/solana-program/token-2022/blob/3f85f9cf0764a15869d4c11411cfe022eaa1d6ee/interface/src/extension/transfer_hook/mod.rs",
+    "https://unpkg.com/@pump-fun/pump-swap-sdk@2.2.0/src/sdk/offlinePumpAmm.ts"
+  ],
+  "facts": {
+    "pumpswap_effective_quote": "raw_quote_vault_amount + signed_i128_virtual_quote_reserves",
+    "reserved_fee_handling": "Retained protocol/creator fees are already reflected negatively in virtual_quote_reserves; never subtract them twice from effective liquidity",
+    "pumpswap_boost_amount": "virtual_quote_reserves + protocol_fees + creator_fees",
+    "canonical_pool_creator": "Pump PDA from pool-authority and base_mint; pool index is zero for migrated pools",
+    "old_accounts": "Missing whole appended fields default to zero, false or default pubkey",
+    "transfer_fee_epoch": "Select newer_transfer_fee when current epoch >= newer_transfer_fee.epoch, otherwise older_transfer_fee",
+    "transfer_fee_rounding": "min(maximum_fee, ceil(amount * basis_points / 10000))",
+    "pool_allocation": "Current Pool serialization is 287 bytes; documented extend_account allocation is 300 bytes. Accept exactly 300 only when the remaining 13 bytes are zero",
+    "global_config_allocations": "Current GlobalConfig is 949 bytes; documented previous versions are 907 and 940 bytes, each ending on a field boundary",
+    "fee_config_allocation_versions": "2512=primary tiers only; 4073=primary plus stable tiers; 4097=plus exotic flat fees. Length gates determine field presence, not remaining dynamic-vector bytes",
+    "fee_config_unused_tail": "Official versioned reader ignores unused allocation bytes, which may hold stale nonzero bytes from shrunken vectors. Ignore that tail only for these exact documented allocation sizes"
+  },
+  "decoder_limits": {
+    "max_account_bytes": 16384,
+    "max_fee_tiers_per_vector": 128,
+    "unknown_mint_or_token_extension": "Displayed as unsupported, quotes disabled",
+    "unknown_account_layout": "Rejected; no future layout guessing",
+    "quote_chain_curve": "Depth and appended fields decoded; multi-hop execution not implemented by account decoder",
+    "program_trust": "Decoding does not authenticate deployed program code or RPC truth; runtime must verify target, owner, slots, vault and mint bindings"
+  }
+}

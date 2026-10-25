@@ -647,20 +647,38 @@ Item {
     }
 
     Timer {
+        objectName: "chatActivityLampTimer"
         interval: 16
         running: root.visible && root.surfaceHost
         repeat: true
         onTriggered: {
             if (!root.surfaceHost || !root.surfaceHost.tmogPulse)
                 return
+            root.diskLampTick += 1
+            var tui = false
+            try {
+                if (root.surfaceHost.chatIoActive)
+                    tui = root.surfaceHost.chatIoActive()
+            } catch (err) {}
+            root.chatLampOn = root.lampBlink(root.busy || tui, 3)
             try {
                 var p = JSON.parse(root.surfaceHost.tmogPulse() || "{}")
-                var diskIo = Number(p.disk_read_bps || 0) + Number(p.disk_write_bps || 0)
-                var netIo = Number(p.net_rx_bps || 0) + Number(p.net_tx_bps || 0)
-                var cpu = Number(p.cpu_busy || 0)
+                if (p.pending || p.error) {
+                    root.cpuLampOn = false
+                    root.gpuLampOn = false
+                    root.netLampOn = false
+                    root.diskLampOn = false
+                    return
+                }
+                var errors = p.sample_errors || {}
+                var ioFresh = !errors.io
+                var diskIo = ioFresh ? Number(p.disk_read_bps || 0) + Number(p.disk_write_bps || 0) : 0
+                var netIo = ioFresh ? Number(p.net_rx_bps || 0) + Number(p.net_tx_bps || 0) : 0
+                var cpuFresh = p.cpu_pending !== true && !errors.cpu
+                    && (p.cpu_sample_age_ms === undefined || Number(p.cpu_sample_age_ms) <= 1000)
+                var cpu = cpuFresh ? Number(p.cpu_busy) : NaN
                 var gpu = p.gpu_busy
                 root.gpuLampPresent = gpu !== undefined && gpu !== null
-                root.diskLampTick += 1
                 root.cpuLampOn = root.lampBlink(cpu >= 12, 4)
                 root.gpuLampOn = root.lampBlink(
                     root.gpuLampPresent && Number(gpu) >= 5,
@@ -668,16 +686,11 @@ Item {
                 )
                 root.netLampOn = root.lampBlink(netIo >= 1024, 2)
                 root.diskLampOn = root.lampBlink(diskIo >= 1024, 0)
-                var tui = false
-                if (root.surfaceHost.chatIoActive)
-                    tui = root.surfaceHost.chatIoActive()
-                root.chatLampOn = root.lampBlink(root.busy || tui, 3)
             } catch (err) {
                 root.cpuLampOn = false
                 root.gpuLampOn = false
                 root.netLampOn = false
                 root.diskLampOn = false
-                root.chatLampOn = false
             }
         }
     }

@@ -304,16 +304,27 @@ class ResidentChatTransport(QObject):
     def shutdown_idle(self) -> bool:
         if self.busy():
             return False
-        if self._grok is not None:
-            self._grok.shutdown_idle()
-        self.shutdown()
+        if self._grok is not None and not self._grok.shutdown_idle():
+            return False
+        # This transport also owns the desktop's shared surfaces. Releasing
+        # idle model memory for another task must keep their timers alive.
+        self._shutdown_server()
         return True
 
     def shutdown(self) -> None:
-        if self._surface_host is not None:
-            self._surface_host.shutdown()
-        if self._grok is not None:
-            self._grok.shutdown()
+        self._closing = True
+        try:
+            if self._surface_host is not None:
+                self._surface_host.shutdown()
+        finally:
+            try:
+                if self._grok is not None:
+                    self._grok.shutdown()
+            finally:
+                self._shutdown_server()
+
+    def _shutdown_server(self) -> None:
+        """Release only the resident model process and its per-turn state."""
         self._closing = True
         process = self._process
         try:

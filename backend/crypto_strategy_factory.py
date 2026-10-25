@@ -16,6 +16,7 @@ import math
 import time
 from typing import Any
 from backend import crypto_backtest
+from backend import crypto_research_quality
 
 
 SCHEMA = "gg.crypto.strategy-factory.v1"
@@ -206,6 +207,8 @@ def _trade_report(
     start: int,
     end: int,
     bar_seconds: int = 3600,
+    *,
+    capture_equity: bool = False,
 ) -> dict[str, Any]:
     warmup = int(candidate.get("warmup") or 0)
     first = max(warmup, int(start))
@@ -219,6 +222,7 @@ def _trade_report(
             "wins": 0,
             "win_rate_pct": 0.0,
             "sharpe_proxy": 0.0,
+            **({"_equity_curve": [1.0]} if capture_equity else {}),
         }
 
     friction = (FEE_BPS + SLIPPAGE_BPS) / 10_000.0
@@ -259,6 +263,7 @@ def _trade_report(
             "wins": 0,
             "win_rate_pct": 0.0,
             "sharpe_proxy": 0.0,
+            **({"_equity_curve": [1.0]} if capture_equity else {}),
         }
 
     peak = 1.0
@@ -291,7 +296,68 @@ def _trade_report(
         "avg_trade_pct": round(sum(trades) / len(trades), 4) if trades else 0.0,
         "sharpe_proxy": round(sharpe_proxy, 4),
         "bars": last - first,
+        **({"_equity_curve": [1.0] + equity_curve} if capture_equity else {}),
     }
+
+
+def _winner_research_quality(candidate: dict[str, Any], prices: list[float],
+                             equity: list[float]) -> dict[str, Any]:
+    """Audit a choice already frozen using validation, never rank choices here."""
+    try:
+        bootstrap = crypto_research_quality.report(equity, seed=0, replicas=128)
+    except ValueError as exc:
+        # The normal report rejects oversized input. Surface that explicitly;
+        # truncating a holdout would quietly change its statistical experiment.
+        bootstrap = {"available": False, "reason": str(exc),
+                     "sample_count": max(0, len(equity) - 1),
+                     "equity_count": len(equity),
+                     "minimum_sample_count": crypto_research_quality.MIN_RETURNS,
+                     "method": "circular_block_bootstrap", "observed": None, "intervals": None}
+    cap = min(len(prices) - 1, 256)
+    cutoffs = sorted({max(1, cap // 3), max(1, 2 * cap // 3), cap}) if cap >= 1 else []
+    checks = []
+    evaluations = 0
+    stage = "full"
+    active_cutoff = None
+    try:
+        # The full-tape outputs are generated once. Prefix outputs are fresh
+        # executions against actual truncated price inputs, not slices of a
+        # cached full result. Only indices before each cutoff are compared.
+        full_signals = []
+        for index in range(cap):
+            evaluations += 1
+            full_signals.append(_signal(candidate, prices, index))
+        for cutoff in cutoffs:
+            stage, active_cutoff = "prefix", cutoff
+            prefix_prices = prices[:cutoff]
+            prefix_signals = []
+            for index in range(cutoff):
+                evaluations += 1
+                prefix_signals.append(_signal(candidate, prefix_prices, index))
+            checks.append(crypto_research_quality.causality_check(full_signals, prefix_signals, cutoff))
+        causality = {"available": bool(checks),
+                     "passed": all(check["passed"] for check in checks) if checks else None,
+                     "reason": ("PREFIX_OUTPUT_CHANGED" if any(not check["passed"] for check in checks)
+                                else "" if checks else "INSUFFICIENT_PREFIX_DATA"),
+                     "checks": checks, "max_prefix_bars": max(0, cap),
+                     "signal_evaluations": evaluations,
+                     "scope": "Frozen winner signal rule; at most three prefixes of the first 256 bars"}
+    except (ValueError, ArithmeticError, IndexError, TypeError):
+        failed_prefix = stage == "prefix"
+        reason = "PREFIX_EXECUTION_FAILED" if failed_prefix else "SIGNAL_AUDIT_UNAVAILABLE"
+        if failed_prefix:
+            checks.append({"available": False, "passed": False, "cutoff": active_cutoff,
+                           "reason": reason})
+        causality = {"available": False, "passed": False if failed_prefix else None, "reason": reason,
+                     "checks": checks, "max_prefix_bars": max(0, cap),
+                     "signal_evaluations": evaluations, "possible_lookahead": failed_prefix}
+    return {"bootstrap": bootstrap, "causality": causality,
+            "limits": [
+                "Diagnostics run once after validation freezes the winner; they do not affect selection.",
+                "Bootstrap uses normalized final-test equity, including initial cash and modeled entry/exit costs.",
+                "Prefix checks cover a bounded part of the signal rule; they do not prove global absence of leakage.",
+                "Resampling is historical uncertainty, not prediction or additional walk-forward evidence.",
+            ]}
 
 
 def _candidate_report(
@@ -404,6 +470,9 @@ def empty_snapshot() -> dict[str, Any]:
         "candidates": [],
         "graveyard": [],
         "autoresearch": [],
+        "research_quality": {"bootstrap": {"available": False, "reason": "NO_RUN"},
+                             "causality": {"available": False, "passed": None, "checks": [], "reason": "NO_RUN"},
+                             "limits": []},
         "orchestration": orchestration_snapshot("IDLE"),
     }
 
@@ -506,6 +575,12 @@ def run_factory(frames: dict[str, Any]) -> dict[str, Any]:
             }
         )
 
+    frozen_winner = {**base, "parameters": {**base["parameters"], "buffer_bps": best_buffer}}
+    final_test = _trade_report(frozen_winner, prices, split["validation_end"], n,
+                               bar_seconds, capture_equity=True)
+    final_equity = final_test.pop("_equity_curve")
+    research_quality = _winner_research_quality(frozen_winner, prices, final_equity)
+
     return {
         "schema": SCHEMA,
         "state": "DONE",
@@ -531,6 +606,7 @@ def run_factory(frames: dict[str, Any]) -> dict[str, Any]:
         },
         "candidates": candidates,
         "graveyard": graveyard,
+        "research_quality": research_quality,
         "autoresearch": {
             "pattern": "KEEP_OR_REVERT",
             "best_buffer_bps": best_buffer,
@@ -539,12 +615,9 @@ def run_factory(frames: dict[str, Any]) -> dict[str, Any]:
             "trial_count": len(candidates) + len(autoresearch) - 1,
             "selection_method": "Mean Sharpe of two expanding-history validation folds",
             "trial_registry": [row["id"] for row in CANDIDATE_CATALOG] + [f"MOMENTUM_20_60_B{x}" for x in (5, 15, 25)],
-            "validation_folds": _validation_folds({**base, "parameters": {**base["parameters"], "buffer_bps": best_buffer}}, prices, split, bar_seconds),
+            "validation_folds": _validation_folds(frozen_winner, prices, split, bar_seconds),
             "interpretation": "Exploratory trials; final holdout is shown once per frozen choice, not an automatic winner or statistical proof.",
-            "final_test": _trade_report(
-                {**base, "parameters": {**base["parameters"], "buffer_bps": best_buffer}},
-                prices, split["validation_end"], n, bar_seconds,
-            ),
+            "final_test": final_test,
             "steps": autoresearch,
         },
         "orchestration": orchestration_snapshot("DONE"),

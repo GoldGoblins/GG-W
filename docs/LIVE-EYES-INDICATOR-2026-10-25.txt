@@ -1,0 +1,73 @@
+GG AI DESKTOP — VISUELL GG-LIVE-EYES-INDIKATOR
+2026-10-25
+
+AVSIKT
+Visa när agenten använder gg-live-eyes. Behåll den etablerade visuella stilen
+och alla tidigare TMOG-, CRYPTO-, wallet- och bakgrundsfixar.
+
+FYND
+Windows bildfångst sker på begäran i kortlivade hjälpprocesser. Dess status-
+funktion returnerade alltid off. Därför fick varken huvudfönstrets ÖGON-text
+eller telemetrirutan veta när CLI/MCP faktiskt hämtade bilder.
+
+ÄNDRING
+App, CLI och worker delar en liten namngiven Windows-minnesmappning med högst
+16 KiB metadata och åtta samtidiga observationsposter. Appen håller kanalen
+öppen från start, så även en snabb CLI-bild kan observeras efter processens
+avslut. Inga bilder, URL:er, privata sökvägar eller credentials lagras i kanalen.
+Ingen fångstdaemon, bildfil eller bildcache har tillkommit.
+
+ÖGON · FÅNGAR: en Windows frame/clip-begäran pågår. Räknare/fps bygger på
+faktiskt mottagna bilder. Före första bilden påstås inte färska bilddata finnas.
+ÖGON · VIDEO: videolänk/lokal videosekvens bearbetas. Detta är avkodning,
+inte kontinuerlig skärmvisning eller ett mått på modellens analysfrekvens.
+ÖGON · NYSS: en observation har nyss hämtats. Den visas i tre sekunder och
+släcks sedan. Current fps är då 0 och current frame age är okänd; senaste
+observationens uppgifter hålls åtskilda från pågående fångst.
+ÖGON · FEL: en begäran misslyckades. Felkategorier saneras; fel blir inte
+lyckade observationer och indikatorn kan inte fastna permanent.
+
+Huvudfält och telemetri använder samma QML-hjälpare. Befintlig Linux live-status
+stöds fortsatt. Windows läser bara metadata fyra gånger/s, utan att ta bilder,
+skapa processer eller vänta på den delade låsningen från UI-tråden.
+
+STOPP OCH FEL
+Stopp gör befintliga observationer ogiltiga. Screen-workerns tidigare
+processgräns på åtta sekunder kvarstår. Video använder sin befintliga
+resolver-/avkodarbudget med stoppkontroller. Endast respektive anrops egna
+underprocesser avbryts. Sena svar efter stopp kan inte tända NYSS igen.
+Separata poster gör att en avslutad observation inte släcker en annan aktiv.
+Tidsgränser och kontroll av ägarprocess tar bort övergivna poster.
+Statusformat, storlek, tidsstämplar och process-ID:n valideras innan användning.
+
+VERIFIERING
+Riktiga QML-tester kör statushjälparen och TelemetryRail-bindningarna för av,
+aktivt utan bild, färsk bild, nyss avslutat, fel, stopp och Linux live. Main
+använder samma hjälpare. Windows-test startar separata processer som delar
+enbart metadata och kontrollerar korta anrop, överlapp, stopp, processdöd,
+korrupt data, låskonkurrens och uteblivna sena lyckade svar.
+En riktig 32x32-skärmworker avbröts under pågående clip i ett isolerat
+testutrymme. Ingen redan körande användarapp avslutades.
+
+En faktisk gg-eyes.cmd clip på 0,5 s/upp till 25 fps läste den tidigare
+visuellt inspekterade skärmens överkant via RAM/stdout. Den levererade tolv
+bilder, 0,465 s täckning, största lucka 45 ms och rapporterad 22,4 fps.
+Statuskedjan aktiv -> nyss -> av verifierades. Detta är fångstdata, inte
+modellens tolkningshastighet. Inga bitmaps sparades till disk av provet.
+Videotester använder simulerade media-/resolverprocesser; ingen extern
+videolänk hämtades i denna verifiering. Aktuella slutresultat registreras i
+WINDOWS-PORT.json under live_eyes_indicator_2026_10_25.
+
+GRÄNSER
+Det befintliga GG-fönstret och chatten hölls öppna. Dess redan laddade kod
+ersätts först vid full omstart. De nya statusbindningarna verifieras separat;
+den gamla körande appens indikator påstås inte vara visuellt uppdaterad ännu.
+Inga nya paket, OS-inställningar, credentials eller GitHub-publicering ingår.
+
+REFERENSER
+Python mmap: anonym mappning och Windows tagname.
+https://docs.python.org/3/library/mmap.html
+Microsoft: namngiven delad minnesmappning mellan processer.
+https://learn.microsoft.com/en-us/windows/win32/memory/creating-named-shared-memory
+Microsoft: mutex-ägarskap och ändliga väntetider.
+https://learn.microsoft.com/en-us/windows/win32/sync/using-mutex-objects

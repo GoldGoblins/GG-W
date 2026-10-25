@@ -20,6 +20,7 @@ if str(PROJECT) not in sys.path:
 
 from backend.live_vision import (FrameRing, MAX_DETAIL_BYTES, MAX_REPLY_BYTES,
                                 RING_SECONDS, TARGET_FPS)
+from backend import windows_vision_activity as activity
 
 PREVIEW_SIZE = (960, 540)
 DETAIL_SIZE = (4096, 2160)
@@ -28,10 +29,13 @@ DETAIL_SIZE = (4096, 2160)
 def status() -> dict:
     # This getter is also used on the app's UI thread. Never capture or spawn
     # from it, and never report "live" merely because a provider is installed.
-    return {"state": "off", "provider": "windows-gdi", "capture_mode": "on_demand",
-            "storage": "RAM", "buffer_bytes": 0, "received_fps": 0,
-            "frame_age_ms": None, "target_fps": TARGET_FPS,
-            "reason": "Windows fångar bilder på begäran; ingen bakgrundsfångst körs."}
+    try:
+        value = activity.snapshot()
+    except (OSError, RuntimeError, ValueError):
+        value = {"state": "error", "reason": "Ögonindikatorn kunde inte läsas.",
+                 "capture_mode": "on_demand", "storage": "RAM", "buffer_bytes": 0,
+                 "received_fps": 0, "frame_age_ms": None}
+    return {**value, "provider": "windows-gdi", "target_fps": TARGET_FPS}
 
 
 def validate(command: dict) -> dict:
@@ -63,6 +67,7 @@ def request(op: str, *, timeout: float = 8, **parameters) -> dict:
     if op == "status":
         return status()
     if op == "stop":
+        activity.stop()
         return status()
     if op == "start":
         return {**status(), "state": "ready", "requires_selection": False,
@@ -77,18 +82,38 @@ def request(op: str, *, timeout: float = 8, **parameters) -> dict:
     # The existing process runner bounds both output and wall time, and kills
     # the helper's entire process tree if a driver stalls. No app process is
     # signalled or asked to render a screenshot.
-    code, output, _, trigger = run_bounded(
-        [str(executable), "-X", "utf8", "-B", str(Path(__file__).resolve()),
-         json.dumps(command, allow_nan=False)], cwd=PROJECT,
-        timeout=min(timeout, 8), max_output_bytes=MAX_REPLY_BYTES)
-    if trigger != "NONE":
-        raise RuntimeError("Windows screen capture stopped: " + trigger)
-    if code != 0:
-        raise RuntimeError("Windows screen capture helper failed")
-    answer = json.loads(output)
-    if not answer.get("ok"):
-        raise RuntimeError(answer.get("error", "Windows screen capture failed"))
-    return answer["result"]
+    lease = activity.begin(op, min(timeout, 8))
+    result = None
+    failure = None
+    try:
+        code, output, _, trigger = run_bounded(
+            [str(executable), "-X", "utf8", "-B", str(Path(__file__).resolve()),
+             json.dumps(command, allow_nan=False), json.dumps(lease)], cwd=PROJECT,
+            timeout=min(timeout, 8), max_output_bytes=MAX_REPLY_BYTES,
+            cancelled=lambda: activity.cancelled(lease))
+        if trigger != "NONE":
+            raise RuntimeError("Windows screen capture stopped: " + trigger)
+        if code != 0:
+            raise RuntimeError("Windows screen capture helper failed")
+        answer = json.loads(output)
+        if not isinstance(answer, dict) or not answer.get("ok"):
+            raise RuntimeError("Windows screen capture failed")
+        if activity.cancelled(lease):
+            raise RuntimeError("Windows screen capture stopped: CANCELLED")
+        result = answer.get("result")
+        if not isinstance(result, dict):
+            raise RuntimeError("Windows screen capture returned invalid metadata")
+        return result
+    except BaseException as exc:
+        failure = type(exc).__name__
+        raise
+    finally:
+        try:
+            activity.finish(lease, result, error=failure)
+        except (OSError, RuntimeError):
+            # The request deadline/owner check expires an abandoned metadata
+            # slot even when another process temporarily holds its mutex.
+            pass
 
 
 def _screen_size() -> tuple[int, int]:
@@ -101,7 +126,7 @@ def _screen_size() -> tuple[int, int]:
     return user.GetSystemMetrics(0), user.GetSystemMetrics(1)
 
 
-def capture(command: dict, *, grab=None, screen_size=None) -> dict:
+def capture(command: dict, *, grab=None, screen_size=None, on_frame=None, cancelled=None) -> dict:
     """Capture one bounded interval; injectable source permits headless tests."""
     from PIL import Image, ImageGrab
     command = validate(command)
@@ -122,6 +147,8 @@ def capture(command: dict, *, grab=None, screen_size=None) -> dict:
     limit = min(150, int(command["seconds"] * command["fps"]) + 1)
     capture_costs = []
     for _ in range(limit):
+        if cancelled is not None and cancelled():
+            raise RuntimeError("Windows screen capture stopped: CANCELLED")
         remaining = next_at - time.monotonic()
         if remaining > 0:
             time.sleep(remaining)
@@ -138,6 +165,10 @@ def capture(command: dict, *, grab=None, screen_size=None) -> dict:
             stream = io.BytesIO()
             frame.save(stream, "JPEG", quality=88 if command["op"] == "frame" else 70)
             ring.append(stream.getvalue(), frame.width, frame.height, None, captured=captured)
+        if on_frame is not None:
+            progress = ring.status()
+            on_frame(frames=ring.seq, last_frame_at=captured,
+                     received_fps=progress["received_fps"])
         if captured - first >= command["seconds"]:
             break
         next_at = max(next_at + period, time.monotonic())
@@ -162,7 +193,10 @@ def main() -> None:
             raise RuntimeError("Windows capture requires Windows")
         from backend.platform_process import apply_windows_worker_limits
         apply_windows_worker_limits(memory_bytes=256 * 1024**2, cpu_seconds=12)
-        result = capture(json.loads(sys.argv[1]))
+        lease = json.loads(sys.argv[2]) if len(sys.argv) > 2 else None
+        result = capture(json.loads(sys.argv[1]),
+            on_frame=(lambda **values: activity.update(lease, **values)) if lease else None,
+            cancelled=(lambda: activity.cancelled(lease)) if lease else None)
         packet = json.dumps({"ok": True, "result": result}, allow_nan=False).encode()
         if len(packet) > MAX_REPLY_BYTES:
             raise RuntimeError("Observation exceeds transport limit")

@@ -13,7 +13,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from backend.crypto_contract import ensure_state_dir, format_units
+from backend.crypto_contract import (ensure_state_dir, format_units, write_state_json,
+                                     read_state_json, _serialized)
 
 SOL_DECIMALS = 9
 USD_DECIMALS = 6
@@ -50,23 +51,33 @@ def _default_pools() -> dict[str, Any]:
 def load_pools() -> dict[str, Any]:
     path = pools_path()
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError, UnicodeError):
-        payload = _default_pools()
-        save_pools(payload)
-        return payload
-    if not isinstance(payload, dict) or "A" not in payload or "B" not in payload:
-        payload = _default_pools()
-        save_pools(payload)
+        payload = read_state_json(path, max_bytes=128 * 1024)
+    except FileNotFoundError:
+        return _default_pools()
+    except (OSError, ValueError):
+        raise ValueError('CRYPTO_ARB_STATE_CORRUPT') from None
+    _validate_pools(payload)
     return payload
+
+
+def _validate_pools(payload: dict[str, Any]) -> None:
+    if (not isinstance(payload, dict)
+            or any(not isinstance(payload.get(name), dict)
+                   or any(type(payload[name].get(field)) is not int or payload[name][field] <= 0
+                          for field in ('sol', 'usd')) for name in ('A', 'B'))
+            or any(type(payload.get(field, default)) is not int
+                   or not 0 <= payload.get(field, default) < 10000
+                   for field, default in (('fee_bps', SWAP_FEE_BPS), ('flash_bps', FLASH_FEE_BPS)))):
+        raise ValueError('CRYPTO_ARB_STATE_CORRUPT')
 
 
 def save_pools(payload: dict[str, Any]) -> None:
     path = pools_path()
-    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    path.chmod(0o600)
+    _validate_pools(payload)
+    write_state_json(path, payload)
 
 
+@_serialized
 def reset_pools() -> dict[str, Any]:
     payload = _default_pools()
     save_pools(payload)
@@ -132,9 +143,12 @@ def _tip_usd(gross_usd: int, usd_per_sol: int) -> int:
 
 
 def quote_flash_arb(usd_borrow: int, pools: dict[str, Any] | None = None) -> dict[str, Any]:
-    snapshot = json.loads(json.dumps(pools or load_pools()))
-    fee_bps = int(snapshot.get("fee_bps") or SWAP_FEE_BPS)
-    flash_bps = int(snapshot.get("flash_bps") or FLASH_FEE_BPS)
+    if type(usd_borrow) is not int or usd_borrow <= 0:
+        raise ValueError("CRYPTO_ARB_SIZE")
+    snapshot = json.loads(json.dumps(load_pools() if pools is None else pools))
+    _validate_pools(snapshot)
+    fee_bps = snapshot.get("fee_bps", SWAP_FEE_BPS)
+    flash_bps = snapshot.get("flash_bps", FLASH_FEE_BPS)
     a = dict(snapshot["A"])
     b = dict(snapshot["B"])
     price_a = _pool_px(a)
@@ -205,12 +219,13 @@ def optimal_borrow(pools: dict[str, Any] | None = None) -> int:
     return best
 
 
+@_serialized
 def swap_usd_for_sol(usd_in: int) -> dict[str, Any]:
-    amount = int(usd_in)
-    if amount <= 0:
+    amount = usd_in
+    if type(amount) is not int or amount <= 0:
         raise ValueError("CRYPTO_ARB_SIZE")
     pools = load_pools()
-    fee = int(pools.get("fee_bps") or SWAP_FEE_BPS)
+    fee = pools.get("fee_bps", SWAP_FEE_BPS)
     snapshot = json.loads(json.dumps(pools))
     buy = dict(snapshot["A"])
     sol_out = _swap_usd_for_sol(buy, amount, fee)
@@ -224,12 +239,13 @@ def swap_usd_for_sol(usd_in: int) -> dict[str, Any]:
     }
 
 
+@_serialized
 def swap_sol_for_usd(sol_in: int) -> dict[str, Any]:
-    amount = int(sol_in)
-    if amount <= 0:
+    amount = sol_in
+    if type(amount) is not int or amount <= 0:
         raise ValueError("CRYPTO_ARB_SIZE")
     pools = load_pools()
-    fee = int(pools.get("fee_bps") or SWAP_FEE_BPS)
+    fee = pools.get("fee_bps", SWAP_FEE_BPS)
     snapshot = json.loads(json.dumps(pools))
     sell = dict(snapshot["A"])
     usd_out = _swap_sol_for_usd(sell, amount, fee)
@@ -243,6 +259,7 @@ def swap_sol_for_usd(sol_in: int) -> dict[str, Any]:
     }
 
 
+@_serialized
 def commit_flash_arb(usd_borrow: int) -> dict[str, Any]:
     current = load_pools()
     quoted = quote_flash_arb(usd_borrow, current)

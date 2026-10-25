@@ -2269,16 +2269,6 @@ Item {
         }
     }
 
-    // Lightweight editor state stays responsive at the display cadence. The
-    // compiler/model work remains debounced in analysisTimer above.
-    Timer {
-        id: editorFrameTimer
-        interval: 16
-        repeat: true
-        running: root.editorLoaded
-        onTriggered: root.updateEditorCursor()
-    }
-
     Timer {
         id: externalChangeTimer
         interval: 16
