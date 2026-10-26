@@ -10,6 +10,7 @@ Item {
     objectName: "workspaceSurface"
 
     signal activeObjectChanged(string objectId, string title)
+    signal knowledgePromptRequested(string text)
 
     property var liveAidBackend: null
     property bool editorLoaded: false
@@ -971,7 +972,7 @@ Item {
         root.hostKind = kind
         if (kind === "GAME_ENGINE")
             root.keepGameEngine = true
-        if (kind === "CRYPTO" || kind === "MARKETPLACE" || kind === "TMOG" || kind === "OSINT" || kind === "QIP" || kind === "MEDIA" || kind === "DRAW" || kind === "GAME_ENGINE" || kind === "NODES" || kind === "FLOW" || kind === "RESEARCH")
+        if (kind === "CRYPTO" || kind === "MARKETPLACE" || kind === "TMOG" || kind === "OSINT" || kind === "KNOWLEDGE" || kind === "QIP" || kind === "MEDIA" || kind === "DRAW" || kind === "GAME_ENGINE" || kind === "NODES" || kind === "FLOW" || kind === "RESEARCH")
             return
         if (
             kind === "CODE"
@@ -2945,6 +2946,7 @@ Item {
                 && root.hostKind !== "MARKETPLACE"
                 && root.hostKind !== "TMOG"
                 && root.hostKind !== "OSINT"
+                && root.hostKind !== "KNOWLEDGE"
                 && root.hostKind !== "QIP"
                 && root.hostKind !== "MEDIA"
                 && root.hostKind !== "DRAW"
@@ -3123,11 +3125,7 @@ Item {
                     ? "BUFFER · UNSAVED · DISK UNCHANGED"
                     : "BUFFER · UNSAVED"
             )
-            : (
-                root.hostKind === "CODE"
-                    ? "BUFFER · DISK BASE"
-                    : "DISK BASE"
-            )
+            : ""
         backgroundColor: "#161616"
         borderColor: root.frameBorder
         radius: root.frameRadius
@@ -3201,6 +3199,7 @@ Item {
                     && root.hostKind !== "MARKETPLACE"
                     && root.hostKind !== "TMOG"
                     && root.hostKind !== "OSINT"
+                    && root.hostKind !== "KNOWLEDGE"
                     && root.hostKind !== "QIP"
                     && root.hostKind !== "MEDIA"
                     && root.hostKind !== "DRAW"
@@ -4081,6 +4080,27 @@ Item {
                 }
             }
 
+            Loader {
+                id: knowledgePane
+                objectName: "workspaceKnowledgeLoader"
+                z: 20
+                anchors.fill: parent
+                anchors.leftMargin: 2
+                anchors.rightMargin: 4
+                anchors.topMargin: 4
+                anchors.bottomMargin: 18
+                active: !root.settingsOpen && root.hostKind === "KNOWLEDGE"
+                visible: active
+                sourceComponent: Component {
+                    KnowledgeSurface {
+                        surfaceHost: root.scratchHost()
+                        frameBorder: root.frameBorder
+                        frameRadius: root.frameRadius
+                        onRequestToChat: function(prompt) { root.knowledgePromptRequested(prompt) }
+                    }
+                }
+            }
+
             Item {
                 id: webHost
                 objectName: "workspaceWebHost"
@@ -4278,6 +4298,7 @@ Item {
                     && root.hostKind !== "MARKETPLACE"
                     && root.hostKind !== "TMOG"
                     && root.hostKind !== "OSINT"
+                    && root.hostKind !== "KNOWLEDGE"
                     && root.hostKind !== "QIP"
                     && root.hostKind !== "MEDIA"
                     && root.hostKind !== "DRAW"
@@ -4327,9 +4348,9 @@ Item {
         z: 5
         anchors.left: hostKindFooter.left
         anchors.leftMargin: -6
-        anchors.bottom: hostKindFooter.bottom
+        anchors.verticalCenter: hostKindFooter.verticalCenter
         width: hostKindFooter.width + 12
-        height: 18
+        height: hostKindFooter.height + 4
         color: "#161616"
         visible: hostKindFooter.width > 0
     }
@@ -4340,9 +4361,8 @@ Item {
         z: 6
         anchors.left: parent.left
         anchors.leftMargin: 14
-        anchors.bottom: workspaceFrame.bottom
-        anchors.bottomMargin: -7
-        height: 18
+        anchors.verticalCenter: workspaceFrame.bottom
+        height: implicitHeight
         spacing: 0
 
         Text {
@@ -4530,6 +4550,27 @@ Item {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
                 onClicked: root.setHostKind("OSINT")
+            }
+        }
+
+        Text {
+            text: " | "
+            color: "#a8b0b8"
+            font.family: "monospace"
+            font.pixelSize: 12
+        }
+
+        Text {
+            objectName: "workspaceKindKnowledge"
+            text: "KNOWLEDGE"
+            color: root.hostKind === "KNOWLEDGE" ? "#d8dee9" : "#a8b0b8"
+            font.family: "monospace"
+            font.pixelSize: 12
+            font.bold: root.hostKind === "KNOWLEDGE"
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.setHostKind("KNOWLEDGE")
             }
         }
 

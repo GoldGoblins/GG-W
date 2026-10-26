@@ -126,7 +126,9 @@ Rectangle {
             }
         }
         WalletButton {
+            objectName: "walletCloseButton"
             width: 26; height: 26; padding: 0; text: "×"; Accessible.name: "Stäng wallet"
+            background: Rectangle { color: root.color; border.width: 0 }
             onClicked: root.requestClose()
         }
     }

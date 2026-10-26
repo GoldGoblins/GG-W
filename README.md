@@ -1,32 +1,32 @@
-# GG-W — GG AI Desktop for Windows
+# GG AI Desktop
 
 ![GG AI Desktop](docs/gg-ai-desktop.png)
 
-Windows repo: [github.com/GoldGoblins/GG-W](https://github.com/GoldGoblins/GG-W)
+Public repo: [github.com/GoldGoblins/GG](https://github.com/GoldGoblins/GG)
 
 ## Choose a platform
 
-| Version | Repository | Start here |
+| Version | Branch | Start here |
 |---|---|---|
-| Original Linux version | [GG](https://github.com/GoldGoblins/GG) | `run-gg-ai-desktop.sh` |
-| Windows version | [GG-W](https://github.com/GoldGoblins/GG-W) | `setup-windows.cmd`, then `run-gg-ai-desktop.cmd` |
+| Original Linux version | [`main`](https://github.com/GoldGoblins/GG/tree/main) | `run-gg-ai-desktop.sh` |
+| Windows version | [`windows`](https://github.com/GoldGoblins/GG/tree/windows) | `setup-windows.cmd`, then `run-gg-ai-desktop.cmd` |
 
-GG-W contains the Windows port, including ConPTY chat,
+This `windows` branch contains the Windows port, including ConPTY chat,
 native WebView2 video, optional original uBlock Origin filtering, Windows
 screen observation, TMoG meters and Qt audio. The original Linux version
-remains available in the separate GG repository. The Windows desktop core is verified; optional
+remains available on `main`. The Windows desktop core is verified; optional
 features and remaining limitations are recorded in [WINDOWS-PORT.json](WINDOWS-PORT.json).
 
 To get this version on Windows:
 
 ```powershell
-git clone https://github.com/GoldGoblins/GG-W.git
-cd GG-W
+git clone --branch windows --single-branch https://github.com/GoldGoblins/GG.git
+cd GG
 .\setup-windows.cmd
 .\run-gg-ai-desktop.cmd
 ```
 
-Updates use `git pull` in GG-W, followed by restarting the desktop.
+Updates on this branch use `git pull`, followed by restarting the desktop.
 Each installation uses its own local state and requires its own provider
 sign-ins. Sessions, credentials, model weights and installed third-party tools
 are not included in the repository.
@@ -156,7 +156,7 @@ fullscreen changes and ordinary window/pane resizing retain the process,
 scrollback, scroll position and unfinished input without triggering a history
 replay. The terminal scales down when its pane becomes smaller.
 
-`AGENTS.md`, all seven GG knowledge profiles and the four canonical skills
+`AGENTS.md`, all seven GG knowledge profiles and the five canonical skills
 are included. On Windows the shared skill paths use directory junctions.
 
 **Current limits:** this public export contains no private
@@ -231,7 +231,7 @@ The Windows platform integration checks can be run with:
 ## Installation and application files
 
 The complete application lives in this directory. It includes `AGENTS.md`,
-all seven GG GPT knowledge packages, the four GG skills and their shared
+all seven GG GPT knowledge packages, the bundled GG skills and their shared
 support modules. [FILE-LAYOUT.md](FILE-LAYOUT.md) describes the directories,
 installation and provider dependencies. `FILE-CATALOG.json` inventories the
 current distributable sources.
@@ -246,6 +246,88 @@ PYTHON="$PWD/.venv/bin/python" ./run-gg-ai-desktop.sh
 Install and sign in to Codex for GPT TUI or Grok Build for GROK TUI. External
 provider plugins are cataloged in `config/dependencies.json` and installed
 through their respective provider clients.
+
+## Knowledge Atlas · local material and clickable raster illustrations
+
+Open **KNOWLEDGE** next to OSINT. **Lägg till** imports PDFs, UTF-8 notes
+(`.md`, `.txt`, `.rst`, `.json`) and object images (`.png`, `.jpg`, `.webp`).
+Search retains document and page references; click a passage to inspect the
+original page. PDF extraction runs in a bounded background process. Pages
+without extractable text are marked as needing OCR. Oversized files are
+rejected with an import report instead of silently losing text.
+
+The image view provides smooth zoom, pan, clickable details, back/reset and
+source-page navigation. The included cell is an illustrative demonstration.
+Your own raster scenes can link every explanatory hotspot to an exact quote
+on a source page. A changed source marks its scenes for review. The secondary
+map shows literal word mentions, rather than invented semantic relationships.
+
+`gg-knowledge.cmd` on Windows (or `python3 -B gg-knowledge`) shares the panel's
+store: `import`, `search`, `detail`, `page`, `publish`, and `scenes`. The bundled
+`gg-knowledge-atlas` skill explains how the active agent turns material into
+a cited raster scene. **Förbered visuell förklaring** stages that request in
+the chat; Enter submits it through the normal chat workflow. New illustration
+generation has a first-run cost and latency. Search, cached page rasters,
+zoom and navigation use no model calls. A raster is not a physical simulation;
+alternate object angles require additional authored images.
+
+Restart the desktop after installing the backend update.
+
+## Patch notes · 2026-10-26 · MEDIA library, smooth browsing and KNOWLEDGE
+
+This patch contains the complete distributable source delta since the previous
+GG-W patch, checked against the three latest saved sessions and current GitHub
+sources.
+
+- MEDIA brings channels, films, series, music, radio and completed FETCH files
+  into the same browsing flow. Combine A–Ö, title, category and language filters;
+  series open numerically ordered seasons and episodes in the existing list.
+- Large libraries use a local index and continuous 80-row chunks, with 80–160
+  rows prefetched ahead. Opening a series replaces recycled rows immediately.
+  Back preserves selection and scroll position; catalogue additions do not shift
+  a list being browsed. The loading regression exercises 50,000 items without
+  database scans, source requests or decoder probes on the GUI thread.
+- Source checks require matching provider/file metadata and actual decoded
+  samples. VOD gets a larger bounded probe; public stream headers and supported
+  HLS formats reach the real player. A failed source is withdrawn, with up to
+  three already checked alternatives available for the same title. Corrected
+  encoding grouping keeps separate episodes from a shared torrent/ZIP origin.
+- Swedish and US nostalgia bundles add provider-file metadata for 37 films and
+  33 series groups from 1980–2009, alongside the existing catalogue. These are
+  candidates until checked on each installation. Counts represent checked titles,
+  not a large inventory of unchecked links. Availability depends on the source,
+  region and network; a decoded sample does not establish whole-programme or
+  permanent availability.
+- New installations build their own checked library from the public bundles.
+  While MEDIA is visible, the first check runs on workers for at most five
+  minutes and 240 jobs, with two check workers. Hiding MEDIA or closing the app
+  cancels its work. Refresh can continue that initial check; existing manual or
+  stopped audits remain under their original control. FFmpeg and ffprobe are
+  required for source validation; missing tools produce an installation notice.
+- Utilities playback position, pause and seek follow the actual decoder clock.
+  The video area, EQ and reactive audio rendering retain their existing layout
+  and appearance. Completed local FETCH files use the same player; no new
+  torrent client or automatic third-party installation is included.
+- KNOWLEDGE imports local PDFs, text and images, searches pages and opens the
+  original source. Cached raster explorations support zoom, pan and clickable
+  source citations; changed sources are marked for review. The bundled cell
+  demonstration works without personal documents. Optional teaching views use
+  each user's own learning bundles.
+- Motor menus consistently offer GROK TUI, GPTUI and FLOW TUI, with small frame
+  label and close-control refinements.
+
+Verification covers the source-check pipeline, real local Qt playback/seek,
+first-install validation, continuous QML lists, the 50,000-item loading fixture,
+50 KNOWLEDGE tests and a fresh isolated Windows desktop start. Release check
+results are recorded in `WINDOWS-PORT.json`. Public services are not guaranteed
+by offline fixtures. No private sessions, audit databases, documents, generated
+personal illustrations, credentials or workstation settings are distributed.
+
+Update with `git pull` in GG-W, then close and restart the entire desktop.
+RELOAD alone does not replace the Python backend. Install FFmpeg, including
+ffprobe, if MEDIA reports missing tools, then choose Refresh in MEDIA. The first
+source checks populate the local list progressively; another computer's checked
+catalogue is not copied.
 
 ## Patch notes · 2026-10-25 · CRYPTO, background telemetry and live-eyes
 
@@ -307,30 +389,6 @@ credentials, personal assets or per-computer settings are published.
 
 Update with `git pull` in GG-W, then close and restart the entire desktop.
 RELOAD alone does not replace the Python backend or persistent window components.
-
-## Patch notes · 2026-10-24 · Windows RESEARCH and chat clipboard
-
-Windows RESEARCH now runs pinned REA 6.0.0 and Ghidra 12.1.4 with Temurin
-JDK 25.0.4.1 in a network-disabled AppContainer. Input/tool snapshots are
-read-only, writable scratch and process budgets are bounded, and the selected
-program is parsed without launching it. The optional official-source installer
-and known-answer self-test are documented above; vendor installations remain
-per-user dependencies and are not bundled in this patch.
-
-RESEARCH and GAMES preserve drafts and usable reports across failures, expose
-actual cancellation and evidence states, support native Windows tool discovery,
-and run WASM asynchronously with memory/table/time/input/output limits. EVALS
-records supplied checks and results; opening a trace does not execute a suite.
-
-Chat copy/paste preserves selected text and handles Windows image clipboard
-rendering. GPT image pastes use stable temporary attachments, while the other
-terminal retains its native image protocol. Failed image reads produce a
-visible notice. Terminal mouse/shortcut regressions accompany these changes.
-
-This patch includes every new distributable source change since the previous
-GG-W patch. Sessions, credentials, local databases, installed vendor binaries
-and private authored assets remain outside the public source distribution.
-Restart the entire desktop after updating.
 
 ## Patch notes · 2026-10-24 · verified native Windows SITE runtimes
 
@@ -413,24 +471,6 @@ limits; stopping a stream waits for its child processes to release their inputs.
 Restart the whole desktop after updating; workspace reload does not replace
 the running Python backend. These local changes do not update remote PHP
 servers or verify a hosting provider's installed patch status.
-
-## Patch notes · 2026-10-23 · integrated window title bar
-
-The desktop title and minimize, maximize/restore and close buttons now share
-the existing GG frame's top legend line, matching its monospace type and dark
-colors. The separate Windows title bar is removed.
-
-Drag the title row to move the window or double-click it to maximize/restore.
-Edges and corners use native system resizing and retain the minimum window
-size. Fullscreen and desktop-shell transitions keep the integrated frame.
-The first restore also handles platforms without a saved normal window size.
-
-Verification: real QML button clicks and move/resize dispatch, window-state
-transitions, desktop settings, five live-terminal resize regressions, full
-Windows desktop startup and core-view loading, plus a rendered header preview.
-
-Restart GG AI Desktop completely after updating; RELOAD only reloads workspace
-surfaces and does not replace the application window or Python backend.
 
 ## Patch notes · 2026-10-12 · GG AI Desktop updates since 2026-09-24
 
@@ -1360,6 +1400,171 @@ last-good cache fallback. Radio keeps a larger jitter buffer, the spectrum
 updates live at 60 Hz, and stalled video streams get a bounded retry instead
 of leaving the player frozen.
 
+MEDIA now has one alphabetic browsing flow for **Kanaler, Filmer, Serier,
+Musik, Radio and Hämtat**. Select an A–Ö letter (or `#`), optionally narrow
+the category/language, and click a title to play. Film/series selection can
+be combined with the letter and current search. Series open their seasons
+and numerically sorted episodes in the existing catalog column; the video
+area keeps its width and gains height. The MEDIA / UTILITIES EQ and reactive
+audio display are unchanged.
+
+`config/media-channels.m3u` ships a ready channel snapshot from
+[iptv-org](https://github.com/iptv-org/iptv). `config/media-library.json`
+contains a curated Internet Archive video snapshot, including Swedish Media
+Dubb TMHT episodes, with original source pages and file metadata. Archive
+discovery uses the [public metadata API](https://archive.org/developers/md-read.html).
+The refresh button and submitted TV searches run bounded source work in the
+background. Source availability can change; a listing or metadata response
+does not guarantee that every stream is playable in every region. Finished
+downloads play in the same viewer; entering Hämtat no longer launches a
+terminal. Torlink remains an optional explicit tool when installed.
+
+MEDIA browsing uses a persistent SQLite index and sends at most **80 rows**
+to QML. Opening MEDIA, changing mode, reading player status and looking up an
+unknown ID do not scan files, probe installed tools, query the database or
+perform HTTP on the GUI thread. Letter, type, season and search filters are
+worker queries; typing is debounced and late pages cannot replace newer views.
+The loading checks exercise actual 50,000-row ingestion and paging while Qt
+heartbeats continue. Utilities, EQ and spectrum rendering are preserved.
+
+The saved playable library appears immediately. Only sources with a real
+positive decoded playback proof are listed and counted; a series requires
+checked episodes rather than a successfully loaded collection webpage.
+Catalogue retention is separate from playback-check freshness: last-success
+evidence remains visible for 7 days for live channels and 30 days for VOD.
+The tooltip identifies older checks, and selecting them requires a fresh check.
+Unknown, mismatched, failed and out-of-retention candidates stay private.
+List blocks contain only titles, categories and identifiers. Opening
+Kanaler, Filmer or Serier, switching pages and filtering start no HTTP,
+metadata expansion, bulk import, player probing or playback validation.
+The local bundled snapshot is indexed once, then reused across app starts.
+A bounded 24-page cache makes repeat visits inexpensive and is invalidated by
+persisted catalogue revisions. The list scrolls continuously: its first 80 rows
+appear promptly and the next block is prepared immediately. Scrolling then
+keeps 80–160 rows ahead according to velocity, with at most 80 summaries in each
+transfer. Two small backend buffers warm ahead of the viewer. The worker retains
+only ordered group identities for the current browsing session, so new catalogue
+admissions cannot shift the continuation point or force manual refresh at row 80.
+Actual proof withdrawals invalidate buffered data and trigger a coherent local
+refresh; merely finding another source does not reset a deep scroll position.
+Visited metadata remains available for backwards scrolling; ListView creates
+only visible delegates. Each transfer is capped at 80 rows and previously
+visited blocks are not rebuilt on append. Invalidated source membership drops
+obsolete tail rows and rejects late chunks so withdrawn sources cannot linger.
+Returning from an episode list restores its parent filters and scroll position.
+The parent browsing session also retains its continuation cursor. Entering a
+series switches the model identity and flushes recycled parent delegates before
+showing episodes, so correct episode rows appear without needing a scroll.
+Superseded filter scans and speculative reads cancel inside SQLite workers.
+Only opening a series can fetch its missing episode metadata; cached episodes
+appear directly. Clicking an episode resolves and checks that episode.
+Explicit refresh and submitted searches may
+update candidate metadata on separate workers without blocking local paging.
+The Utilities timeline reads the decoder clock separately from its static
+controls: the handle advances during playback, remains still while paused, and
+previews a drag before committing one seek on release. Paused seeks and seeking
+to zero update the live cache immediately. These controls are checked together
+with the actual video decoder using a local video fixture; EQ and the reactive
+audio display retain their existing rendering. Transport controls still reach
+the video decoder when MEDIA is hidden behind another workspace tab, and the
+final decoder position is reported when a film ends. The library total counts
+checked titles, independently of the size of the candidate source inventory.
+
+`config/media-library-sv.json` adds source metadata for Swedish classics,
+including c/o Segemyhr, Rena rama Rolf, Tre Kronor, Skärgårdsdoktorn, Pistvakt,
+Sunes jul and Swedish feature films. These are candidates until checked.
+Bundled snapshots are fingerprinted and imported once when their content changes.
+The separate nostalgia bundles add actual provider-file metadata spanning
+Swedish and US media from 1980–2009: 37 films, 33 series groups and 1,615 episode
+or programme-part files. Examples include Strul, Drömkåken, Fanny och Alexander,
+Tusenbröder, Trazan och Banarne, Wallander, Married… with Children, Animaniacs,
+Darkwing Duck, Powerpuff Girls, Ghostbusters and Back to the Future. Their
+source metadata is validated; only decoded, checked sources become visible.
+Encoding ancestry stops at a real video file: a shared torrent/ZIP origin can
+no longer collapse hundreds of separate episodes into one encoding choice.
+Legacy expansion caches are refreshed once under this corrected rule.
+
+A selected live source is checked on a worker with a 4 MiB byte budget
+and a 12-second network/decoder deadline target. VOD audits and selected Archive
+films/episodes allow up to 8 MiB and 30 seconds, since genuine large MP4 files
+can require more initial metadata/frames. An OS DNS stall can outlast the socket
+timeout. Local files are decoded without HTTP. Live checks expire
+after 15 minutes; VOD checks after 24 hours. These deadlines trigger a new
+playback check instead of silently removing a previously working title from
+the catalogue. Failed selections leave previous
+playback running; failures withdraw the source from the public library.
+If the chosen source fails, selection can try up to three fresh, already checked
+alternatives for that same title/channel without another click. It never starts
+checking unknown alternatives or abandons a newer user selection to do so.
+Source, title, language, archive file and episode identity bind each proof, so
+renaming a programme under an unchanged URL invalidates its former approval.
+Published public User-Agent/referrer hints also bind that proof. The same hints
+reach the actual Qt player through an opaque loopback relay for the selected
+HTTP source, including nested HLS playlists, public keys and media segments. The
+relay streams fixed buffers, bounds manifests to 1 MiB and closes active
+upstream connections on stop; it does not save videos or keys. It handles
+zero-offset Range rejection and derives missing HLS target durations from
+the playlist's own segment durations so the decoder and verifier agree. Source checks
+handle ordinary public AES-128 HLS, gzip playlists, packed AAC and playable
+progressive HTTP 200 responses. DRM/SAMPLE-AES and unsupported transports remain
+unconfirmed. Successful samples do not claim that seeking is supported unless
+ranges were actually checked.
+
+An absent provider language or season/episode field no longer establishes a
+broken video. Unsupported labels are normalized to unknown, with the exact
+provider file label retained, before a new identity-bound decoded check.
+Conflicting programme/file evidence remains rejected. TV discovery recognizes
+all numbered seasons, full/entire series and named archival VHS/WOC episodes;
+bare episode filenames, advertising compilations and gameplay do not become
+fictitious series.
+
+Explicit channel refresh imports the official [IPTV.org API](https://github.com/iptv-org/api)
+in batches of 200, retaining channel/feed grouping and public request hints.
+Opening or scrolling a catalogue never triggers that import. The standalone
+`python -B -m backend.media_sources import` performs the same finite metadata
+refresh; it makes no playback claims and does not start downloads. Existing
+completed FETCH files can enter the same checked library. Torlink search
+results or pending torrent downloads never count as immediately playable.
+
+The separate `backend.media_health_audit` CLI has `start`, `status`, `run`,
+`repair`, `include` and `stop` operations. It audits a finite saved snapshot with URL
+deduplication, checkpoints, worker leases, cancellation and bounded runs
+(at most 24 workers and 12 hours per invocation, with at most 12 checks for
+Archive and 2 for any other provider at once). Separate content lanes reserve
+capacity for channels, films and series. Series groups receive a first sample
+before the queue exhausts all episodes of one show. Short SQLite writes are
+serialized separately from concurrent network/decoder work. Transient source
+or metadata failures get one later retry; an isolated worker error cannot stop
+the rest of the catalogue. `repair` reconciles changed snapshot identities and
+older transient failures within the same two-attempt limit; each
+corrected identity still needs its own metadata check and decoded proof.
+Old VOD failures under the former 4 MiB/12-second limits receive one explicit
+recheck under the new bounded profile; saved limits prevent repeated migration.
+`include` explicitly adds the current locally imported candidates to that
+finite run; ordinary resume and browsing never expand its snapshot. Different
+effective public request headers require independent decoded samples even when
+their URL matches. Known corrected failures receive priority within each lane.
+`run --lanes movies,series` concentrates the finite audit on films and episodes
+while keeping remaining channel work checkpointed. Footer progress then counts
+only those active lanes. Nostalgia sources can be prioritized without treating
+unverified metadata as an available programme.
+Same-source provider expansion preserves the saved canonical labels and proofs.
+New admissions update the local first block without starting source work;
+deep continuous scrolling retains its current list until returning to the top.
+Archive descriptors expand into finite child
+sources within that run. It checks provider title/language/file/numbering
+correspondence before requiring actual decoded frames; HTTP 200 alone never
+admits a source. Unconfirmed evidence remains hidden. The footer separates
+`Källkontroll X/Y` source-work counts from `Bibliotek Z` checked-title counts.
+The proof covers source metadata and a decoded sample, not whole-programme
+semantic viewing or permanent future availability. It records this scope
+explicitly rather than presenting a large metadata inventory as playable.
+
+Candidate discovery has no fixed film/series total. Each bounded refresh
+resumes its checkpoint until the provider is exhausted. Duplicate encodings
+and episodes do not count as additional series. Discovering metadata never
+increases the playable library count until source checks succeed.
+
 **New local state is explicit.** Codex session discovery/resume and the GPT
 memory bridge live in dedicated backend modules; no model weights or login
 state are added to git.
@@ -1662,6 +1867,13 @@ The first theme is `GG Obsidian / Ledger`:
 - border legends as component syntax;
 - compact peripheral telemetry;
 - no neon dashboard treatment.
+
+Keep this language consistent across tabs. Use the shared frame syntax and
+the existing TMOG navigation as references: white/light gray border legends,
+neutral button fills, gray focus outlines and gray selected tabs. Accent colors
+belong in semantic text, small status lamps and plotted data; do not fill whole
+buttons or major panels with an accent color. External product research may
+improve information hierarchy and workflows without creating a separate theme.
 
 ## Safety boundary
 

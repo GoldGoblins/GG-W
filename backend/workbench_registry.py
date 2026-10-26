@@ -184,6 +184,18 @@ BUILTIN_EXTENSIONS: tuple[dict[str, Any], ...] = (
         settings=("site.preview",),
     ),
     _contribution(
+        "gg.surface.knowledge",
+        "Knowledge Atlas",
+        kind="SURFACE",
+        group="WORKSPACE",
+        description="Local PDFs and knowledge with source citations and clickable raster illustrations.",
+        activation="onCommand",
+        host_kind="KNOWLEDGE",
+        surface_id="workspace",
+        commands=("workspace.KNOWLEDGE",),
+        views=("KNOWLEDGE",),
+    ),
+    _contribution(
         "gg.surface.crypto",
         "Crypto Desk",
         kind="SURFACE",

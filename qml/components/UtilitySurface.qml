@@ -55,7 +55,14 @@ Item {
         return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     }
     readonly property real duration: Number(root.status.duration || 0)
-    readonly property real position: Number(root.status.position || 0)
+    // The decoder clock changes independently of the static chrome. Keeping it
+    // numeric avoids rebuilding the EQ/status JSON for every clock tick.
+    property real meterPosition: 0
+    property real seekPreview: -1
+    property bool timelineDragging: false
+    property real seekPendingUntil: 0
+    property string clockItemKey: ""
+    readonly property real position: root.seekPreview >= 0 ? root.seekPreview : root.meterPosition
     readonly property bool seekable: root.duration > 0.5
     readonly property real progress: {
         if (!root.seekable)
@@ -137,6 +144,25 @@ Item {
     }
 
     function applyChrome(parsed) {
+        var item = parsed.now || {}
+        var itemKey = JSON.stringify([String(item.id || ""), String(item.source || ""),
+            Number(parsed.playback_generation || 0)])
+        if (itemKey !== root.clockItemKey) {
+            root.clockItemKey = itemKey
+            root.seekPreview = -1
+            root.timelineDragging = false
+        }
+        var stamp = Number(parsed.position)
+        if (isFinite(stamp) && stamp >= 0) {
+            root.meterPosition = stamp
+            if (!root.timelineDragging && root.seekPreview >= 0
+                && (Math.abs(stamp - root.seekPreview) < 0.75 || Date.now() >= root.seekPendingUntil))
+                root.seekPreview = -1
+        }
+        if (!(Number(parsed.duration) > 0.5)) {
+            root.seekPreview = -1
+            root.timelineDragging = false
+        }
         var blob = root.chromeBlob(parsed)
         if (blob !== root.statusJson)
             root.statusJson = blob
@@ -310,8 +336,28 @@ Item {
         if (!root.seekable)
             return
         var frac = Math.max(0, Math.min(1, Number(x) / Math.max(1, Number(width))))
-        root.statusJson = root.surfaceHost.mediaSeek(frac * root.duration)
+        root.seekPreview = frac * root.duration
+        root.seekPendingUntil = Date.now() + 1800
+        root.statusJson = root.surfaceHost.mediaSeek(root.seekPreview)
         root.refresh()
+    }
+
+    function previewSeekAt(x, width) {
+        if (!root.seekable)
+            return
+        root.seekPreview = root.duration * Math.max(0, Math.min(1, Number(x) / Math.max(1, Number(width))))
+    }
+
+    function seekRelative(seconds) {
+        if (root.seekable)
+            root.seekAt(root.position + seconds, root.duration)
+    }
+
+    function timelineClock(seconds) {
+        var stamp = Math.max(0, Math.floor(Number(seconds) || 0))
+        var mins = Math.floor(stamp / 60)
+        var secs = stamp % 60
+        return (mins < 10 ? "0" : "") + mins + ":" + (secs < 10 ? "0" : "") + secs
     }
 
     function tuneAt(x, width) {
@@ -969,8 +1015,26 @@ Item {
                 anchors.bottom: parent.bottom
                 height: root.seekable ? 10 : 0
                 visible: root.seekable
+                activeFocusOnTab: root.seekable
+                Accessible.role: Accessible.Slider
+                Accessible.name: "Uppspelningsposition"
+                Accessible.description: root.timelineClock(root.position) + " / " + root.timelineClock(root.duration)
+                Keys.onPressed: function(event) {
+                    if (event.key === Qt.Key_Left)
+                        root.seekRelative(-10)
+                    else if (event.key === Qt.Key_Right)
+                        root.seekRelative(10)
+                    else if (event.key === Qt.Key_Home)
+                        root.seekAt(0, 1)
+                    else if (event.key === Qt.Key_End)
+                        root.seekAt(1, 1)
+                    else
+                        return
+                    event.accepted = true
+                }
 
                 Rectangle {
+                    objectName: "utilityTimelineTrack"
                     anchors.verticalCenter: parent.verticalCenter
                     width: parent.width
                     height: 4
@@ -981,6 +1045,7 @@ Item {
                 }
 
                 Rectangle {
+                    objectName: "utilityTimelineFill"
                     anchors.verticalCenter: parent.verticalCenter
                     width: root.seekable
                         ? Math.max(0, parent.width * root.progress)
@@ -992,6 +1057,7 @@ Item {
                 }
 
                 Rectangle {
+                    objectName: "utilityTimelineHandle"
                     anchors.verticalCenter: parent.verticalCenter
                     x: Math.max(
                         0,
@@ -1000,24 +1066,50 @@ Item {
                     width: 8
                     height: 8
                     radius: 4
-                    color: "#d8dee9"
+                    color: timeline.activeFocus || root.timelineDragging ? "#e8c58f" : "#d8dee9"
                     visible: root.seekable
                 }
 
                 MouseArea {
+                    objectName: "utilityTimelineMouse"
                     anchors.fill: parent
+                    anchors.topMargin: -4
+                    anchors.bottomMargin: -4
                     enabled: root.seekable
                     cursorShape: root.seekable
                         ? Qt.PointingHandCursor
                         : Qt.ArrowCursor
                     preventStealing: true
                     onPressed: function(event) {
-                        root.seekAt(event.x, timeline.width)
+                        timeline.forceActiveFocus()
+                        root.timelineDragging = true
+                        root.previewSeekAt(event.x, timeline.width)
                     }
                     onPositionChanged: function(event) {
                         if (pressed)
-                            root.seekAt(event.x, timeline.width)
+                            root.previewSeekAt(event.x, timeline.width)
                     }
+                    onReleased: function(event) {
+                        if (!root.timelineDragging)
+                            return
+                        root.timelineDragging = false
+                        root.seekAt(event.x, timeline.width)
+                    }
+                    onCanceled: {
+                        root.timelineDragging = false
+                        root.seekPreview = -1
+                    }
+                }
+
+                Text {
+                    visible: root.timelineDragging
+                    anchors.bottom: parent.top
+                    anchors.bottomMargin: 2
+                    x: Math.max(0, Math.min(parent.width - width, parent.width * root.progress - width / 2))
+                    text: root.timelineClock(root.position)
+                    color: "#e8c58f"
+                    font.family: "monospace"
+                    font.pixelSize: 10
                 }
             }
         }

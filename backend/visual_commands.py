@@ -29,6 +29,7 @@ HOST_KINDS = {
     "MARKETPLACE",
     "TMOG",
     "OSINT",
+    "KNOWLEDGE",
     "QIP",
     "MEDIA",
     "DRAW",

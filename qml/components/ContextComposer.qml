@@ -71,6 +71,11 @@ Item {
             input.text = ""
     }
 
+    function setDraft(value) {
+        input.text = String(value || "")
+        input.forceActiveFocus()
+    }
+
     readonly property bool canSend: input.text.trim().length > 0
     readonly property string engineLabel: root.engineTarget === "FLOW_TUI" ? "FLOW TUI" :
         root.engineTarget === "GPT_TUI" ? "GPTUI" :
@@ -457,54 +462,6 @@ Item {
         anchors.verticalCenter: chatLampRail.verticalCenter
         height: 18
         spacing: 0
-
-        Text {
-            id: qwenEngineTarget
-            text: "QWEN"
-            color: root.engineTarget === "LOCAL_QWEN"
-                ? "#d8dee9"
-                : "#5d6670"
-            font.family: "monospace"
-            font.pixelSize: 12
-            font.bold: root.engineTarget === "LOCAL_QWEN"
-
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.engineTargetRequested("LOCAL_QWEN")
-            }
-        }
-
-        Text {
-            text: " | "
-            color: "#a8b0b8"
-            font.family: "monospace"
-            font.pixelSize: 12
-        }
-
-        Text {
-            id: grokEngineTarget
-            text: "GROK"
-            color: root.engineTarget === "GROK_WORKER"
-                ? "#d8dee9"
-                : "#5d6670"
-            font.family: "monospace"
-            font.pixelSize: 12
-            font.bold: root.engineTarget === "GROK_WORKER"
-
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.engineTargetRequested("GROK_WORKER")
-            }
-        }
-
-        Text {
-            text: " | "
-            color: "#a8b0b8"
-            font.family: "monospace"
-            font.pixelSize: 12
-        }
 
         Text {
             id: grokTuiEngineTarget

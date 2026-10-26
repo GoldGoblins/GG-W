@@ -4,18 +4,18 @@
   "source_root": ".",
   "dependency_catalog": "config/dependencies.json",
   "categories": {
-    "application-code": 445,
-    "configuration": 6,
+    "application-code": 462,
+    "configuration": 11,
     "contracts": 5,
     "documentation": 7,
-    "entrypoints-and-guidance": 34,
-    "gg-skills": 8,
+    "entrypoints-and-guidance": 36,
+    "gg-skills": 9,
     "gpt-knowledge": 93,
     "installation-and-packaging": 6,
-    "interface": 229,
+    "interface": 233,
     "native-engine": 1188,
     "shared-support": 54,
-    "tests": 415,
+    "tests": 439,
     "tools": 35
   },
   "files": [
@@ -59,8 +59,8 @@
       "path": "FILE-LAYOUT.md",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 5273,
-      "sha256": "7f6bfac8211f43d558c80596e9c95e089a49f4084ed65d8a0286fd6727266c65",
+      "bytes": 5290,
+      "sha256": "875e87cbd8711c069eb3bb11d6bc77d3bf008137b09d6fb7e323a1890f52593f",
       "mode": "0o644"
     },
     {
@@ -83,24 +83,24 @@
       "path": "README.md",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 101186,
-      "sha256": "e9b4ece763594bd25ed22d779f619713ab84bc6cb7f1f8dbf593be519c8df7aa",
+      "bytes": 116240,
+      "sha256": "b796e9449c3e5e30d6538c66b1263ad792755478b4fdaa14d03175b330565f15",
       "mode": "0o600"
     },
     {
       "path": "SOURCE-MANIFEST.json",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 503876,
-      "sha256": "eaa47edca6da13ac1bbf917ad5ce8ae13647a228e18b7980a390c2b43e3bce15",
+      "bytes": 514433,
+      "sha256": "a80901fd381ad665bc5276615757ef3295b3f00ce0164eef421e02b7efb23a01",
       "mode": "0o644"
     },
     {
       "path": "WINDOWS-PORT.json",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 143550,
-      "sha256": "3d4afafcd5f0653e57a22978608d4675c72dfe520f74cea0f56d3805344aca1c",
+      "bytes": 140379,
+      "sha256": "2514fd39ec303513f8f888e9874bd26c3e3c17ae3c5b386ca3ac443778beed87",
       "mode": "0o644"
     },
     {
@@ -307,8 +307,8 @@
       "path": "backend/chat_surface_host.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 254077,
-      "sha256": "5fafa167e0e59fe5a2158339878d4da0e1e2336767b3d8df705805513d3bc571",
+      "bytes": 261101,
+      "sha256": "56fbe5a4eee7fe15a70d9702abcf38939bd5abf0e9d1f6bc6711e1b437a792e9",
       "mode": "0o600"
     },
     {
@@ -2432,6 +2432,46 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/knowledge_atlas.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 26886,
+      "sha256": "d8a2d148f5421f0b77474da85b23352df77e758c18268bb20133afd121517f58",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/knowledge_body.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 29626,
+      "sha256": "76387d2a65d5d7a2d2d400365efcdaa20fde7ca680a3bb88d28046e6093bf315",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/knowledge_extract.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 4349,
+      "sha256": "77141714616719656358fb52bd17d8c59a09ec23cdd3122687ab2158805e8a14",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/knowledge_host.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 7122,
+      "sha256": "9f9c91a065abb15ef351b685c9c6d11f0fc6d03c7dd573f3a219b4bef5a6d4fd",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/knowledge_scenes.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 7593,
+      "sha256": "31c39f80889e31e1816fec252a5fe7514d67ab36bb8fc1e47d84afb055d06ee9",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/learning_memory_promotion.py",
       "category": "application-code",
       "kind": "file",
@@ -2776,11 +2816,43 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/media_availability.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 38250,
+      "sha256": "7217d01dd758a6dadc10f1fb6d03bd64fd78b2551cbfc33b8fafa81447a1ba57",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/media_browse_session.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 3143,
+      "sha256": "4976fa35e1454e9dff34c70afaaaaedfd4102eb195a63e9778120ec860c4d145",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/media_catalog_service.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 146,
+      "sha256": "47ba70e8137ea4ff32046e790df7ebb50b38e80066588718b8b862d27508b163",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/media_contract.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 42923,
-      "sha256": "7bfb09686fd2132f6c3484b4cdd4dbddcb588f6363aa09440ab728cd58c32d7f",
+      "bytes": 48113,
+      "sha256": "597a05c0d58a88f26fb53f0b11955315aacee7d4ae7303ad8d2ad3c310a474e9",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/media_discovery.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 10370,
+      "sha256": "4c1b9bad89a6b236001e67f7d415a497e0749f2777a3d9956d1335fc5f3d1421",
       "mode": "0o644"
     },
     {
@@ -2792,19 +2864,59 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/media_health_audit.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 57500,
+      "sha256": "a882c048245627c3429c662f9c69a3764885b705df187d4ee3307a2eede5d375",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/media_hls.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 4677,
-      "sha256": "5bb024b9ceb6f762854a6e8979ef16615583197cfcc06b0dc5381191607fcec0",
+      "bytes": 5429,
+      "sha256": "6f2352037f524452de7e080d4f055f7fbdc4a8f86a84e5f27de9f8b6b7f6efa2",
       "mode": "0o644"
     },
     {
       "path": "backend/media_host.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 50091,
-      "sha256": "0262b8668b24066c64b051ccd8f6660dcf78b038264f7c0ef69559d39d73e64c",
+      "bytes": 57795,
+      "sha256": "39c2b005043f0ed2e35dc542faba84511707411975a4a2cbf5926fe115a9ecbf",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/media_index.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 38075,
+      "sha256": "cb0f9321aa597a1d18959f149f143f27c0c4099c6f872ea1646090fcb99a26bc",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/media_initial_validation.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 3204,
+      "sha256": "87d30307a197cb973277926e4cbefdb79fbcccd07e226f5a28ef5a2f3c401e6a",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/media_library.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 26041,
+      "sha256": "b56154d431b4dc7b1b9205bedc987a7b8a5b1543162184f6c76705affd0a1943",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/media_paged_service.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 46842,
+      "sha256": "dd48f04acd711eb7b02b1e377a8c165c15977b3c52d9e4686d23bab80cbf1120",
       "mode": "0o644"
     },
     {
@@ -2824,11 +2936,35 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/media_request.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 1149,
+      "sha256": "3fadbe751575372d49099bde206b99fb8ff983a7243a520da48fe382c8354847",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/media_sources.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 10494,
+      "sha256": "d7c713f8da476fb0e604c3b5f60ff9f1d70243b472a64d4b6afe1ab8e7095190",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/media_spectrum.py",
       "category": "application-code",
       "kind": "file",
       "bytes": 2549,
       "sha256": "edc979c5bc48c2fabf1e07726be0f6fe0b658c58b7c3dbe68ed6a62bb0625c16",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/media_stream_proxy.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 11862,
+      "sha256": "719411e78270e63b4cb288f667a14fb9db65ec186d9eb4708eecc55cbfe1ddbb",
       "mode": "0o644"
     },
     {
@@ -3443,8 +3579,8 @@
       "path": "backend/surface_intent.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 4267,
-      "sha256": "acd34b2996fcc31ae6ef57142340e95cf2c3810b9a81f2aa9c67c0edd420ad13",
+      "bytes": 4618,
+      "sha256": "c543e8e6f02898a46529607f1adf2f2d3e5e5842a1d8a3053e1ad6973e47ef99",
       "mode": "0o600"
     },
     {
@@ -3523,8 +3659,8 @@
       "path": "backend/visual_commands.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 8014,
-      "sha256": "9703201a1d37eee4e20305fbbf100ae1fa7e4c3c5b403f97a5cd931230ee11b4",
+      "bytes": 8031,
+      "sha256": "f0f02c754dd5e7a59373e88dcf43de77a22a81781268c08d43fbc4d3b10cccf1",
       "mode": "0o644"
     },
     {
@@ -3643,8 +3779,8 @@
       "path": "backend/workbench_registry.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 19550,
-      "sha256": "547a7213e218db901f0870cb3cc1b736b0d2282d85f39ffebb294c7e1c40117c",
+      "bytes": 19960,
+      "sha256": "f19b273b53422abe3789a14ebbd7ee0a709e1d3981c2eb1b74e0c96fcba391c0",
       "mode": "0o644"
     },
     {
@@ -3691,8 +3827,48 @@
       "path": "config/dependencies.json",
       "category": "configuration",
       "kind": "file",
-      "bytes": 14686,
-      "sha256": "c09a63804bdc520f82369f57ba631cf519246c3151df92e26704ee3e94bf5089",
+      "bytes": 14713,
+      "sha256": "b5b5cda45fb015d82e20b993187170b925bae2d36dfaf668f1697ce1619f0feb",
+      "mode": "0o644"
+    },
+    {
+      "path": "config/media-channels.m3u",
+      "category": "configuration",
+      "kind": "file",
+      "bytes": 2763021,
+      "sha256": "fefe58fdfa79d7d16bbf15ed6d7af5d84368a0fc5ad58f60aea15db0e6ec969b",
+      "mode": "0o644"
+    },
+    {
+      "path": "config/media-library-nostalgia-sv.json",
+      "category": "configuration",
+      "kind": "file",
+      "bytes": 87089,
+      "sha256": "deb9d8da15c859aa9df109b95116c164b3431263b1a56bcd4537ba432f17d249",
+      "mode": "0o644"
+    },
+    {
+      "path": "config/media-library-nostalgia-us.json",
+      "category": "configuration",
+      "kind": "file",
+      "bytes": 2257098,
+      "sha256": "03a850142a832779a52d0361b511550a72e3c6617496b3a0705ed2e019fdc58d",
+      "mode": "0o644"
+    },
+    {
+      "path": "config/media-library-sv.json",
+      "category": "configuration",
+      "kind": "file",
+      "bytes": 565109,
+      "sha256": "395c147dfb2d608797891d499dba3c3eb3584f16bf3d1f5dee5730b46f924cc0",
+      "mode": "0o644"
+    },
+    {
+      "path": "config/media-library.json",
+      "category": "configuration",
+      "kind": "file",
+      "bytes": 1813056,
+      "sha256": "0805cfe110841088102eaf5de4d09323fb4b7cec9271d84a55f4b543f98a8397",
       "mode": "0o644"
     },
     {
@@ -3773,7 +3949,7 @@
       "kind": "file",
       "bytes": 362,
       "sha256": "a93af0785a37267027164222d9d0028daecde4b53b68cbe435193f22075b2b5f",
-      "mode": "0o755"
+      "mode": "0o644"
     },
     {
       "path": "gg-blender.cmd",
@@ -3829,6 +4005,22 @@
       "kind": "file",
       "bytes": 329,
       "sha256": "b29d45627e043ef2d4ea5a820d6ff14bb66739c3d19c68d2d7a21ff04c954c98",
+      "mode": "0o644"
+    },
+    {
+      "path": "gg-knowledge",
+      "category": "entrypoints-and-guidance",
+      "kind": "file",
+      "bytes": 3402,
+      "sha256": "a8c7d6e4a457f09c5b7aee629da82f3e2ffd8942c4a1b008b2bea744037fb0ab",
+      "mode": "0o644"
+    },
+    {
+      "path": "gg-knowledge.cmd",
+      "category": "entrypoints-and-guidance",
+      "kind": "file",
+      "bytes": 314,
+      "sha256": "6665a6979d38c091e9a35795f4cd9820b187dc35d4b125617c98f124e3ef4039",
       "mode": "0o644"
     },
     {
@@ -14163,8 +14355,8 @@
       "path": "packaging/catalog.py",
       "category": "installation-and-packaging",
       "kind": "file",
-      "bytes": 8650,
-      "sha256": "edc799f1371e57c7893f9ca606c605a9b4eade9de90326658c1fb1ac6c962e94",
+      "bytes": 8699,
+      "sha256": "f574eee6e11b15ff8c4296aa1b9ecb38fbc55f36a46287ce21d2df526ed548e9",
       "mode": "0o755"
     },
     {
@@ -14203,16 +14395,24 @@
       "path": "packaging/source-base.json",
       "category": "installation-and-packaging",
       "kind": "file",
-      "bytes": 120469,
-      "sha256": "3aa7882a908f9288341b267399d37a19440d354bdb38d12fd026f50229faa4e4",
+      "bytes": 120503,
+      "sha256": "b2492be3ae9a28ea747e0486307b027a31ffa0ad129f78e33a7944afb85abc19",
       "mode": "0o644"
     },
     {
       "path": "qml/Main.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 151766,
-      "sha256": "96c2c3cfe3f06aba89eb04909b2cd38f4a78d4b13c8c9006dcee4194861aabdd",
+      "bytes": 152635,
+      "sha256": "200c241ebc725ac5fd390ee7562a1d0f49a2c97561adb4139551d07b7aff48e3",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/assets/knowledge-cell.png",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 2822111,
+      "sha256": "30f98f80bf5da04534fe2808ae85d5f0a7e928afbf09f2d122e40da0aa7702b1",
       "mode": "0o644"
     },
     {
@@ -14323,8 +14523,8 @@
       "path": "qml/components/ContextComposer.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 23649,
-      "sha256": "684fa2427271d810d4d106a4ad70f5f57c69c04b7fc0aabba5a8e469ce168434",
+      "bytes": 22434,
+      "sha256": "27ca4ec01c3d182edd1f28d123b05a1f0bc880bddebf4953d7bbfffa21087d88",
       "mode": "0o644"
     },
     {
@@ -14784,6 +14984,30 @@
       "mode": "0o644"
     },
     {
+      "path": "qml/components/KnowledgeBodyView.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 51987,
+      "sha256": "8994de76520b71b80389f10b3e5d752c3c72166191aef0910c824cdc294852d8",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/KnowledgeRasterView.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 9727,
+      "sha256": "f0e92e9bbefbff59a74212e3a2c76fda89542b1296df2fef4fd25b528907e00f",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/KnowledgeSurface.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 46308,
+      "sha256": "7ead26dbf8b32e96523033a61f65b8ab1090d3787d112e018988337303a94083",
+      "mode": "0o644"
+    },
+    {
       "path": "qml/components/LiveAidLineAnnotation.qml",
       "category": "interface",
       "kind": "file",
@@ -14851,8 +15075,8 @@
       "path": "qml/components/MediaSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 43847,
-      "sha256": "9dae5489450b9308d1f5595f5a2fff7e2ab35c29289b9cbe5edb034a145f68c4",
+      "bytes": 107925,
+      "sha256": "f05c25f8f94213e04a955b1faed04334a958df30a3506d98ec69f02b80022844",
       "mode": "0o644"
     },
     {
@@ -14955,8 +15179,8 @@
       "path": "qml/components/SettingsChatModule.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 5044,
-      "sha256": "933568f0e7f1d9694582d50477f9f6ab85d0aba85533345f853ddea39ea529ac",
+      "bytes": 3564,
+      "sha256": "56ce6c098c7d21dbe8dc902897c8db23fae3ee94911ce8a3bb4c32557a3ea476",
       "mode": "0o644"
     },
     {
@@ -15011,8 +15235,8 @@
       "path": "qml/components/SettingsWorkspaceModule.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 8427,
-      "sha256": "37d370741ba082bd2559acdf37f63789a58f2700f21c48d43b6e0df6517e15c7",
+      "bytes": 8554,
+      "sha256": "d00866674f57db68050f8a3753a980c1fef0c84ca982d3d68167f8351b6cfb91",
       "mode": "0o644"
     },
     {
@@ -15091,8 +15315,8 @@
       "path": "qml/components/UtilitySurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 41532,
-      "sha256": "9c14b36fc4594df58840d775e01054da6ee9ee8821d6cc5a73ea8bb3fec47ff0",
+      "bytes": 45647,
+      "sha256": "81a519a10bc1cb79d51f2437eeebe69eeaf315619a46ef8b925c995b38d0a5e9",
       "mode": "0o644"
     },
     {
@@ -15131,8 +15355,8 @@
       "path": "qml/components/WalletPopup.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 19923,
-      "sha256": "00c74694d00a13b30a68a4fcac49ae07d11febd1533773dc82c85a2b9d6b89f8",
+      "bytes": 20040,
+      "sha256": "e2a3e1bedac7610dbe87816de7d3bb8ba9d1ffb8baeb2b2b0787f3c5eae8d71f",
       "mode": "0o644"
     },
     {
@@ -15187,8 +15411,8 @@
       "path": "qml/components/WorkspaceSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 168931,
-      "sha256": "a61e78f2dfbb3fd557f78721008559936e941a15ad0f4f8705b69328606de5c7",
+      "bytes": 170517,
+      "sha256": "579d8247dda34cea561a3d6ab77e0d39436425b64b513debf21446afd8fb9e95",
       "mode": "0o644"
     },
     {
@@ -16107,8 +16331,8 @@
       "path": "setup-windows.cmd",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 727,
-      "sha256": "ac6c3439934a33cc27811b38445a38faa6a5cc2696a1da55d853855b0bcd6586",
+      "bytes": 869,
+      "sha256": "7abf0505e04cc4265a0e54014ecf0a49a1d2fe07462d96cf247bf38e167ffa92",
       "mode": "0o644"
     },
     {
@@ -16125,6 +16349,14 @@
       "kind": "file",
       "bytes": 362,
       "sha256": "277bb157a05b830aa0d103930c3b0727774a47272f7a6c406300d0b4a1b5208c",
+      "mode": "0o644"
+    },
+    {
+      "path": "skills/gg-knowledge-atlas/SKILL.md",
+      "category": "gg-skills",
+      "kind": "file",
+      "bytes": 5343,
+      "sha256": "9cee399b2e50c2938f919847f3758ca79be200abe9df5aabba29e71afd50add9",
       "mode": "0o644"
     },
     {
@@ -16680,6 +16912,14 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/preview_media_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 2224,
+      "sha256": "6946bb422691dbc9bd542606f6b64e00ba09a9fbf6a0b8b252bd9e5fd9431eb1",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/run_crypto_checks.py",
       "category": "tests",
       "kind": "file",
@@ -16723,8 +16963,8 @@
       "path": "tests/test_application_bundle.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 9770,
-      "sha256": "4b83cf2f719df1423cd72e06e2dd89030c2ae5380c61fe33765715baedbe113d",
+      "bytes": 9915,
+      "sha256": "de313a8c9f32f3cccd823c8caee31398a16136b938801b72ef0c54fe92a754f6",
       "mode": "0o644"
     },
     {
@@ -18987,8 +19227,8 @@
       "path": "tests/test_grok_worker_contract.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 29944,
-      "sha256": "5d047299b118f6709bf16fdc4f120ac7e803022c44316813d66c86087e13370e",
+      "bytes": 29949,
+      "sha256": "dda171a2d3fbdbf907b56b3ba43f8e6939a65f2e7beeeccbb69957f0737ec70d",
       "mode": "0o600"
     },
     {
@@ -19032,11 +19272,51 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_knowledge_atlas.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 13499,
+      "sha256": "bec4153d1ec5d76426eeaad973c41d183f4e08efdbf2bea52eaf2b9af9bf6c4c",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_knowledge_body.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 18160,
+      "sha256": "507114f7a61e04381a6d2272cb7ad044f5de5f97483ac929080f466c1c209baa",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_knowledge_body_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 14160,
+      "sha256": "d27b66c34c4bf1b5c4d11f2559ae94038c20b590a161176ba0b52f79668a192f",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_knowledge_compiler.py",
       "category": "tests",
       "kind": "file",
       "bytes": 11213,
       "sha256": "56379059aa3d2ca6d61efa002bff572c929de624398d334e9be117c6f71f648b",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_knowledge_scenes.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 7168,
+      "sha256": "28203a1b8af8c9bfee6528e6887fa4a45ce7016f22e29e521c3e11a0ded12cef",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_knowledge_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 8639,
+      "sha256": "ded4d14dc8b0810c872441048fa4eb268a0097c76bbface2ca735cb9505aacdb",
       "mode": "0o644"
     },
     {
@@ -19112,11 +19392,75 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_media_availability.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 31543,
+      "sha256": "ccf2b9eafc9e46d52289898b2679c30b405813704217ccfdb0a29bcb4b4da36e",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_media_browse_session.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 4657,
+      "sha256": "c0af89457cfca529e527cfaef8ac50dba0ab7cb0250a36f928de83b6de8bb3e4",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_media_catalog_index.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 25260,
+      "sha256": "b7836fc9f64eea6d5884e104b263bb55dba49819f37ff9cf9555c6bee1ed65c1",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_media_catalog_service.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 100044,
+      "sha256": "d7ae640d7fe396fcc3cb395a3f79c76e1315b108f0229411df9390ff871df2fc",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_media_cliamp_cache.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 4470,
+      "sha256": "ac9d967c7133544626bccbfaf897090f70f1ce1ceed42b301b6c1cbee81f112c",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_media_contract.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 28928,
-      "sha256": "bcae3d5b0fb0787a4e66043e14b0e0a23994bdeb9e8d4dd083aca53a1e61f81a",
+      "bytes": 29009,
+      "sha256": "f07a2cf557718bc78730367441f7a8a90dd6ce7afc5feefdb934ab0a33ec5e23",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_media_controls_integration.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 9390,
+      "sha256": "93448f7378e37da53ced2e16b777e728837788bc062ba13dce303c260b142ba2",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_media_discovery.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 12684,
+      "sha256": "e9240e2169e68d27ed1ed50d8ed0cc80ac8c67e51dd0ef201d9173b84ef6eed3",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_media_health_audit.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 40322,
+      "sha256": "9b883ee06bb5827f56cd1ab128be986ba2888664761c48373dccabb26868482c",
       "mode": "0o644"
     },
     {
@@ -19125,6 +19469,54 @@
       "kind": "file",
       "bytes": 6173,
       "sha256": "337499dfd48194c999fdcab1c97b9fed880d397ece1d37fa3471dbccfc352826",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_media_initial_validation.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 12264,
+      "sha256": "e4bc088b34a259902c0ae942edd558999b3e3ba7d0d102f81b2cdcbf423bb7fd",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_media_library.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 14077,
+      "sha256": "6eeeef6e395d9d5f2178851acedb8a08023732d650954288e0e0988a132fd996",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_media_library_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 52082,
+      "sha256": "46e9d6b3f9120f5bb715dc6122c2d9b67999a0908e9afedf03fad5af831b40ae",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_media_loading.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 27669,
+      "sha256": "fc2d43039b62c53d7fcb53ed020a015855d05ade7e2caaf3e6c84d6b4e98f24b",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_media_nostalgia_sv.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 5348,
+      "sha256": "22fb25c5bea978ed55b426550f924aced94a80178c8f874bb77393cfdac76474",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_media_nostalgia_us.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 7138,
+      "sha256": "39664f7f002e4a0a8dd6f3591560ce64685d1543de2e03bdb38140d25ec24608",
       "mode": "0o644"
     },
     {
@@ -19141,6 +19533,38 @@
       "kind": "file",
       "bytes": 10731,
       "sha256": "7a88044b96358ee81d9bf5c4757b2d6da3bb4af701f81fa33c43b04532c865d0",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_media_sources.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 8810,
+      "sha256": "4eb062d1eb436b7af296fad53244cd0286900502dc4f6d3dcd98011859bc12a9",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_media_stream_proxy.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 10058,
+      "sha256": "ce5d4e6289f1fe2fddd80db3f78cb4b6a263354367744acfd7954f08111bdf8b",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_media_swedish_library.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 3698,
+      "sha256": "c410d66b73b255ec1d3dee3ead91c9d43830bf5d7e690fcb69b60c89d51b6cfa",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_media_timeline.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 6052,
+      "sha256": "551d0390cd1dfbb0d730c67e44402c73648a6cb58844073459457ab08789df02",
       "mode": "0o644"
     },
     {
@@ -19571,8 +19995,8 @@
       "path": "tests/test_source_contract.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 35225,
-      "sha256": "09c74c04f3c8744bd9ca398c18628969656b4f65694aedf1e7fa5648dcadcd75",
+      "bytes": 35241,
+      "sha256": "974f2c99eee15640dd0262054a7d8e2f595de762640f74aba0e316349c363e48",
       "mode": "0o644"
     },
     {
@@ -19723,8 +20147,8 @@
       "path": "tests/test_ux_baseline_contract.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 58224,
-      "sha256": "48dd5da656ff7b4760da9b7c1aa84906c837b00dd3245e0771f525d05bd8d3ba",
+      "bytes": 58289,
+      "sha256": "1b87b5365c3b67b8709d535832114338a9b7915b96d3db9e8e2b06926510c9de",
       "mode": "0o644"
     },
     {
@@ -19803,8 +20227,8 @@
       "path": "tests/test_windows_desktop.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 5172,
-      "sha256": "58512246eefa02269a1024420847cb1a1c38ee3d7cd6c1f3e3c9d230d49683bc",
+      "bytes": 5185,
+      "sha256": "6c5bd546a2651f567a5ac7eb42b6d813e022effc05baac1d156db0d9f7ab0987",
       "mode": "0o644"
     },
     {

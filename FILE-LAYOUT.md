@@ -13,7 +13,7 @@ size and integrity check.
 | `qml/` | Interface and application resources |
 | `native/` | Engine libraries and build sources |
 | `knowledge/web-gpts/` | All seven GG GPT source packages |
-| `skills/` | Blender workflow, live eyes, visible web and SELFDEV |
+| `skills/` | Blender workflow, knowledge atlas, live eyes, visible web and SELFDEV |
 | `.agents/skills`, `.grok/skills` | Links to the canonical skills directory |
 | `support/` | Cognitive core, orchestrator, code gates and debug tools |
 | `config/`, `schemas/` | Defaults, dependency catalog and data contracts |
@@ -46,7 +46,7 @@ PYTHON="$PWD/.venv/bin/python" ./run-gg-ai-desktop.sh
 ```
 
 Install and sign in to Codex for GPT TUI or Grok Build for GROK TUI.
-`--prepare` exposes the four GG skills to the local client homes. Provider
+`--prepare` exposes the five GG skills to the local client homes. Provider
 settings and authentication are not distributed with GG. A standalone
 installation uses this directory as its default workspace; development
 checkouts retain their parent shared workspace.

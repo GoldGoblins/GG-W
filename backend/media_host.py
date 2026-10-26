@@ -59,6 +59,18 @@ _paused = False
 _embed_tokens: tuple[str, ...] = ()
 _rc_sock: Path | None = None
 _extra_items: list[dict[str, Any]] = []
+_search_mode = ""
+_search_query = ""
+_search_active = False
+_library_busy = False
+_library_error = ""
+_library_collection = ""
+_library_revision = 0
+_library_items: dict[str, dict[str, Any]] = {}
+_library_children: dict[str, list[dict[str, Any]]] = {}
+_library_page_state: dict[str, Any] = {}
+_library_page_items: list[dict[str, Any]] = []
+_library_fetch_info: dict[str, Any] = {"present": False}
 _backend = ""
 _catalog_memo: dict[str, tuple[float, list[dict[str, Any]]]] = {}
 _CATALOG_MEMO_TTL = 45.0
@@ -97,7 +109,6 @@ _live_payload: dict[str, Any] = {}
 _live_lock = threading.Lock()
 _cliamp_boot_lock = threading.Lock()
 _pump_thread: threading.Thread | None = None
-_GUI_LIVE_TTL = 0.016
 _RF_TTL = 5.0
 _rf_cache: tuple[float, dict[str, str]] | None = None
 _TUNER_MARKS = radio_tuner_marks()
@@ -155,7 +166,7 @@ def player_pid() -> int:
         return int(_cliamp_proc.pid)
     if _backend == "torlink" and _fetch_alive() and _fetch_proc is not None:
         return int(_fetch_proc.pid)
-    if not _running() or _proc is None:
+    if _proc is None or not _running():
         return 0
     return int(_proc.pid)
 
@@ -253,7 +264,8 @@ def _cliamp_call(payload: dict[str, Any], timeout: float = 8.0) -> dict[str, Any
     global _last_live_state, _last_live_at
     cmd = str(payload.get("cmd") or "")
     if cmd != "status":
-        _last_live_state = {}
+        # Expire the worker's snapshot without blanking the GUI clock/EQ while
+        # a command is in flight. Only decoder status replaces the full state.
         _last_live_at = 0.0
     path = _cliamp_sock()
     if not path.exists():
@@ -282,7 +294,34 @@ def _cliamp_call(payload: dict[str, Any], timeout: float = 8.0) -> dict[str, Any
         parsed = json.loads(text[0])
     except json.JSONDecodeError:
         return {}
-    return parsed if isinstance(parsed, dict) else {}
+    if not isinstance(parsed, dict):
+        return {}
+    if parsed.get("ok") is True:
+        if cmd == "status" and "state" in parsed:
+            _last_live_state = dict(parsed)
+            _last_live_at = time.monotonic()
+        elif cmd != "status":
+            live = dict(_last_live_state)
+            # Some protocol versions return the changed fields with an ack.
+            for key in ("state", "position", "duration", "eq_preset", "eq_bands",
+                        "track", "shuffle", "repeat"):
+                if key in parsed:
+                    live[key] = parsed[key]
+            if cmd == "eq":
+                if "name" in payload:
+                    live["eq_preset"] = str(parsed.get("eq_preset") or payload["name"])
+                elif "band" in payload and "eq_bands" not in parsed:
+                    bands = normalize_eq(live.get("eq_bands"))
+                    index = int(payload["band"])
+                    if 0 <= index < len(bands):
+                        bands[index] = float(payload.get("value", bands[index]))
+                        live["eq_bands"] = bands
+            elif cmd == "toggle" and "state" not in parsed:
+                state = str(live.get("state") or "")
+                if state in ("playing", "paused"):
+                    live["state"] = "paused" if state == "playing" else "playing"
+            _last_live_state = live
+    return parsed
 
 
 def start_live_pump() -> None:
@@ -315,7 +354,7 @@ def live_status_json() -> str:
         spec = list(_spectrum)
         payload = dict(_live_payload)
     if not raw:
-        return raw
+        return publish_live(status_payload(live=True))
     if not spec:
         return raw
     if not payload:
@@ -526,6 +565,8 @@ def publish_live(payload: dict[str, Any] | None = None) -> str:
     data.pop("cores", None)
     data.pop("eq_presets", None)
     data.pop("library_roots", None)
+    for field in ("library_categories", "library_languages", "library_seasons"):
+        data.pop(field, None)
     data["live"] = True
     raw = json.dumps(data, separators=(",", ":"))
     with _live_lock:
@@ -553,11 +594,9 @@ def _live_pump_loop() -> None:
 
 
 def _cached_cliamp() -> dict[str, Any]:
-    now = time.monotonic()
-    if _last_live_state and now - _last_live_at < _GUI_LIVE_TTL:
-        live = dict(_last_live_state)
-        return live
-    return _cliamp_live(want_bands=False)
+    # GUI readers never perform socket IPC. The live-pump worker refreshes this
+    # snapshot; its last known state is preferable to blocking paint/input.
+    return dict(_last_live_state)
 
 
 def _cliamp_live(want_bands: bool) -> dict[str, Any]:
@@ -595,16 +634,123 @@ def _maybe_resume_stream(state: str) -> None:
 
 
 def _catalog_rows(mode: str) -> list[dict[str, Any]]:
-    if _extra_items:
-        return _extra_items
     kind = str(mode or "").strip().upper()
-    now = time.monotonic()
+    if _search_active and kind == _search_mode:
+        return _extra_items[:80]
+    if _library_page_state.get("mode") == kind:
+        return _library_page_items
     hit = _catalog_memo.get(kind)
-    if hit is not None and now - hit[0] < _CATALOG_MEMO_TTL:
-        return hit[1]
-    rows = catalog_for(kind)
-    _catalog_memo[kind] = (now, rows)
-    return rows
+    return hit[1][:80] if hit is not None else []
+
+
+def library_publish_page(payload: dict[str, Any]) -> None:
+    global _library_page_state, _library_page_items, _library_revision
+    _library_page_state = {key: value for key, value in payload.items() if key != "items"}
+    _library_page_items = list(payload.get("items") or [])[:80]
+    _library_revision += 1
+    # Only visible rows and the current player need GUI-thread lookup state.
+    retained = {str(row["id"]): row for row in _library_page_items}
+    if _item:
+        retained[str(_item["id"])] = _item
+    _library_items.clear()
+    _library_items.update(retained)
+
+
+def _group_library(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Keep every playable ID, presenting series as a single alphabetic entry."""
+    from backend.media_library import annotate
+    groups: dict[str, list[dict[str, Any]]] = {}
+    channels: dict[str, dict[str, Any]] = {}
+    result: list[dict[str, Any]] = []
+    def series_key(row: dict[str, Any]) -> str:
+        title = " ".join(str(row.get("series_title") or row.get("title") or "").casefold().split())
+        return title + "|" + str(row.get("language") or "").casefold()
+    for raw in rows:
+        row = annotate(raw)
+        _library_items[str(row["id"])] = row
+        if row.get("content_type") == "live" and row.get("channel_id"):
+            channel_key = str(row["channel_id"]).casefold()
+            previous = channels.get(channel_key)
+            if previous is not None:
+                alternatives = previous.setdefault("alternate_sources", [])
+                if row["source"] != previous["source"] and row["source"] not in alternatives:
+                    alternatives.append(row["source"])
+                continue
+            channels[channel_key] = row
+        if row.get("content_type") == "episode" and row.get("series_title"):
+            key = series_key(row)
+            groups.setdefault(key, []).append(row)
+        else:
+            result.append(row)
+    parents = {series_key(row): row
+               for row in result if row.get("content_type") == "series"}
+    for key, episodes in groups.items():
+        episodes.sort(key=lambda row: (int(row.get("season") or 0), int(row.get("episode") or 0), str(row.get("title") or "").casefold()))
+        parent = parents.get(key)
+        if parent is None:
+            parent = dict(episodes[0])
+            parent.update(id=item_id("series", key), title=str(parent["series_title"]),
+                          content_type="series", media="collection", source="", collection_id=key)
+            result.append(parent)
+        prior = _library_children.get(str(parent["id"]), [])
+        merged = {str(row["id"]): row for row in prior + episodes}
+        episodes = sorted(merged.values(), key=lambda row: (int(row.get("season") or 0), int(row.get("episode") or 0), str(row.get("title") or "").casefold()))
+        _library_children[str(parent["id"])] = episodes
+        parent["episode_count"] = len(episodes)
+        _library_items[str(parent["id"])] = parent
+    return sorted(result, key=lambda row: str(row.get("title") or "").casefold())
+
+
+def library_begin() -> None:
+    global _library_busy, _library_error
+    _library_busy, _library_error = True, ""
+
+
+def library_finish(rows: list[dict[str, Any]] | None, *, mode: str = "TV", query: str = "", collection: str = "", error: str = "", refresh: bool = False) -> None:
+    global _library_busy, _library_error, _library_collection, _library_revision
+    global _extra_items, _search_active, _search_mode, _search_query
+    _library_busy, _library_error = False, str(error)[:240]
+    if rows is not None:
+        normalized = _group_library(rows) if not collection else rows
+        for row in rows:
+            _library_items[str(row["id"])] = row
+        if refresh:
+            _catalog_memo[mode] = (time.monotonic(), normalized)
+        else:
+            _extra_items = normalized
+            _search_active, _search_mode, _search_query = True, mode, query
+            _library_collection = collection
+    _library_revision += 1
+
+
+def library_back() -> dict[str, Any]:
+    global _extra_items, _search_active, _search_mode, _search_query, _library_collection, _library_error, _library_busy
+    _extra_items = []
+    _search_active, _search_mode, _search_query = False, "", ""
+    _library_collection, _library_error, _library_busy = "", "", False
+    return status_payload()
+
+
+def library_children(item: dict[str, Any]) -> list[dict[str, Any]] | None:
+    return _library_children.get(str(item.get("id") or ""))
+
+
+def library_store(item: dict[str, Any]) -> None:
+    _library_items[str(item["id"])] = item
+    for index, row in enumerate(_extra_items):
+        if row.get("id") == item["id"]:
+            _extra_items[index] = item
+
+
+def library_state() -> dict[str, Any]:
+    state = {"library_busy": _library_busy, "library_error": _library_error,
+            "library_query": _search_query, "library_collection": _library_collection,
+            "library_revision": _library_revision}
+    state.update({key: value for key, value in _library_page_state.items() if key.startswith("library_")})
+    state["library_revision"] = _library_revision
+    state["library_busy"] = _library_busy
+    state["library_error"] = _library_error
+    return state
 
 
 def _cliamp_pid_file() -> Path:
@@ -755,7 +901,11 @@ def _play_qml(item: dict[str, Any]) -> dict[str, Any]:
     _kind = "video"
     _backend = "qml"
     _item = item
-    save_prefs({"mode": str(item["kind"]), "last_id": item["id"]})
+    browse_mode = load_prefs()["mode"]
+    target_mode = str(item["kind"])
+    if browse_mode in ("TV", "FETCH") and target_mode in ("TV", "FETCH"):
+        target_mode = browse_mode
+    save_prefs({"mode": target_mode, "last_id": item["id"]})
     payload = status_payload()
     payload["screen"] = "EMBED"
     payload["drawable"] = False
@@ -936,13 +1086,11 @@ def ytdlp_resolve(url: str) -> str:
 
 
 def set_mode(mode: str) -> dict[str, Any]:
-    global _extra_items
     kind = str(mode or "").strip().upper()
     if kind not in MODES:
         raise ValueError("MEDIA_MODE_INVALID")
     save_prefs({"mode": kind})
-    _extra_items = []
-    return status_payload()
+    return library_back()
 
 
 def set_volume(volume: int) -> dict[str, Any]:
@@ -997,11 +1145,8 @@ def item_by_id(item_id_value: str) -> dict[str, Any] | None:
     for item in _extra_items:
         if item.get("id") == wanted:
             return item
-    prefs = load_prefs()
-    for mode in (prefs["mode"],) + MODES:
-        for item in _catalog_rows(mode):
-            if item["id"] == wanted:
-                return item
+    if wanted in _library_items:
+        return _library_items[wanted]
     return None
 
 
@@ -1033,7 +1178,6 @@ def play_item(item_id_value: str, drawable_xid: int = 0) -> dict[str, Any]:
         video = Path(source).suffix.lower() in VIDEO_EXT or str(item.get("play") or "") == "video"
         if video:
             item = dict(item)
-            item["kind"] = "TV"
             return _play_qml(item)
         if os.name == "nt":
             return _play_qt_audio(item)
@@ -1196,6 +1340,7 @@ def seek(seconds: float) -> dict[str, Any]:
         return status_payload(live=True)
     if _backend == "qml":
         _qml_position = stamp
+        publish_live()
         return status_payload(live=True)
     if _backend == "cliamp" and _cliamp_alive():
         sent = _cliamp_call({"cmd": "seek", "position": stamp}, timeout=0.4)
@@ -1232,14 +1377,14 @@ def stop() -> dict[str, Any]:
 
 
 def search(query: str) -> dict[str, Any]:
-    global _extra_items
+    global _extra_items, _search_mode, _search_query, _search_active
     prefs = load_prefs()
     cleaned = str(query or "").strip()
     if not cleaned:
-        _extra_items = []
-        return status_payload()
+        return library_back()
     rows = search_items(prefs["mode"], cleaned)
     _extra_items = rows
+    _search_active, _search_mode, _search_query = True, prefs["mode"], cleaned
     payload = status_payload()
     payload["items"] = rows
     payload["query"] = str(query or "")[:80]
@@ -1248,7 +1393,7 @@ def search(query: str) -> dict[str, Any]:
 
 def next_item_id(delta: int) -> str:
     prefs = load_prefs()
-    rows = _extra_items or _catalog_rows(prefs["mode"])
+    rows = _catalog_rows(prefs["mode"])
     if not rows:
         return ""
     current = str((_item or {}).get("id") or prefs.get("last_id") or "")
@@ -1454,7 +1599,7 @@ def status_payload(live: bool = False, *, pump: bool = False) -> dict[str, Any]:
             start_live_pump()
         live_state = (
             _cliamp_live(want_bands=False)
-            if pump or not live
+            if pump
             else _cached_cliamp()
         )
         state = str(live_state.get("state") or "")
@@ -1519,15 +1664,13 @@ def status_payload(live: bool = False, *, pump: bool = False) -> dict[str, Any]:
     elif report_backend == "torlink":
         player = "TORLINK"
     else:
-        player = Path(player_bin()).name.upper() if player_bin() else "NONE"
+        player = "NONE"
     legend = mode
     if now:
         legend = str(now.get("title") or mode)
     fetch: dict[str, Any] = {}
     if mode == "FETCH" or not live:
-        fetch = fetch_status()
-        if mode == "FETCH":
-            legend = str(fetch["label"])
+        fetch = dict(_library_fetch_info, running=_fetch_alive())
     screen = ""
     if _backend in ("qml", "libretro"):
         screen = "EMBED"
@@ -1579,13 +1722,21 @@ def status_payload(live: bool = False, *, pump: bool = False) -> dict[str, Any]:
         "repeat": repeat,
         "last_id": str(prefs.get("last_id") or ""),
         "freq_mhz": freq_for_now(now),
-        "rf": _cached_rf(),
+        "rf": dict(_rf_cache[1]) if _rf_cache else {"kind": "NONE", "label": "NO RF"},
         "tuner": list(_TUNER_MARKS),
     }
+    payload.update(library_state())
+    if not live:
+        payload["library_count"] = len(rows)
     if live:
+        for field in ("library_categories", "library_languages", "library_seasons"):
+            payload.pop(field, None)
         payload["live"] = True
         return payload
-    tools = probe_tools()
+    from backend import media_contract as _media_contract
+    tools = dict(_media_contract._probe_cache[1]) if _media_contract._probe_cache else {
+        key: {"present": False, "path": ""} for key in ("cliamp", "vlc", "ffplay", "torlink", "yt-dlp", "retroarch")
+    }
     payload["eq_presets"] = list(EQ_PRESETS)
     payload["items"] = rows
     payload["tools"] = {
@@ -1596,9 +1747,9 @@ def status_payload(live: bool = False, *, pump: bool = False) -> dict[str, Any]:
         "yt-dlp": tools.get("yt-dlp") or {"present": False, "path": ""},
         "retroarch": tools["retroarch"],
     }
-    payload["cores"] = tools["cores"]
+    payload["cores"] = tools.get("cores", {})
     payload["fetch"] = fetch
-    payload["library_roots"] = [str(path) for path in library_roots()]
+    payload["library_roots"] = []
     return payload
 
 

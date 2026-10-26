@@ -41,54 +41,6 @@ Item {
             height: 18
 
             Text {
-                text: "QWEN"
-                color: root.engineTarget === "LOCAL_QWEN"
-                    ? "#d8dee9"
-                    : "#5d6670"
-                font.family: "monospace"
-                font.pixelSize: 12
-                font.bold: root.engineTarget === "LOCAL_QWEN"
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked:
-                        root.engineTargetChangedByUser("LOCAL_QWEN")
-                }
-            }
-
-            Text {
-                text: " | "
-                color: "#a8b0b8"
-                font.family: "monospace"
-                font.pixelSize: 12
-            }
-
-            Text {
-                text: "GROK"
-                color: root.engineTarget === "GROK_WORKER"
-                    ? "#d8dee9"
-                    : "#5d6670"
-                font.family: "monospace"
-                font.pixelSize: 12
-                font.bold: root.engineTarget === "GROK_WORKER"
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked:
-                        root.engineTargetChangedByUser("GROK_WORKER")
-                }
-            }
-
-            Text {
-                text: " | "
-                color: "#a8b0b8"
-                font.family: "monospace"
-                font.pixelSize: 12
-            }
-
-            Text {
                 text: "GROK TUI"
                 color: root.engineTarget === "GROK_TUI"
                     ? "#d8dee9"
@@ -161,7 +113,7 @@ Item {
 
         Text {
             width: parent.width
-            text: "Same QWEN | GROK | GROK TUI | GPTUI switch as under INPUT. Motor only. "
+            text: "Same GROK TUI | GPTUI | FLOW TUI switch as under INPUT. Motor only. "
                 + "The open tab name is optional chrome, not something "
                 + "you type."
             color: "#8a8a8a"

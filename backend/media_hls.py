@@ -13,6 +13,7 @@ from PySide6.QtCore import QObject, QTimer, QUrl, Signal
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 
 from backend.media_contract import stream_allowed
+from backend.media_request import requires_headers
 
 MAX_MANIFEST_BYTES = 256 * 1024
 MANIFEST_TIMEOUT_MS = 5000
@@ -59,22 +60,37 @@ class HlsVariantResolver(QObject):
         super().__init__(parent)
         self.manager = QNetworkAccessManager(self)
         self.reply = None
+        self.proxy = None
 
     def cancel(self):
         reply, self.reply = self.reply, None
         if reply is not None:
             reply.abort()
             reply.deleteLater()
+        proxy, self.proxy = self.proxy, None
+        if proxy is not None:
+            proxy.close()
 
-    def resolve(self, source: str, attempt: int, ticket: int):
+    def resolve(self, source: str, attempt: int, ticket: int, row=None):
         self.cancel()
         try:
             stream_allowed(source)
         except ValueError:
             self.sourceReady.emit(ticket, source, source)
             return
+        original = source
+        # The selected player uses the same public request context as its
+        # decoded proof. The relay also handles servers rejecting Range:0.
+        if row is not None or requires_headers(row):
+            try:
+                from backend.media_stream_proxy import MediaStreamProxy
+                self.proxy = MediaStreamProxy(dict(row, source=source))
+                source = self.proxy.url
+            except (ValueError, OSError):
+                self.sourceReady.emit(ticket, original, original)
+                return
         if not urlsplit(source).path.lower().endswith((".m3u8", ".m3u")):
-            self.sourceReady.emit(ticket, source, source)
+            self.sourceReady.emit(ticket, original, source)
             return
         request = QNetworkRequest(QUrl(source))
         request.setTransferTimeout(MANIFEST_TIMEOUT_MS)
@@ -109,7 +125,7 @@ class HlsVariantResolver(QObject):
                 except (ValueError, UnicodeError):
                     pass
             reply.deleteLater()
-            self.sourceReady.emit(ticket, source, selected)
+            self.sourceReady.emit(ticket, original, selected)
 
         reply.readyRead.connect(limit_response)
         reply.finished.connect(finished)

@@ -54,7 +54,7 @@ window = engine.rootObjects()[0]
 bootstrap = FirstFrameBootstrap(window, app, engine)
 started = time.monotonic()
 checked = []
-kinds = ['CODE', 'NODES', 'FLOW', 'RESEARCH', 'TMOG', 'CRYPTO', 'MARKETPLACE', 'MEDIA', 'DRAW', 'EXTERNAL', 'GAME_ENGINE']
+kinds = ['CODE', 'NODES', 'FLOW', 'RESEARCH', 'KNOWLEDGE', 'TMOG', 'CRYPTO', 'MARKETPLACE', 'MEDIA', 'DRAW', 'EXTERNAL', 'GAME_ENGINE']
 next_check = [0.0]
 def check():
     from shiboken6 import isValid

@@ -1,6 +1,7 @@
 {
   "schema": "gg.ai-desktop.source-base.v1",
   "files": [
+    "config/media-channels.m3u",
     ".gitattributes",
     ".gitignore",
     "GAME_ENGINE_ARCHITECTURE.md",

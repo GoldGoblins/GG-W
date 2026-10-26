@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+"""Import and query material or publish a cited raster scene for the GG atlas."""
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+import sys
+
+PROJECT = Path(__file__).resolve().parent
+sys.path.insert(0, str(PROJECT))
+from backend import knowledge_atlas, knowledge_scenes
+from backend.platform_support import configure_stdio
+
+
+def main() -> int:
+    configure_stdio()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", type=Path, help="Optional isolated material store")
+    sub = parser.add_subparsers(dest="command", required=True)
+    importer = sub.add_parser("import", help="Import explicit files/folders without model calls")
+    importer.add_argument("paths", nargs="+")
+    search = sub.add_parser("search", help="Search stored complete page text")
+    search.add_argument("query", nargs="?", default="")
+    search.add_argument("--kind", choices=["ALL", "SOURCE", "CONCEPT", "OBJECT"], default="ALL")
+    detail = sub.add_parser("detail", help="Get a source or literal concept and its page citations")
+    detail.add_argument("node_id")
+    page = sub.add_parser("page", help="Read one exact complete page, or create its cached raster")
+    page.add_argument("source_id")
+    page.add_argument("page", type=int)
+    page.add_argument("--raster", action="store_true")
+    publisher = sub.add_parser("publish", help="Publish a source-cited raster scene manifest")
+    publisher.add_argument("manifest", type=Path)
+    scenes = sub.add_parser("scenes", help="List saved raster scenes")
+    scenes.add_argument("scene_id", nargs="?")
+    args = parser.parse_args()
+    try:
+        if args.command == "import":
+            value = knowledge_atlas.import_paths(args.paths, root=args.root)
+        elif args.command == "search":
+            value = knowledge_atlas.snapshot(args.query, args.kind, root=args.root)
+        elif args.command == "detail":
+            value = knowledge_atlas.detail(args.node_id, root=args.root)
+        elif args.command == "page":
+            getter = knowledge_atlas.page_image if args.raster else knowledge_atlas.source_page
+            value = getter(args.source_id, args.page, root=args.root)
+        elif args.command == "publish":
+            if args.manifest.stat().st_size > 1_000_000:
+                raise ValueError("SCENE_MANIFEST_TOO_LARGE")
+            payload = json.loads(args.manifest.read_text(encoding="utf-8"))
+            if isinstance(payload, dict) and isinstance(payload.get("image_path"), str):
+                path = Path(payload["image_path"]).expanduser()
+                if not path.is_absolute():
+                    payload["image_path"] = str((args.manifest.resolve().parent / path).resolve())
+            value = knowledge_scenes.publish(payload, root=args.root)
+        else:
+            value = knowledge_scenes.read(args.scene_id, root=args.root) if args.scene_id else {
+                "status": "READY", "scenes": knowledge_scenes.list_scenes(root=args.root)}
+    except (OSError, ValueError, TypeError) as exc:
+        value = {"status": "ERROR", "reason": str(exc) if isinstance(exc, ValueError) else type(exc).__name__}
+    print(json.dumps(value, ensure_ascii=False, allow_nan=False, indent=2))
+    return 1 if value.get("status") in {"ERROR", "CANCELLED"} else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

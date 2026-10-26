@@ -370,9 +370,9 @@ def main() -> int:
         "id: peopleRow",
         "id: sendRow",
         'anchors.right: inputFrame.right',
-        'text: "QWEN"',
-        'text: "GROK"',
         'text: "GROK TUI"',
+        'text: "GPTUI"',
+        'text: "FLOW TUI"',
         'objectName: "chatDiskLamp"',
         'objectName: "chatLampRail"',
         'anchors.verticalCenter: chatLampRail.verticalCenter',
@@ -768,7 +768,7 @@ def main() -> int:
         'leftLegend: "WORKSPACE"',
         "signal hostKindChangedByUser(string value)",
         'text: "New tab +"',
-        'model: ["CODE", "TERMINAL", "WEB", "EXTERNAL", "SITE", "CRYPTO", "MARKETPLACE", "TMOG", "OSINT", "RESEARCH", "MEDIA", "DRAW", "GAME_ENGINE", "NODES", "FLOW"]',
+        'model: ["CODE", "TERMINAL", "WEB", "EXTERNAL", "SITE", "CRYPTO", "MARKETPLACE", "TMOG", "OSINT", "KNOWLEDGE", "RESEARCH", "MEDIA", "DRAW", "GAME_ENGINE", "NODES", "FLOW"]',
     ):
         require(
             marker in settings_workspace,
@@ -778,8 +778,9 @@ def main() -> int:
     for marker in (
         'leftLegend: "CHAT"',
         "signal engineTargetChangedByUser(string value)",
-        'text: "QWEN"',
-        'text: "GROK"',
+        'text: "GROK TUI"',
+        'text: "GPTUI"',
+        'text: "FLOW TUI"',
     ):
         require(
             marker in settings_chat,
@@ -1084,7 +1085,7 @@ def main() -> int:
         'sourcePath: "qml/components/ContextComposer.qml"',
         'objectName: "workspaceSurface"',
         'objectName: "workspaceCodeEditor"',
-        '"BUFFER · DISK BASE"',
+        'bottomRightLegend: root.editorDirty',
         '"BUFFER · UNSAVED · DISK UNCHANGED"',
         "function loadCurrentAuthoringBuffer()",
         "function requestLiveAidAnalysis()",

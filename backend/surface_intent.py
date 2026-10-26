@@ -35,6 +35,10 @@ _RESEARCH = re.compile(
     r"\b(research|research desk|researcha|undersök(?:a|ning)?|evidence|evidens|källor|metodminne|sql preview|ghidra|rea|reverse engineering)\b",
     re.IGNORECASE,
 )
+_KNOWLEDGE = re.compile(
+    r"\b(knowledge|kunskap(?:en|svärld(?:en)?|skarta(?:n)?)?|material(?:et)?|atlas)\b",
+    re.IGNORECASE,
+)
 _QIP = re.compile(
     r"\b(qip|wasm|webassembly|component\s+debugger)\b",
     re.IGNORECASE,
@@ -77,6 +81,11 @@ _BARE = {
     "osint": "OSINT",
     "osiris": "OSINT",
     "osirisai": "OSINT",
+    "knowledge": "KNOWLEDGE",
+    "kunskap": "KNOWLEDGE",
+    "kunskapsvärlden": "KNOWLEDGE",
+    "kunskapskartan": "KNOWLEDGE",
+    "atlas": "KNOWLEDGE",
     "research": "RESEARCH",
     "research desk": "RESEARCH",
     "evidens": "RESEARCH",
@@ -132,6 +141,8 @@ def parse_surface_intent(text: str) -> str:
         return "TMOG"
     if _OSINT.search(value):
         return "OSINT"
+    if _KNOWLEDGE.search(value):
+        return "KNOWLEDGE"
     if _RESEARCH.search(value):
         return "RESEARCH"
     if _QIP.search(value):

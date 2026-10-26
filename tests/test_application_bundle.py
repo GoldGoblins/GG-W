@@ -178,7 +178,10 @@ assert app.exec() == 0, 'RELOCATED_QML_STARTUP_FAILED'
             self.assertEqual(result.returncode, 0, result.stderr[-1000:])
             report = json.loads(result.stdout)
             self.assertEqual(report["gpt_packages"], 7)
-            self.assertEqual(len(report["gg_skills"]), 4)
+            self.assertEqual(set(report["gg_skills"]), {
+                "gg-blender-reference-workflow", "gg-knowledge-atlas",
+                "gg-live-eyes", "selfdev-t", "visible-web",
+            })
             self.assertTrue((root / "state/goldgoblins/gg-ai-desktop/codex-gpt-tui/skills/gg-live-eyes/SKILL.md").is_file())
             self.assertFalse((root / "new-user/.codex/auth.json").exists())
 

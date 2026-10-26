@@ -20,6 +20,7 @@ if errorlevel 1 goto fail
 ".venv-windows\Scripts\python.exe" -B gg-setup --prepare
 if errorlevel 1 goto fail
 echo GG AI Desktop dependencies are ready. Run run-gg-ai-desktop.cmd.
+echo MEDIA source checks also require FFmpeg and ffprobe. If missing, install FFmpeg and choose Refresh in MEDIA.
 exit /b 0
 :fail
 echo Setup failed. Python 3.12 or newer is required.

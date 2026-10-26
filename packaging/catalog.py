@@ -56,7 +56,7 @@ def selected_paths(project: Path = PROJECT) -> list[str]:
         for p in (project / dirname).rglob("*"):
             if p.is_file():
                 selected.add(p.relative_to(project).as_posix())
-    for name in ("AGENTS.md", "FILE-LAYOUT.md", "requirements.txt", "gg-setup", "gg-model", "tools/blender/gg_blender_reference.py", "tools/install_site_runtime.py", "tools/verify_site_runtime.py", "qml/components/engine/white.png", "setup-windows.cmd", "run-gg-ai-desktop.cmd", "WINDOWS-PORT.json"):
+    for name in ("AGENTS.md", "FILE-LAYOUT.md", "requirements.txt", "gg-setup", "gg-model", "gg-knowledge", "qml/assets/knowledge-cell.png", "tools/blender/gg_blender_reference.py", "tools/install_site_runtime.py", "tools/verify_site_runtime.py", "qml/components/engine/white.png", "setup-windows.cmd", "run-gg-ai-desktop.cmd", "WINDOWS-PORT.json"):
         if name.endswith('.cmd') or name == 'WINDOWS-PORT.json':
             if not (project / name).is_file():
                 continue

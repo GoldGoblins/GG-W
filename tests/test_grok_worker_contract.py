@@ -633,9 +633,9 @@ def main() -> int:
         "People · close",
         "GG-AI-installator",
         "id: engineFooter",
-        'text: "QWEN"',
-        'text: "GROK"',
         'text: "GROK TUI"',
+        'text: "GPTUI"',
+        'text: "FLOW TUI"',
         'id: grokTuiEngineTarget',
         "anchors.bottom: engineFooter.top",
     ):

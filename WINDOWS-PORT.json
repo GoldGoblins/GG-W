@@ -1,7 +1,7 @@
 {
   "bundled_guidance": {
     "agents": true,
-    "gg_skills": 4,
+    "gg_skills": 5,
     "gpt_profiles": 7,
     "windows_skill_aliases": "directory junctions"
   },
@@ -20,11 +20,7 @@
     },
     "README.md": {
       "upstream_sha256": "1fa0f62e802aa8e200ac4de9147d20d5777b395dd14ba58299be28e2b9f50eae",
-      "windows_sha256": "e9b4ece763594bd25ed22d779f619713ab84bc6cb7f1f8dbf593be519c8df7aa"
-    },
-    "backend/app_audio.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "8526d7e773b710281dc6777ccb816ca300fbaa5d5fcc6897608ca43aca69a675"
+      "windows_sha256": "ea2fc2501a02792a9c8071830781fcd9904894d812b7acb92f2795a0f60c513d"
     },
     "backend/application_paths.py": {
       "upstream_sha256": "20ec0345b0b2415f2586b8e08a1df58efba42b8e818dfd45345f601a5d56a2c1",
@@ -66,9 +62,17 @@
       "upstream_sha256": "c3f349b72159aea2f08d5c008b563412778f2c67165d37be39d9a9985ebe5502",
       "windows_sha256": "24c2c852453c8b8d559a92f68481001922a964a4348b38e83b9af90a545554a4"
     },
-    "backend/desktop_shell.py": {
+    "backend/game_asset_resources.py": {
       "upstream_sha256": null,
-      "windows_sha256": "26fb7c4845e35452bb462bf94ef32f245e84275de5f06d4341a4f2d900e5f107"
+      "windows_sha256": "4cde025bddc9f7fae7f8ed149aed9e41edcc4d8936817c81a861bce1bd3cff6d"
+    },
+    "backend/game_engine_asset_editor.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "53a3bf62fe295fb9d8dc999ce2716766cf871677c7f6468d102295a84186a465"
+    },
+    "backend/game_engine_assets.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "122e6591d3044c73a9a77d8a193bb7e4846881dcda9b9a89479fd949c644fd65"
     },
     "backend/game_engine_local_channels.py": {
       "upstream_sha256": "49542e8b89bbf86b52cd128f4acb555986835e48dd2f3bf799f840006bdaada2",
@@ -94,13 +98,33 @@
       "upstream_sha256": "e6166802383ce813cf7f138464c9f9b915c8c7bf034e1ee26747dadd791768b7",
       "windows_sha256": "5f4a9fe8190f5597186dbae5169a2cc49b4e3f93687a13aad563cdce1637947b"
     },
+    "backend/game_workflow_collections.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "d6382eeb3b834d10b2d8f8ff8d1321ba80d744d5bb2931539d4b02e40dbe4559"
+    },
     "backend/game_workflow_common.py": {
       "upstream_sha256": "745f2960fbf9895a2d846bbe2ff1895214ee61464a336814a1bd8fb59769832b",
       "windows_sha256": "816516d0559e7b493d5f720356abe3276ef66eca2a70170f0da9c747ff1eb0c0"
     },
+    "backend/game_workflow_compiler.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "f79605b3b787b6e4cc36f0c7b87114b25d601bf1f7043fad5d94bb497250adf6"
+    },
     "backend/game_workflow_jobs.py": {
       "upstream_sha256": "d2567d56d5bd01c2df876fb98e42fddece221dd76e52d686901e0f65cca0b0e8",
       "windows_sha256": "eca9730e0116b056d6446f88c4b6203252605d3f36c02984a67ee1cfa9b9c4c9"
+    },
+    "backend/game_workflow_profile.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "e9f472d72fb11f8afbb51af7866c968f47308de87b486fc771947b2ac1f40d12"
+    },
+    "backend/game_workflow_scout.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "cfed98c88c80d7a1a64f6222bd36df5f7a4e95c2672c3f1fb559f9305602af01"
+    },
+    "backend/game_workflow_verify.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "0b53bbb298fe5bc4973ab78fee5cd3cd5235be71558d7281ad0bf19df098c132"
     },
     "backend/grok_worker_contract.py": {
       "upstream_sha256": "b0ed14ccd4a63e1e9cd813d35cd70ad15d88cc57d40986a03cabbbb6cff74cf8",
@@ -113,10 +137,6 @@
     "backend/live_vision.py": {
       "upstream_sha256": "241341e32215abb43812af09f6ab169a72c53cb78905ea3deb7e0d908f168016",
       "windows_sha256": "2767775b292ceba3137ab3181d49aee7b1916234bcce47496adc95ce48465de8"
-    },
-    "backend/media_hls.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "5bb024b9ceb6f762854a6e8979ef16615583197cfcc06b0dc5381191607fcec0"
     },
     "backend/media_host.py": {
       "upstream_sha256": null,
@@ -150,9 +170,25 @@
       "upstream_sha256": null,
       "windows_sha256": "b1c412b8fea79e830a80f37e26390057819d7a7f35884f75007362a654acc075"
     },
+    "backend/qip_lab.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "e504f9464aebface822d8d22eea8bdb067c8246e9d4464c19a8845ffb4ebf21d"
+    },
+    "backend/research_desk.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "f36ec3007c45217b7f948fde778f6bbf6d7a8a14306ab365e0b4383384a0f78c"
+    },
     "backend/research_jobs.py": {
       "upstream_sha256": "2e1647bb1a2a418128f254201e1e67a3b653d6aac70a82b6a2c525d8addb4425",
       "windows_sha256": "7019c3d2a8a2d381d2452f5b431792ec8d81e507c1ab0a01c452be46081ca89b"
+    },
+    "backend/research_lab.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "b56e3b1cb8ffc8dc2154a0e2dc3748b0246a0e51811b811ecdb924a2ea8d9630"
+    },
+    "backend/research_learning.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "d65936244446608e84c858c182c76373c6e1e1d6cb78610c22f89dd1b27769e8"
     },
     "backend/resident_information_state.py": {
       "upstream_sha256": "0bce490f600fb9750739406fbd553b656291fcbe23b255e09d9f5459bfc10e52",
@@ -185,6 +221,18 @@
     "backend/windows_pty.py": {
       "upstream_sha256": null,
       "windows_sha256": "da3115d29c54a0bc09d365767980cea3924e896c9399e5a54886c298402fcedb"
+    },
+    "backend/windows_research_ghidra.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "215161840ec29855d3bc980534f6230c9adc5d0c182fd10b43d49178faca3cc8"
+    },
+    "backend/windows_research_sandbox.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "a80996f7bd0a23713406a0422f91640209ac48f5959b987fdfa89dcfa405f509"
+    },
+    "backend/windows_research_setup.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "0e10742b3ac3b9b2bce933279f6b97e87e4bccbcdc8cb05ebdbcace706f85908"
     },
     "backend/windows_telemetry.py": {
       "upstream_sha256": null,
@@ -226,10 +274,6 @@
       "upstream_sha256": "905990b7b4ca4ded093c13d91e003b7bdc99fa97d3fcf7022cab0bd343043e07",
       "windows_sha256": "1fed1c4acb844f9d017afdc8e8866aa8849e48150e1f422de5b01b9db17b22fd"
     },
-    "native/audio/gg_app_audio.cpp": {
-      "upstream_sha256": null,
-      "windows_sha256": "42a235ef4b487d4245d443f89d094dd00a90e21d870aef1fee80096d7ac3e780"
-    },
     "native/webview/MICROSOFT-LICENSE.txt": {
       "upstream_sha256": null,
       "windows_sha256": "0af8f1b807512aae39c2ac1aa4d0cae65cabecb6fd554b8439a5162a0d6eca55"
@@ -253,10 +297,6 @@
     "packaging/source-base.json": {
       "upstream_sha256": null,
       "windows_sha256": "3aa7882a908f9288341b267399d37a19440d354bdb38d12fd026f50229faa4e4"
-    },
-    "qml/Main.qml": {
-      "upstream_sha256": null,
-      "windows_sha256": "96c2c3cfe3f06aba89eb04909b2cd38f4a78d4b13c8c9006dcee4194861aabdd"
     },
     "qml/components/GameEnchantingControls.qml": {
       "upstream_sha256": "cf29cc3e7238cb1ee9429e8a92b36ee0d8a0f00ab398532113882316ce837d0b",
@@ -282,13 +322,25 @@
       "upstream_sha256": "ad844057e9c7752ff72e658db6cf4421cd671871b0d81985e1d5811f4ef2b0ca",
       "windows_sha256": "aa6c1fbbb3fd953e03b1c33cea8c0c5c2e9bee27e9f9e872761825df9825a6be"
     },
-    "qml/components/GgWindowChrome.qml": {
-      "upstream_sha256": null,
-      "windows_sha256": "b169192a69a2f19b015bcb48326b17bef9ee827dd6aba83fdfe190b7c8e954d7"
-    },
     "qml/components/MediaSurface.qml": {
       "upstream_sha256": null,
       "windows_sha256": "9dae5489450b9308d1f5595f5a2fff7e2ab35c29289b9cbe5edb034a145f68c4"
+    },
+    "qml/components/QipSurface.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "3089b82b6144e0faa8e0485fbc032503087078bc009a799e142e031fdb915ac9"
+    },
+    "qml/components/ResearchGamesSurface.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "55536abb7c8050eed87c4533f9ced35904a5d553f9442318bac3e064d8b26838"
+    },
+    "qml/components/ResearchReverseSurface.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "592883ac10d86af1dc198c2657b975e65692912e503e074156bc294bdd702f29"
+    },
+    "qml/components/ResearchSurface.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "1e8bd54a257fd699478451ab9b6d3856884a32a30813c2f35425c8ba447991bb"
     },
     "qml/components/TmogSurface.qml": {
       "upstream_sha256": "5fa5e25d13465aa6201fa91caa90b7bf85a33666d82ff9ed09c77b43874c5a63",
@@ -345,10 +397,6 @@
     "startup.py": {
       "upstream_sha256": "6f9be0d9073b57b79d111221b6a4320230890606704a1e77a89dae953e7155d3",
       "windows_sha256": "69302d8d2cc41872bfc54e8ef3eee2bf888179c4dcdc2f5dfe6f80e820afa6c4"
-    },
-    "tests/test_app_audio.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "7c8b111bd54262e3863700b22fe385eabe15d39db79d45d3d928570dcd0759c3"
     },
     "tests/test_application_bundle.py": {
       "upstream_sha256": "72a24bda3aa8669ab19dc3614abeaba681f97a7c8dc9455457b08154c8b3223b",
@@ -410,9 +458,13 @@
       "upstream_sha256": "a8a4cd0e5d87b61384317c4c4721e06899cac9aaea5ab11d7b2507200857698c",
       "windows_sha256": "b4daadf619ac68aada8dcb3e99fa1e9cf262e732b5448ca776134802aebf1b6e"
     },
-    "tests/test_media_hls.py": {
+    "tests/test_game_workflows.py": {
       "upstream_sha256": null,
-      "windows_sha256": "337499dfd48194c999fdcab1c97b9fed880d397ece1d37fa3471dbccfc352826"
+      "windows_sha256": "8268a03162b13478039d2dcf3f9d9779040f2028099b5b73d9aca1dc29cf7452"
+    },
+    "tests/test_game_workflows_engine.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "c6e89a9350a8c2b944328ac4c2c5589dbe58f388e346139d27d3a37f24ef89fc"
     },
     "tests/test_media_qt_audio.py": {
       "upstream_sha256": null,
@@ -421,150 +473,6 @@
     "tests/test_media_reconnect.py": {
       "upstream_sha256": null,
       "windows_sha256": "7a88044b96358ee81d9bf5c4757b2d6da3bb4af701f81fa33c43b04532c865d0"
-    },
-    "tests/test_media_video.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "d682f639833bc5cc3c5f572400cb33bf824e2fc42b6b8e4418b68a6f875bc7f7"
-    },
-    "tests/test_media_video_playback.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "9a3270b53dcc95c8b436c4dc1780291f9bf966a841438a25d5880ba274a07240"
-    },
-    "tests/test_tmog_visual_damping.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "9e66628668c461f330bfd6b2e992522fd192e6c326eae863af464ebd04bec8ab"
-    },
-    "tests/test_web_content_blocker.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "632f10b382ce6bafd20b5099ece3127954a2fc626c812bbafc42c82f6645e15a"
-    },
-    "tests/test_web_operator.py": {
-      "upstream_sha256": "e3cb52ea656dccac9a6e6478ebe69dcae14196e85f919a7083d7498e3ea9e237",
-      "windows_sha256": "d33eb032794c41a91c76f3e0d90fe007b53ed1f730a8e19a3601f4e467be419c"
-    },
-    "tests/test_window_chrome.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "2eb9063be4ba35b71808ff9aaa83c92ab09a1f724054029253b46cabae295e32"
-    },
-    "tests/test_windows_blender_live.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "25b7c9bfd299b9db7ab5ee6b0d3e21128d0a1ace3a57a1fff94f0a436361f549"
-    },
-    "tests/test_windows_platform.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "cf629d0224e69c16d6da803d9342f7412ee9d0e9c3d823bbff70c37f8dec596d"
-    },
-    "tests/test_windows_vision.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "e3a28d999b9903ec856fe128ae8d9ab05698c9f7dcde9792a954de02ea4d952c"
-    },
-    "tests/test_windows_webview.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "b8151ed47151311ac1786b8084eefbaa3d19326ff82950b8dfb01b5ce447b740"
-    },
-    "tools/blender/gg_blender_mcp.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "69a42e5aec82ad305098cc28e1a58ac260f2bf56761441ca90e71668158a5cb9"
-    },
-    "tools/blender/gg_blender_sidecar.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "6dda38e069db33369c01f88e0b77957bf421ebe59f24b3a438bca4b5adcee2c1"
-    },
-    "tools/blender/gg_blender_virtual_input.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "9a984e1427a89e6b6d86bad95c8ba2e487f0c1c55172e01b1112b20974af131a"
-    },
-    "tools/install_web_filter.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "796dbce552131a5042f7ca034896f1b48d2a81d2e1931137dbae2aa2df4304f4"
-    },
-    "tools/world/build_app_audio.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "7b7b9ed669f99eb2bb73c0d86376061394c2da15df4d478acc114c0a51533d0e"
-    },
-    "backend/game_asset_resources.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "4cde025bddc9f7fae7f8ed149aed9e41edcc4d8936817c81a861bce1bd3cff6d"
-    },
-    "backend/game_engine_asset_editor.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "53a3bf62fe295fb9d8dc999ce2716766cf871677c7f6468d102295a84186a465"
-    },
-    "backend/game_engine_assets.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "122e6591d3044c73a9a77d8a193bb7e4846881dcda9b9a89479fd949c644fd65"
-    },
-    "backend/game_workflow_collections.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "d6382eeb3b834d10b2d8f8ff8d1321ba80d744d5bb2931539d4b02e40dbe4559"
-    },
-    "backend/game_workflow_compiler.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "f79605b3b787b6e4cc36f0c7b87114b25d601bf1f7043fad5d94bb497250adf6"
-    },
-    "backend/game_workflow_profile.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "e9f472d72fb11f8afbb51af7866c968f47308de87b486fc771947b2ac1f40d12"
-    },
-    "backend/game_workflow_scout.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "cfed98c88c80d7a1a64f6222bd36df5f7a4e95c2672c3f1fb559f9305602af01"
-    },
-    "backend/game_workflow_verify.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "0b53bbb298fe5bc4973ab78fee5cd3cd5235be71558d7281ad0bf19df098c132"
-    },
-    "backend/qip_lab.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "e504f9464aebface822d8d22eea8bdb067c8246e9d4464c19a8845ffb4ebf21d"
-    },
-    "backend/research_desk.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "f36ec3007c45217b7f948fde778f6bbf6d7a8a14306ab365e0b4383384a0f78c"
-    },
-    "backend/research_lab.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "b56e3b1cb8ffc8dc2154a0e2dc3748b0246a0e51811b811ecdb924a2ea8d9630"
-    },
-    "backend/research_learning.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "d65936244446608e84c858c182c76373c6e1e1d6cb78610c22f89dd1b27769e8"
-    },
-    "backend/windows_research_ghidra.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "215161840ec29855d3bc980534f6230c9adc5d0c182fd10b43d49178faca3cc8"
-    },
-    "backend/windows_research_sandbox.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "a80996f7bd0a23713406a0422f91640209ac48f5959b987fdfa89dcfa405f509"
-    },
-    "backend/windows_research_setup.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "0e10742b3ac3b9b2bce933279f6b97e87e4bccbcdc8cb05ebdbcace706f85908"
-    },
-    "qml/components/QipSurface.qml": {
-      "upstream_sha256": null,
-      "windows_sha256": "3089b82b6144e0faa8e0485fbc032503087078bc009a799e142e031fdb915ac9"
-    },
-    "qml/components/ResearchGamesSurface.qml": {
-      "upstream_sha256": null,
-      "windows_sha256": "55536abb7c8050eed87c4533f9ced35904a5d553f9442318bac3e064d8b26838"
-    },
-    "qml/components/ResearchReverseSurface.qml": {
-      "upstream_sha256": null,
-      "windows_sha256": "592883ac10d86af1dc198c2657b975e65692912e503e074156bc294bdd702f29"
-    },
-    "qml/components/ResearchSurface.qml": {
-      "upstream_sha256": null,
-      "windows_sha256": "1e8bd54a257fd699478451ab9b6d3856884a32a30813c2f35425c8ba447991bb"
-    },
-    "tests/test_game_workflows.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "8268a03162b13478039d2dcf3f9d9779040f2028099b5b73d9aca1dc29cf7452"
-    },
-    "tests/test_game_workflows_engine.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "c6e89a9350a8c2b944328ac4c2c5589dbe58f388e346139d27d3a37f24ef89fc"
     },
     "tests/test_qip_runtime_limits.py": {
       "upstream_sha256": null,
@@ -586,9 +494,29 @@
       "upstream_sha256": null,
       "windows_sha256": "a26a692b688d77be4f888419cdd62b1650f37ba9efa0bd503e020b2e861fd162"
     },
+    "tests/test_tmog_visual_damping.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "9e66628668c461f330bfd6b2e992522fd192e6c326eae863af464ebd04bec8ab"
+    },
+    "tests/test_web_content_blocker.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "632f10b382ce6bafd20b5099ece3127954a2fc626c812bbafc42c82f6645e15a"
+    },
+    "tests/test_web_operator.py": {
+      "upstream_sha256": "e3cb52ea656dccac9a6e6478ebe69dcae14196e85f919a7083d7498e3ea9e237",
+      "windows_sha256": "d33eb032794c41a91c76f3e0d90fe007b53ed1f730a8e19a3601f4e467be419c"
+    },
+    "tests/test_windows_blender_live.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "25b7c9bfd299b9db7ab5ee6b0d3e21128d0a1ace3a57a1fff94f0a436361f549"
+    },
     "tests/test_windows_game_workflows.py": {
       "upstream_sha256": null,
       "windows_sha256": "e51ec272452d186e44b246df1337ee900d236844f2701602e1af967633e37ddb"
+    },
+    "tests/test_windows_platform.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "cf629d0224e69c16d6da803d9342f7412ee9d0e9c3d823bbff70c37f8dec596d"
     },
     "tests/test_windows_research_backend.py": {
       "upstream_sha256": null,
@@ -610,9 +538,33 @@
       "upstream_sha256": null,
       "windows_sha256": "d4cb0333d193982bfbf6aff91be508964fc244316489944a83b4e7e2bbf63c01"
     },
+    "tests/test_windows_vision.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "e3a28d999b9903ec856fe128ae8d9ab05698c9f7dcde9792a954de02ea4d952c"
+    },
+    "tests/test_windows_webview.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "b8151ed47151311ac1786b8084eefbaa3d19326ff82950b8dfb01b5ce447b740"
+    },
+    "tools/blender/gg_blender_mcp.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "69a42e5aec82ad305098cc28e1a58ac260f2bf56761441ca90e71668158a5cb9"
+    },
+    "tools/blender/gg_blender_sidecar.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "6dda38e069db33369c01f88e0b77957bf421ebe59f24b3a438bca4b5adcee2c1"
+    },
+    "tools/blender/gg_blender_virtual_input.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "9a984e1427a89e6b6d86bad95c8ba2e487f0c1c55172e01b1112b20974af131a"
+    },
     "tools/install_research_engines.py": {
       "upstream_sha256": null,
       "windows_sha256": "e41b9bdffbba4bd2acbfe22457ea723cb6f573cd3672702cf2577a61f290e6ed"
+    },
+    "tools/install_web_filter.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "796dbce552131a5042f7ca034896f1b48d2a81d2e1931137dbae2aa2df4304f4"
     },
     "tools/research/profile_game_asset_scene.py": {
       "upstream_sha256": null,
@@ -738,30 +690,6 @@
       "upstream_sha256": null,
       "windows_sha256": "d61e15c2ebae3607ffea9b620dbea519306829bf63fa259eb5350049987c4004"
     },
-    "qml/components/GrokTuiHole.qml": {
-      "upstream_sha256": null,
-      "windows_sha256": "5e6b8fcc728adced09e896130476b387059e5c78419e7015412497391370c7b6"
-    },
-    "tests/test_terminal_grid.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "c34bcba9aaee40450accd9382797113c7bd03c0c4dfd84b70e3f3c0eda861f44"
-    },
-    "tests/test_windows_chat_clipboard.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "cd9e07e2b3276cfba2b34dfe07ea406c23e477876dbeae048b689ddaddd656b2"
-    },
-    "tests/test_chat_clipboard.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "19c64caf20330e9707eba8468afece8f2744605012824d6b5ada78c7944f1c79"
-    },
-    "backend/chat_clipboard.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "e74d6f43477e093e085bac4539f3f268ce11f5340d439d87012b77766437fb89"
-    },
-    "backend/terminal_grid.py": {
-      "upstream_sha256": null,
-      "windows_sha256": "534fe705ca020f933a0ec586040a5c4aed534d4dcfccb9cf40dc2ce0c7dea51e"
-    },
     "backend/crypto_ui_runtime.py": {
       "upstream_sha256": null,
       "windows_sha256": "01c32a57857b747df127166cea5b926603dd8824dd6cbd7b9c290b1e459d0e69"
@@ -805,6 +733,10 @@
     "backend/kaspa_contract.py": {
       "upstream_sha256": null,
       "windows_sha256": "cfbd8b99a9596c0d2487ee4b827544da3ed5689ac9af1d903d1cab5d73742a93"
+    },
+    "qml/Main.qml": {
+      "upstream_sha256": null,
+      "windows_sha256": "96c2c3cfe3f06aba89eb04909b2cd38f4a78d4b13c8c9006dcee4194861aabdd"
     },
     "qml/components/CryptoSurface.qml": {
       "upstream_sha256": null,
@@ -870,6 +802,10 @@
       "upstream_sha256": null,
       "windows_sha256": "9b245238774465af76fbba6e4e6f4ef9f2a99692752d4f019c73d2a98937a05e"
     },
+    "backend/app_audio.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "8526d7e773b710281dc6777ccb816ca300fbaa5d5fcc6897608ca43aca69a675"
+    },
     "qml/components/ContextComposer.qml": {
       "upstream_sha256": null,
       "windows_sha256": "684fa2427271d810d4d106a4ad70f5f57c69c04b7fc0aabba5a8e469ce168434"
@@ -885,6 +821,10 @@
     "tests/test_desktop_idle_load.py": {
       "upstream_sha256": null,
       "windows_sha256": "07e9868f128db6f507612873510418b36ae3fddbf94fcee2f2405d41998d5c75"
+    },
+    "backend/terminal_grid.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "534fe705ca020f933a0ec586040a5c4aed534d4dcfccb9cf40dc2ce0c7dea51e"
     },
     "backend/tmog_sampler.py": {
       "upstream_sha256": null,
@@ -1128,7 +1068,6 @@
     "backend/blender_contract.py",
     "backend/blender_embed.py",
     "backend/bound_source_platform.py",
-    "backend/chat_clipboard.py",
     "backend/chat_surface_host.py",
     "backend/container_platform.py",
     "backend/crypto_contract.py",
@@ -1150,7 +1089,6 @@
     "backend/crypto_trader.py",
     "backend/crypto_tx.py",
     "backend/crypto_ui_runtime.py",
-    "backend/desktop_shell.py",
     "backend/game_asset_resources.py",
     "backend/game_engine_adapter_asset_worker.py",
     "backend/game_engine_adapter_transport.py",
@@ -1169,7 +1107,6 @@
     "backend/kaspa_contract.py",
     "backend/live_vision.py",
     "backend/local_ai_platform.py",
-    "backend/media_hls.py",
     "backend/media_host.py",
     "backend/media_qt_audio.py",
     "backend/media_reconnect.py",
@@ -1224,7 +1161,6 @@
     "gg-eyes",
     "gg-research",
     "main.py",
-    "native/audio/gg_app_audio.cpp",
     "native/webview/MICROSOFT-LICENSE.txt",
     "native/webview/MICROSOFT-NOTICE.txt",
     "native/webview/README.md",
@@ -1241,8 +1177,6 @@
     "qml/components/CryptoPortfolioSummary.qml",
     "qml/components/CryptoPumpPanel.qml",
     "qml/components/CryptoSurface.qml",
-    "qml/components/GgWindowChrome.qml",
-    "qml/components/GrokTuiHole.qml",
     "qml/components/LiveEyesStatus.js",
     "qml/components/MediaSurface.qml",
     "qml/components/QipSurface.qml",
@@ -1266,13 +1200,11 @@
     "startup.py",
     "tests/preview_crypto_ui.py",
     "tests/run_crypto_checks.py",
-    "tests/test_app_audio.py",
     "tests/test_app_audio_idle.py",
     "tests/test_asset_failure_recovery.py",
     "tests/test_blender_agent_input.py",
     "tests/test_blender_contract.py",
     "tests/test_blender_windows.py",
-    "tests/test_chat_clipboard.py",
     "tests/test_chat_shutdown.py",
     "tests/test_crypto_chart_lifecycle.py",
     "tests/test_crypto_design.py",
@@ -1303,11 +1235,8 @@
     "tests/test_game_workflows_engine.py",
     "tests/test_live_eyes_status_ui.py",
     "tests/test_live_eyes_video_activity.py",
-    "tests/test_media_hls.py",
     "tests/test_media_qt_audio.py",
     "tests/test_media_reconnect.py",
-    "tests/test_media_video.py",
-    "tests/test_media_video_playback.py",
     "tests/test_php_source_analysis.py",
     "tests/test_php_source_ui.py",
     "tests/test_qip_runtime_limits.py",
@@ -1323,7 +1252,6 @@
     "tests/test_site_runtime_setup.py",
     "tests/test_site_runtime_windows.py",
     "tests/test_startup_shutdown.py",
-    "tests/test_terminal_grid.py",
     "tests/test_terminal_input_backpressure.py",
     "tests/test_terminal_snapshot_backpressure.py",
     "tests/test_terminal_window_state.py",
@@ -1337,9 +1265,7 @@
     "tests/test_web_operator_lifecycle.py",
     "tests/test_web_operator_qml_lifecycle.py",
     "tests/test_web_surface.py",
-    "tests/test_window_chrome.py",
     "tests/test_windows_blender_live.py",
-    "tests/test_windows_chat_clipboard.py",
     "tests/test_windows_desktop.py",
     "tests/test_windows_game_workflows.py",
     "tests/test_windows_research_backend.py",
@@ -1362,20 +1288,19 @@
     "tools/install_web_filter.py",
     "tools/research/profile_game_asset_scene.py",
     "tools/verify_site_runtime.py",
-    "tools/world/build_app_audio.py",
     "tools/world/build_windows_native.py"
   ],
   "installed_tools": {
     "ffmpeg": "9.0.2",
+    "ghidra": "12.1.4",
     "git": "2.55.0.windows.5",
     "node": "24.20.0",
     "podman": "5.8.3",
+    "research_jdk": "25.0.4.1",
+    "research_rea": "6.0.0",
     "rust": "1.99.1 stable-x86_64-pc-windows-msvc",
     "visual_studio_build_tools": "2022 17.14.42",
     "wsl": "3.0.3",
-    "ghidra": "12.1.4",
-    "research_jdk": "25.0.4.1",
-    "research_rea": "6.0.0",
     "site_php": {
       "version": "8.5.12",
       "build": "VS17 x64 NTS",
@@ -1461,22 +1386,10 @@
   "status": "WINDOWS_CORE_VERIFIED_OPTIONAL_FEATURES_INCOMPLETE",
   "tested_python": "3.13.16",
   "tested_qt": "6.11.2",
-  "updated": "2026-10-24",
+  "updated": "2026-10-26",
   "upstream_commit": "a378aafc265f050cf4a0b3e39a5b1c85d96b2264",
   "upstream_repo": "https://github.com/GoldGoblins/GG",
   "verification": {
-    "application_audio": {
-      "includes": [
-        "shared volume",
-        "helper-process capture",
-        "other-process isolation",
-        "volume persistence",
-        "Utilities controls"
-      ],
-      "result": "PASS",
-      "scope": "APPLICATION_PROCESS_TREE_ONLY",
-      "tests": 4
-    },
     "blender_ext": {
       "date": "2026-10-23",
       "input": "Existing GG desktop-operator agent mouse and keyboard; bounded sidecar event bridge and the existing GG cursor pack over Blender",
@@ -1506,18 +1419,6 @@
       "verification": "Real Windows PTY in the offscreen Main.qml shell: native window methods, drag sizes, fullscreen; same process, worker, complete transcript, scroll position and unfinished input"
     },
     "desktop": "Fresh user state, all eleven core views, actual window close and QML cleanup PASS",
-    "integrated_window_chrome": {
-      "behavior": "Title and window controls share the GG frame legend; native move and resize, fullscreen and desktop-shell transitions",
-      "date": "2026-10-23",
-      "limitations": "Window actions and startup verified offscreen; header checked in a rendered preview. Full application restart required.",
-      "result": "PASS",
-      "tests": [
-        "test_window_chrome.py",
-        "test_desktop_settings.py",
-        "test_terminal_window_state.py",
-        "test_windows_desktop.py"
-      ]
-    },
     "media_frequency_display": {
       "date": "2026-10-22",
       "limitations": "No live station retest in the running application; Python backend requires app restart",
@@ -1575,6 +1476,22 @@
         "test_lua_split_merge_real_stacks_preserves_metadata_counts_and_rejects_bad_moves": "Missing optional step-grass.wav",
         "test_qt_draws_actual_framexml": "Optional qml/game/framexml content is absent"
       }
+    },
+    "research_windows": {
+      "date": "2026-10-23",
+      "engines": "Real REA JavaScript imports/exports; Ghidra native overview, function, search, decompile and xrefs; function context transferred to GAMES",
+      "games": "Synthetic asset discovery, candidate syntax, routes, rig trials, actual MSVC, QtQuick3D stage measurements and Blender roundtrip",
+      "interface": "Nine RESEARCH sections; actual Qt interactions, save/error draft retention, responsive asynchronous WASM and analysis jobs, complete recorded evaluation lifecycle",
+      "isolation": "Zero-capability Windows AppContainer; read-only inputs/tools, scratch-only writes, resource and output limits, process-tree cancellation and cleanup; drive-root scopes rejected",
+      "jdk_compatibility": "Sandbox-only exact-source metadata adapters for NTFS component limits and handle-based canonical paths; vendor JDK binaries unchanged; access denial tests pass",
+      "limitations": [
+        "Evidence applies to the listed fixture workflows, not arbitrary behavioral conclusions.",
+        "Private authored game assets are not part of the export; synthetic alternatives were tested.",
+        "Full application restart required to replace loaded Python services."
+      ],
+      "setup": "Official checksum-verified pinned downloads; safe extraction and preserved archive timestamps; recorded critical-file integrity checked before Java execution",
+      "status": "VERIFIED_ON_KNOWN_ANSWER_AND_SYNTHETIC_FIXTURES",
+      "wasm": "Asynchronous; full 64 KiB input via private files, immutable 1 MiB snapshot, enforced memory/table growth limits, cancellation and timeout"
     },
     "results": {
       "test_application_bundle": {
@@ -1902,20 +1819,6 @@
         "image_ring_bytes": 820419
       }
     },
-    "tv_playback": {
-      "includes": [
-        "HLS selection",
-        "server outage recovery",
-        "quality fallback"
-      ],
-      "live_channels": [
-        "SVT1 HD",
-        "Al Jazeera English"
-      ],
-      "live_seconds_each": 185,
-      "result": "PASS",
-      "targeted_tests": 35
-    },
     "unit_test_totals": {
       "errors": 0,
       "failures": 4,
@@ -2037,22 +1940,6 @@
         "main_app_responding_after_capture": true
       }
     },
-    "research_windows": {
-      "date": "2026-10-23",
-      "engines": "Real REA JavaScript imports/exports; Ghidra native overview, function, search, decompile and xrefs; function context transferred to GAMES",
-      "games": "Synthetic asset discovery, candidate syntax, routes, rig trials, actual MSVC, QtQuick3D stage measurements and Blender roundtrip",
-      "interface": "Nine RESEARCH sections; actual Qt interactions, save/error draft retention, responsive asynchronous WASM and analysis jobs, complete recorded evaluation lifecycle",
-      "isolation": "Zero-capability Windows AppContainer; read-only inputs/tools, scratch-only writes, resource and output limits, process-tree cancellation and cleanup; drive-root scopes rejected",
-      "jdk_compatibility": "Sandbox-only exact-source metadata adapters for NTFS component limits and handle-based canonical paths; vendor JDK binaries unchanged; access denial tests pass",
-      "limitations": [
-        "Evidence applies to the listed fixture workflows, not arbitrary behavioral conclusions.",
-        "Private authored game assets are not part of the export; synthetic alternatives were tested.",
-        "Full application restart required to replace loaded Python services."
-      ],
-      "setup": "Official checksum-verified pinned downloads; safe extraction and preserved archive timestamps; recorded critical-file integrity checked before Java execution",
-      "status": "VERIFIED_ON_KNOWN_ANSWER_AND_SYNTHETIC_FIXTURES",
-      "wasm": "Asynchronous; full 64 KiB input via private files, immutable 1 MiB snapshot, enforced memory/table growth limits, cancellation and timeout"
-    },
     "php2shell_hardening": {
       "date": "2026-10-23",
       "status": "PASS_SCOPED_LOCAL_CHECKS",
@@ -2144,130 +2031,6 @@
         "These results do not establish remote hosting/provider patch status",
         "The user must restart the full desktop to load its updated Python backend"
       ]
-    },
-    "ggw_complete_patch_2026_10_24": {
-      "date": "2026-10-24",
-      "result": "PASS",
-      "scope": "Complete distributable source delta, including clipboard and terminal changes",
-      "checkout_regressions": [
-        {
-          "test": "test_site_runtime_setup.py",
-          "status": "PASS",
-          "tests": 6,
-          "seconds": 0.98
-        },
-        {
-          "test": "test_site_database_vault.py",
-          "status": "PASS",
-          "tests": 6,
-          "seconds": 0.26
-        },
-        {
-          "test": "test_site_resilience.py",
-          "status": "PASS",
-          "tests": 18,
-          "seconds": 7.76
-        },
-        {
-          "test": "test_site_runtime_windows.py",
-          "status": "PASS",
-          "tests": 4,
-          "seconds": 74.41
-        },
-        {
-          "test": "test_web_surface.py",
-          "status": "PASS",
-          "tests": null,
-          "seconds": 0.95
-        },
-        {
-          "test": "test_site_database.py",
-          "status": "PASS",
-          "tests": null,
-          "seconds": 0.16
-        },
-        {
-          "test": "test_php_source_analysis.py",
-          "status": "PASS",
-          "tests": 12,
-          "seconds": 2.12
-        },
-        {
-          "test": "test_research_evidence_integrity.py",
-          "status": "PASS",
-          "tests": 8,
-          "seconds": 0.53
-        },
-        {
-          "test": "test_windows_research_backend.py",
-          "status": "PASS",
-          "tests": 8,
-          "seconds": 1.01
-        },
-        {
-          "test": "test_qip_runtime_limits.py",
-          "status": "PASS",
-          "tests": 6,
-          "seconds": 0.7
-        },
-        {
-          "test": "test_research_jobs.py",
-          "status": "PASS",
-          "tests": 19,
-          "seconds": 2.72
-        },
-        {
-          "test": "test_windows_research_setup.py",
-          "status": "PASS",
-          "tests": 15,
-          "seconds": 0.78
-        },
-        {
-          "test": "test_chat_clipboard.py",
-          "status": "PASS",
-          "tests": 12,
-          "seconds": 1.79
-        },
-        {
-          "test": "test_terminal_grid.py",
-          "status": "PASS",
-          "tests": null,
-          "seconds": 0.3
-        },
-        {
-          "test": "test_window_chrome.py",
-          "status": "PASS",
-          "tests": 1,
-          "seconds": 1.26
-        },
-        {
-          "test": "test_web_operator_lifecycle.py",
-          "status": "PASS",
-          "tests": 13,
-          "seconds": 4.77
-        },
-        {
-          "test": "test_web_operator_qml_lifecycle.py",
-          "status": "PASS",
-          "tests": 1,
-          "seconds": 6.73
-        },
-        {
-          "test": "test_chat_surface_host.py",
-          "status": "PASS",
-          "tests": null,
-          "seconds": 7.76
-        },
-        {
-          "test": "test_windows_desktop.py",
-          "status": "PASS",
-          "tests": 1,
-          "seconds": 14.8
-        }
-      ],
-      "source_integrity": "Every copied source matches the shared workspace; previous GG-W documentation and executable mode preserved",
-      "distribution": "Installers and verifier included; no credentials, local state or external vendor runtime binaries bundled",
-      "restart": "Full desktop restart required to load changed Python backend"
     },
     "crypto_windows_responsiveness": {
       "date": "2026-10-24",
@@ -3570,6 +3333,139 @@
       "source_integrity": "All non-metadata application sources match shared workspace; original TMOG renderer files unchanged",
       "distribution": "Catalog allowlist only; no sessions, credentials, captures, local measurements, external installations or OS settings",
       "restart": "Full application restart required; running user desktop remains open"
+    },
+    "ggw_complete_patch_2026_10_26": {
+      "date": "2026-10-26",
+      "result": "PASS",
+      "scope": "Complete distributable source delta since previous GG-W main patch; MEDIA, KNOWLEDGE and shared menus",
+      "saved_sessions_reviewed": 3,
+      "regressions": [
+        {
+          "test": "test_media_catalog_service.py",
+          "status": "PASS",
+          "tests": 72
+        },
+        {
+          "test": "test_media_health_audit.py",
+          "status": "PASS",
+          "tests": 41
+        },
+        {
+          "test": "test_media_library_ui.py",
+          "status": "PASS",
+          "tests": 3
+        },
+        {
+          "test": "test_media_loading.py",
+          "status": "PASS",
+          "tests": 3
+        },
+        {
+          "test": "test_media_availability.py",
+          "status": "PASS",
+          "tests": 30
+        },
+        {
+          "test": "test_media_stream_proxy.py",
+          "status": "PASS",
+          "tests": 8
+        },
+        {
+          "test": "test_media_hls.py",
+          "status": "PASS",
+          "tests": 11
+        },
+        {
+          "test": "test_media_controls_integration.py",
+          "status": "PASS",
+          "tests": 1
+        },
+        {
+          "test": "test_media_timeline.py",
+          "status": "PASS",
+          "tests": 1
+        },
+        {
+          "test": "test_knowledge_atlas.py",
+          "status": "PASS",
+          "tests": 14
+        },
+        {
+          "test": "test_knowledge_body.py",
+          "status": "PASS",
+          "tests": 17
+        },
+        {
+          "test": "test_knowledge_scenes.py",
+          "status": "PASS",
+          "tests": 8
+        },
+        {
+          "test": "test_knowledge_ui.py",
+          "status": "PASS",
+          "tests": 4
+        },
+        {
+          "test": "test_knowledge_body_ui.py",
+          "status": "PASS",
+          "tests": 7
+        },
+        {
+          "test": "test_windows_desktop.py",
+          "status": "PASS",
+          "tests": 1
+        },
+        {
+          "test": "test_media_initial_validation.py",
+          "status": "PASS",
+          "tests": 13
+        },
+        {
+          "test": "test_application_bundle.py",
+          "status": "PASS",
+          "tests": 9
+        }
+      ],
+      "standalone_contracts": {
+        "test_workbench_registry.py": "PASS",
+        "test_surface_intent.py": "PASS",
+        "test_source_contract.py": "PASS"
+      },
+      "media_loading": {
+        "items": 50000,
+        "page_rows": 80,
+        "prefetch_rows_ahead": "80-160",
+        "gui_browse_ms": 0.39,
+        "service_heartbeat_max_ms": 11.84,
+        "qml_heartbeat_max_ms": 18.23,
+        "qml_warnings": 0,
+        "gui_source_work": false
+      },
+      "media_first_install": {
+        "scope": "Public bundled metadata; independent local identity and decoded sample checks",
+        "workers": 2,
+        "max_seconds": 300,
+        "max_jobs": 240,
+        "visibility": "Visible MEDIA only; hide/close cancellation",
+        "manual_audits": "Existing manual, stopped and externally running audits left under original control",
+        "dependencies": "FFmpeg and ffprobe required; explicit missing-decoder notice; no automatic third-party installs",
+        "explicit_refresh": "Own initial run only: fresh finite two-attempt budget for transient failures; healthy and permanent failures unchanged"
+      },
+      "media_proof_scope": "Provider/file identity and decoded samples, not complete programme viewing or permanent availability; per-install and provider/region/network dependent",
+      "knowledge": {
+        "tests": 50,
+        "default_demo": "Bundled cell illustration",
+        "personal_documents_and_teaching_bundles": "Per-user state only; not distributed"
+      },
+      "distribution": "Catalog allowlist only; no sessions, credentials, audit databases, private documents, generated personal illustrations, external installations or workstation settings",
+      "known_preexisting_test_limits": [
+        "test_ux_baseline_contract.py expects an already absent upstream loading label",
+        "test_grok_worker_contract.py has an existing Unix-only path assertion on Windows"
+      ],
+      "restart": "Full application restart required after update; running user desktop remains open",
+      "relocated_export_new_home": "PASS: exact catalogue export, application import, full QML startup and bundled skill registration with new user home",
+      "catalog_files": 2578,
+      "changed_files": 83
     }
   },
   "verification_before_2026_10_21": {
@@ -3618,7 +3514,5 @@
     "independent_computers": true,
     "path": ".venv-windows",
     "reason": "Qt 6.12.0 nullable QObject slot crash reproduced locally; 6.11.2 passes"
-  },
-  "windows_repository": "https://github.com/GoldGoblins/GG-W",
-  "distribution": "Separate Windows repository; original Linux repository retained"
+  }
 }

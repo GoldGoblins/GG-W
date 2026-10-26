@@ -220,6 +220,7 @@ class ChatSurfaceHost(QObject):
     siteImportProgress = Signal(str, int, int, str)
     mediaFrameSeqChanged = Signal()
     mediaStateChanged = Signal()
+    mediaLibraryChunkReady = Signal(int, str)
     liveVisionStatusChanged = Signal()
     mediaSeekChanged = Signal(float)
     mediaVideoSourceReady = Signal(int, str, str)
@@ -227,6 +228,9 @@ class ChatSurfaceHost(QObject):
     osintUpdated = Signal(str)
     osintNearbyUpdated = Signal(str)
     osintFlightLookedUp = Signal(str)
+    knowledgeUpdated = Signal(str)
+    knowledgeImportFinished = Signal(str)
+    knowledgePageReady = Signal(str)
     # Shared visual commands are emitted as a small JSON envelope.  QML owns
     # the presentation action; GPTUI, GrokTUI and the normal composer all use
     # this same ingress.
@@ -268,6 +272,7 @@ class ChatSurfaceHost(QObject):
         self._flow_poll.timeout.connect(self._flow_tui_poll)
         self._tmog_embed: object | None = None
         self._media_embed: object | None = None
+        self._media_catalog = None
         self._torlink_embed: object | None = None
         self._draw_embed: object | None = None
         self._external_embed: object | None = None
@@ -1502,6 +1507,46 @@ class ChatSurfaceHost(QObject):
     def osintRecordEvidence(self, kind: str, event_id: str) -> str:
         return self._osint.recordEvidence(str(kind or ""), str(event_id or ""))
 
+    def _knowledge_host(self):
+        host = getattr(self, "_knowledge", None)
+        if host is None:
+            from backend.knowledge_host import KnowledgeHost
+
+            host = KnowledgeHost(self)
+            host.updated.connect(self.knowledgeUpdated)
+            host.importFinished.connect(self.knowledgeImportFinished)
+            host.pageReady.connect(self.knowledgePageReady)
+            self._knowledge = host
+        return host
+
+    @Slot(str, str, result=str)
+    def knowledgeSnapshot(self, query: str = "", kind: str = "ALL") -> str:
+        return self._knowledge_host().snapshot(query, kind)
+
+    @Slot(str, result=str)
+    def knowledgeDetail(self, node_id: str) -> str:
+        return self._knowledge_host().detail(node_id)
+
+    @Slot(str, result=str)
+    def knowledgeScene(self, scene_id: str) -> str:
+        return self._knowledge_host().scene(scene_id)
+
+    @Slot(result=str)
+    def knowledgeBody(self) -> str:
+        return self._knowledge_host().body()
+
+    @Slot(str, result=str)
+    def knowledgeBodyEvaluate(self, raw_json: str) -> str:
+        return self._knowledge_host().body_evaluate(raw_json)
+
+    @Slot(str, result=bool)
+    def knowledgeImport(self, paths_json: str) -> bool:
+        return self._knowledge_host().import_paths(paths_json)
+
+    @Slot(str, int, result=bool)
+    def knowledgePage(self, source_id: str, page: int = 1) -> bool:
+        return self._knowledge_host().page(source_id, page)
+
     @Slot(str, result=str)
     def researchCommand(self, raw_json: str = "{}") -> str:
         """Dispatch the finite local Research Desk command set."""
@@ -1960,6 +2005,7 @@ class ChatSurfaceHost(QObject):
     @Slot(result=str)
     def mediaStatus(self) -> str:
         try:
+            self._media_library_service().ensure_started()
             return self._media_status_json(False)
         except Exception as exc:
             return json.dumps({"error": type(exc).__name__, "schema": media_host.SCHEMA})
@@ -1985,19 +2031,107 @@ class ChatSurfaceHost(QObject):
         self.mediaStateChanged.emit()
         return json.dumps(payload, separators=(",", ":"))
 
+    def _media_library_service(self):
+        if self._media_catalog is None:
+            from backend.media_catalog_service import MediaCatalogService
+            service = MediaCatalogService(self)
+            service.changed.connect(self._media_library_updated)
+            service.playReady.connect(self._media_library_play_ready)
+            service.chunkReady.connect(self._media_library_chunk_ready)
+            self._media_catalog = service
+        return self._media_catalog
+
+    @Slot()
+    def _media_library_updated(self) -> None:
+        self._media_changed(media_host.status_payload())
+
+    @Slot(int, object)
+    def _media_library_chunk_ready(self, ticket: int, payload: dict[str, Any]) -> None:
+        self.mediaLibraryChunkReady.emit(int(ticket), json.dumps(payload, separators=(",", ":")))
+
+    @Slot(object)
+    def _media_library_play_ready(self, item: dict[str, Any]) -> None:
+        try:
+            payload = self._media_follow(media_host.play_item(str(item["id"])))
+            self._console_sync(payload)
+            self._media_changed(payload)
+        except (ValueError, RuntimeError):
+            media_host.library_finish(None, error="Videon kunde inte öppnas. Försök igen eller välj en annan titel.")
+            self._media_changed(media_host.status_payload())
+
+    @Slot(result=str)
+    def mediaLibraryRefresh(self) -> str:
+        self._media_library_service().refresh()
+        return self._media_changed(media_host.status_payload())
+
+    @Slot(str, str, str, str, str, str, int, result=str)
+    def mediaLibraryBrowse(self, page: str, letter: str, category: str, language: str, season: str, query: str, offset: int) -> str:
+        self._media_library_service().browse(page, letter, category, language, season, query, offset)
+        return self._media_changed(media_host.status_payload())
+
+    @Slot(str, str, str, str, str, str, int, int)
+    def mediaLibraryChunk(self, page: str, letter: str, category: str, language: str,
+                          season: str, query: str, offset: int, ticket: int) -> None:
+        self._media_library_service().chunk(page, letter, category, language, season, query, offset, ticket)
+
+    @Slot(bool)
+    def mediaLibraryActive(self, active: bool) -> None:
+        if self._media_catalog is not None:
+            self._media_catalog.set_active(active)
+
+    @Slot(str)
+    def mediaLibraryAcceptSnapshot(self, revision: str) -> None:
+        if self._media_catalog is not None:
+            self._media_catalog.accept_snapshot(str(revision))
+
+    @Slot(str, result=str)
+    def mediaLibrarySearch(self, query: str) -> str:
+        self._media_library_service().search(query)
+        return self._media_changed(media_host.status_payload())
+
+    @Slot(str, result=str)
+    def mediaOpenCollection(self, item_id: str) -> str:
+        try:
+            service = self._media_library_service()
+            if media_host.item_by_id(item_id) is None:
+                # Continuous scrolling retains labels in QML, while the GUI
+                # registry stays small. Resolve an off-page selection on its worker.
+                service.play_id(item_id)
+            else:
+                service.open_collection(item_id)
+            return self._media_changed(media_host.status_payload())
+        except ValueError:
+            return json.dumps({"error": "Serien kunde inte öppnas."})
+
+    @Slot(result=str)
+    def mediaLibraryBack(self) -> str:
+        self._media_library_service().back()
+        return self._media_changed(media_host.status_payload())
+
     @Slot(str, result=str)
     def mediaSetMode(self, mode: str) -> str:
         try:
-            return self._media_changed(media_host.set_mode(mode))
+            if self._media_catalog is not None:
+                self._media_catalog.cancel_browse()
+                self._media_catalog.cancel_play()
+            payload = media_host.set_mode(mode)
+            service = self._media_library_service()
+            page = {"TV": "live", "MUSIC": "music", "RADIO": "radio", "FETCH": "downloads", "GAME": "games"}.get(mode, "live")
+            service.browse(page, "all", "all", "all", "all", "", 0)
+            return self._media_changed(media_host.status_payload())
         except ValueError as exc:
             return json.dumps({"error": str(exc)})
 
     @Slot(str, result=str)
     def mediaPlay(self, item_id: str) -> str:
         try:
-            payload = self._media_follow(media_host.play_item(item_id))
-            self._console_sync(payload)
-            return self._media_changed(payload)
+            item = media_host.item_by_id(item_id)
+            if item and item.get("content_type") == "series":
+                return self.mediaOpenCollection(item_id)
+            # Rows are lightweight catalogue summaries; only the selected item
+            # is resolved and checked by the worker before playback.
+            self._media_library_service().play_id(item_id, fallback=item)
+            return self._media_changed(media_host.status_payload())
         except (ValueError, RuntimeError) as exc:
             return json.dumps({"error": str(exc)})
 
@@ -2007,12 +2141,16 @@ class ChatSurfaceHost(QObject):
 
     @Slot(result=str)
     def mediaStop(self) -> str:
+        self.mediaCancelVideoSource()
+        if self._media_catalog is not None:
+            self._media_catalog.cancel_play()
         embed = self._media_embed
         if embed is not None:
             embed.stop()
         torlink = self._torlink_embed
         if torlink is not None:
             torlink.stop()
+        media_host.library_finish(None)
         payload = media_host.stop()
         self._console_sync(payload)
         return self._media_changed(payload)
@@ -2027,6 +2165,16 @@ class ChatSurfaceHost(QObject):
         if changed:
             self.mediaStateChanged.emit()
 
+    @Slot(str, int)
+    def mediaReportSourceFailure(self, identifier: str, generation: int) -> None:
+        item = media_host._item
+        if not item or str(item.get("id")) != identifier or generation != media_host._qml_generation:
+            return
+        failed_source = dict(item)
+        item["availability"] = "failed"
+        media_host.library_store(dict(item))
+        self._media_library_service().invalidate(identifier, expected=failed_source)
+
     @Slot(str, int, int)
     def mediaResolveVideoSource(self, source: str, attempt: int, ticket: int) -> None:
         from backend.media_hls import HlsVariantResolver
@@ -2035,7 +2183,9 @@ class ChatSurfaceHost(QObject):
             resolver = HlsVariantResolver(self)
             resolver.sourceReady.connect(self.mediaVideoSourceReady.emit)
             self._media_hls_resolver = resolver
-        resolver.resolve(source, attempt, ticket)
+        current = media_host._item or {}
+        row = current if str(current.get("source") or "") == source else None
+        resolver.resolve(source, attempt, ticket, row=row)
 
     @Slot()
     def mediaCancelVideoSource(self) -> None:
@@ -2047,7 +2197,7 @@ class ChatSurfaceHost(QObject):
     def mediaSeek(self, seconds: float) -> str:
         payload = media_host.seek(float(seconds))
         if str(payload.get("backend") or "") == "qml":
-            self.mediaSeekChanged.emit(float(payload.get("position") or seconds))
+            self.mediaSeekChanged.emit(float(payload.get("position", seconds)))
         self.mediaStateChanged.emit()
         return json.dumps(payload, separators=(",", ":"))
 
@@ -2064,7 +2214,7 @@ class ChatSurfaceHost(QObject):
     @Slot(str, result=str)
     def mediaSearch(self, query: str) -> str:
         try:
-            return self._media_changed(media_host.search(query))
+            return self.mediaLibrarySearch(query)
         except (ValueError, RuntimeError) as exc:
             return json.dumps({"error": str(exc)})
 
@@ -6425,6 +6575,8 @@ class ChatSurfaceHost(QObject):
             self._tui_focus_terminal = ""
             if self._crypto_ui is not None:
                 release("crypto", self._crypto_ui.close)
+            if self._media_catalog is not None:
+                release("media_catalog", self._media_catalog.close)
             from backend import site_jobs
 
             release("site_jobs", site_jobs.cancel)
@@ -6453,8 +6605,11 @@ class ChatSurfaceHost(QObject):
                 if embed is not None:
                     release(name, embed.stop)
             release("osint", self._osint.shutdown)
+            if getattr(self, "_knowledge", None) is not None:
+                release("knowledge", self._knowledge.shutdown)
             release("game_engine", game_engine_host.shutdown)
             release("pump", crypto_host.close_pump)
+            release("media_source", self.mediaCancelVideoSource)
             release("media", media_host.stop)
         finally:
             self._shutdown_errors = tuple(failures[-32:])

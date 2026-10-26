@@ -1009,7 +1009,7 @@ def main() -> int:
         "Manifest synthetic context policy mismatch.",
     )
 
-    catalog = json.loads((PROJECT / "FILE-CATALOG.json").read_text())
+    catalog = json.loads((PROJECT / "FILE-CATALOG.json").read_text(encoding="utf-8"))
     expected_hashed = {
         row["path"] for row in catalog["files"]
         if row["kind"] == "file" and row["path"] != "SOURCE-MANIFEST.json"

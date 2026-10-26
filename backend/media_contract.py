@@ -5,6 +5,7 @@ from backend.application_paths import DATA_HOME, HOME, STATE_ROOT
 import hashlib
 import json
 import os
+import re
 import shutil
 import time
 import urllib.error
@@ -20,7 +21,7 @@ SCHEMA = "gg.ai-desktop.media-status.v1"
 STATE_DIR = Path(str(STATE_ROOT / 'media'))
 MODES = ("MUSIC", "RADIO", "TV", "GAME", "FETCH")
 DEFAULT_MODE = "MUSIC"
-MAX_ITEMS = 600
+MAX_ITEMS = 16000
 MAX_SCAN_DEPTH = 4
 MAX_TITLE = 96
 VOLUME_DEFAULT = 70
@@ -162,14 +163,17 @@ TOOL_DIRS = (
 
 RADIO_API = "https://de1.api.radio-browser.info/json/stations/search"
 IPTV_PLAYLISTS = (
+    "https://iptv-org.github.io/iptv/index.category.m3u",
     "https://iptv-org.github.io/iptv/countries/se.m3u",
     "https://iptv-org.github.io/iptv/countries/fi.m3u",
     "https://iptv-org.github.io/iptv/countries/no.m3u",
     "https://iptv-org.github.io/iptv/countries/dk.m3u",
     "https://iptv-org.github.io/iptv/countries/uk.m3u",
-    "https://iptv-org.github.io/iptv/categories/news.m3u",
+    "https://iptv-org.github.io/iptv/languages/swe.m3u",
 )
-IPTV_PER_SOURCE = 160
+IPTV_PER_SOURCE = 16000
+MAX_HTTP_BYTES = 12 * 1024 * 1024
+BUNDLED_CHANNELS = Path(__file__).resolve().parents[1] / "config/media-channels.m3u"
 RADIO_BROWSER_LIMIT = 250
 RADIO_BROWSER_COUNTRIES = (
     ("SE", 220),
@@ -451,12 +455,23 @@ def stream_allowed(url: str) -> str:
 def parse_m3u_text(text: str, kind: str) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     title = ""
+    attrs: dict[str, str] = {}
+    hints: dict[str, str] = {}
     for raw_line in str(text or "").splitlines():
         line = raw_line.strip()
         if not line or line.startswith("#EXTM3U"):
             continue
         if line.startswith("#EXTINF:"):
-            title = line.split(",", 1)[-1].strip()[:MAX_TITLE]
+            match = re.match(r'#EXTINF:((?:[^",]|"[^"]*")*),(.*)$', line)
+            title = (match.group(2) if match else line.rsplit(",", 1)[-1]).strip()[:MAX_TITLE]
+            attrs = dict(re.findall(r'([\w-]+)="([^"]*)"', match.group(1) if match else line))
+            hints = {}
+            continue
+        if line.startswith("#EXTVLCOPT:"):
+            name, _, value = line[len("#EXTVLCOPT:"):].partition("=")
+            field = {"http-referrer": "referrer", "http-user-agent": "user_agent"}.get(name.casefold())
+            if field:
+                hints[field] = value
             continue
         if line.startswith("#"):
             continue
@@ -464,6 +479,14 @@ def parse_m3u_text(text: str, kind: str) -> list[dict[str, Any]]:
             url = stream_allowed(line)
         except ValueError:
             title = ""
+            attrs = {}
+            hints = {}
+            continue
+        try:
+            from backend.media_request import public_headers
+            public_headers(hints)
+        except ValueError:
+            title, attrs, hints = "", {}, {}
             continue
         rows.append(
             {
@@ -473,9 +496,21 @@ def parse_m3u_text(text: str, kind: str) -> list[dict[str, Any]]:
                 "source": url,
                 "media": "stream",
                 "system": "",
+                "content_type": "live" if kind == "TV" else "music",
+                "is_live": True,
+                "channel_id": attrs.get("tvg-id", ""),
+                "category": attrs.get("group-title", ""),
+                "language": attrs.get("tvg-language", ""),
+                "country": attrs.get("tvg-country", ""),
+                "logo": attrs.get("tvg-logo", ""),
+                "provider": "IPTV" if kind == "TV" else "Radio",
+                "play": "video" if kind == "TV" else "audio",
+                **hints,
             }
         )
         title = ""
+        attrs = {}
+        hints = {}
         if len(rows) >= MAX_ITEMS:
             break
     return rows
@@ -496,7 +531,10 @@ def _http_get(url: str, timeout: float = 12.0) -> bytes:
         method="GET",
     )
     with urllib.request.urlopen(request, timeout=timeout) as response:
-        return response.read()
+        data = response.read(MAX_HTTP_BYTES + 1)
+        if len(data) > MAX_HTTP_BYTES:
+            raise ValueError("MEDIA_RESPONSE_TOO_LARGE")
+        return data
 
 
 def _cache_path(name: str) -> Path:
@@ -525,12 +563,26 @@ def _cached_bytes(name: str, url: str, *, timeout: float = 12.0) -> bytes:
         pass
     try:
         raw = _http_get(url, timeout=timeout)
-    except (OSError, urllib.error.URLError, TimeoutError):
+        if name.endswith(".m3u") and not raw.lstrip(b"\xef\xbb\xbf\r\n ").startswith(b"#EXTM3U"):
+            raise ValueError("MEDIA_PLAYLIST_INVALID")
+        if name.endswith(".json"):
+            payload = json.loads(raw.decode("utf-8"))
+            if not isinstance(payload, (list, dict)):
+                raise ValueError("MEDIA_RESPONSE_INVALID")
+    except (OSError, urllib.error.URLError, TimeoutError, ValueError, UnicodeError):
         if stale:
             return stale
         raise
-    path.write_bytes(raw)
-    path.chmod(0o600)
+    # Publish complete files only; a crash must not replace the good cache.
+    temporary = path.with_suffix(path.suffix + ".tmp-" + str(os.getpid()) + "-" + str(time.monotonic_ns()))
+    try:
+        temporary.write_bytes(raw)
+        temporary.chmod(0o600)
+        temporary.replace(path)
+    except OSError:
+        pass
+    finally:
+        temporary.unlink(missing_ok=True)
     return raw
 
 
@@ -595,17 +647,24 @@ def radio_browser_stations(
     return rows
 
 
-def _iptv_playlist(url: str) -> list[dict[str, Any]]:
+def _iptv_playlist(url: str, *, refresh: bool = True) -> list[dict[str, Any]]:
     name = "tv-" + hashlib.sha256(url.encode("utf-8")).hexdigest()[:16] + ".m3u"
     try:
         # A dead IPTV mirror must not hold the GUI for the generic 12-second
         # HTTP timeout.  The catalog can still use its last successful cache.
-        text = _cached_bytes(name, url, timeout=5.0).decode("utf-8", "replace")
-    except (OSError, urllib.error.URLError, TimeoutError, UnicodeError):
+        text = (_cached_bytes(name, url, timeout=5.0) if refresh else _cache_path(name).read_bytes()).decode("utf-8", "replace")
+        if not text.lstrip("\ufeff\r\n ").startswith("#EXTM3U"):
+            return []
+    except (OSError, urllib.error.URLError, TimeoutError, UnicodeError, ValueError):
         return []
     rows: list[dict[str, Any]] = []
     for item in parse_m3u_text(text, "TV"):
         item["player"] = "qml"
+        item["source_page"] = url
+        if not item["category"] and "/categories/" in url:
+            item["category"] = url.rsplit("/", 1)[-1].split(".")[0].title()
+        if not item["language"] and "/languages/" in url:
+            item["language"] = url.rsplit("/", 1)[-1].split(".")[0]
         rows.append(item)
     return rows
 
@@ -626,10 +685,13 @@ def _iptv_playlists() -> list[list[dict[str, Any]]]:
         return rows
 
 
-def iptv_catalog() -> list[dict[str, Any]]:
+def iptv_catalog(*, refresh: bool = True) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     seen: set[str] = set()
-    for playlist in _iptv_playlists():
+    playlists = _iptv_playlists() if refresh else [_iptv_playlist(url, refresh=False) for url in IPTV_PLAYLISTS]
+    if BUNDLED_CHANNELS.is_file():
+        playlists.append(parse_m3u(BUNDLED_CHANNELS, "TV"))
+    for playlist in playlists:
         taken = 0
         for item in playlist:
             if item["source"] in seen:
@@ -642,6 +704,30 @@ def iptv_catalog() -> list[dict[str, Any]]:
         if len(rows) >= MAX_ITEMS:
             break
     return rows
+
+
+def library_catalog(*, refresh: bool = False) -> list[dict[str, Any]]:
+    """One video library. Network refresh is only called by the library worker."""
+    from backend.media_library import annotate, starter_catalog
+    rows = _scan_files("TV", VIDEO_EXT)
+    rows.extend(row for row in fetch_catalog() if row.get("play") == "video")
+    playlist = ensure_state_dir() / "tv.m3u"
+    if playlist.is_file():
+        rows.extend(parse_m3u(playlist, "TV"))
+    rows.extend(starter_catalog())
+    rows.extend(iptv_catalog(refresh=refresh))
+    seen: set[str] = set()
+    result: list[dict[str, Any]] = []
+    for raw in rows:
+        row = annotate(raw)
+        source = str(row.get("source") or row.get("id") or "")
+        if not source or source in seen:
+            continue
+        seen.add(source)
+        result.append(row)
+        if len(result) >= MAX_ITEMS:
+            break
+    return sort_title_rows(result)
 
 
 def _title_sort_key(title: str) -> str:
@@ -701,8 +787,9 @@ def query_item(kind: str, query: str) -> dict[str, Any] | None:
     if not looks_like_url(raw):
         return None
     source = stream_allowed(raw)
-    title = urlparse(source).path.rsplit("/", 1)[-1] or source
-    return {
+    parsed = urlparse(source)
+    title = parsed.path.rsplit("/", 1)[-1] or source
+    row = {
         "id": item_id(kind, source),
         "kind": kind,
         "title": title[:MAX_TITLE],
@@ -711,6 +798,23 @@ def query_item(kind: str, query: str) -> dict[str, Any] | None:
         "system": "",
         "player": "cliamp" if kind == "RADIO" else "qml",
     }
+    if kind == "TV":
+        host = (parsed.hostname or "").lower()
+        parts = [urllib.parse.unquote(part) for part in parsed.path.split("/") if part]
+        if host in {"archive.org", "www.archive.org"} and len(parts) >= 2 and parts[0] in {"details", "metadata", "download"}:
+            identifier = parts[1]
+            if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,199}", identifier):
+                raise ValueError("MEDIA_ARCHIVE_ID_INVALID")
+            row.update(archive_id=identifier, title=identifier, provider="Internet Archive", content_type="movie",
+                       media="vod", is_live=False, stream=False, play="video",
+                       source_page="https://archive.org/details/" + urllib.parse.quote(identifier, safe=""))
+            if parts[0] != "download" or len(parts) < 3:
+                row["source"] = row["source_page"]
+            else:
+                row["archive_file"] = "/".join(parts[2:])
+        elif Path(parsed.path).suffix.lower() in VIDEO_EXT:
+            row.update(content_type="movie", media="vod", is_live=False, stream=False, play="video")
+    return row
 
 
 def _scan_files(kind: str, suffixes: frozenset[str]) -> list[dict[str, Any]]:

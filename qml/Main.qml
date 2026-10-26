@@ -617,6 +617,25 @@ ApplicationWindow {
     signal bridgeAssignmentClear()
 
     Connections {
+        target: root.workspace
+        ignoreUnknownSignals: true
+        function onKnowledgePromptRequested(text) {
+            // Stage a question in the active motor. Enter remains the normal
+            // user submission path, including its existing task approvals.
+            var draft = String(text || "").replace(/\u001b/g, "")
+            if (root.surfaceHost && root.engineTarget === "GPT_TUI") {
+                root.surfaceHost.gptTuiWrite("\u001b[200~" + draft + "\u001b[201~")
+            } else if (root.surfaceHost && root.engineTarget === "GROK_TUI") {
+                root.surfaceHost.grokTuiWrite("\u001b[200~" + draft + "\u001b[201~")
+            } else if (root.engineTarget === "FLOW_TUI") {
+                flowTuiHost.draft = draft
+            } else {
+                composer.setDraft(draft)
+            }
+        }
+    }
+
+    Connections {
         target: root.surfaceHost
         function onStartupChatChanged() {
             if (root.shellLoading)

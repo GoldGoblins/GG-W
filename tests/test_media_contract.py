@@ -529,11 +529,11 @@ def main() -> int:
     qml = (PROJECT / "qml" / "components" / "MediaSurface.qml").read_text(
         encoding="utf-8"
     )
-    if "OPEN TORLINK" not in qml or "REATTACH TORLINK" not in qml:
-        raise AssertionError("FETCH open control missing")
-    if "search finished downloads" not in qml:
+    if "function openFetch()" not in qml or "root.openFetch()" not in qml:
+        raise AssertionError("optional FETCH tool control missing")
+    if 'id: "downloads", label: "Hämtat"' not in qml or "mediaLibrarySearch" not in qml:
         raise AssertionError("FETCH file search missing")
-    collapsed = qml[qml.index("listCollapsed:") : qml.index("function refresh(")]
+    collapsed = qml[qml.index("listCollapsed:") : qml.index("readonly property bool streamBuffering")]
     if "FETCH" in collapsed:
         raise AssertionError("FETCH still collapses the finished-file list")
     if "duckstation" not in src or "pcsx2" not in src or "xemu" not in src:
