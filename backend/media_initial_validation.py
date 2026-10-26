@@ -7,12 +7,10 @@ from __future__ import annotations
 
 import time
 
-from backend.media_availability import decoder_tools
 from backend.media_health_audit import MediaHealthAudit
 
 MAX_SECONDS = 300.0
 MAX_JOBS = 240
-MISSING_DECODER = "Mediebiblioteket behöver FFmpeg och ffprobe. Installera FFmpeg och välj uppdatera."
 
 
 def validate_initial(index, *, cancel, max_seconds=MAX_SECONDS, explicit=False):
@@ -38,10 +36,6 @@ def validate_initial(index, *, cancel, max_seconds=MAX_SECONDS, explicit=False):
             return {"state": "stopped", "notice": ""}
         if run[3] and run[4] > time.time():
             return {"state": "external", "notice": ""}
-    if explicit:
-        decoder_tools.cache_clear()
-    if not all(decoder_tools().get(name) for name in ("ffmpeg", "ffprobe")):
-        return {"state": "decoder_missing", "notice": MISSING_DECODER}
     if cancel.is_set():
         return {"state": "cancelled", "notice": ""}
     audit = MediaHealthAudit(index)

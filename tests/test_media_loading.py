@@ -302,7 +302,7 @@ def index_fixture(root: Path, *, prepare=False):
     from PySide6.QtCore import QCoreApplication, QTimer
     from PySide6.QtTest import QTest
     from backend import media_contract as contract, media_host as host
-    from backend import media_availability as availability, media_discovery as discovery, media_library as library
+    from backend import media_availability as availability, media_quick_availability as quick, media_discovery as discovery, media_library as library
     from backend.media_index import MediaIndex
     from backend.media_catalog_service import MediaCatalogService
 
@@ -361,7 +361,8 @@ def index_fixture(root: Path, *, prepare=False):
             return item
         count = index.ingest(row(number) for number in range(50_000))
         # Synthetic proofs isolate paging performance from real network work.
-        # Unchecked, failed and out-of-retention entries cannot inflate totals.
+        # Metadata and stale positives remain browseable without a decoder;
+        # a known failed source remains withdrawn until its retry window.
         with index.connection() as db:
             db.execute("UPDATE items SET status='verified',checked_at=?,verified_until=?",
                        (time.time(), time.time() + 600))
@@ -437,7 +438,7 @@ def index_fixture(root: Path, *, prepare=False):
             # Unexpected work is logged even when worker error handling catches
             # the exception, so a blank/error page cannot mask the regression.
             for target, name in (
-                (availability, "verify"), (library, "expand_item"), (library, "resolve_item"),
+                (availability, "verify"), (quick, "quick_check"), (library, "expand_item"), (library, "resolve_item"),
                 (library, "search_archive"), (library, "starter_catalog"),
                 (discovery, "discover"), (contract, "catalog_for"), (contract, "iptv_catalog"),
                 (contract, "probe_tools"), (urllib.request, "urlopen"),
@@ -446,11 +447,13 @@ def index_fixture(root: Path, *, prepare=False):
             try:
                 service = MediaCatalogService(index_path=path)
                 first = browse_page()
-                assert first["library_total"] == 49_997
+                assert first["library_total"] == 49_999
                 assert len(first["items"]) == 80
                 by_id = {row["id"]: row for row in first["items"]}
-                assert not {"indexed-0", "indexed-1", "indexed-2"}.intersection(by_id)
-                assert all(row["availability"] == "verified" for row in first["items"])
+                assert "indexed-1" not in by_id
+                assert by_id["indexed-0"]["availability"] == "unknown"
+                assert by_id["indexed-2"]["availability"] == "expired"
+                assert all(row["availability"] in ("unknown", "available", "expired") for row in first["items"])
 
                 second = browse_page(letter="B", offset=80)
                 assert second["library_total"] == 24_999
@@ -476,7 +479,7 @@ def index_fixture(root: Path, *, prepare=False):
                 close_service()
                 service = MediaCatalogService(index_path=path)
                 reused = browse_page()
-                assert reused["library_total"] == 49_997
+                assert reused["library_total"] == 49_999
                 assert [row["id"] for row in reused["items"]] == [row["id"] for row in first["items"]]
                 QTest.qWait(30)
                 assert not forbidden_calls, {"ordinary_browse_work": forbidden_calls}
@@ -486,7 +489,8 @@ def index_fixture(root: Path, *, prepare=False):
                 assert len(beats) >= 30, {"heartbeats": len(beats)}
                 assert max(gaps, default=0) < 100, {"max_heartbeat_gap_ms": max(gaps)}
                 print(json.dumps({"actual_sqlite_rows": first["library_total"], "page_rows": len(second["items"]),
-                                  "browse_slot_max_ms": round(max(slot_times), 2), "unverified_metadata_hidden": True,
+                                  "browse_slot_max_ms": round(max(slot_times), 2), "metadata_browseable_without_decoder": True,
+                                  "known_failed_source_hidden": True, "undecoded_sources_not_labelled_decoded": True,
                                   "saved_catalogue_reused": True, "ordinary_browse_io": forbidden_calls,
                                   "published_pages": len(published_pages), "heartbeats": len(beats),
                                   "max_heartbeat_gap_ms": round(max(gaps), 2), "gui_database_calls": False}))

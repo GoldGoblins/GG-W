@@ -66,6 +66,7 @@ class MediaIndex:
         self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         db = sqlite3.connect(self.path, timeout=2)
         db.row_factory = sqlite3.Row
+        db.create_function("gg_casefold", 1, _key, deterministic=True)
         db.execute("PRAGMA busy_timeout=2000")
         try:
             yield db
@@ -93,6 +94,11 @@ class MediaIndex:
                 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
             """)
             db.execute("BEGIN IMMEDIATE")
+            columns = {row[1] for row in db.execute("PRAGMA table_info(items)")}
+            for name, declaration in (("check_scope", "TEXT NOT NULL DEFAULT ''"),
+                                      ("check_decoded", "INTEGER NOT NULL DEFAULT 0")):
+                if name not in columns:
+                    db.execute("ALTER TABLE items ADD COLUMN " + name + " " + declaration)
             policy = db.execute("SELECT value FROM meta WHERE key='health_policy'").fetchone()
             if policy is None or policy[0] != "metadata-and-decoded-sample-v2":
                 # Older proofs did not bind source identity. Keep their logs,
@@ -247,6 +253,10 @@ class MediaIndex:
                 group = collection_key or self.series_key(row)
             elif content_type == "live":
                 group = "live:" + _key(row.get("channel_id") or title)
+            elif row["kind"] == "MUSIC" and content_type == "music":
+                # Each local file remains selectable, including equal track
+                # titles from different artists, albums or encodings.
+                group = "music:" + str(row["id"])
             elif content_type == "episode":
                 position = f"{row.get('season', 0)}:{row.get('episode', 0)}"
                 group = parent + "|" + (position if row.get("episode") else _key(row.get("episode_title") or title))
@@ -273,25 +283,32 @@ class MediaIndex:
              ("kind", "type", "title", "language", "season", "episode")] +
             ["json_extract(items.payload,'$." + field + "') IS json_extract(excluded.payload,'$." + field + "')"
              for field in ("series_title", "year", "archive_id", "archive_file", "archive_title", "referrer", "user_agent")])
-        proof_matches = "items.source_key=excluded.source_key AND " + identity_matches
+        proof_matches = ("items.source_key=excluded.source_key AND " + identity_matches
+            + " AND NOT (excluded.kind='MUSIC' AND items.status IN ('failed','error') "
+              "AND json_extract(excluded.payload,'$.local')=1 "
+              "AND COALESCE(json_extract(excluded.payload,'$.audio_metadata_version'),0)>=1)")
         withdrawn = False
+        membership_changed = False
         for start in range(0, len(prepared), 400):
             batch = prepared[start:start + 400]
             incoming = {row[0]: row for row in batch}
-            previous = db.execute("SELECT id,payload,status,checked_at,verified_until FROM items WHERE id IN (" +
+            previous = db.execute("SELECT id,payload,status,checked_at,verified_until,retry_at FROM items WHERE id IN (" +
                                   ",".join("?" for _ in batch) + ")", list(incoming))
             for old in previous:
                 old_payload = json.loads(old[1])
+                replacement = json.loads(incoming[old[0]][13])
+                same_identity = (old_payload.get("source") == replacement.get("source")
+                                 and self.identity_key(old_payload) == self.identity_key(replacement))
+                now = time.time()
+                old_member = self._metadata_member(old_payload, old[2], old[3], old[5], now)
+                new_member = self._metadata_member(replacement, old[2] if same_identity else "unknown",
+                    old[3] if same_identity else 0, old[5] if same_identity else 0, now)
+                membership_changed = membership_changed or old_member != new_member
+                withdrawn = withdrawn or old_member and not new_member
                 if (old[2] == 'verified' and old[3] > 0 and old[4] > old[3]
-                        and self._catalog_until(old[3], old_payload) > time.time()):
-                    replacement = json.loads(incoming[old[0]][13])
-                    if (old_payload.get("source") != replacement.get("source")
-                            or self.identity_key(old_payload) != self.identity_key(replacement)):
-                        withdrawn = True
-                        break
-            if withdrawn:
-                break
-        structural = self._structure_changed(db, prepared)
+                        and self._catalog_until(old[3], old_payload) > now and not same_identity):
+                    withdrawn = True
+        structural = membership_changed or self._structure_changed(db, prepared)
         db.executemany("""INSERT INTO items(id,kind,type,title,sort_title,letter,category,language,season,episode,
               group_key,parent_key,source_key,payload) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)
               ON CONFLICT(id) DO UPDATE SET kind=excluded.kind,type=excluded.type,title=excluded.title,
@@ -299,7 +316,11 @@ class MediaIndex:
                 language=excluded.language,season=excluded.season,episode=excluded.episode,
                 group_key=excluded.group_key,parent_key=excluded.parent_key,payload=excluded.payload,
                 verified_until=CASE WHEN """ + proof_matches + """ THEN items.verified_until ELSE 0 END,
+                checked_at=CASE WHEN """ + proof_matches + """ THEN items.checked_at ELSE 0 END,
+                retry_at=CASE WHEN """ + proof_matches + """ THEN items.retry_at ELSE 0 END,
                 status=CASE WHEN """ + proof_matches + """ THEN items.status ELSE 'unknown' END,
+                check_scope=CASE WHEN """ + proof_matches + """ THEN items.check_scope ELSE '' END,
+                check_decoded=CASE WHEN """ + proof_matches + """ THEN items.check_decoded ELSE 0 END,
                 source_key=excluded.source_key""", prepared)
         self._changed(db, structural=structural, withdrawn=withdrawn)
         # Keep a stable parent for episode identity even if a provider later
@@ -331,13 +352,32 @@ class MediaIndex:
         return (f"({alias}.status='verified' AND {alias}.checked_at>0 "
                 f"AND {alias}.verified_until>{alias}.checked_at AND {cls._catalog_until_sql(alias)}>?)")
 
+    @staticmethod
+    def _metadata_member(row, status, checked_at, retry_at, now):
+        return bool(str(row.get("source") or "").strip()) and (status not in ("failed", "error") or retry_at <= now)
+
+    @staticmethod
+    def _metadata_sql(alias="i"):
+        return (f"(COALESCE(trim(json_extract({alias}.payload,'$.source')),'')<>'' AND "
+                f"({alias}.status NOT IN ('failed','error') OR {alias}.retry_at<=?))")
+
+    @classmethod
+    def _listed_sql(cls, alias="i"):
+        return ("(" + cls._metadata_sql(alias) + f" OR ({alias}.type='series' AND EXISTS "
+                f"(SELECT 1 FROM items child WHERE child.parent_key={alias}.group_key AND "
+                + cls._metadata_sql("child") + ")))")
+
     def record(self, identifier: str, report: dict[str, Any], *, source=None, identity=None):
         status = str(report.get("status") or "unknown")
         checked = float(report.get("checked_at") or time.time())
         expiry = float(report.get("expires_at") or 0) if status == "verified" else 0
+        evidence = report.get("evidence") or {}
+        decoded = bool(evidence.get("decoded") is True or evidence.get("video_frames", 0) > 0
+                       or evidence.get("audio_frames", 0) > 0)
+        scope = str(report.get("scope") or ("decoded_sample" if decoded else ""))[:80]
         with self.connection() as db:
             db.execute("BEGIN IMMEDIATE")
-            previous = db.execute("SELECT status,verified_until,source_key,payload,checked_at FROM items WHERE id=?", (identifier,)).fetchone()
+            previous = db.execute("SELECT status,verified_until,source_key,payload,checked_at,retry_at FROM items WHERE id=?", (identifier,)).fetchone()
             expected_source = hashlib.sha256(str(source).encode()).hexdigest() if source is not None else None
             if previous is None or (expected_source is not None and previous[2] != expected_source):
                 return
@@ -345,20 +385,18 @@ class MediaIndex:
                 return
             now = time.time()
             payload = json.loads(previous[3])
-            previous_checked = previous[4]
-            old_member = (previous[0] == "verified" and previous_checked > 0 and previous[1] > previous_checked
-                          and self._catalog_until(previous_checked, payload) > now)
-            new_member = (status == "verified" and checked > 0 and expiry > checked
-                          and self._catalog_until(checked, payload) > now)
+            retry_at = expiry if status == "verified" else checked + (300 if status == "unknown" else 1800)
+            old_member = self._metadata_member(payload, previous[0], previous[4], previous[5], now)
+            new_member = self._metadata_member(payload, status, checked, retry_at, now)
             membership_changed = old_member != new_member
             # Provider refreshes may replace a URL while its former probe runs.
             # That former proof must never certify the replacement source.
             source_clause = " AND source_key=?" if source is not None else ""
-            args = [status, checked, expiry,
-                    expiry if status == "verified" else checked + (300 if status == "unknown" else 1800), identifier]
+            args = [status, checked, expiry, retry_at, scope, int(decoded), identifier]
             if source is not None:
                 args.append(hashlib.sha256(str(source).encode()).hexdigest())
-            db.execute("UPDATE items SET status=?,checked_at=?,verified_until=?,retry_at=? WHERE id=?" + source_clause, args)
+            db.execute("UPDATE items SET status=?,checked_at=?,verified_until=?,retry_at=?,check_scope=?,check_decoded=? "
+                       "WHERE id=?" + source_clause, args)
             self._changed(db, structural=membership_changed, withdrawn=old_member and not new_member)
 
     def is_verified(self, identifier: str) -> bool:
@@ -392,13 +430,19 @@ class MediaIndex:
             args.append(int(view["season"]) if view["season"].isdigit() else -1)
         if view["query"]:
             for word in _key(view["query"]).split()[:12]:
-                clauses.append("(i.sort_title LIKE ? ESCAPE '\\' OR i.parent_key LIKE ? ESCAPE '\\')")
+                search = ["i.sort_title", "i.parent_key"]
+                if mode == "MUSIC":
+                    search.extend(["gg_casefold(json_extract(i.payload,'$.artist'))",
+                                   "gg_casefold(json_extract(i.payload,'$.album'))"])
+                clauses.append("(" + " OR ".join(value + " LIKE ? ESCAPE '\\'" for value in search) + ")")
                 word = word.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-                args.extend(["%" + word + "%"] * 2)
+                args.extend(["%" + word + "%"] * len(search))
         now = time.time()
-        if verified and view["page"] != "games":
-            clauses.append("((i.type<>'series' AND " + self._catalogued_sql("i") + ") OR (i.type='series' AND EXISTS "
-                           "(SELECT 1 FROM items c WHERE c.parent_key=i.group_key AND " + self._catalogued_sql("c") + ")))")
+        if verified:
+            # Importing meaningful metadata makes it selectable. Only a
+            # definite failed check temporarily withdraws it. A timeout or
+            # inconclusive response does not establish that a source is dead.
+            clauses.append(self._listed_sql())
             args.extend([now, now])
         elif candidates:
             clauses.append("i.verified_until<=? AND i.retry_at<=?")
@@ -422,22 +466,54 @@ class MediaIndex:
         status = record["status"]
         catalog_until = cls._catalog_until(record["checked_at"], payload)
         fresh = status == "verified" and record["verified_until"] > now
+        decoded = bool(record["check_decoded"])
+        scope = record["check_scope"] or "previous_check"
         if status == "verified" and (catalog_until <= now or record["verified_until"] <= record["checked_at"]):
             status = "expired"
+        if status == "verified" and not decoded:
+            status = "available"
         row.update(availability=status, availability_checked_at=record["checked_at"],
                    availability_expires_at=record["verified_until"], availability_fresh=fresh,
-                   availability_catalog_until=catalog_until)
+                   availability_catalog_until=catalog_until, availability_decoded=decoded,
+                   availability_scope="metadata")
         if status == "verified":
             row["availability_scope"] = "decoded_sample" if fresh else "previously_decoded"
+        elif status == "available":
+            row["availability_scope"] = scope
         return row
 
+    def _series_summary(self, db, row, group, now):
+        children = db.execute("SELECT COUNT(DISTINCT c.group_key),MAX(c.checked_at),MAX(c.verified_until),"
+            "MAX(CASE WHEN c.status='verified' AND c.verified_until>c.checked_at THEN 1 ELSE 0 END),"
+            "MAX(CASE WHEN c.status='verified' AND c.verified_until>c.checked_at THEN c.check_decoded ELSE 0 END) "
+            "FROM items c WHERE c.parent_key=? AND " + self._metadata_sql("c"), (group, now)).fetchone()
+        row["episode_count"] = children[0]
+        if children[0] and (children[3] or row["availability"] not in ("verified", "available")):
+            row.update(availability="verified" if children[4] else "available" if children[3] else "unknown",
+                       availability_scope="checked_episodes" if children[4] else "available_episodes" if children[3]
+                           else "metadata_episodes", availability_decoded=bool(children[4]),
+                       availability_checked_at=children[1] or 0, availability_expires_at=children[2] or 0,
+                       availability_fresh=(children[2] or 0) > now,
+                       availability_catalog_until=self._catalog_until(children[1] or 0, row))
+        return row
+
+    @staticmethod
+    def _browse_order(view):
+        def alphabetic(field):
+            return "replace(replace(replace(" + field + ",'å','{a'),'ä','{b'),'ö','{c')"
+        title = alphabetic("sort_title")
+        if view.get("collection_key"):
+            return "season,episode," + title
+        if view["page"] == "music":
+            return alphabetic("gg_casefold(category)") + "," + title
+        return title
+
     def browse(self, view, *, cancel=None):
-        """Page previously checked sources; browsing never starts source work."""
+        """Page known metadata; browsing never starts source or decoder work."""
         if cancel is not None and cancel.is_set():
             raise ValueError("MEDIA_BROWSE_CANCELLED")
         where, args = self._where(view, verified=True)
-        alphabetic = "replace(replace(replace(sort_title,'å','{a'),'ä','{b'),'ö','{c')"
-        order = "season,episode," + alphabetic if view.get("collection_key") else alphabetic
+        order = self._browse_order(view)
         now = time.time()
         with self.connection() as db:
             if cancel is not None:
@@ -451,7 +527,7 @@ class MediaIndex:
                     return deepcopy(cached[1])
             structure_revision = db.execute("SELECT value FROM meta WHERE key='inventory_structure_revision'").fetchone()
             total = db.execute("SELECT COUNT(DISTINCT i.group_key) FROM items i WHERE " + where, args).fetchone()[0]
-            groups = db.execute("SELECT i.group_key,MIN(i.sort_title) AS sort_title,MIN(i.season) AS season,"
+            groups = db.execute("SELECT i.group_key,MIN(i.category) AS category,MIN(i.sort_title) AS sort_title,MIN(i.season) AS season,"
                                 "MIN(i.episode) AS episode FROM items i WHERE " + where +
                                 " GROUP BY i.group_key ORDER BY " + order + ",i.group_key LIMIT ? OFFSET ?",
                                 [*args, PAGE_SIZE, view["offset"]]).fetchall()
@@ -461,29 +537,24 @@ class MediaIndex:
             for group in groups:
                 if cancel is not None and cancel.is_set():
                     raise ValueError("MEDIA_BROWSE_CANCELLED")
-                record = db.execute("SELECT i.payload,i.status,i.checked_at,i.verified_until FROM items i WHERE "
+                record = db.execute("SELECT i.payload,i.status,i.checked_at,i.verified_until,i.check_scope,i.check_decoded FROM items i WHERE "
                                     + where + " AND i.group_key=? ORDER BY " + self._source_order() + " LIMIT 1",
                                     [*args, group["group_key"], now, now]).fetchone()
                 if record is not None:
                     row = self._summary(record, now)
                     if row.get("content_type") == "series":
-                        # A series is admitted by its checked episodes, not by
-                        # merely resolving a provider's collection webpage.
-                        children = db.execute("SELECT COUNT(DISTINCT c.group_key),MAX(c.checked_at),MAX(c.verified_until),MAX(" +
-                            self._catalog_until_sql("c") + ") FROM items c WHERE c.parent_key=? AND " + self._catalogued_sql("c"),
-                            [group["group_key"], now]).fetchone()
-                        row.update(availability="verified", availability_scope="checked_episodes",
-                                   episode_count=children[0], availability_checked_at=children[1] or 0,
-                                   availability_expires_at=children[2] or 0, availability_fresh=(children[2] or 0) > now,
-                                   availability_catalog_until=children[3] or 0)
+                        row = self._series_summary(db, row, group["group_key"], now)
                     rows.append(row)
             options = {}
             for field in ("category", "language", "season"):
                 option_view = dict(view, **{field: "all"}, offset=0)
                 option_where, option_args = self._where(option_view, verified=True)
+                option_limit = 2048 if field == "category" and view["page"] == "music" else 150
                 values = db.execute("SELECT DISTINCT i." + field + " FROM items i WHERE " + option_where +
-                                    " ORDER BY i." + field + " LIMIT 150", option_args).fetchall()
+                                    " ORDER BY gg_casefold(i." + field + ") LIMIT ?", [*option_args, option_limit]).fetchall()
                 label = {"category": "Alla kategorier", "language": "Alla språk", "season": "Alla säsonger"}[field]
+                if field == "category" and view["page"] == "music":
+                    label = "Alla artister"
                 options["library_" + {"category": "categories", "language": "languages", "season": "seasons"}[field]] = [
                     {"value": "all", "label": label}] + [{"value": str(row[0]), "label":
                      ("Utan säsongsnummer" if row[0] == 0 else "Säsong " + str(row[0])) if field == "season" else str(row[0])}
@@ -497,7 +568,7 @@ class MediaIndex:
                   "library_candidate_count": counts[0], "library_checked_count": counts[1] or 0,
                   "library_verified_count": counts[2] or 0}
         expiry = min([now + 30] + ([counts[3]] if counts[3] else []) + [row["availability_expires_at"] for row in rows
-                                  if row["availability"] == "verified" and row["availability_expires_at"] > now])
+                                  if row["availability"] in ("verified", "available") and row["availability_expires_at"] > now])
         with self._cache_lock:
             self._page_cache[cache_key] = (expiry, deepcopy(result))
             self._page_cache.move_to_end(cache_key)
@@ -508,14 +579,13 @@ class MediaIndex:
     def snapshot_groups(self, view, cancel=None):
         """Capture only ordered identities on a worker, never source metadata."""
         where, args = self._where(view, verified=True)
-        title = "replace(replace(replace(sort_title,'å','{a'),'ä','{b'),'ö','{c')"
-        order = "season,episode," + title if view.get("collection_key") else title
+        order = self._browse_order(view)
         with self.connection() as db:
             if cancel is not None:
                 db.set_progress_handler(lambda: int(cancel.is_set()), 1000)
             rows = []
             for row in db.execute(
-                "SELECT i.group_key,MIN(i.sort_title) AS sort_title,MIN(i.season) AS season,MIN(i.episode) AS episode "
+                "SELECT i.group_key,MIN(i.category) AS category,MIN(i.sort_title) AS sort_title,MIN(i.season) AS season,MIN(i.episode) AS episode "
                 "FROM items i WHERE " + where + " GROUP BY i.group_key ORDER BY " + order + ",i.group_key", args):
                 rows.append(row[0])
                 if len(rows) % 256 == 0:
@@ -525,7 +595,7 @@ class MediaIndex:
             return tuple(rows)
 
     def snapshot_page(self, view, groups, position, cancel=None):
-        """Read up to80 current healthy summaries from a stable identity list."""
+        """Read up to80 selectable summaries from a stable identity list."""
         where, args = self._where(view, verified=True)
         rows, positions = [], []
         now = time.time()
@@ -545,19 +615,14 @@ class MediaIndex:
                     position += 1
                     if group not in alive:
                         continue
-                    record = db.execute("SELECT i.payload,i.status,i.checked_at,i.verified_until FROM items i WHERE "
+                    record = db.execute("SELECT i.payload,i.status,i.checked_at,i.verified_until,i.check_scope,i.check_decoded FROM items i WHERE "
                         + where + " AND i.group_key=? ORDER BY " + self._source_order() + " LIMIT 1",
                         [*args, group, now, now]).fetchone()
                     if record is None:
                         continue
                     row = self._summary(record, now)
                     if row.get("content_type") == "series":
-                        children = db.execute("SELECT COUNT(DISTINCT c.group_key),MAX(c.checked_at),MAX(c.verified_until),MAX(" +
-                            self._catalog_until_sql("c") + ") FROM items c WHERE c.parent_key=? AND " + self._catalogued_sql("c"),
-                            [group, now]).fetchone()
-                        row.update(availability="verified", availability_scope="checked_episodes", episode_count=children[0],
-                            availability_checked_at=children[1] or 0, availability_expires_at=children[2] or 0,
-                            availability_fresh=(children[2] or 0) > now, availability_catalog_until=children[3] or 0)
+                        row = self._series_summary(db, row, group, now)
                     rows.append(row)
                     positions.append(position)
                     if len(rows) > PAGE_SIZE:

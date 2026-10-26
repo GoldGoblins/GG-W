@@ -1,8 +1,9 @@
 """Finite, resumable MEDIA source audit, independent of catalogue browsing.
 
-The audit checks decoded samples and source-metadata consistency. It does not
-claim to have watched complete programmes or identified live-channel branding
-from pixels. Only a decoded source whose metadata checks pass is admitted.
+The default audit checks file and HTTP media availability without decoding.
+It retains source-identity guards and resolves provider collection descriptors,
+but does not claim semantic programme identity or complete playback. Explicit
+diagnostics can inject the existing deeper metadata/decoder checks.
 The CLI prints counts only; source URLs and item IDs stay in the private index.
 """
 from __future__ import annotations
@@ -22,6 +23,7 @@ from urllib.parse import quote, urlsplit
 import uuid
 
 from backend import media_availability as availability, media_contract as contract, media_library as library
+from backend import media_quick_availability as quick_availability
 from backend.media_index import MediaIndex
 
 SCHEMA = "gg.media.health-audit.v1"
@@ -256,7 +258,7 @@ def prepare_identity(row):
 def _safe_report(report):
     """Retain audit evidence without copying signed/source URLs into reports."""
     result = {}
-    for key in ("schema", "status", "checked_at", "expires_at", "ttl_seconds", "elapsed_seconds", "downloaded_bytes",
+    for key in ("schema", "status", "scope", "checked_at", "expires_at", "ttl_seconds", "elapsed_seconds", "downloaded_bytes",
                 "max_seconds", "max_bytes", "requests"):
         value = report.get(key)
         if isinstance(value, (str, bool, int, float)) and (not isinstance(value, float) or math.isfinite(value)):
@@ -283,9 +285,16 @@ def _decoded(report, row):
             and (not evidence.get("audio_stream") or int(evidence.get("audio_frames") or 0) > 0))
 
 
+def _available(report, row):
+    return quick_availability.is_fresh_available(report) or _decoded(report, row)
+
+
 class MediaHealthAudit:
-    def __init__(self, index=None):
+    def __init__(self, index=None, *, verifier=None, identity=None, deep_checks=False):
         self.index = index or MediaIndex()
+        self._deep_checks = bool(deep_checks)
+        self._verifier = verifier or (availability.verify if deep_checks else quick_availability.quick_check)
+        self._identity = identity or (prepare_identity if deep_checks else quick_availability.prepare_quick_identity)
         self._provider_lock = threading.Lock()
         self._provider_slots = {}
         self._database_gate = threading.RLock()
@@ -662,7 +671,7 @@ class MediaHealthAudit:
                 self._member_result(run_id, key, row, "changed", _identity("unknown", "source", "source_changed"))
                 continue
             try:
-                prepared, identity = prepare_identity(row)
+                prepared, identity = self._identity(row)
                 if identity["status"] == "consistent" and self.index.identity_key(prepared) != self.index.identity_key(row):
                     with self._database_gate:
                         prepared = self.index.correct_metadata(prepared, expected=row)
@@ -748,12 +757,14 @@ class MediaHealthAudit:
                 return self._finish(run_id, key, "queued", {})
             checked_row = grouped[0][0]
             profile = ({"max_seconds": availability.MAX_CHECK_SECONDS, "max_bytes": availability.MAX_CHECK_BYTES}
-                       if checked_row.get("content_type") in ("movie", "episode") else {})
-            report = availability.verify(checked_row, cancel=cancelled, **profile)
+                       if self._deep_checks and checked_row.get("content_type") in ("movie", "episode")
+                       else {} if self._deep_checks else
+                       {"max_seconds": quick_availability.MAX_SECONDS, "max_bytes": quick_availability.MAX_BYTES})
+            report = self._verifier(checked_row, cancel=cancelled, **profile)
             if cancelled.is_set():
                 return self._finish(run_id, key, "queued", {})
-            if report.get("status") == "verified" and not _decoded(report, checked_row):
-                report = dict(status="unknown", checked_at=time.time(), error="decoded_proof_missing", evidence={"decoded": False})
+            if report.get("status") == "verified" and not _available(report, checked_row):
+                report = dict(status="unknown", checked_at=time.time(), error="availability_evidence_missing", evidence={"decoded": False})
             state = "healthy" if report.get("status") == "verified" else "failed" if report.get("status") == "failed" else "unknown"
             states = [self._member_result(run_id, key, row, state, evidence, report) for row, evidence in grouped]
             if all(member == "changed" for member in states):

@@ -590,6 +590,8 @@ def radio_browser_stations(
     query: str = "",
     country: str = "SE",
     limit: int = 80,
+    *,
+    refresh: bool = True,
 ) -> list[dict[str, Any]]:
     params: dict[str, str] = {
         "hidebroken": "true",
@@ -605,7 +607,7 @@ def radio_browser_stations(
     url = RADIO_API + "?" + urllib.parse.urlencode(params)
     cache_name = "radio-" + hashlib.sha256(url.encode("utf-8")).hexdigest()[:16] + ".json"
     try:
-        raw = _cached_bytes(cache_name, url)
+        raw = _cached_bytes(cache_name, url) if refresh else _cache_path(cache_name).read_bytes()
         payload = json.loads(raw.decode("utf-8"))
     except (
         OSError,
@@ -863,8 +865,64 @@ def _scan_files(kind: str, suffixes: frozenset[str]) -> list[dict[str, Any]]:
     return rows
 
 
-def music_catalog() -> list[dict[str, Any]]:
-    return _scan_files("MUSIC", AUDIO_EXT)
+def music_catalog(*, cancel=None) -> list[dict[str, Any]]:
+    """Index configured local music with tags; never decode every audio file.
+
+    The old generic media walk stopped after four folders and 16,000 entries.
+    Music keeps walking its configured roots, with cancellation and filesystem
+    boundaries rather than silently omitting a deep album or later artist.
+    """
+    from backend.media_audio_metadata import AudioMetadataCache, VERSION
+
+    roots = library_roots()
+    cache = AudioMetadataCache(ensure_state_dir() / "music-tags-v1.json")
+    rows, seen_files, seen_folders = [], set(), set()
+    stack = list(reversed(roots))
+    excluded = {"node_modules", "__pycache__", ".venv", "venv", "$recycle.bin", "system volume information"}
+    while stack:
+        if cancel is not None and cancel.is_set():
+            break
+        folder = stack.pop()
+        try:
+            folder_key = os.path.normcase(str(folder.resolve()))
+            if folder_key in seen_folders:
+                continue
+            seen_folders.add(folder_key)
+            with os.scandir(folder) as entries:
+                children = sorted(entries, key=lambda item: item.name.casefold())
+        except OSError:
+            continue
+        for entry in children:
+            if cancel is not None and cancel.is_set():
+                break
+            path = Path(entry.path)
+            try:
+                if entry.name.startswith(".") or entry.is_symlink():
+                    continue
+                if entry.is_dir(follow_symlinks=False):
+                    if (entry.name.casefold() not in excluded and not _denied_path(path)
+                            and not getattr(path, "is_junction", lambda: False)()):
+                        stack.append(path)
+                    continue
+                if path.suffix.casefold() not in AUDIO_EXT or not entry.is_file(follow_symlinks=False) or _denied_path(path):
+                    continue
+                resolved = confined(path, roots=roots)
+                source = str(resolved)
+                source_key = os.path.normcase(source)
+                if source_key in seen_files:
+                    continue
+                stat = entry.stat(follow_symlinks=False)
+                if stat.st_size <= 0:
+                    continue
+                seen_files.add(source_key)
+                metadata = cache.get(resolved, stat)
+            except (OSError, ValueError):
+                continue
+            rows.append(dict(id=item_id("MUSIC", source), kind="MUSIC", source=source,
+                media="file", system="", local=True, source_label="LOKAL", provider="Local",
+                category=metadata["artist"], audio_metadata_version=VERSION, **metadata))
+    cache.save(complete=not (cancel is not None and cancel.is_set()))
+    return sorted(rows, key=lambda row: (_title_sort_key(str(row["artist"])), _title_sort_key(str(row["title"])), row["id"]))
 
 
 def video_catalog() -> list[dict[str, Any]]:
@@ -886,7 +944,7 @@ def video_catalog() -> list[dict[str, Any]]:
     return sort_title_rows(rows)[:MAX_ITEMS]
 
 
-def radio_catalog() -> list[dict[str, Any]]:
+def radio_catalog(*, refresh: bool = True) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     seen: set[str] = set()
     for preset in RADIO_PRESETS:
@@ -914,7 +972,7 @@ def radio_catalog() -> list[dict[str, Any]]:
             rows.append(item)
             seen.add(item["source"])
     for country, cap in RADIO_BROWSER_COUNTRIES:
-        for item in radio_browser_stations(country=country, limit=cap):
+        for item in radio_browser_stations(country=country, limit=cap, refresh=refresh):
             if item["source"] in seen:
                 continue
             rows.append(item)

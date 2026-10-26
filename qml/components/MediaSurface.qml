@@ -32,6 +32,12 @@ Item {
     property real playerLastFrameAt: 0
     property real playerStableSince: 0
     property bool videoFullscreen: false
+    property bool fullscreenMasterAudioReady: false
+    property int fullscreenMasterVolume: 70
+    property int fullscreenVolumePreview: -1
+    readonly property int fullscreenVolume: root.fullscreenVolumePreview >= 0 ? root.fullscreenVolumePreview
+        : root.fullscreenMasterAudioReady ? root.fullscreenMasterVolume
+        : Math.max(0, Math.min(100, Number(root.status.volume === undefined ? 70 : root.status.volume)))
     property string libraryPage: "music"
     property string libraryLetter: "all"
     property string categoryFilter: "all"
@@ -60,6 +66,7 @@ Item {
     property string listContextKey: ""
     property var parentLibraryView: null
     property var pendingListRestore: null
+    readonly property bool restoringCatalogPosition: !!root.pendingListRestore && root.pendingListRestore.recheck === true
     property var catalogModel: initialCatalogModel
     property bool chunkBusy: false
     property string chunkError: ""
@@ -78,7 +85,8 @@ Item {
         root.categoryFilter, root.languageFilter, root.seasonFilter, root.localQuery, 0) + "|"
         + (root.catalogCollectionKey || root.collectionTitle)
     readonly property bool canLoadMore: root.continuousLibrary && root.displayedPageMatches
-        && root.catalogRowsReady && root.catalogModel.count > 0 && root.catalogModel.count < root.catalogTotal
+        && (root.catalogRowsReady || root.restoringCatalogPosition)
+        && root.catalogModel.count > 0 && root.catalogModel.count < root.catalogTotal
     readonly property bool hasLibraryFilters: root.libraryLetter !== "all" || root.categoryFilter !== "all"
         || root.languageFilter !== "all" || root.seasonFilter !== "all" || root.localQuery.trim().length > 0
     readonly property bool pagedLibrary: !!root.surfaceHost && !!root.surfaceHost.mediaLibraryBrowse
@@ -104,6 +112,21 @@ Item {
         || root.browsePending || browseTimer.running
     readonly property bool libraryIndexing: root.status.library_indexing === true
     readonly property var libraryAudit: root.status.library_audit || ({})
+    readonly property var libraryBackground: root.status.library_background || ({})
+    readonly property bool backgroundRunning: root.libraryBackground.running === true
+    readonly property bool backgroundPausing: root.libraryBackground.pausing === true
+    readonly property bool hasBackgroundControl: !!root.surfaceHost && !!root.surfaceHost.mediaLibraryBackground
+    readonly property string backgroundCounts: "Film +" + Number(root.libraryBackground.new_movies || 0)
+        + " · Serier +" + Number(root.libraryBackground.new_series || 0)
+        + " · Avsnitt +" + Number(root.libraryBackground.new_episodes || 0)
+    readonly property string backgroundSummary: root.backgroundPausing ? "Pausar · sparar framsteg…"
+        : root.backgroundRunning ? (String(root.libraryBackground.phase || "").indexOf("discovering_") === 0
+            ? "Söker · Fynd: " + Number(root.libraryBackground.discovered_movies || 0) + " filmer · "
+                + Number(root.libraryBackground.discovered_series || 0) + " serier"
+            : "Kontrollerar · " + root.backgroundCounts)
+        : root.libraryBackground.phase === "error" ? String(root.libraryBackground.notice || "Källkontrollen kunde inte starta.")
+        : Number(root.libraryBackground.new_movies || 0) + Number(root.libraryBackground.new_series || 0)
+            + Number(root.libraryBackground.new_episodes || 0) > 0 ? "Pausad · " + root.backgroundCounts : ""
     readonly property string auditProgressText: Number(root.libraryAudit.total || 0) > 0
         ? "Källkontroll " + Number(root.libraryAudit.done || 0) + "/" + Number(root.libraryAudit.total)
             + " · Bibliotek " + root.pageTotal
@@ -120,7 +143,8 @@ Item {
     readonly property var filteredItems: root.pagedLibrary
         ? (root.displayedPageMatches ? root.catalogItems : []) : root.filterItems()
     readonly property var categoryOptions: root.pagedLibrary
-        ? root.catalogCategories : root.filterOptions("category", "Alla kategorier")
+        ? root.catalogCategories : root.filterOptions(root.libraryPage === "music" ? "artist" : "category",
+            root.libraryPage === "music" ? "Alla artister" : "Alla kategorier")
     readonly property var languageOptions: root.pagedLibrary
         ? root.catalogLanguages : root.filterOptions("language", "Alla språk")
     readonly property var seasonOptions: root.pagedLibrary
@@ -230,6 +254,10 @@ Item {
         if (!root.canLoadMore || root.chunkBusy || root.chunkError || root.libraryBusy
             || !root.visible || catalogSyncTimer.running || root.catalogSyncing)
             return
+        if (root.restoringCatalogPosition) {
+            root.restoreCatalogPosition()
+            return
+        }
         // Keep one complete block in front of the viewport, with up to one
         // additional block for a fast flick. The next read starts long before
         // the last visible row instead of stopping at every80-row boundary.
@@ -265,6 +293,7 @@ Item {
 
     function retryChunk() {
         if (root.chunkNeedsRefresh) {
+            root.rememberCatalogPosition()
             root.cancelChunk()
             root.catalogRowsReady = false
             root.catalogItems = []
@@ -327,15 +356,87 @@ Item {
         root.catalogTotal = Math.max(root.catalogModel.count, Number(page.library_total || 0))
         root.catalogHasMore = root.catalogModel.count < root.catalogTotal
         root.chunkOffset = -1
+        if (root.restoringCatalogPosition)
+            root.restoreCatalogPosition()
         Qt.callLater(root.maybeLoadMore)
     }
 
-    function optionRows(rows, label) {
+    function rememberCatalogPosition() {
+        if (root.restoringCatalogPosition || root.pendingListRestore || !root.catalogModel.count)
+            return
+        var y = catalogList.contentY - catalogList.originY
+        if (y <= 1 && catalogList.currentIndex < 0)
+            return
+        var first = Math.max(0, Math.min(root.catalogModel.count - 1, Math.floor(y / 50)))
+        var anchors = []
+        for (var i = first; i < Math.min(first + 3, root.catalogModel.count); ++i) {
+            var row = root.catalogModel.get(i).entry
+            anchors.push({id: String(row.id || ""), title: root.rowTitle(row), offset: y - i * 50})
+        }
+        var selected = catalogList.currentIndex >= 0 && catalogList.currentIndex < root.catalogModel.count
+            ? root.catalogModel.get(catalogList.currentIndex).entry : ({})
+        root.pendingListRestore = {recheck: true, context: root.streamContext, firstIndex: first,
+            firstOffset: y - first * 50, anchors: anchors, selectedId: String(selected.id || ""),
+            selectedTitle: selected.id ? root.rowTitle(selected) : "",
+            target: Math.min(root.catalogModel.count,
+                Math.max(first + Math.ceil(catalogList.height / 50) + 1, catalogList.currentIndex + 1))}
+        root.catalogRowsReady = false
+    }
+
+    function restoreCatalogPosition() {
+        var saved = root.pendingListRestore
+        if (!saved || saved.recheck !== true)
+            return
+        if (saved.context !== root.streamContext) {
+            root.pendingListRestore = null
+            return
+        }
+        if (root.catalogModel.count < Math.min(saved.target, root.catalogTotal) && root.canLoadMore) {
+            if (!root.chunkBusy && !root.chunkError && !root.libraryBusy)
+                root.loadMore(false)
+            return
+        }
+        var selected = -1
+        var anchor = -1
+        var anchorOffset = saved.firstOffset
+        for (var a = 0; a < saved.anchors.length && anchor < 0; ++a) {
+            for (var i = 0; i < root.catalogModel.count; ++i) {
+                var row = root.catalogModel.get(i).entry
+                if (String(row.id) === saved.anchors[a].id) {
+                    anchor = i
+                    anchorOffset = saved.anchors[a].offset
+                    break
+                }
+            }
+        }
+        for (var j = 0; j < root.catalogModel.count; ++j) {
+            if (String(root.catalogModel.get(j).entry.id) === saved.selectedId) { selected = j; break }
+        }
+        // A different healthy source may represent the same displayed title.
+        for (var k = 0; k < root.catalogModel.count && (anchor < 0 || selected < 0); ++k) {
+            var title = root.rowTitle(root.catalogModel.get(k).entry)
+            if (anchor < 0 && saved.anchors.length && title === saved.anchors[0].title) anchor = k
+            if (selected < 0 && saved.selectedTitle && title === saved.selectedTitle) selected = k
+        }
+        if (anchor < 0) anchor = Math.min(saved.firstIndex, root.catalogModel.count - 1)
+        root.catalogSyncing = true
+        catalogList.currentIndex = selected
+        catalogList.forceLayout()
+        if (anchor >= 0)
+            catalogList.contentY = Math.max(catalogList.originY,
+                Math.min(catalogList.originY + Math.max(0, catalogList.contentHeight - catalogList.height),
+                    catalogList.originY + anchor * 50 + anchorOffset))
+        root.pendingListRestore = null
+        root.catalogRowsReady = true
+        root.catalogSyncing = false
+    }
+
+    function optionRows(rows, label, maximum) {
         var output = [{value: "all", label: label}]
         if (!rows || rows.length === undefined)
             return output
         // Option lists are also bounded; a corrupt provider cannot grow the menu indefinitely.
-        for (var i = 0; i < Math.min(256, rows.length); ++i) {
+        for (var i = 0; i < Math.min(Number(maximum || 256), rows.length); ++i) {
             var row = rows[i]
             var value = typeof row === "object" ? String(row.value) : String(row)
             if (value !== "all")
@@ -350,6 +451,8 @@ Item {
         var rows = root.filteredItems
         var context = root.desiredBrowseKey + "|" + (root.catalogCollectionKey || root.collectionTitle)
         var sameContext = context === root.listContextKey
+        if (root.restoringCatalogPosition && root.pendingListRestore.context !== root.streamContext)
+            root.pendingListRestore = null
         if (root.continuousLibrary) {
             if (!root.displayedPageMatches)
                 return
@@ -378,6 +481,12 @@ Item {
             if (root.catalogModel.count > root.catalogTotal)
                 root.catalogModel.remove(root.catalogTotal, root.catalogModel.count - root.catalogTotal)
             root.listContextKey = context
+            if (root.restoringCatalogPosition) {
+                catalogList.forceLayout()
+                root.catalogSyncing = false
+                root.restoreCatalogPosition()
+                return
+            }
             root.catalogRowsReady = true
             catalogList.forceLayout()
             var saved = root.pendingListRestore
@@ -644,6 +753,18 @@ Item {
 
     function itemDetail(row) {
         var type = root.contentType(row)
+        if (String(row.kind || "") === "MUSIC") {
+            var musicParts = [row.media === "file" || row.local === true ? "LOKAL" : "ONLINE",
+                String(row.artist || "Okänd artist")]
+            if (row.album) musicParts.push(String(row.album))
+            return musicParts.join(" · ")
+        }
+        if (String(row.kind || "") === "RADIO") {
+            var radioParts = ["RADIO"]
+            if (row.language) radioParts.push(root.rowValue(row, "language"))
+            if (row.country || row.provider) radioParts.push(String(row.country || row.provider))
+            return radioParts.join(" · ")
+        }
         var labels = {live: "LIVE", movie: "FILM", video: "VIDEO", series: "SERIE", collection: "SAMLING", music: "MUSIK"}
         var parts = []
         if (type === "episode") {
@@ -678,16 +799,20 @@ Item {
     }
 
     function availabilityDetail(row) {
+        if (row.media === "file" || row.local === true)
+            return "Lokal fil · spelas direkt från datorn."
         if (row.availability === "failed")
             return "Senast otillgänglig. Välj titeln för att försöka igen."
+        if (row.availability === "available")
+            return "Källan är tillgänglig enligt senaste snabbkontrollen."
         if (row.availability === "verified") {
             if (row.availability_scope === "checked_episodes")
-                return "Serien har provspelade avsnitt. Äldre kontroller förnyas när du trycker på play."
+                return "Avsnitt finns tillgängliga. Välj ett avsnitt för att spela."
             if (row.availability_fresh === false)
                 return "Tidigare provspelad. En ny källkontroll görs när du trycker på play."
             return "Provspelad vid senaste källkontrollen."
         }
-        return "Information och uppspelningskälla laddas när du väljer titeln."
+        return "Katalogpost · källan öppnas när du trycker Play."
     }
 
     function clearFilters() {
@@ -811,6 +936,16 @@ Item {
             root.refresh()
     }
 
+    function toggleBackgroundLibrary() {
+        if (!root.hasBackgroundControl || root.backgroundPausing)
+            return
+        try {
+            root.applyStatus(root.surfaceHost.mediaLibraryBackground(!root.backgroundRunning))
+        } catch (err) {
+            root.browseError = "Kunde inte ändra bakgrundsarbetet. Försök igen."
+        }
+    }
+
     onModeChanged: {
         if (root.changingLibraryMode || (root.pagedLibrary && (root.browsePending || browseTimer.running)))
             return
@@ -895,8 +1030,7 @@ Item {
                 && root.status.library_requires_reset !== true
                 && root.catalogBrowseKey === root.desiredBrowseKey
                 && root.catalogStructureRevision.length > 0 && structuralRevision !== root.catalogStructureRevision
-                && root.catalogModel.count > root.catalogPageSize
-                && catalogList.contentY - catalogList.originY >= root.catalogPageSize * 50) {
+                && catalogList.contentY - catalogList.originY > 1) {
                 // Keep a coherent visited snapshot while someone is reading
                 // farther down. New admissions appear on return to the first
                 // block; chunk revision checks still reject mixed offsets.
@@ -906,6 +1040,9 @@ Item {
             root.catalogUpdatePending = false
             if (root.continuousLibrary && (structuralRevision !== root.catalogStructureRevision
                     || root.status.library_requires_reset === true)) {
+                if (root.catalogBrowseKey === root.desiredBrowseKey
+                    && String(root.catalogCollectionKey || root.collectionTitle) === String(collectionKey || collection))
+                    root.rememberCatalogPosition()
                 root.cancelChunk()
                 // A membership change may occur entirely beyond the first
                 // block, for example when a visited source expires. Retain
@@ -932,14 +1069,14 @@ Item {
             root.catalogHasMore = root.status.library_has_more === true
             root.catalogCollection = String(root.status.library_collection || "")
             root.catalogCollectionKey = collectionKey
-            root.catalogCategories = root.optionRows(root.status.library_categories, "Alla kategorier")
+            root.catalogCategories = root.optionRows(root.status.library_categories,
+                root.libraryPage === "music" ? "Alla artister" : "Alla kategorier", root.libraryPage === "music" ? 2048 : 256)
             root.catalogLanguages = root.optionRows(root.status.library_languages, "Alla språk")
             root.catalogSeasons = root.optionRows(root.status.library_seasons, "Alla säsonger")
             // Data and collection identity commit together. A filter can keep
             // the same80 IDs/count; relying only on filteredItemsChanged would
             // otherwise leave reused parent delegates until a scroll repaints.
             catalogSyncTimer.stop()
-            root.syncCatalogModel()
             if (structuralRevision && root.surfaceHost && root.surfaceHost.mediaLibraryAcceptSnapshot
                 && (root.acceptedCatalogHost !== root.surfaceHost || root.acceptedCatalogSnapshot !== structuralRevision)) {
                 try {
@@ -951,6 +1088,9 @@ Item {
                     // without an acknowledgement lane.
                 }
             }
+            // Restoration may request its next block synchronously. Bind the
+            // accepted cursor before that request can capture the old session.
+            root.syncCatalogModel()
             return
         }
         if (rows !== undefined && rows !== null && rows.length !== undefined) {
@@ -1042,6 +1182,51 @@ Item {
 
     function toggleFullscreen() {
         root.videoFullscreen = !root.videoFullscreen
+    }
+
+    function refreshFullscreenVolume() {
+        if (!root.videoFullscreen)
+            return
+        root.fullscreenMasterAudioReady = false
+        if (!root.surfaceHost || !root.surfaceHost.appAudioStatus
+            || !root.surfaceHost.appPreviewAudioVolume || !root.surfaceHost.appSetAudioVolume)
+            return
+        try {
+            var audio = JSON.parse(root.surfaceHost.appAudioStatus())
+            root.fullscreenMasterAudioReady = audio.available === true
+            if (root.fullscreenMasterAudioReady && isFinite(Number(audio.volume)))
+                root.fullscreenMasterVolume = Math.max(0, Math.min(100, Number(audio.volume)))
+        } catch (err) {
+            root.fullscreenMasterAudioReady = false
+        }
+    }
+
+    function previewFullscreenVolume(value) {
+        root.fullscreenVolumePreview = Math.max(0, Math.min(100, Math.round(value)))
+        if (root.fullscreenMasterAudioReady && root.surfaceHost && root.surfaceHost.appPreviewAudioVolume) {
+            root.surfaceHost.appPreviewAudioVolume(root.fullscreenVolumePreview)
+        } else {
+            holeAudio.volume = root.fullscreenVolumePreview / 100
+        }
+    }
+
+    function commitFullscreenVolume(value) {
+        var volume = Math.max(0, Math.min(100, Math.round(value)))
+        if (root.surfaceHost) {
+            if (root.fullscreenMasterAudioReady && root.surfaceHost.appSetAudioVolume) {
+                var audio = JSON.parse(root.surfaceHost.appSetAudioVolume(volume))
+                root.fullscreenMasterVolume = audio.volume === undefined ? volume : Number(audio.volume)
+            } else if (root.surfaceHost.mediaSetVolume) {
+                root.applyStatus(root.surfaceHost.mediaSetVolume(volume))
+            }
+        }
+        root.fullscreenVolumePreview = -1
+    }
+
+    function seekFullscreenVideo(seconds) {
+        if (!root.videoFullscreen || !fullscreenControls.seekEnabled || !root.surfaceHost || !root.surfaceHost.mediaSeek)
+            return
+        root.applyStatus(root.surfaceHost.mediaSeek(Math.max(0, Math.min(holePlayer.duration / 1000, seconds))))
     }
 
     function reportPlayerState() {
@@ -1232,7 +1417,8 @@ Item {
             return
         }
         var url = root.toMediaUrl(String((root.status.now || {}).source || ""))
-        var volume = root.status.volume === undefined ? 70 : Number(root.status.volume)
+        var volume = !root.fullscreenMasterAudioReady && root.fullscreenVolumePreview >= 0
+            ? root.fullscreenVolumePreview : root.status.volume === undefined ? 70 : Number(root.status.volume)
         holeAudio.volume = Math.max(0, Math.min(1, volume / 100))
         var generation = Number(root.status.playback_generation || 0)
         if (url !== root.lastPlayUrl || generation !== root.playerGeneration) {
@@ -1286,11 +1472,21 @@ Item {
 
     onVideoFullscreenChanged: {
         if (root.videoFullscreen && root.qmlVideo) {
+            root.refreshFullscreenVolume()
             fullscreenWindow.showFullScreen()
             fullscreenWindow.requestActivate()
         } else {
+            if (root.fullscreenVolumePreview >= 0)
+                root.commitFullscreenVolume(root.fullscreenVolumePreview)
             fullscreenWindow.hide()
         }
+    }
+
+    Timer {
+        interval: 250
+        running: root.videoFullscreen && (fullscreenControls.revealed || root.fullscreenVolumePreview >= 0)
+        repeat: true
+        onTriggered: root.refreshFullscreenVolume()
     }
 
     onStatusJsonChanged: {
@@ -1538,10 +1734,14 @@ Item {
             width: parent.width
             spacing: 6
 
-            Flickable {
-                id: navigationStrip
+            Item {
                 width: parent.width
                 height: 28
+            Flickable {
+                id: navigationStrip
+                anchors.left: parent.left
+                width: Math.max(40, parent.width - (backgroundControls.visible ? backgroundControls.width + 6 : 0))
+                height: parent.height
                 clip: true
                 contentWidth: navigationButtons.width
                 contentHeight: height
@@ -1566,6 +1766,42 @@ Item {
                     }
                 }
                 ScrollBar.horizontal: GgScrollBar {}
+            }
+            Row {
+                id: backgroundControls
+                anchors.right: parent.right
+                height: parent.height
+                spacing: 7
+                visible: root.hasBackgroundControl
+                Text {
+                    objectName: "mediaBackgroundCounts"
+                    visible: mediaFrame.width > navigationButtons.width + backgroundToggle.width + implicitWidth + 28
+                    height: parent.height
+                    verticalAlignment: Text.AlignVCenter
+                    text: root.backgroundCounts
+                    textFormat: Text.PlainText
+                    color: root.muted
+                    font.family: "monospace"
+                    font.pixelSize: 10
+                }
+                MediaAction {
+                    id: backgroundToggle
+                    objectName: "mediaBackgroundToggle"
+                    height: 28
+                    checked: root.backgroundRunning
+                    enabled: !root.backgroundPausing
+                    text: root.backgroundPausing ? "PAUSAR…" : root.backgroundRunning ? "UTÖKA · PÅ" : "UTÖKA · AV"
+                    tip: (root.backgroundRunning
+                        ? "Pausa sökning och källkontroll. Framstegen sparas."
+                        : "Sök fler filmer och serier och kontrollera att de går att spela. Högst fem minuter per start.")
+                        + "\nSnabbkontrollerade: " + root.backgroundCounts
+                        + "\nHittade kandidater: " + Number(root.libraryBackground.discovered_movies || 0)
+                        + " filmer · " + Number(root.libraryBackground.discovered_series || 0) + " serier"
+                        + (root.libraryBackground.notice ? "\n" + String(root.libraryBackground.notice) : "")
+                    Accessible.name: "Utöka mediebiblioteket " + (root.backgroundRunning ? "på" : "av")
+                    onClicked: root.toggleBackgroundLibrary()
+                }
+            }
             }
 
             Row {
@@ -1932,11 +2168,19 @@ Item {
                                 : root.mode === "FETCH" ? "Dina färdiga hämtningar visas här."
                                 : root.mode === "GAME" ? "Inga spel ännu. Sök homebrew eller lägg till egna ROM-filer."
                                 : root.mode === "MUSIC" ? "Lägg till musik i ditt lokala bibliotek."
+                                : root.hasBackgroundControl ? "Inga kontrollerade titlar ännu. Slå på UTÖKA för att fylla biblioteket."
                                 : "Inga kontrollerade titlar i den här vyn ännu."
                             textFormat: Text.PlainText
                             color: root.muted
                             horizontalAlignment: Text.AlignHCenter
                             wrapMode: Text.WordWrap
+                            font.pixelSize: 11
+                        }
+                        Text {
+                            visible: root.restoringCatalogPosition && !root.chunkError && catalogList.count > 0
+                            anchors.centerIn: parent
+                            text: "Uppdaterar listan…"
+                            color: root.muted
                             font.pixelSize: 11
                         }
                     }
@@ -1956,6 +2200,7 @@ Item {
                                 : root.chunkBusy ? "Laddar fler titlar…"
                                 : root.libraryBusy ? "Laddar katalog…"
                                 : root.libraryIndexing ? "Uppdaterar katalog…"
+                                : root.backgroundSummary ? root.backgroundSummary
                                 : root.catalogUpdatePending ? "Nya titlar · visas överst i listan"
                                 : root.auditProgressText ? root.auditProgressText
                                 : root.collectionTitle ? "Välj avsnitt · Enter spelar"
@@ -2171,6 +2416,13 @@ Item {
                         visible: false
                         onClosing: root.videoFullscreen = false
 
+                        Shortcut {
+                            sequence: "Escape"
+                            context: Qt.WindowShortcut
+                            enabled: fullscreenWindow.visible
+                            onActivated: root.videoFullscreen = false
+                        }
+
                         VideoOutput {
                             id: fullscreenVideo
                             objectName: "mediaFullscreenVideo"
@@ -2178,8 +2430,29 @@ Item {
                             fillMode: VideoOutput.PreserveAspectFit
                         }
 
+                        MediaFullscreenControls {
+                            id: fullscreenControls
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            anchors.margins: 12
+                            active: root.videoFullscreen && root.qmlVideo
+                            positionSeconds: Number(holePlayer.position || 0) / 1000
+                            durationSeconds: Number(holePlayer.duration || 0) / 1000
+                            seekEnabled: root.qmlVideo && !!root.surfaceHost && !!root.surfaceHost.mediaSeek
+                                && holePlayer.seekable === true && holePlayer.duration > 500
+                            liveStream: root.liveVideo
+                            volumeValue: root.fullscreenVolume
+                            playbackKey: JSON.stringify([String(root.now.id || ""), root.lastPlayUrl, root.playerGeneration])
+                            onSeekRequested: function(seconds) { root.seekFullscreenVideo(seconds) }
+                            onVolumePreviewed: function(value) { root.previewFullscreenVolume(value) }
+                            onVolumeCommitted: function(value) { root.commitFullscreenVolume(value) }
+                            onRevealedChanged: if (revealed) root.refreshFullscreenVolume()
+                        }
+
                         Rectangle {
                             id: fullscreenExitButton
+                            objectName: "mediaFullscreenExitButton"
                             anchors.right: parent.right
                             anchors.top: parent.top
                             anchors.margins: 18

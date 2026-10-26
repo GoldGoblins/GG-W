@@ -128,6 +128,14 @@ an interruption. Short buffer dips recover without restarting; frozen video
 uses decoded-frame monitoring and bounded retries. Local HLS fault tests cover
 server outages, quality fallback, fullscreen, pause and stop.
 
+Fullscreen video has a compact timeline and volume row at the bottom. Its
+34-pixel hover rectangle provides 10 pixels above and below the handles and
+fades away outside that rectangle; dragging keeps the controls visible. Seeking
+previews during dragging and commits once on release, including while paused.
+Volume shares the Utilities application gain, with the existing media-volume
+fallback when unavailable. Live sources without a seekable window retain
+volume controls. Escape and the existing top-right button exit fullscreen.
+
 TMOG's 60 Hz UI reads prepared telemetry instead of querying Windows from
 the render loop. Meter sampling and page inventories use separate bounded
 local workers on Windows, so even system calls that hold Python's GIL cannot
@@ -272,6 +280,50 @@ zoom and navigation use no model calls. A raster is not a physical simulation;
 alternate object angles require additional authored images.
 
 Restart the desktop after installing the backend update.
+
+## Patch notes · 2026-10-26 · MEDIA playback, radio and local music
+
+This follow-up patch keeps MEDIA responsive while restoring immediate access
+to radio and local music. It updates the source-check policy from the earlier
+MEDIA patch: browsing no longer requires a decoded playback sample.
+
+- Channel clicks retain the selected row and scroll position. Background
+  additions wait while a scrolled list is being browsed; withdrawing a broken
+  source preserves the nearest surviving row and accepts the new cursor before
+  loading the next block.
+- **UTÖKA · AV/PÅ**, above Search, starts or pauses catalogue discovery and
+  source checks. Progress separates discovered candidates from newly checked
+  films, series and episodes. Each start is limited to five minutes, two check
+  workers and 240 check jobs; another start resumes the saved queue. Opening
+  MEDIA starts no bulk work. Closing the app cancels work owned by the app.
+- Fullscreen video has a compact, hover-revealed timeline and shared volume
+  control. The fixed control rectangle adds a 10-pixel buffer around its
+  handles, remains visible during dragging and supports paused seeking and
+  seeking to zero. Live streams retain volume control; seeking requires a
+  seekable source. Escape and the existing fullscreen button both exit.
+- RADIO shows presets and last-good station metadata immediately, without
+  fetching every station when the tab opens. MUSIC scans the configured local
+  library roots without the former depth/count truncation, caches artist,
+  title and album tags, and clearly marks local tracks. Artist selection,
+  alphabetical title filtering and search work together; separate files with
+  the same title remain separate tracks. Online entries remain distinct.
+- Fast file and bounded HTTP/HLS checks replace mandatory pre-play decoding
+  across MEDIA. Definite broken responses are temporarily withdrawn until
+  retry; inconclusive responses keep the entry visible and let the actual
+  player try. Availability labels distinguish metadata, quick reachability
+  and decoded playback. FFmpeg/ffprobe remain optional for deep diagnostics.
+
+Verification covers 1,500-track artist browsing, 50,000 catalogue rows,
+selection/scroll stability, the background switch, quick source checks and
+real Qt fullscreen seek/volume. Results are recorded in `WINDOWS-PORT.json`.
+Quick reachability does not guarantee codec compatibility or permanent source
+availability. The video area, Utilities, EQ and reactive audio sources remain
+unchanged. Private libraries, sessions, credentials and audit state are not
+distributed.
+
+Update with `git pull` in GG-W, then close and restart the entire desktop.
+RELOAD alone does not replace the Python backend. Local music and saved radio
+metadata are browseable immediately; use UTÖKA when you want background work.
 
 ## Patch notes · 2026-10-26 · MEDIA library, smooth browsing and KNOWLEDGE
 
@@ -1413,8 +1465,9 @@ audio display are unchanged.
 contains a curated Internet Archive video snapshot, including Swedish Media
 Dubb TMHT episodes, with original source pages and file metadata. Archive
 discovery uses the [public metadata API](https://archive.org/developers/md-read.html).
-The refresh button and submitted TV searches run bounded source work in the
-background. Source availability can change; a listing or metadata response
+UTÖKA runs bounded discovery and source checks in the background on explicit
+start; submitted TV searches can fetch matching metadata independently. The
+refresh button republishes the saved list. Source availability can change; a listing or metadata response
 does not guarantee that every stream is playable in every region. Finished
 downloads play in the same viewer; entering Hämtat no longer launches a
 terminal. Torlink remains an optional explicit tool when installed.
@@ -1427,13 +1480,12 @@ worker queries; typing is debounced and late pages cannot replace newer views.
 The loading checks exercise actual 50,000-row ingestion and paging while Qt
 heartbeats continue. Utilities, EQ and spectrum rendering are preserved.
 
-The saved playable library appears immediately. Only sources with a real
-positive decoded playback proof are listed and counted; a series requires
-checked episodes rather than a successfully loaded collection webpage.
-Catalogue retention is separate from playback-check freshness: last-success
-evidence remains visible for 7 days for live channels and 30 days for VOD.
-The tooltip identifies older checks, and selecting them requires a fresh check.
-Unknown, mismatched, failed and out-of-retention candidates stay private.
+The saved catalogue appears immediately. Imported titles, station metadata and
+local files are selectable without a mandatory playback probe. Local audio is
+labelled LOCAL and grouped by artist; its tag cache follows file size and
+modification time. A source's quick availability and any optional decoded
+diagnostic remain distinct. Definitive failures are hidden until retry, while
+an inconclusive response does not establish that a source is broken.
 List blocks contain only titles, categories and identifiers. Opening
 Kanaler, Filmer or Serier, switching pages and filtering start no HTTP,
 metadata expansion, bulk import, player probing or playback validation.
@@ -1468,27 +1520,27 @@ with the actual video decoder using a local video fixture; EQ and the reactive
 audio display retain their existing rendering. Transport controls still reach
 the video decoder when MEDIA is hidden behind another workspace tab, and the
 final decoder position is reported when a film ends. The library total counts
-checked titles, independently of the size of the candidate source inventory.
+catalogue titles; source-check progress and confirmed availability are separate.
 
 `config/media-library-sv.json` adds source metadata for Swedish classics,
 including c/o Segemyhr, Rena rama Rolf, Tre Kronor, Skärgårdsdoktorn, Pistvakt,
-Sunes jul and Swedish feature films. These are candidates until checked.
+Sunes jul and Swedish feature films. These are catalogue entries with source metadata.
 Bundled snapshots are fingerprinted and imported once when their content changes.
 The separate nostalgia bundles add actual provider-file metadata spanning
 Swedish and US media from 1980–2009: 37 films, 33 series groups and 1,615 episode
 or programme-part files. Examples include Strul, Drömkåken, Fanny och Alexander,
 Tusenbröder, Trazan och Banarne, Wallander, Married… with Children, Animaniacs,
 Darkwing Duck, Powerpuff Girls, Ghostbusters and Back to the Future. Their
-source metadata is validated; only decoded, checked sources become visible.
+source metadata is retained; no prior decoded sample is required for browsing.
 Encoding ancestry stops at a real video file: a shared torrent/ZIP origin can
 no longer collapse hundreds of separate episodes into one encoding choice.
 Legacy expansion caches are refreshed once under this corrected rule.
 
-A selected live source is checked on a worker with a 4 MiB byte budget
-and a 12-second network/decoder deadline target. VOD audits and selected Archive
-films/episodes allow up to 8 MiB and 30 seconds, since genuine large MP4 files
-can require more initial metadata/frames. An OS DNS stall can outlast the socket
-timeout. Local files are decoded without HTTP. Live checks expire
+A selected source uses a worker with a 64 KiB byte budget and a four-second
+quick-check deadline. Local files need file/readability information; HTTP checks
+use media response information and HLS playlist/segment availability, without
+starting FFmpeg or ffprobe. An OS DNS stall can outlast the socket timeout.
+Inconclusive fast results still allow the actual player to try. Live checks expire
 after 15 minutes; VOD checks after 24 hours. These deadlines trigger a new
 playback check instead of silently removing a previously working title from
 the catalogue. Failed selections leave previous
@@ -1512,13 +1564,13 @@ ranges were actually checked.
 
 An absent provider language or season/episode field no longer establishes a
 broken video. Unsupported labels are normalized to unknown, with the exact
-provider file label retained, before a new identity-bound decoded check.
-Conflicting programme/file evidence remains rejected. TV discovery recognizes
+provider file label retained. Structural source/file conflicts remain rejected.
+TV discovery recognizes
 all numbered seasons, full/entire series and named archival VHS/WOC episodes;
 bare episode filenames, advertising compilations and gameplay do not become
 fictitious series.
 
-Explicit channel refresh imports the official [IPTV.org API](https://github.com/iptv-org/api)
+The standalone channel importer uses the official [IPTV.org API](https://github.com/iptv-org/api)
 in batches of 200, retaining channel/feed grouping and public request hints.
 Opening or scrolling a catalogue never triggers that import. The standalone
 `python -B -m backend.media_sources import` performs the same finite metadata
@@ -1533,16 +1585,16 @@ deduplication, checkpoints, worker leases, cancellation and bounded runs
 Archive and 2 for any other provider at once). Separate content lanes reserve
 capacity for channels, films and series. Series groups receive a first sample
 before the queue exhausts all episodes of one show. Short SQLite writes are
-serialized separately from concurrent network/decoder work. Transient source
+serialized separately from concurrent availability work. Transient source
 or metadata failures get one later retry; an isolated worker error cannot stop
 the rest of the catalogue. `repair` reconciles changed snapshot identities and
 older transient failures within the same two-attempt limit; each
-corrected identity still needs its own metadata check and decoded proof.
+corrected identity receives its own structural source and quick availability check.
 Old VOD failures under the former 4 MiB/12-second limits receive one explicit
 recheck under the new bounded profile; saved limits prevent repeated migration.
 `include` explicitly adds the current locally imported candidates to that
 finite run; ordinary resume and browsing never expand its snapshot. Different
-effective public request headers require independent decoded samples even when
+effective public request headers require independent availability checks even when
 their URL matches. Known corrected failures receive priority within each lane.
 `run --lanes movies,series` concentrates the finite audit on films and episodes
 while keeping remaining channel work checkpointed. Footer progress then counts
@@ -1550,20 +1602,19 @@ only those active lanes. Nostalgia sources can be prioritized without treating
 unverified metadata as an available programme.
 Same-source provider expansion preserves the saved canonical labels and proofs.
 New admissions update the local first block without starting source work;
-deep continuous scrolling retains its current list until returning to the top.
-Archive descriptors expand into finite child
-sources within that run. It checks provider title/language/file/numbering
-correspondence before requiring actual decoded frames; HTTP 200 alone never
-admits a source. Unconfirmed evidence remains hidden. The footer separates
-`Källkontroll X/Y` source-work counts from `Bibliotek Z` checked-title counts.
-The proof covers source metadata and a decoded sample, not whole-programme
-semantic viewing or permanent future availability. It records this scope
-explicitly rather than presenting a large metadata inventory as playable.
+a scrolled continuous list retains its current snapshot until returning to the top.
+Archive descriptors expand into finite child sources within that run. Ordinary
+checks use file/HTTP media availability without decoding; success does not claim
+whole-programme semantics, codec compatibility or permanent availability. The
+footer separates `Källkontroll X/Y` source-work counts from `Bibliotek Z`
+catalogue-title counts. Quick results and optional deeper decoder evidence have
+distinct scopes. Extended metadata/decoder diagnostics remain available through
+`MediaHealthAudit(..., deep_checks=True)` and never gate ordinary browsing.
 
-Candidate discovery has no fixed film/series total. Each bounded refresh
+Candidate discovery has no fixed film/series total. Each explicitly started pass
 resumes its checkpoint until the provider is exhausted. Duplicate encodings
-and episodes do not count as additional series. Discovering metadata never
-increases the playable library count until source checks succeed.
+and episodes do not count as additional series. New metadata becomes browseable;
+confirmed-availability progress remains a separate count.
 
 **New local state is explicit.** Codex session discovery/resume and the GPT
 memory bridge live in dedicated backend modules; no model weights or login

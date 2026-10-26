@@ -1,4 +1,4 @@
-"""Saved checked MEDIA sources are paged without retrieval during browsing."""
+"""Known MEDIA metadata is paged without retrieval during browsing."""
 from __future__ import annotations
 
 import json
@@ -13,6 +13,7 @@ PROJECT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT))
 from backend.media_index import (MediaIndex, view_request, LIVE_CATALOG_RETENTION_SECONDS,
                                  VOD_CATALOG_RETENTION_SECONDS)
+from backend.media_browse_session import BrowseSession, SnapshotInvalid
 
 
 def item(identifier, title, content_type="movie", **values):
@@ -32,7 +33,184 @@ class SavedCatalogueIndexTests(unittest.TestCase):
     def healthy(self, rows):
         self.index.ingest(rows)
         for row in rows:
-            self.index.record(row["id"], dict(status="verified", checked_at=time.time(), expires_at=time.time() + 100))
+            self.index.record(row["id"], dict(status="verified", checked_at=time.time(), expires_at=time.time() + 100,
+                                               evidence={"video_frames": 3, "audio_frames": 2}))
+
+    def test_radio_and_local_music_metadata_are_browsable_without_fabricated_proofs(self):
+        rows = [dict(id="station", kind="RADIO", title="Alpha radio", media="stream",
+                     source="https://example.invalid/radio.mp3"),
+                dict(id="track", kind="MUSIC", title="Alpha song", media="file",
+                     source="C:/Music/Alpha song.flac", artist="Example artist", album="Example album"),
+                item("unchecked-video", "Unchecked video"),
+                dict(item("unchecked-download", "Unchecked download"), kind="FETCH")]
+        self.index.ingest(rows)
+        for page, identifier in (("radio", "station"), ("music", "track")):
+            with self.subTest(page=page):
+                result = self.index.browse(view_request(page))
+                self.assertEqual(result["library_total"], 1)
+                self.assertEqual(result["items"][0]["id"], identifier)
+                self.assertEqual(result["items"][0]["availability"], "unknown")
+                self.assertFalse(result["items"][0]["availability_fresh"])
+                self.assertEqual(result["items"][0]["availability_scope"], "metadata")
+                self.assertFalse(result["items"][0]["availability_decoded"])
+                self.assertNotIn("source", result["items"][0])
+                self.assertFalse(self.index.is_verified(identifier))
+                self.assertEqual(result["library_verified_count"], 0)
+        music = self.index.browse(view_request("music"))["items"][0]
+        self.assertEqual((music["artist"], music["album"], music["provider"]),
+                         ("Example artist", "Example album", "Local"))
+        self.assertEqual({row["id"] for row in self.index.browse(view_request("movies"))["items"]},
+                         {"unchecked-video", "unchecked-download"})
+        self.assertEqual(self.index.browse(view_request("downloads"))["items"][0]["id"], "unchecked-download")
+
+    def test_all_local_tracks_keep_distinct_files_and_alphabetical_snapshot_paging(self):
+        rows = [dict(id=f"track-{n:04}", kind="MUSIC", title=f"Song {n // 2:04}", media="file",
+                     source=f"C:/Music/Artist {n % 2}/track-{n:04}.flac", artist=f"Artist {n % 2}",
+                     category=f"Artist {n % 2}")
+                for n in reversed(range(1500))]
+        self.index.ingest(rows)
+        session = BrowseSession(self.index, view_request("music"))
+        self.assertEqual(len(session.groups), 1500)
+        identifiers, titles, offset = [], [], 0
+        while True:
+            result = session.page(offset)
+            identifiers.extend(row["id"] for row in result["items"])
+            titles.extend((row["artist"], row["title"]) for row in result["items"])
+            self.assertLessEqual(len(result["items"]), 80)
+            self.assertTrue(all(row["availability"] == "unknown" for row in result["items"]))
+            if not result["library_has_more"]:
+                break
+            offset += len(result["items"])
+        self.assertEqual(len(identifiers), 1500)
+        self.assertEqual(len(set(identifiers)), 1500)
+        self.assertEqual(titles, sorted(titles))
+        self.assertEqual(result["library_total"], 1500)
+
+    def test_failed_audio_is_withdrawn_until_retry_and_invalidates_existing_snapshot(self):
+        now = time.time()
+        for page, kind, source, media in (("radio", "RADIO", "https://example.invalid/radio.mp3", "stream"),
+                                          ("music", "MUSIC", "file:///C:/Music/song.flac", "file")):
+            with self.subTest(page=page):
+                identifier = "failed-" + page
+                self.index.ingest([dict(id=identifier, kind=kind, title="Example " + page,
+                                        source=source, media=media)])
+                session = BrowseSession(self.index, view_request(page))
+                self.assertEqual(session.page(0)["items"][0]["id"], identifier)
+                self.index.record(identifier, dict(status="failed", checked_at=now))
+                with self.assertRaises(SnapshotInvalid):
+                    session.page(0)
+                self.assertEqual(self.index.browse(view_request(page))["items"], [])
+                with patch("backend.media_index.time.time", return_value=now + 1801):
+                    retry = self.index.browse(view_request(page))
+                self.assertEqual(retry["items"][0]["id"], identifier)
+                self.assertEqual(retry["items"][0]["availability"], "failed")
+                self.assertFalse(self.index.is_verified(identifier))
+
+    def test_quick_remote_music_check_is_available_without_claiming_a_decode(self):
+        row = dict(id="remote-music", kind="MUSIC", title="Remote song", media="stream",
+                   source="https://example.invalid/song.mp3")
+        self.index.ingest([row])
+        self.assertEqual(self.index.browse(view_request("music"))["items"][0]["availability"], "unknown")
+        self.index.record(row["id"], dict(status="verified", scope="http_media", checked_at=time.time(),
+                                         expires_at=time.time() + 100, evidence={"decoded": False, "reachable": True}))
+        checked = self.index.browse(view_request("music"))["items"][0]
+        self.assertEqual((checked["availability"], checked["availability_scope"]), ("available", "http_media"))
+        self.assertFalse(checked["availability_decoded"])
+
+    def test_quick_and_decoded_scopes_survive_reopen_and_snapshot_reads(self):
+        rows = [item("quick", "A quick check"), item("deep", "B decoded check"), item("legacy", "C old check")]
+        self.index.ingest(rows)
+        now = time.time()
+        self.index.record("quick", dict(status="verified", scope="hls_media", checked_at=now,
+            expires_at=now + 60, evidence={"decoded": False, "reachable": True}))
+        self.index.record("deep", dict(status="verified", checked_at=now, expires_at=now + 60,
+            evidence={"video_frames": 3, "audio_frames": 2}))
+        self.index.record("legacy", dict(status="verified", checked_at=now, expires_at=now + 60))
+        reopened = MediaIndex(self.index.path)
+        reopened.initialize()
+        result = BrowseSession(reopened, view_request("movies")).page(0)
+        summaries = {row["id"]: row for row in result["items"]}
+        self.assertEqual((summaries["quick"]["availability"], summaries["quick"]["availability_scope"],
+                          summaries["quick"]["availability_decoded"]), ("available", "hls_media", False))
+        self.assertEqual((summaries["deep"]["availability"], summaries["deep"]["availability_scope"],
+                          summaries["deep"]["availability_decoded"]), ("verified", "decoded_sample", True))
+        self.assertEqual((summaries["legacy"]["availability"], summaries["legacy"]["availability_scope"],
+                          summaries["legacy"]["availability_decoded"]), ("available", "previous_check", False))
+
+    def test_old_index_migrates_without_inventing_decoded_evidence(self):
+        self.index.ingest([item("legacy", "Existing positive")])
+        now = time.time()
+        self.index.record("legacy", dict(status="verified", checked_at=now, expires_at=now + 60))
+        with self.index.connection() as db:
+            db.execute("ALTER TABLE items DROP COLUMN check_scope")
+            db.execute("ALTER TABLE items DROP COLUMN check_decoded")
+        reopened = MediaIndex(self.index.path)
+        reopened.initialize()
+        summary = reopened.browse(view_request("movies"))["items"][0]
+        self.assertEqual(summary["availability"], "available")
+        self.assertEqual(summary["availability_scope"], "previous_check")
+        self.assertFalse(summary["availability_decoded"])
+
+    def test_empty_sources_and_orphan_generated_series_do_not_create_titles(self):
+        empty = dict(item("empty", "Empty source"), source="")
+        orphan = dict(item("orphan", "Orphan series", "series"), source="", media="collection")
+        child = item("candidate", "Known series S01E01", "episode", series_title="Known series", season=1, episode=1)
+        self.index.ingest([empty, orphan, child])
+        self.assertEqual(self.index.browse(view_request("movies"))["items"], [])
+        series = self.index.browse(view_request("series"))["items"]
+        self.assertEqual(len(series), 1)
+        self.assertEqual(series[0]["title"], "Known series")
+        self.assertEqual((series[0]["episode_count"], series[0]["availability_scope"]), (1, "metadata_episodes"))
+
+    def test_fresh_local_scan_reconsiders_old_failure_without_fabricating_a_positive(self):
+        path = self.index.path.parent / "song.mp3"
+        path.write_bytes(b"ID3-local-fixture")
+        row = dict(item("local-rescan", "Song"), kind="MUSIC", content_type="music",
+                   media="file", source=str(path), local=True, artist="Artist")
+        self.index.ingest([row])
+        self.index.record(row["id"], dict(status="failed", scope="local_file", checked_at=time.time()))
+        self.assertEqual(self.index.browse(view_request("music"))["items"], [])
+        self.index.ingest([dict(row, audio_metadata_version=1)])
+        current = self.index.browse(view_request("music"))["items"][0]
+        self.assertEqual(current["availability"], "unknown")
+        self.assertFalse(self.index.is_verified(row["id"]))
+
+    def test_inconclusive_check_keeps_metadata_visible_without_inventing_a_positive(self):
+        now = time.time()
+        row = item("candidate", "Candidate")
+        self.index.ingest([row])
+        session = BrowseSession(self.index, view_request("movies"))
+        self.index.record(row["id"], dict(status="unknown", checked_at=now))
+        self.assertEqual(session.page(0)["items"][0]["id"], row["id"])
+        current = self.index.browse(view_request("movies"))["items"][0]
+        self.assertEqual(current["availability"], "unknown")
+        self.assertFalse(self.index.is_verified(row["id"]))
+        self.index.ingest([dict(row, source="https://example.invalid/replacement.mp4")])
+        summary = self.index.browse(view_request("movies"))["items"][0]
+        self.assertEqual(summary["availability_checked_at"], 0)
+        self.assertEqual(summary["availability_scope"], "metadata")
+
+    def test_artist_options_search_and_order_keep_title_letter_filter(self):
+        rows = [dict(id=f"artist-{n:03}", kind="MUSIC", title=f"Track {n:03}", category=f"Artist {n:03}",
+                     artist=f"Artist {n:03}", album="Collection", media="file", source=f"C:/Music/{n}.flac")
+                for n in range(170)]
+        rows.extend([dict(id="zulu", kind="MUSIC", title="Alpha song", category="Zulu", artist="Zulu",
+                          album="Återbesök", media="file", source="C:/Music/zulu.flac"),
+                     dict(id="alpha", kind="MUSIC", title="Zulu song", category="Alpha", artist="Alpha",
+                          album="Example", media="file", source="C:/Music/alpha.flac")])
+        self.index.ingest(rows)
+        first = self.index.browse(view_request("music"))
+        self.assertEqual(first["items"][0]["id"], "alpha")
+        self.assertEqual(len(first["library_categories"]), 173)
+        self.assertEqual(first["library_categories"][0]["label"], "Alla artister")
+        by_artist = self.index.browse(view_request("music", category="Zulu"))
+        self.assertEqual([row["id"] for row in by_artist["items"]], ["zulu"])
+        by_title_letter = self.index.browse(view_request("music", letter="A"))
+        self.assertEqual([row["id"] for row in by_title_letter["items"]], ["zulu"])
+        self.assertEqual([row["id"] for row in self.index.browse(view_request("music", query="Zulu"))["items"]],
+                         ["alpha", "zulu"])
+        self.assertEqual([row["id"] for row in self.index.browse(view_request("music", query="återbesök"))["items"]],
+                         ["zulu"])
 
     def test_public_playback_header_changes_require_new_proof(self):
         row = item("header", "Example", user_agent="Published/1.0", referrer="https://publisher.invalid/")
@@ -57,20 +235,20 @@ class SavedCatalogueIndexTests(unittest.TestCase):
             self.index.correct_metadata(dict(row, season=3), expected=row)
         self.assertEqual(self.index.get(row["id"])["season"], 0)
 
-    def test_only_checked_positive_sources_are_listed_without_loading_sources(self):
+    def test_candidates_and_positive_sources_are_listed_without_loading_sources(self):
         self.index.ingest([item("unknown", "A film"), item("failed", "B film"),
                            item("expired", "C film"), item("verified", "D film")])
         now = time.time()
         self.index.record("failed", dict(status="failed", checked_at=now))
         self.index.record("expired", dict(status="verified", checked_at=now - 100,
-                                          expires_at=now - 1))
+                                          expires_at=now - 1, evidence={"video_frames": 3}))
         self.index.record("verified", dict(status="verified", checked_at=now,
-                                           expires_at=now + 100))
+                                           expires_at=now + 100, evidence={"video_frames": 3}))
         page = self.index.browse(view_request("movies"))
-        self.assertEqual(page["library_total"], 2)
+        self.assertEqual(page["library_total"], 3)
         self.assertFalse(page["library_has_more"])
         self.assertEqual({row["id"]: row["availability"] for row in page["items"]},
-                         dict(expired="verified", verified="verified"))
+                         dict(unknown="unknown", expired="verified", verified="verified"))
         summaries = {row["id"]: row for row in page["items"]}
         self.assertFalse(summaries["expired"]["availability_fresh"])
         self.assertEqual(summaries["expired"]["availability_scope"], "previously_decoded")
@@ -91,7 +269,7 @@ class SavedCatalogueIndexTests(unittest.TestCase):
         self.assertTrue(first["library_has_more"])
         self.assertEqual(len(last["items"]), 21)
         self.assertFalse(last["library_has_more"])
-        self.assertLess(len(json.dumps(first)), 45000)
+        self.assertLess(len(json.dumps(first)), 50000)
         self.assertNotIn("alternate_sources", first["items"][0])
         self.assertNotIn("description", first["items"][0])
 
@@ -102,7 +280,8 @@ class SavedCatalogueIndexTests(unittest.TestCase):
         self.index.ingest(rows)
         now = time.time()
         self.index.record("dead", dict(status="failed", checked_at=now))
-        self.index.record("working", dict(status="verified", checked_at=now, expires_at=now + 100))
+        self.index.record("working", dict(status="verified", checked_at=now, expires_at=now + 100,
+                                           evidence={"video_frames": 3}))
         page = self.index.browse(view_request("live"))
         self.assertEqual(page["library_total"], 1)
         self.assertEqual(page["items"][0]["id"], "working")
@@ -110,18 +289,19 @@ class SavedCatalogueIndexTests(unittest.TestCase):
         sources = self.index.group_sources("dead")
         self.assertEqual([row["id"] for row in sources], ["working", "unknown", "dead"])
 
-    def test_series_requires_a_checked_episode_instead_of_only_metadata(self):
+    def test_real_series_descriptor_and_known_children_list_without_decoder_proofs(self):
         descriptor = item("descriptor", "Example series", "series", language="sv", archive_id="example-series")
         descriptor["source"] = "https://archive.org/details/example-series"
         self.index.ingest([descriptor])
         page = self.index.browse(view_request("series"))
-        self.assertEqual(page["library_total"], 0)
+        self.assertEqual(page["library_total"], 1)
+        self.assertEqual(page["items"][0]["availability_scope"], "metadata")
         series = self.index.get("descriptor")
         episodes = self.index.browse(view_request("series", collection_key=series["collection_key"]))
         self.assertEqual(episodes["library_total"], 0)
         self.assertEqual(self.index.collection_descriptor(series["collection_key"])["id"], "descriptor")
         self.index.record("descriptor", dict(status="verified", checked_at=time.time(), expires_at=time.time() + 100))
-        self.assertEqual(self.index.browse(view_request("series"))["library_total"], 0)
+        self.assertEqual(self.index.browse(view_request("series"))["library_total"], 1)
         child = item("episode", "Example series S01E01", "episode", series_title="Example series", language="sv", season=1, episode=1)
         self.healthy([child])
         checked = self.index.browse(view_request("series"))
@@ -186,7 +366,8 @@ class SavedCatalogueIndexTests(unittest.TestCase):
     def test_revisited_page_retains_checked_source_but_exposes_expired_playback_freshness(self):
         self.index.ingest([item("alpha", "Alpha film")])
         now = time.time()
-        self.index.record("alpha", dict(status="verified", checked_at=now, expires_at=now + 1))
+        self.index.record("alpha", dict(status="verified", checked_at=now, expires_at=now + 1,
+                                         evidence={"video_frames": 3}))
         view = view_request("movies")
         self.assertEqual(self.index.browse(view)["items"][0]["availability"], "verified")
         with patch("backend.media_index.time.time", return_value=now + 2):
@@ -195,7 +376,7 @@ class SavedCatalogueIndexTests(unittest.TestCase):
         self.assertFalse(result["items"][0]["availability_fresh"])
         self.assertEqual(result["items"][0]["availability_scope"], "previously_decoded")
 
-    def test_retention_is_bounded_and_requires_an_actual_positive_proof(self):
+    def test_retention_bounds_positive_claims_without_hiding_saved_metadata(self):
         now = time.time()
         rows = [item("recent-live", "Recent live", "live"), item("old-live", "Old live", "live"),
                 item("recent-film", "Recent film"), item("old-film", "Old film"),
@@ -208,12 +389,15 @@ class SavedCatalogueIndexTests(unittest.TestCase):
             checked = now - age
             self.index.record(identifier, dict(status="verified", checked_at=checked, expires_at=checked + 1))
         self.index.record("malformed", dict(status="verified", checked_at=now, expires_at=0))
-        self.assertEqual([r["id"] for r in self.index.browse(view_request("live"))["items"]], ["recent-live"])
-        self.assertEqual([r["id"] for r in self.index.browse(view_request("movies"))["items"]], ["recent-film"])
+        self.assertEqual([r["id"] for r in self.index.browse(view_request("live"))["items"]], ["old-live", "recent-live"])
+        self.assertEqual({r["id"] for r in self.index.browse(view_request("movies"))["items"]},
+                         {"old-film", "recent-film", "unconfirmed", "malformed"})
         self.assertEqual(self.index.browse(view_request("movies"))["library_verified_count"], 2)
         with patch("backend.media_index.time.time", return_value=now + 2):
-            self.assertEqual(self.index.browse(view_request("live"))["items"], [])
-            self.assertEqual(self.index.browse(view_request("movies"))["items"], [])
+            self.assertTrue(all(row["availability"] == "expired"
+                                for row in self.index.browse(view_request("live"))["items"]))
+            self.assertTrue(all(row["availability"] != "available"
+                                for row in self.index.browse(view_request("movies"))["items"]))
 
     def test_source_choices_prefer_fresh_then_retained_and_failures_withdraw_retained_rows(self):
         now = time.time()
@@ -227,9 +411,9 @@ class SavedCatalogueIndexTests(unittest.TestCase):
         self.index.record("z-fresh", dict(status="failed", checked_at=now))
         self.assertEqual(self.index.browse(view_request("live"))["items"][0]["id"], "b-retained")
         self.index.record("b-retained", dict(status="unknown", checked_at=now))
-        self.assertEqual(self.index.browse(view_request("live"))["items"], [])
+        self.assertEqual(self.index.browse(view_request("live"))["items"][0]["id"], "a-unknown")
 
-    def test_series_retains_checked_children_without_admitting_unchecked_episodes(self):
+    def test_series_lists_known_children_with_honest_positive_scope(self):
         now = time.time()
         rows = [item("checked-episode", "Example S01E01", "episode", series_title="Example", season=1, episode=1),
                 item("unchecked-episode", "Example S01E02", "episode", series_title="Example", season=1, episode=2)]
@@ -237,10 +421,11 @@ class SavedCatalogueIndexTests(unittest.TestCase):
         self.index.record("checked-episode", dict(status="verified", checked_at=now - 2000, expires_at=now - 1000))
         series = self.index.browse(view_request("series"))["items"]
         self.assertEqual(len(series), 1)
-        self.assertEqual(series[0]["episode_count"], 1)
+        self.assertEqual(series[0]["episode_count"], 2)
+        self.assertEqual(series[0]["availability_scope"], "available_episodes")
         self.assertFalse(series[0]["availability_fresh"])
         episodes = self.index.browse(view_request("series", collection_key=series[0]["collection_key"]))
-        self.assertEqual([r["id"] for r in episodes["items"]], ["checked-episode"])
+        self.assertEqual([r["id"] for r in episodes["items"]], ["checked-episode", "unchecked-episode"])
 
     def test_discovery_merge_preserves_curated_identity_and_existing_positive_proof(self):
         curated = item("episode", "S01E03 - Avsnitt 3", "episode", series_title="Example series",
@@ -269,12 +454,15 @@ class SavedCatalogueIndexTests(unittest.TestCase):
     def test_discovery_source_replacement_still_withdraws_previous_proof(self):
         original = item("film", "Original film")
         self.healthy([original])
+        session = BrowseSession(self.index, view_request("movies"))
         replacement = dict(original, source="https://example.invalid/replacement.mp4", title="Replacement film")
         canonical = self.index.ingest_discovered([replacement])
         self.assertEqual(canonical[0]["source"], replacement["source"])
         self.assertEqual(canonical[0]["title"], replacement["title"])
         self.assertFalse(self.index.is_verified("film"))
-        self.assertEqual(self.index.browse(view_request("movies"))["items"], [])
+        self.assertEqual(self.index.browse(view_request("movies"))["items"][0]["availability"], "unknown")
+        with self.assertRaises(SnapshotInvalid):
+            session.page(0)
 
     def test_repeated_discovery_of_identical_row_is_noop_and_returns_canonical_group(self):
         episode = item("episode", "Example S01E01", "episode", series_title="Example", season=1, episode=1)

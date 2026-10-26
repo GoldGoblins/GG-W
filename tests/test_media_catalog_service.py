@@ -23,7 +23,7 @@ sys.path.insert(0, str(PROJECT))
 
 from PySide6.QtCore import QCoreApplication, QObject
 from PySide6.QtGui import QGuiApplication
-from backend import media_contract, media_host, media_library, media_availability, media_health_audit
+from backend import media_contract, media_host, media_library, media_availability, media_health_audit, media_quick_availability
 from backend.media_index import MediaIndex
 from backend.chat_surface_host import ChatSurfaceHost
 
@@ -99,13 +99,13 @@ class CatalogServiceTests(unittest.TestCase):
         self.stack.enter_context(patch.object(media_host, "_stop_proc"))
         self.stack.enter_context(patch.object(media_host.libretro_host, "loaded", return_value=False))
         self.archive = self.stack.enter_context(patch.object(media_library, "search_archive", return_value=[]))
-        self.verifier = self.stack.enter_context(patch.object(media_availability, "verify", side_effect=lambda row, **kw:
-            {"status": "verified", "checked_at": time.time(), "expires_at": time.time() + 600,
-             "evidence": {"video_frames": 3, "audio_frames": 2}}))
+        self.verifier = self.stack.enter_context(patch.object(media_quick_availability, "quick_check", side_effect=lambda row, **kw:
+            {"schema": media_quick_availability.SCHEMA, "status": "verified", "checked_at": time.time(), "expires_at": time.time() + 600,
+             "scope": "http_media", "evidence": {"decoded": False, "reachable": True, "content_type": "video/mp4"}}))
         # These are synthetic source fixtures. Real metadata correspondence
         # cases are exercised by test_media_health_audit.py; catalogue tests
         # retain the production identity gate without making external requests.
-        self.identity_checker = self.stack.enter_context(patch.object(media_health_audit, "check_identity",
+        self.identity_checker = self.stack.enter_context(patch.object(media_quick_availability, "check_quick_identity",
             return_value={"status": "consistent", "scope": "fixture_metadata"}))
         self.stack.enter_context(patch.object(media_library, "_download_json", side_effect=AssertionError("Unexpected network access")))
         media_contract.save_prefs({"mode": "TV"})
@@ -138,6 +138,7 @@ class CatalogServiceTests(unittest.TestCase):
         self.service._verify_pool.shutdown(wait=True, cancel_futures=True)
         self.service._metadata_pool.shutdown(wait=True, cancel_futures=True)
         self.service._discovery_pool.shutdown(wait=True, cancel_futures=True)
+        self.service._background_pool.shutdown(wait=True, cancel_futures=True)
         self.app.processEvents()
         self.assertFalse(self.gui_database_calls, "A GUI callback opened the catalogue database")
         self.stack.close()
@@ -170,7 +171,8 @@ class CatalogServiceTests(unittest.TestCase):
             self.service.index.ingest(rows)
             if verified:
                 for row in rows:
-                    self.service.index.record(row["id"], {"status": "verified", "checked_at": time.time(), "expires_at": time.time() + 600})
+                    self.service.index.record(row["id"], {"status": "verified", "checked_at": time.time(), "expires_at": time.time() + 600,
+                        "evidence": {"decoded": True, "video_frames": 3, "audio_frames": 2}})
         self.db_work(work)
 
     def mark_ready(self, *identifiers):
@@ -385,7 +387,7 @@ class CatalogServiceTests(unittest.TestCase):
         with patch.object(media_library, "expand_item", return_value=[playable]):
             self.bridge.mediaLibrarySearch(url)
             self.settled()
-            self.assertNotIn(descriptor["id"], self.identifiers())
+            self.assertIn(descriptor["id"], self.identifiers(), "A direct catalogue source should be selectable before checks")
             self.verifier.assert_not_called()
             self.bridge.mediaPlay(descriptor["id"])
             self.settled()
@@ -396,7 +398,7 @@ class CatalogServiceTests(unittest.TestCase):
         self.assertEqual(media_host.library_state()["library_query"], url)
         self.assertEqual(media_host.library_state()["library_letter"], "B")
 
-    def test_only_fresh_decoder_proofs_are_visible_and_counted(self):
+    def test_known_metadata_and_inconclusive_checks_remain_browseable_but_definite_failures_wait_for_retry(self):
         rows = [video(identifier, identifier) for identifier in ("health-good", "health-unknown", "health-failed", "health-expired")]
         self.ingest(rows, verified=False)
         def mark():
@@ -413,20 +415,24 @@ class CatalogServiceTests(unittest.TestCase):
         self.assertIn("health-good", self.identifiers())
         states = {row["id"]:row["availability"] for row in media_host._catalog_rows("TV")}
         self.assertEqual({key:states[key] for key in states if key.startswith("health-")},
-                         {"health-good":"verified"})
-        self.assertEqual(media_host.library_state()["library_total"], 4)
+                         {"health-good":"available", "health-expired": "expired", "health-unknown": "unknown"})
+        self.assertEqual(media_host.library_state()["library_total"], 6)
         for identifier in ("health-unknown", "health-failed", "health-expired"):
             self.assertIsNotNone(self.db_work(lambda identifier=identifier: self.service.index.get(identifier)),
                                  "Unready candidates must remain available to the independent checker")
         self.verifier.assert_not_called()
-        # A legacy proof on the container/metadata URL cannot certify a series.
+        # A known series can be browsed before checking its episodes; a check
+        # of its container must not pretend those episodes were decoded.
         parent = dict(video("container-proof", "Container proof"), content_type="series")
         child = dict(video("unchecked-child", "Container S01E01"), content_type="episode",
                      series_title="Container proof", season=1, episode=1)
         self.ingest([parent])
         self.ingest([child], verified=False)
         self.browse("series")
-        self.assertEqual(self.identifiers(), [])
+        self.assertEqual(len(self.identifiers()), 1)
+        self.assertNotEqual(media_host._catalog_rows("TV")[0]["availability_scope"], "checked_episodes",
+                            "A container check was presented as checked episodes")
+        self.assertFalse(self.db_work(lambda: self.service.index.is_verified(child["id"])))
         self.mark_ready(child["id"])
         self.browse("series")
         self.assertEqual(len(self.identifiers()), 1)
@@ -435,9 +441,80 @@ class CatalogServiceTests(unittest.TestCase):
         item = dict(self.base[0], source="https://example.invalid/replacement.mp4")
         self.ingest([item], verified=False)
         self.browse("movies")
-        self.assertNotIn(item["id"], self.identifiers())
+        self.assertIn(item["id"], self.identifiers())
+        self.assertEqual(next(row for row in media_host._catalog_rows("TV") if row["id"] == item["id"])["availability"], "unknown")
         self.assertFalse(self.db_work(lambda: self.service.index.is_verified(item["id"])))
         self.verifier.assert_not_called()
+
+    def test_fresh_radio_presets_are_browseable_without_bulk_checks_and_only_selected_station_is_checked(self):
+        self.service._scanned.discard("RADIO")
+        with patch.object(media_contract, "_http_get", side_effect=AssertionError("Radio opening fetched provider metadata")):
+            self.bridge.mediaSetMode("RADIO")
+            self.settled()
+        rows = media_host._catalog_rows("RADIO")
+        self.assertEqual(len(rows), len(media_contract.RADIO_PRESETS))
+        self.assertTrue(rows)
+        self.assertTrue(all(row["kind"] == "RADIO" and row["availability"] == "unknown"
+                            and not row["availability_decoded"] for row in rows))
+        self.verifier.assert_not_called()
+        self.identity_checker.assert_not_called()
+        selected = rows[0]["id"]
+        with patch.object(media_host, "play_item", return_value=media_host.status_payload()) as play:
+            self.bridge.mediaPlay(selected)
+            self.settled()
+            play.assert_called_once_with(selected)
+        self.assertEqual([call.args[0]["id"] for call in self.verifier.call_args_list], [selected])
+        self.assertEqual(self.verifier.call_args.kwargs["max_bytes"], 65536)
+
+    def test_fresh_local_music_scan_keeps_all_1500_files_and_filters_by_artist(self):
+        def clear_fixture_music():
+            with self.service.index.connection() as db:
+                db.execute("DELETE FROM items WHERE kind='MUSIC'")
+        self.db_work(clear_fixture_music)
+        rows = [dict(id="local-track-" + str(number), kind="MUSIC", content_type="music",
+            source=str(self.library / (str(number) + ".mp3")), media="file", local=True,
+            title="Local song " + str(number).zfill(4), artist="Artist " + str(number % 320).zfill(4),
+            category="Artist " + str(number % 320).zfill(4), album="Local album", source_label="LOKAL",
+            provider="Local", play="audio") for number in range(1500)]
+        self.service._scanned.discard("MUSIC")
+        with patch.object(media_contract, "music_catalog", return_value=rows) as scan:
+            self.bridge.mediaSetMode("MUSIC")
+            self.settled()
+        scan.assert_called_once()
+        self.assertEqual(media_host.library_state()["library_total"], 1500)
+        visible = media_host._catalog_rows("MUSIC")
+        self.assertEqual(len(visible), 80)
+        self.assertTrue(all(row["media"] == "file" and row["source_label"] == "LOKAL"
+                            and row["availability"] == "unknown" for row in visible))
+        self.assertEqual([(row["artist"], row["title"]) for row in visible],
+                         sorted((row["artist"], row["title"]) for row in visible))
+        options = media_host.library_state()["library_categories"]
+        self.assertEqual(len(options), 321, "Artist options were truncated to the old category limit")
+        self.assertEqual(options[0]["label"], "Alla artister")
+        artist = "Artist 0319"
+        self.bridge.mediaLibraryBrowse("music", "all", artist, "all", "all", "", 0)
+        self.settled()
+        filtered = media_host._catalog_rows("MUSIC")
+        self.assertTrue(filtered)
+        self.assertTrue(all(row["artist"] == artist for row in filtered))
+        self.assertEqual([row["title"] for row in filtered], sorted(row["title"] for row in filtered))
+        self.verifier.assert_not_called()
+        self.identity_checker.assert_not_called()
+
+    def test_inconclusive_quick_check_attempts_actual_playback_without_claiming_a_check(self):
+        item = video("quick-inconclusive", "Inconclusive source")
+        self.ingest([item], verified=False)
+        self.verifier.side_effect = lambda row, **kwargs: dict(status="unknown", checked_at=time.time(),
+            expires_at=0, error="timeout", evidence={"decoded": False})
+        with patch.object(media_availability, "verify", side_effect=AssertionError("Play invoked a decoder probe")), \
+             patch.object(media_host, "play_item", return_value=media_host.status_payload()) as play:
+            self.bridge.mediaPlay(item["id"])
+            self.settled()
+            play.assert_called_once_with(item["id"])
+        saved = self.db_work(lambda: self.service.index.get(item["id"]))
+        self.assertEqual(saved["source"], item["source"])
+        self.assertFalse(self.db_work(lambda: self.service.index.is_verified(item["id"])))
+        self.assertFalse(media_host.library_state()["library_selection_error"])
 
     def test_saved_transport_selection_resolves_off_page_without_gui_lookup_scan(self):
         self.browse("movies", query="Alpha")
@@ -526,12 +603,12 @@ class CatalogServiceTests(unittest.TestCase):
         with patch.object(media_library, "expand_item", side_effect=AssertionError("Chunk expanded metadata")), \
              patch.object(media_library, "resolve_item", side_effect=AssertionError("Chunk resolved a source")), \
              patch.object(media_contract, "catalog_for", side_effect=AssertionError("Chunk scanned providers")):
-            for ticket, offset, count in ((10, 80, 80), (11, 160, 21)):
+            for ticket, offset, count in ((10, 80, 80), (11, 160, 22)):
                 self.bridge.mediaLibraryChunk("movies", "all", "all", "all", "all", "Chunk", offset, ticket)
                 self.until(lambda: received and received[-1][0] == ticket)
                 payload = received[-1][1]
                 self.assertEqual(payload["library_offset"], offset)
-                self.assertEqual(payload["library_total"], 181)
+                self.assertEqual(payload["library_total"], 182)
                 self.assertEqual(len(payload["items"]), count)
                 self.assertEqual(payload["items"][0]["id"], "chunk-" + str(offset))
                 self.assertNotIn("source", payload["items"][0])
@@ -572,6 +649,106 @@ class CatalogServiceTests(unittest.TestCase):
         self.assertEqual(self.identifiers(), ["film-beta"])
         self.assertEqual(media_host.library_state()["library_offset"], 0)
         self.verifier.assert_not_called()
+
+    def test_playing_off_page_channel_keeps_cursor_and_next_chunk_without_rescanning_inventory(self):
+        rows = [dict(video("stable-channel-" + str(number), "Stable channel " + str(number).zfill(3)),
+                     content_type="live", media="stream", is_live=True, channel_id="stable-" + str(number))
+                for number in range(241)]
+        self.ingest(rows)
+        self.browse("live")
+        self.service._audit_timer.stop()
+        snapshot = self.service._accepted_snapshot
+        before_rows = self.identifiers()
+        received = []
+        self.bridge.mediaLibraryChunkReady.connect(lambda ticket, raw: received.append((ticket, json.loads(raw))))
+        self.bridge.mediaLibraryChunk("live", "all", "all", "all", "all", "", 80, 100)
+        self.until(lambda: received and received[-1][0] == 100)
+        self.assertEqual(received[-1][1]["items"][0]["id"], rows[80]["id"])
+        with patch.object(self.service.index, "snapshot_groups", side_effect=AssertionError("Play rebuilt the browse inventory")):
+            self.bridge.mediaPlay(rows[95]["id"])
+            self.settled()
+        self.assertEqual(media_host._item["id"], rows[95]["id"])
+        self.assertIs(self.service._accepted_snapshot, snapshot)
+        self.assertEqual(media_host.library_state()["library_catalog_revision"], snapshot.revision)
+        self.assertEqual(self.identifiers(), before_rows)
+        self.assertFalse(media_host.library_state()["library_requires_reset"])
+        self.bridge.mediaLibraryChunk("live", "all", "all", "all", "all", "", 160, 101)
+        self.until(lambda: received and received[-1][0] == 101)
+        self.assertEqual(received[-1][1]["library_catalog_revision"], snapshot.revision)
+        self.assertEqual(received[-1][1]["items"][0]["id"], rows[160]["id"])
+        self.verifier.assert_not_called()
+
+    def test_play_refresh_does_not_adopt_a_deferred_positive_admission_snapshot(self):
+        rows = [dict(video("admission-channel-" + str(number), "Admission channel " + str(number).zfill(3)),
+                     content_type="live", media="stream", is_live=True, channel_id="admission-" + str(number))
+                for number in range(181)]
+        self.ingest(rows)
+        self.browse("live")
+        self.service._audit_timer.stop()
+        snapshot = self.service._accepted_snapshot
+        inserted = dict(video("admission-new-channel", "A newly admitted channel"),
+                        content_type="live", media="stream", is_live=True, channel_id="admission-new")
+        self.ingest([inserted])
+        self.service._poll_audit()
+        self.settled()
+        self.assertTrue(media_host.library_state()["library_background_refresh"])
+        self.assertNotEqual(media_host.library_state()["library_catalog_revision"], snapshot.revision)
+        self.assertIs(self.service._accepted_snapshot, snapshot, "Unaccepted admission replaced the active cursor")
+        self.bridge.mediaPlay(rows[95]["id"])
+        self.settled()
+        self.assertIs(self.service._accepted_snapshot, snapshot)
+        self.assertEqual(media_host.library_state()["library_catalog_revision"], snapshot.revision)
+        self.assertNotIn(inserted["id"], self.identifiers())
+        self.assertEqual(media_host._item["id"], rows[95]["id"])
+
+    def test_failed_unknown_selection_keeps_existing_browse_snapshot(self):
+        snapshot = self.service._accepted_snapshot
+        before_rows = self.identifiers()
+        self.bridge.mediaPlay("nonexistent-selected-source")
+        self.settled()
+        self.assertTrue(media_host.library_state()["library_selection_error"])
+        self.assertIs(self.service._accepted_snapshot, snapshot)
+        self.assertEqual(media_host.library_state()["library_catalog_revision"], snapshot.revision)
+        self.assertEqual(self.identifiers(), before_rows)
+
+    def test_failed_retained_channel_still_invalidates_snapshot_and_withdraws_dead_source(self):
+        channel = dict(video("retained-dead-channel", "Retained channel"),
+                       content_type="live", media="stream", is_live=True, channel_id="retained-channel")
+        self.ingest([channel], verified=False)
+        checked = time.time() - 3600
+        self.db_work(lambda: self.service.index.record(channel["id"], dict(status="verified", checked_at=checked,
+                     expires_at=checked + 900), source=channel["source"]))
+        self.browse("live")
+        snapshot = self.service._accepted_snapshot
+        self.assertIn(channel["id"], self.identifiers())
+        self.verifier.side_effect = lambda row, **kwargs: dict(status="failed", checked_at=time.time(), error="http_not_found")
+        self.bridge.mediaPlay(channel["id"])
+        self.settled()
+        self.assertTrue(media_host.library_state()["library_selection_error"])
+        self.assertIsNot(self.service._accepted_snapshot, snapshot)
+        self.assertTrue(media_host.library_state()["library_requires_reset"])
+        self.assertNotIn(channel["id"], self.identifiers())
+        self.assertEqual(self.verifier.call_count, 1)
+
+    def test_status_refresh_recovers_when_source_is_withdrawn_during_snapshot_read(self):
+        snapshot = self.service._accepted_snapshot
+        original_page = snapshot.page
+        self.service._warm_cancel.set()
+        if self.service._warm_future is not None:
+            self.until(self.service._warm_future.done)
+        def withdraw_then_read(offset, **kwargs):
+            self.service.index.record("film-beta", dict(status="failed", checked_at=time.time()),
+                                      source=self.base[1]["source"])
+            return original_page(offset, **kwargs)
+        with patch.object(snapshot, "page", side_effect=withdraw_then_read), \
+             patch.object(self.service, "_warm_snapshot"):
+            self.service._query(preserve_snapshot=True)
+            self.settled()
+        self.assertIsNot(self.service._accepted_snapshot, snapshot)
+        self.assertNotIn("film-beta", self.identifiers())
+        self.assertEqual(set(self.identifiers()), {"film-alpha", "fetch-alpha"})
+        self.assertTrue(media_host.library_state()["library_requires_reset"])
+        self.assertFalse(media_host.library_state()["library_error"])
 
     def test_scroll_chunk_keeps_selected_series_context_and_can_open_an_off_page_series(self):
         descriptor = dict(video("chunk-series", "Chunk series"), content_type="series", archive_id="chunk-series",
@@ -622,6 +799,7 @@ class CatalogServiceTests(unittest.TestCase):
         import sqlite3
         from backend.media_health_audit import MediaHealthAudit
         self.ingest([video("audit-unchecked", "Audit unchecked")], verified=False)
+        self.browse("movies")
         audit = MediaHealthAudit(self.service.index)
         run_id = self.db_work(audit.start)
         def progress_fixture():
@@ -695,12 +873,11 @@ class CatalogServiceTests(unittest.TestCase):
 
     def test_external_admission_refreshes_only_small_local_page_without_source_io(self):
         item = video("audit-new-ready", "Audit admitted film")
-        self.ingest([item], verified=False)
         self.browse("movies")
         self.service._audit_timer.stop()
         self.assertNotIn(item["id"], self.identifiers())
         before_view = dict(self.service._view)
-        self.mark_ready(item["id"])
+        self.ingest([item])
         main_thread = threading.get_ident()
         threads, requests = [], []
         original = self.service.index.browse
@@ -744,20 +921,14 @@ class CatalogServiceTests(unittest.TestCase):
         self.assertEqual(media_host._item["id"], item["id"])
         self.assertTrue(self.db_work(lambda: self.service.index.is_verified(item["id"])))
 
-    def test_missing_descriptive_metadata_is_corrected_before_a_new_selected_decode(self):
-        item = dict(video("unconfirmed-label", "S02E03 - Curated label"), content_type="episode",
-                    series_title="Example", language="sv", season=2, episode=3)
-        self.ingest([item])
-        def check(row):
-            if row.get("language"):
-                return dict(status="unknown", scope="archive_file", reason="language_unconfirmed",
-                            metadata_corrections=dict(language="", season=0, episode=0,
-                                                      title="Example bonus", episode_title="Example bonus"))
-            return dict(status="consistent", scope="archive_file")
-        self.identity_checker.side_effect = check
+    def test_optional_descriptive_metadata_is_not_a_selected_playback_prerequisite(self):
+        item = dict(video("unconfirmed-label", "Example bonus"), content_type="episode",
+                    series_title="Example", language="", season=0, episode=0)
+        self.ingest([item], verified=False)
         self.verifier.reset_mock()
-        self.bridge.mediaPlay(item["id"])
-        self.settled()
+        with patch.object(media_health_audit, "prepare_identity", side_effect=AssertionError("Selected play requested deep metadata")):
+            self.bridge.mediaPlay(item["id"])
+            self.settled()
         self.verifier.assert_called_once()
         checked = self.verifier.call_args.args[0]
         self.assertEqual((checked["language"], checked["season"], checked["episode"], checked["title"]),
@@ -769,18 +940,15 @@ class CatalogServiceTests(unittest.TestCase):
         item = dict(video("correction-race", "Original programme"), language="sv")
         replacement = dict(item, title="New programme", source="https://example.invalid/new-source.mp4")
         self.ingest([item])
-        def check(row):
-            if row.get("language"):
-                return dict(status="unknown", scope="archive_file", reason="language_unconfirmed",
-                            metadata_corrections=dict(language=""))
+        def prepare(row):
             self.service.index.ingest([replacement])
             self.service.index.record(item["id"], dict(status="verified", checked_at=time.time(),
                 expires_at=time.time() + 600), source=replacement["source"])
-            return dict(status="consistent", scope="archive_file")
-        self.identity_checker.side_effect = check
+            return dict(row, language=""), dict(status="consistent", scope="link_identity")
         self.verifier.reset_mock()
-        self.bridge.mediaPlay(item["id"])
-        self.settled()
+        with patch.object(media_quick_availability, "prepare_quick_identity", side_effect=prepare):
+            self.bridge.mediaPlay(item["id"])
+            self.settled()
         saved = self.db_work(lambda: self.service.index.get(item["id"]))
         self.assertEqual((saved["title"], saved["source"]), (replacement["title"], replacement["source"]))
         self.assertTrue(self.db_work(lambda: self.service.index.is_verified(item["id"])))
@@ -902,30 +1070,41 @@ class CatalogServiceTests(unittest.TestCase):
             self.service.set_active(False)
             self.service.set_active(True)
             self.settled()
-            self.assertNotIn(unknown["id"], self.identifiers())
-            self.assertEqual(set(self.identifiers()), {"film-alpha", "film-beta", "fetch-alpha"})
+            self.assertIn(unknown["id"], self.identifiers())
+            self.assertEqual(set(self.identifiers()), {"film-alpha", "film-beta", "fetch-alpha", unknown["id"]})
+            self.assertEqual(next(row for row in media_host._catalog_rows("TV") if row["id"] == unknown["id"])["availability"], "unknown")
             discovery.assert_not_called()
             expansion.assert_not_called()
             self.verifier.assert_not_called()
             self.identity_checker.assert_not_called()
             self.assertFalse(media_host.library_state()["library_indexing"])
 
-    def test_only_explicit_refresh_starts_discovery_and_close_cancels_it(self):
-        from backend import media_discovery
+    def test_only_explicit_background_switch_starts_work_and_close_cancels_it(self):
+        from backend import media_discovery, media_initial_validation
+        from backend.media_background_work import empty_status
         started, cancelled = threading.Event(), threading.Event()
         self.service.set_active(False)
-        def discover(index, page, *, cancel):
+        def run(cancel, *, notify):
             started.set()
+            notify(dict(empty_status(), running=True, paused=False, phase="checking"))
             if cancel.wait(2):
                 cancelled.set()
-            return {"imported": 0}
-        with patch.object(media_discovery, "discover", side_effect=discover) as discovery:
+            return empty_status()
+        with patch.object(self.service._background_work, "run", side_effect=run) as work, \
+             patch.object(media_discovery, "discover", side_effect=AssertionError("Implicit discovery")), \
+             patch.object(media_initial_validation, "validate_initial", side_effect=AssertionError("Implicit initial check")):
             self.browse("movies")
             self.service.set_active(True)
             self.settled()
-            discovery.assert_not_called()
             self.bridge.mediaLibraryRefresh()
+            self.settled()
+            work.assert_not_called()
+            before = time.monotonic()
+            self.bridge.mediaLibraryBackground(True)
+            self.assertLess(time.monotonic() - before, .1)
             self.until(started.is_set)
+            self.service.set_active(False)
+            self.assertFalse(cancelled.is_set(), "Hiding MEDIA cancelled explicitly started background work")
             self.service.close()
             self.assertTrue(cancelled.wait(1))
 
@@ -952,7 +1131,7 @@ class CatalogServiceTests(unittest.TestCase):
             self.assertLess(time.monotonic() - started, .75)
             self.assertEqual(media_host.library_state()["library_page"], "live")
 
-    def test_official_channel_api_refresh_is_explicit_worker_only_and_keeps_unchecked_candidates_hidden(self):
+    def test_channel_refresh_stays_local_when_background_switch_is_off(self):
         from backend import media_sources
         calls = []
         def refresh(index, *, cancel):
@@ -966,8 +1145,8 @@ class CatalogServiceTests(unittest.TestCase):
             official.assert_not_called()
             self.bridge.mediaLibraryRefresh()
             self.settled()
-            official.assert_called_once()
-            self.assertNotIn(threading.get_ident(), calls)
+            official.assert_not_called()
+            self.assertEqual(calls, [])
             self.assertNotIn("new-channel", self.identifiers())
             self.verifier.assert_not_called()
 
@@ -991,41 +1170,80 @@ class CatalogServiceTests(unittest.TestCase):
         self.assertFalse(media_host.library_state()["library_indexing"])
 
     def test_background_discovery_cannot_occupy_interactive_paging_workers(self):
-        from backend import media_discovery
+        from backend.media_background_work import empty_status
         started, release = threading.Event(), threading.Event()
         self.gates.append(release)
         self.service._discovery_started.discard("movies")
-        def discover(*args, **kwargs):
+        def run(*args, **kwargs):
             started.set()
             self.assertTrue(release.wait(2))
-            return {"imported": 0}
-        with patch.object(media_discovery, "discover", side_effect=discover):
-            self.bridge.mediaLibraryRefresh()
+            return empty_status()
+        with patch.object(self.service._background_work, "run", side_effect=run):
+            self.bridge.mediaLibraryBackground(True)
             self.until(started.is_set)
             self.bridge.mediaLibraryBrowse("movies", "all", "all", "all", "all", "Beta", 0)
             self.until(lambda: self.identifiers() == ["film-beta"]
                        and not media_host.library_state()["library_busy"])
             self.assertFalse(release.is_set(), "Paging waited until discovery finished")
             release.set()
+            self.until(self.service._background_future.done)
             self.settled()
 
-    def test_refresh_joins_running_discovery_without_racing_its_checkpoint(self):
-        from backend import media_discovery
+    def test_refresh_and_repeated_start_do_not_duplicate_running_background_job(self):
+        from backend.media_background_work import empty_status
         started, release = threading.Event(), threading.Event()
         self.gates.append(release)
         self.service._discovery_started.discard("movies")
-        def discover(*args, **kwargs):
+        def run(*args, **kwargs):
             started.set()
             self.assertTrue(release.wait(2))
-            return {"imported": 0}
-        with patch.object(media_discovery, "discover", side_effect=discover) as discovery:
-            self.bridge.mediaLibraryRefresh()
+            return empty_status()
+        with patch.object(self.service._background_work, "run", side_effect=run) as work:
+            self.bridge.mediaLibraryBackground(True)
             self.until(started.is_set)
+            self.bridge.mediaLibraryBackground(True)
             self.bridge.mediaLibraryRefresh()
             self.until(lambda: not media_host.library_state()["library_busy"])
-            self.assertEqual(discovery.call_count, 1)
+            self.assertEqual(work.call_count, 1)
             release.set()
+            self.until(self.service._background_future.done)
             self.settled()
+
+    def test_switch_pauses_existing_external_audit_off_gui_and_reports_real_checkpoint(self):
+        from backend.media_health_audit import MediaHealthAudit
+        audit = MediaHealthAudit(self.service.index)
+        run_id = self.db_work(audit.start)
+        def running_fixture():
+            with self.service.index.connection() as db:
+                db.execute("UPDATE media_audit_runs SET status='running',owner='external-fixture',lease_until=? WHERE id=?",
+                           (time.time() + 60, run_id))
+        self.db_work(running_fixture)
+        self.service._poll_audit()
+        self.settled()
+        state = json.loads(self.bridge.mediaLibraryBackgroundStatus())
+        self.assertTrue(state["running"])
+        self.assertTrue(state["external"])
+        original = self.service._background_work.pause
+        def pause(cancel, *, notify):
+            return original(cancel, wait_seconds=0, notify=notify)
+        with patch.object(self.service._background_work, "pause", side_effect=pause):
+            before = time.monotonic()
+            self.bridge.mediaLibraryBackground(False)
+            self.assertLess(time.monotonic() - before, .1)
+            self.until(self.service._background_pause_future.done)
+            self.app.processEvents()
+        self.assertTrue(self.db_work(audit.status)["cancel_requested"])
+        self.assertTrue(json.loads(self.bridge.mediaLibraryBackgroundStatus())["pausing"])
+        def stopped_fixture():
+            with self.service.index.connection() as db:
+                db.execute("UPDATE media_audit_runs SET status='paused',owner='',lease_until=0 WHERE id=?", (run_id,))
+        self.db_work(stopped_fixture)
+        self.service._poll_audit()
+        self.settled()
+        state = json.loads(self.bridge.mediaLibraryBackgroundStatus())
+        self.assertTrue(state["paused"])
+        self.assertFalse(state["running"])
+        self.verifier.assert_not_called()
 
     def test_replaced_source_rejects_proof_from_former_url(self):
         original = video("source-proof", "Source proof")
@@ -1042,7 +1260,7 @@ class CatalogServiceTests(unittest.TestCase):
         item = video("pending-health", "Pending health")
         self.ingest([item], verified=False)
         started, cancelled = threading.Event(), threading.Event()
-        def check(row, *, cancel):
+        def check(row, *, cancel, **limits):
             started.set()
             if cancel.wait(2):
                 cancelled.set()
@@ -1082,7 +1300,7 @@ class CatalogServiceTests(unittest.TestCase):
         self.assertLessEqual(self.service._generation["browse"] - ticket, 1,
                              "Ten check completions queued more than one follow-up page")
 
-    def test_large_series_catalogue_uses_indexed_fresh_child_proofs(self):
+    def test_large_series_catalogue_uses_indexed_known_children_without_bulk_checks(self):
         from backend.media_index import view_request
         rows = [dict(video("series-load-" + str(number),
                     "Load series " + str(number % 5000).zfill(5) + " S01E01"),
@@ -1096,7 +1314,7 @@ class CatalogServiceTests(unittest.TestCase):
                 db.execute("UPDATE items SET status='verified',checked_at=?,verified_until=? "
                            "WHERE type='episode' AND rowid % 43=0", (time.time(), time.time() + 600))
                 expected = db.execute("SELECT COUNT(DISTINCT parent_key) FROM items WHERE type='episode' "
-                                      "AND status='verified' AND verified_until>?", (time.time(),)).fetchone()[0]
+                                      "AND parent_key<>''").fetchone()[0]
                 where, args = self.service.index._where(view, verified=True)
                 plan = db.execute("EXPLAIN QUERY PLAN SELECT COUNT(DISTINCT i.group_key) FROM items i WHERE "
                                   + where, args).fetchall()
@@ -1104,10 +1322,10 @@ class CatalogServiceTests(unittest.TestCase):
             result = self.service.index.browse(view)
             return result, expected, time.perf_counter() - began, " ".join(str(tuple(row)) for row in plan)
         result, expected, elapsed, plan = self.db_work(exercise)
-        self.assertIn("media_series_health", plan)
+        self.assertIn("media_series", plan)
         self.assertEqual(result["library_total"], expected)
         self.assertGreater(expected, 100)
-        self.assertLess(expected, 5000)
+        self.assertEqual(expected, 5000)
         self.assertEqual(len(result["items"]), 80)
         self.assertLess(elapsed, 1.0, "Series paging regressed to a correlated catalogue scan")
 
@@ -1137,15 +1355,15 @@ class CatalogServiceTests(unittest.TestCase):
         state = media_host.library_state()
         self.assertFalse(state["library_busy"])
         self.assertEqual(state["library_loading_id"], "lazy-selected")
-        self.assertEqual(set(self.identifiers()), {"film-alpha", "film-beta", "fetch-alpha"})
+        self.assertEqual(set(self.identifiers()), {"film-alpha", "film-beta", "fetch-alpha", "lazy-selected", "lazy-other"})
         release.set()
         self.settled()
         self.assertEqual([call.args[0]["id"] for call in self.verifier.call_args_list], ["lazy-selected"])
         self.assertEqual(media_host._item["id"], "lazy-selected")
-        self.assertEqual(media_host._item["availability"], "verified")
+        self.assertEqual(media_host._item["availability"], "available")
         states = {row["id"]: row["availability"] for row in media_host._catalog_rows("TV")}
-        self.assertEqual(states["lazy-selected"], "verified")
-        self.assertNotIn("lazy-other", states)
+        self.assertEqual(states["lazy-selected"], "available")
+        self.assertEqual(states["lazy-other"], "unknown")
         self.assertEqual(media_host.library_state()["library_loading_id"], "")
 
     def test_selected_unready_source_failure_stays_hidden_and_preserves_working_playback(self):
@@ -1158,7 +1376,7 @@ class CatalogServiceTests(unittest.TestCase):
         self.verifier.side_effect = lambda row, **kwargs: {"status": "failed", "checked_at": time.time()}
         self.bridge.mediaPlay("lazy-failed")
         self.settled()
-        self.assertEqual(self.identifiers(), before)
+        self.assertEqual(self.identifiers(), [identifier for identifier in before if identifier != "lazy-failed"])
         self.assertNotIn("lazy-failed", self.identifiers())
         def stored_status():
             with self.service.index.connection() as db:
@@ -1290,7 +1508,7 @@ class CatalogServiceTests(unittest.TestCase):
         self.assertEqual([call.args[0]["id"] for call in self.identity_checker.call_args_list], [selected["id"]])
         self.assertEqual(self.verifier.call_count, 1)
 
-    def test_archive_vod_uses_one_larger_bounded_sample_while_live_and_other_vod_keep_defaults(self):
+    def test_selected_archive_live_and_other_vod_all_use_the_same_fast_budget(self):
         archive = dict(video("archive-budget", "Archive feature"), archive_id="feature",
                        archive_file="feature.mp4", source="https://archive.org/download/feature/feature.mp4")
         live = dict(video("live-budget", "Live channel"), content_type="live", media="stream", is_live=True)
@@ -1304,11 +1522,7 @@ class CatalogServiceTests(unittest.TestCase):
                 self.verifier.assert_called_once()
                 kwargs = self.verifier.call_args.kwargs
                 self.assertIn("cancel", kwargs)
-                if item is archive:
-                    self.assertEqual((kwargs["max_seconds"], kwargs["max_bytes"]), (30.0, 8 * 1024 * 1024))
-                else:
-                    self.assertNotIn("max_seconds", kwargs)
-                    self.assertNotIn("max_bytes", kwargs)
+                self.assertEqual((kwargs["max_seconds"], kwargs["max_bytes"]), (4.0, 65536))
                 self.assertEqual(media_host._item["id"], item["id"])
 
     def test_selected_source_rejects_old_identity_proof_before_starting_playback(self):
@@ -1383,9 +1597,9 @@ class CatalogServiceTests(unittest.TestCase):
         self.assertEqual(media_host.library_state()["library_collection"], "")
         self.assertTrue(media_host.library_state()["library_selection_error"])
 
-    def test_selected_cached_decoder_proof_cannot_bypass_metadata_identity_failure(self):
+    def test_selected_cached_decoder_proof_cannot_bypass_definite_source_identity_failure(self):
         self.assertTrue(self.db_work(lambda: self.service.index.is_verified("film-beta")))
-        self.identity_checker.return_value = {"status": "unknown", "scope": "archive_metadata", "reason": "title_mismatch"}
+        self.identity_checker.return_value = {"status": "failed", "scope": "source_metadata", "reason": "archive_source_mismatch"}
         self.bridge.mediaPlay("film-beta")
         self.settled()
         self.identity_checker.assert_called_once()
@@ -1408,11 +1622,13 @@ class CatalogServiceTests(unittest.TestCase):
                     for number in (2, 1)]
         with patch.object(media_library, "expand_item", return_value=children) as expansion:
             self.browse("series")
-            self.assertEqual(self.identifiers(), [], "An unchecked series must not appear ready")
+            self.assertEqual(set(self.identifiers()), {row["id"] for row in descriptors})
+            self.assertTrue(all(row["availability"] == "unknown" for row in media_host._catalog_rows("TV")))
             expansion.assert_not_called()
             self.bridge.mediaOpenCollection("lazy-series-chosen")
             self.settled()
-            self.assertEqual(self.identifiers(), [], "Metadata alone must not publish playable episodes")
+            self.assertEqual(self.identifiers(), ["chosen-episode-1", "chosen-episode-2"])
+            self.assertTrue(all(not row["availability_decoded"] for row in media_host._catalog_rows("TV")))
             self.assertIsNotNone(self.db_work(lambda: self.service.index.get("chosen-episode-1")))
             self.assertIsNotNone(self.db_work(lambda: self.service.index.get("chosen-episode-2")))
             self.assertEqual([call.args[0]["archive_id"] for call in expansion.call_args_list], ["chosen"])
@@ -1421,7 +1637,7 @@ class CatalogServiceTests(unittest.TestCase):
             self.settled()
             self.assertEqual([call.args[0]["id"] for call in self.verifier.call_args_list], ["chosen-episode-2"])
             self.assertEqual(media_host._item["id"], "chosen-episode-2")
-            self.assertEqual(self.identifiers(), ["chosen-episode-2"])
+            self.assertEqual(self.identifiers(), ["chosen-episode-1", "chosen-episode-2"])
 
     def test_selected_series_preserves_identity_when_metadata_adds_language_and_new_title(self):
         descriptor = dict(video("lazy-unnamed", "Saved series title"), content_type="series",
@@ -1432,12 +1648,12 @@ class CatalogServiceTests(unittest.TestCase):
                      content_type="episode", series_title="New provider name", language="en",
                      archive_id="unknown-language", season=1, episode=1)
         self.browse("series")
-        self.assertEqual(self.identifiers(), [])
+        self.assertEqual(self.identifiers(), [descriptor["id"]])
         original_key = self.db_work(lambda: self.service.index.get(descriptor["id"]))["collection_key"]
         with patch.object(media_library, "expand_item", return_value=[child]):
             self.bridge.mediaOpenCollection(descriptor["id"])
             self.settled()
-        self.assertEqual(self.identifiers(), [])
+        self.assertEqual(self.identifiers(), [child["id"]])
         self.assertEqual(media_host.library_state()["library_collection"], descriptor["title"])
         saved = self.db_work(lambda: self.service.index.get(child["id"]))
         self.assertEqual(saved["collection_key"], original_key)
@@ -1492,7 +1708,10 @@ class CatalogServiceTests(unittest.TestCase):
             release.set()
             self.settled()
             expansion.assert_called_once()
-        self.assertEqual(self.identifiers(), [first["id"]], "Unchecked newly found episodes were advertised as playable")
+        self.assertEqual(self.identifiers(), [row["id"] for row in children])
+        scope = {row["id"]: row["availability_scope"] for row in media_host._catalog_rows("TV")}
+        self.assertEqual(scope[children[1]["id"]], "metadata")
+        self.assertEqual(scope[children[2]["id"]], "metadata")
         self.assertTrue(self.db_work(lambda: self.service.index.is_verified(first["id"])))
         for child in children:
             saved = self.db_work(lambda child=child: self.service.index.get(child["id"]))
@@ -1629,7 +1848,7 @@ class CatalogServiceTests(unittest.TestCase):
         with patch.object(media_library, "expand_item", return_value=[missing]) as expansion:
             self.bridge.mediaOpenCollection(media_host._catalog_rows("TV")[0]["id"])
             self.settled()
-        self.assertEqual(self.identifiers(), [cached["id"]])
+        self.assertEqual(self.identifiers(), [cached["id"], missing["id"]])
         self.assertIsNotNone(self.db_work(lambda: self.service.index.get(missing["id"])))
         self.assertEqual([call.args[0]["archive_id"] for call in expansion.call_args_list], ["season-2"])
         self.verifier.assert_not_called()
@@ -1663,7 +1882,7 @@ class CatalogServiceTests(unittest.TestCase):
             self.settled()
         self.assertEqual(media_host.library_state()["library_collection"], "")
         self.assertEqual(self.identifiers(), previous_parent_list)
-        self.assertNotIn(descriptor["id"], self.identifiers())
+        self.assertIn(descriptor["id"], self.identifiers(), "Back lost a known series descriptor")
         self.assertIsNotNone(self.db_work(lambda: self.service.index.get(descriptor["id"])))
         self.assertIsNone(self.db_work(lambda: self.service.index.get(child["id"])))
         self.assertEqual(media_host.library_state()["library_loading_id"], "")
@@ -1680,7 +1899,7 @@ class CatalogServiceTests(unittest.TestCase):
             self.bridge.mediaPlay(descriptor["id"])
             self.settled()
         expansion.assert_called_once()
-        self.assertEqual(self.identifiers(), [])
+        self.assertEqual(self.identifiers(), [child["id"]])
         self.assertIsNotNone(self.db_work(lambda: self.service.index.get(child["id"])))
         self.verifier.assert_not_called()
         self.mark_ready(child["id"])
@@ -1699,7 +1918,7 @@ class CatalogServiceTests(unittest.TestCase):
              patch.object(media_library, "expand_item", return_value=children):
             self.bridge.mediaPlay(descriptor["id"])
             self.settled()
-        self.assertEqual(self.identifiers(), [])
+        self.assertEqual(self.identifiers(), [row["id"] for row in children])
         for row in children:
             self.assertIsNotNone(self.db_work(lambda row=row: self.service.index.get(row["id"])))
         self.assertEqual(media_host.library_state()["library_collection"], "Multi series")

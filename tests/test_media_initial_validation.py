@@ -15,6 +15,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ.setdefault("QT_QUICK_BACKEND", "software")
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from backend import media_initial_validation as initial, media_health_audit as health
+from backend import media_quick_availability as quick
 from backend.media_index import MediaIndex, view_request
 
 
@@ -25,8 +26,8 @@ def row(identifier, **values):
 
 def proof(*args, **kwargs):
     now = time.time()
-    return dict(status="verified", checked_at=now, expires_at=now + 600,
-                evidence=dict(decoded=True, video_frames=3, audio_stream=True, audio_frames=3))
+    return dict(schema=quick.SCHEMA, status="verified", scope="http_media", checked_at=now, expires_at=now + 600,
+                evidence=dict(decoded=False, reachable=True))
 
 
 class InitialValidationTests(unittest.TestCase):
@@ -36,8 +37,8 @@ class InitialValidationTests(unittest.TestCase):
         self.index.initialize()
         self.index.ingest([row("film"), dict(row("episode"), content_type="episode", series_title="A series", season=1, episode=1)])
         self.stack = ExitStack()
-        self.tools = self.stack.enter_context(patch.object(initial, "decoder_tools", return_value={"ffmpeg": "present", "ffprobe": "present"}))
-        self.decode = self.stack.enter_context(patch.object(health.availability, "verify", side_effect=proof))
+        self.tools = self.stack.enter_context(patch.object(health.availability, "decoder_tools", return_value={"ffmpeg": "", "ffprobe": ""}))
+        self.decode = self.stack.enter_context(patch.object(quick, "quick_check", side_effect=proof))
         self.stack.enter_context(patch.object(health.library, "_cached_json", side_effect=AssertionError("Unexpected external access")))
 
     def tearDown(self):
@@ -49,7 +50,7 @@ class InitialValidationTests(unittest.TestCase):
             return [row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE name LIKE 'media_audit_%'")]
 
     def test_fresh_install_admits_checked_films_and_episodes_without_imported_proofs(self):
-        self.assertEqual(self.index.browse(view_request("movies"))["items"], [])
+        self.assertFalse(self.index.is_verified("film"))
         result = initial.validate_initial(self.index, cancel=threading.Event())
         self.assertEqual(result["state"], "complete")
         self.assertEqual(self.decode.call_count, 2)
@@ -72,13 +73,11 @@ class InitialValidationTests(unittest.TestCase):
             self.assertEqual(self.index.meta("starter_audit_run"), "")
         self.decode.assert_not_called()
 
-    def test_missing_decoders_have_actionable_notice_without_creating_an_audit(self):
-        self.tools.return_value = {"ffmpeg": "", "ffprobe": ""}
+    def test_missing_decoders_do_not_block_fast_file_and_http_checks(self):
         result = initial.validate_initial(self.index, cancel=threading.Event())
-        self.assertEqual(result["state"], "decoder_missing")
-        self.assertIn("FFmpeg", result["notice"])
-        self.assertEqual(self.tables(), [])
-        self.decode.assert_not_called()
+        self.assertEqual(result["state"], "complete")
+        self.assertEqual(self.decode.call_count, 2)
+        self.tools.assert_not_called()
 
     def test_established_checked_library_does_not_start_a_bulk_first_install_audit(self):
         self.index.record("film", proof())
@@ -121,7 +120,12 @@ class InitialValidationTests(unittest.TestCase):
             error="network_error", max_bytes=health.availability.MAX_CHECK_BYTES, evidence={"decoded": False})
         self.assertEqual(initial.validate_initial(self.index, cancel=threading.Event())["state"], "complete")
         self.assertEqual(self.decode.call_count, 4)  # Two sources, two attempts each.
-        self.assertEqual(self.index.browse(view_request("movies"))["items"], [])
+        films = self.index.browse(view_request("movies"))["items"]
+        self.assertEqual([film["id"] for film in films], ["film"])
+        self.assertEqual(films[0]["availability"], "unknown")
+        self.assertEqual(films[0]["availability_scope"], "metadata")
+        self.assertFalse(films[0]["availability_decoded"])
+        self.assertFalse(self.index.is_verified("film"))
         self.decode.side_effect = proof
         initial.validate_initial(self.index, cancel=threading.Event())
         self.assertEqual(self.decode.call_count, 4, "Opening reset exhausted attempts")
@@ -163,7 +167,7 @@ class InitialValidationTests(unittest.TestCase):
         self.assertEqual(initial.validate_initial(self.index, cancel=threading.Event(), explicit=True)["state"], "complete")
         self.assertEqual(self.decode.call_count, 2)
 
-    def test_cancellation_keeps_unchecked_sources_hidden_and_checkpoint_resumable(self):
+    def test_cancellation_keeps_sources_unconfirmed_and_checkpoint_resumable(self):
         cancelled = threading.Event()
         def decode(item, **kwargs):
             cancelled.set()
@@ -172,7 +176,8 @@ class InitialValidationTests(unittest.TestCase):
         self.decode.side_effect = decode
         result = initial.validate_initial(self.index, cancel=cancelled)
         self.assertEqual(result["state"], "cancelled")
-        self.assertEqual(self.index.browse(view_request("movies"))["items"], [])
+        self.assertFalse(self.index.is_verified("film"))
+        self.assertFalse(self.index.is_verified("episode"))
         self.assertGreater(health.MediaHealthAudit(self.index).status()["pending"], 0)
 
 

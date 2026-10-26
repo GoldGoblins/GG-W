@@ -13,6 +13,7 @@ from PySide6.QtCore import QObject, Signal, Slot, QTimer
 from backend import media_contract as contract, media_host as host, media_library as library
 from backend.media_index import MediaIndex, PAGES, echo, view_request
 from backend.media_browse_session import BrowseSession, SnapshotInvalid
+from backend.media_background_work import MediaBackgroundWork, empty_status
 
 
 class MediaCatalogService(QObject):
@@ -30,6 +31,13 @@ class MediaCatalogService(QObject):
         self._metadata_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="gg-media-search")
         self._discovery_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="gg-media-discover")
         self._initial_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="gg-media-initial")
+        self._background_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="gg-media-background")
+        self._background_work = MediaBackgroundWork(self.index)
+        self._background_status = empty_status()
+        self._background_cancel = threading.Event()
+        self._background_future = None
+        self._background_pause_future = None
+        self._background_generation = 0
         self._generation = {"browse": 0, "play": 0, "search": 0, "collection": 0, "chunk": 0, "audit": 0}
         self._futures: dict[str, Future] = {}
         self._pending: set[str] = set()
@@ -44,6 +52,7 @@ class MediaCatalogService(QObject):
         self._scanned: set[str] = set()
         self._checking: set[str] = set()
         self._refresh_again = False
+        self._refresh_selected_id = ""
         self._notice = ""
         self._initial_notice = ""
         self._initial_eligible = False
@@ -120,7 +129,60 @@ class MediaCatalogService(QObject):
     def _poll_audit(self):
         if self._closed or not self._active or "audit" in self._pending:
             return
-        self._queue("audit", "audit", self._read_audit_progress)
+        def work():
+            progress = self._read_audit_progress()
+            if progress is not None:
+                progress["_background_status"] = self._background_work.read_status()
+            return progress
+        self._queue("audit", "audit", work)
+
+    def _publish_background(self, status):
+        self._background_status = dict(status)
+        host._library_page_state["library_background"] = dict(status)
+
+    def background(self, enabled):
+        """Explicit source work; browsing and Refresh do not start this lane."""
+        if self._closed:
+            return
+        if enabled and (self._background_future is not None and not self._background_future.done()
+                        or self._background_pause_future is not None and not self._background_pause_future.done()):
+            return
+        if not enabled and self._background_pause_future is not None and not self._background_pause_future.done():
+            return
+        self._background_generation += 1
+        generation = self._background_generation
+        current = dict(self._background_status)
+        current.update(running=bool(enabled), pausing=not enabled, paused=False,
+                       phase="starting" if enabled else "pausing", notice="")
+        self._publish_background(current)
+        self.changed.emit()
+        def notify(status):
+            if not self._closed:
+                self._completed.emit(("background_progress", generation, "background", {}, status, ""))
+        if enabled:
+            cancelled = self._background_cancel = threading.Event()
+            def work():
+                self._bootstrap()
+                return self._background_work.run(cancelled, notify=notify)
+        else:
+            self._background_cancel.set()
+            cancelled = self._background_cancel
+            def work():
+                return self._background_work.pause(cancelled, notify=notify)
+        future = self._background_pool.submit(work)
+        if enabled:
+            self._background_future = future
+        else:
+            self._background_pause_future = future
+        def done(result):
+            try:
+                status = result.result()
+            except Exception:
+                status = dict(empty_status(), phase="error", errors=1,
+                              notice="Bakgrundsarbetet kunde inte slutföras. Försök igen.")
+            if not self._closed:
+                self._completed.emit(("background_done", generation, "background", {}, status, ""))
+        future.add_done_callback(done)
 
     def _cancel_audit_poll(self):
         self._generation["audit"] += 1
@@ -177,7 +239,11 @@ class MediaCatalogService(QObject):
             return
         # These crawls and tool probes are never called from a Qt slot.
         if mode in ("MUSIC", "FETCH", "GAME", "RADIO"):
-            rows = contract.catalog_for(mode)
+            # Stations and the local library are browseable metadata. Opening
+            # RADIO uses presets/last-good cache, never waits on every provider.
+            rows = (contract.radio_catalog(refresh=False) if mode == "RADIO"
+                    else contract.music_catalog(cancel=self._cancel) if mode == "MUSIC"
+                    else contract.catalog_for(mode))
             self.index.ingest(rows)
             if mode == "FETCH":
                 host._library_fetch_info = host.fetch_status()
@@ -339,12 +405,15 @@ class MediaCatalogService(QObject):
             return payload
         self._queue("chunk", "chunk", work, request=view, view_context=context, client_ticket=int(ticket))
 
-    def _query(self, *, background=False):
+    def _query(self, *, background=False, preserve_snapshot=False, selected_id=""):
         self._browse_cancel.set()
         browse_cancel = self._browse_cancel = threading.Event()
         view = dict(self._view)
         notice = self._notice
         previous_snapshot = self._accepted_snapshot
+        status_snapshot = (previous_snapshot if preserve_snapshot and not background
+                           and previous_snapshot is not None
+                           and previous_snapshot.context == self._chunk_context(view) else None)
         parent_snapshot = (self._parent_snapshot if self._restore_parent_snapshot and not background
                            and self._parent_snapshot is not None
                            and self._parent_snapshot.context == self._chunk_context(view) else None)
@@ -364,7 +433,21 @@ class MediaCatalogService(QObject):
             structure = self.index.meta("inventory_structure_revision")
             parent_invalid = bool(parent_snapshot is not None
                 and parent_snapshot.withdraw_revision != self.index.meta("inventory_withdraw_revision"))
+            # Playing a channel changes transport/status, not the list being
+            # browsed. Keep its accepted cursor, including when an admission
+            # proposal is waiting for the reader to return to the beginning.
+            # A withdrawn source still requires a newly checked snapshot.
+            status_valid = bool(status_snapshot is not None
+                and status_snapshot.withdraw_revision == self.index.meta("inventory_withdraw_revision"))
+            if status_valid and selected_id:
+                with self.index.connection() as db:
+                    selected_group = db.execute("SELECT group_key FROM items WHERE id=?", (selected_id,)).fetchone()
+                # A direct link or an unchecked episode may become available
+                # through this Play request. Publish that newly admitted group
+                # rather than retaining a snapshot in which it never existed.
+                status_valid = bool(selected_group is None or selected_group[0] in status_snapshot.groups)
             snapshot = (parent_snapshot if parent_snapshot is not None and not parent_invalid
+                        else status_snapshot if status_valid
                         else BrowseSession(self.index, lookup, cancel=browse_cancel))
             snapshot.context = self._chunk_context(view)
             if (background and previous_snapshot is not None
@@ -378,9 +461,9 @@ class MediaCatalogService(QObject):
             try:
                 result = snapshot.page(view["offset"], cancel=browse_cancel)
             except SnapshotInvalid:
-                if snapshot is not parent_snapshot:
+                if snapshot is not parent_snapshot and snapshot is not status_snapshot:
                     raise
-                parent_invalid = True
+                parent_invalid = snapshot is parent_snapshot
                 snapshot = BrowseSession(self.index, lookup, cancel=browse_cancel)
                 snapshot.context = self._chunk_context(view)
                 result = snapshot.page(view["offset"], cancel=browse_cancel)
@@ -406,12 +489,20 @@ class MediaCatalogService(QObject):
             return
         background = self._audit_refresh_requested
         self._audit_refresh_requested = False
-        self._query(background=background)
+        selected_id, self._refresh_selected_id = self._refresh_selected_id, ""
+        self._query(background=background, preserve_snapshot=True, selected_id=selected_id)
 
     @Slot(object)
     def _finish(self, completed):
         lane, ticket, action, context, value, error = completed
         if self._closed:
+            return
+        if lane in ("background_progress", "background_done"):
+            if ticket == self._background_generation:
+                self._publish_background(value or empty_status())
+                self.changed.emit()
+                if lane == "background_done" and self._active:
+                    self._poll_audit()
             return
         if lane == "initial_validation":
             self._initial_future = None
@@ -432,6 +523,10 @@ class MediaCatalogService(QObject):
             if not self._active or value is None:
                 return
             snapshot = dict(value or {})
+            background = snapshot.pop("_background_status", None)
+            background_changed = background is not None and background != self._background_status
+            if background is not None:
+                self._publish_background(background)
             revision = snapshot.pop("_inventory_structure_revision", None)
             if revision is not None and revision != self._inventory_structure_revision:
                 self._inventory_structure_revision = revision
@@ -439,7 +534,7 @@ class MediaCatalogService(QObject):
                 # page. Audit counters alone must not disturb visited chunks.
                 self._audit_refresh_requested = True
                 self._refresh_timer.start()
-            if snapshot != self._audit_snapshot:
+            if snapshot != self._audit_snapshot or background_changed:
                 self._audit_snapshot = snapshot
                 if snapshot:
                     host._library_page_state["library_audit"] = dict(snapshot)
@@ -469,7 +564,6 @@ class MediaCatalogService(QObject):
             self._discovering.discard(context["page"])
             if self._active:
                 self._refresh_timer.start()
-                self._start_initial_validation(explicit=True)
             return
         if lane == "invalidated":
             if self._active:
@@ -501,10 +595,10 @@ class MediaCatalogService(QObject):
             payload["library_indexing"] = bool("search" in self._pending or self._discovering)
             payload["library_loading_id"] = self._loading_id
             payload["library_selection_error"] = self._selection_error
+            payload["library_background"] = dict(self._background_status)
             if self._audit_snapshot:
                 payload["library_audit"] = dict(self._audit_snapshot)
             host.library_publish_page(payload)
-            self._start_initial_validation()
 
         elif action == "collection":
             if context["collection_key"] != self._view.get("collection_key"):
@@ -514,6 +608,7 @@ class MediaCatalogService(QObject):
                 self._query()
         elif action == "play":
             self._selection(error=error)
+            self._refresh_selected_id = ""
         if action == "play" and value is not None:
             if value.get("collection"):
                 if value.get("row"):
@@ -527,6 +622,7 @@ class MediaCatalogService(QObject):
                 self._query()
             else:
                 host.library_store(value)
+                self._refresh_selected_id = str(value.get("id") or "")
                 self.playReady.emit(value)
         self.changed.emit()
         if action == "play" and self._active:
@@ -582,16 +678,24 @@ class MediaCatalogService(QObject):
         self._notice = ""
         self._initial_notice = ""
         view = dict(self._view)
-        self._start_initial_validation(explicit=True)
         if view["page"] in ("movies", "series"):
-            # Refresh joins an existing job rather than racing its checkpoint.
-            self._start_discovery(view["page"], force=True)
+            # Source discovery/checking belongs to the explicit finite switch.
+            # Refresh only republishes the saved catalogue and never launches
+            # an additional importer outside that worker's budget.
+            host.library_begin()
+            self._query()
+            return
+        if view["page"] == "live":
             host.library_begin()
             self._query()
             return
         def work():
             self._bootstrap()
             self._scanned.discard(PAGES[view["page"]][0])
+            if view["page"] == "radio":
+                self.index.ingest(contract.radio_catalog(refresh=True))
+                self._scanned.add("RADIO")
+                return ""
             if view["page"] == "live":
                 from backend.media_sources import refresh as refresh_sources
                 result = refresh_sources(self.index, cancel=self._cancel)
@@ -724,8 +828,7 @@ class MediaCatalogService(QObject):
         host._library_error = ""
         cancelled = self._play_cancel = threading.Event()
         def work():
-            from backend.media_availability import verify
-            from backend.media_health_audit import prepare_identity
+            from backend.media_quick_availability import quick_check as verify, prepare_quick_identity as prepare_identity
             self._bootstrap()
             row = self.index.get(str(identifier))
             if row is None and fallback and fallback.get("source"):
@@ -803,28 +906,32 @@ class MediaCatalogService(QObject):
                 if cancelled.is_set() or self._cancel.is_set():
                     return None
                 if source_identity.get("status") != "consistent":
-                    self.index.record(str(item["id"]), {"status": "unknown", "checked_at": time.time(),
+                    self.index.record(str(item["id"]), {"status": "failed" if source_identity.get("status") == "failed" else "unknown", "checked_at": time.time(),
                                       "error": "identity_not_confirmed"}, source=item.get("source", ""), identity=identity)
                     raise ValueError("MEDIA_SOURCE_UNAVAILABLE")
                 report = None
                 if not self.index.is_verified(str(item["id"])):
                     if cached_only:
                         raise ValueError("MEDIA_SOURCE_UNAVAILABLE")
-                    limits = ({"max_seconds": 30.0, "max_bytes": 8 * 1024 * 1024}
-                              if item.get("archive_id") and item.get("content_type") in ("movie", "episode")
-                              and not item.get("is_live") else {})
-                    report = verify(item, cancel=cancelled, **limits)
+                    report = verify(item, cancel=cancelled, max_seconds=4.0, max_bytes=65536)
                     if cancelled.is_set() or self._cancel.is_set():
                         return None
-                    self.index.record(str(item["id"]), report, source=item.get("source", ""), identity=identity)
-                    if report.get("status") != "verified":
+                    if report.get("status") in ("verified", "failed"):
+                        self.index.record(str(item["id"]), report, source=item.get("source", ""), identity=identity)
+                    if report.get("status") == "failed":
                         raise ValueError("MEDIA_SOURCE_UNAVAILABLE")
                 current = self.index.get(str(item["id"]))
-                if (not self.index.is_verified(str(item["id"])) or not current
+                confirmed = self.index.is_verified(str(item["id"]))
+                inconclusive = not cached_only and report is not None and report.get("status") == "unknown"
+                if ((not confirmed and not inconclusive) or not current
                         or self.index.identity_key(current) != identity
                         or str(current.get("source") or "") != str(item.get("source") or "")):
                     raise ValueError("MEDIA_SOURCE_UNAVAILABLE")
-                item["availability"] = "verified"
+                # An inconclusive fast response does not pre-empt the actual
+                # player's attempt, and must never become a fabricated proof.
+                item["availability"] = "available" if confirmed else "unknown"
+                item["availability_scope"] = str((report or {}).get("scope") or "previous_check")
+                item["availability_decoded"] = bool((report or {}).get("evidence", {}).get("decoded", False))
                 if report:
                     item.update(availability_checked_at=report.get("checked_at", 0),
                                 availability_expires_at=report.get("expires_at", 0))
@@ -842,7 +949,7 @@ class MediaCatalogService(QObject):
             except ValueError:
                 attempted = set()
             alternate_count = 0
-            # Only already decoded, still-fresh alternatives of this exact
+            # Only already checked, still-fresh alternatives of this exact
             # selected group qualify. No discovery or unknown-source probes.
             for alternate in self.index.group_sources(selected_id, limit=12):
                 if cancelled.is_set() or self._cancel.is_set():
@@ -925,6 +1032,7 @@ class MediaCatalogService(QObject):
 
     def close(self):
         self._closed = True
+        self._background_cancel.set()
         self._initial_cancel.set()
         self._reset_snapshot()
         self._cancel.set()
@@ -937,4 +1045,5 @@ class MediaCatalogService(QObject):
         self._metadata_pool.shutdown(wait=False, cancel_futures=True)
         self._discovery_pool.shutdown(wait=False, cancel_futures=True)
         self._initial_pool.shutdown(wait=False, cancel_futures=True)
+        self._background_pool.shutdown(wait=False, cancel_futures=True)
         self._pool.shutdown(wait=False, cancel_futures=True)

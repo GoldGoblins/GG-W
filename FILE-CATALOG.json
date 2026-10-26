@@ -4,7 +4,7 @@
   "source_root": ".",
   "dependency_catalog": "config/dependencies.json",
   "categories": {
-    "application-code": 462,
+    "application-code": 465,
     "configuration": 11,
     "contracts": 5,
     "documentation": 7,
@@ -12,10 +12,10 @@
     "gg-skills": 9,
     "gpt-knowledge": 93,
     "installation-and-packaging": 6,
-    "interface": 233,
+    "interface": 234,
     "native-engine": 1188,
     "shared-support": 54,
-    "tests": 439,
+    "tests": 446,
     "tools": 35
   },
   "files": [
@@ -83,24 +83,24 @@
       "path": "README.md",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 116240,
-      "sha256": "b796e9449c3e5e30d6538c66b1263ad792755478b4fdaa14d03175b330565f15",
+      "bytes": 119645,
+      "sha256": "999d5fd9bbf63e1ac447d26e138b7afcfbe4fd811e051c02e912f1362bb488ba",
       "mode": "0o600"
     },
     {
       "path": "SOURCE-MANIFEST.json",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 514433,
-      "sha256": "a80901fd381ad665bc5276615757ef3295b3f00ce0164eef421e02b7efb23a01",
+      "bytes": 516203,
+      "sha256": "2a562474f7d65b2109f33f8be07b99b7bb97a0a6df68e7c7ff51162de07ccf8c",
       "mode": "0o644"
     },
     {
       "path": "WINDOWS-PORT.json",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 140379,
-      "sha256": "2514fd39ec303513f8f888e9874bd26c3e3c17ae3c5b386ca3ac443778beed87",
+      "bytes": 149851,
+      "sha256": "e4cc346b2d6414b0bc33d6172251536cb45c7f8577b5b09a25c7c26ed1d44f69",
       "mode": "0o644"
     },
     {
@@ -307,8 +307,8 @@
       "path": "backend/chat_surface_host.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 261101,
-      "sha256": "56fbe5a4eee7fe15a70d9702abcf38939bd5abf0e9d1f6bc6711e1b437a792e9",
+      "bytes": 261517,
+      "sha256": "cd4b9bcc88b6a96c9ecc87c1a602356533e8ffed8fd9c5baa6f88fd2f5e1eff3",
       "mode": "0o600"
     },
     {
@@ -2816,11 +2816,27 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/media_audio_metadata.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 12080,
+      "sha256": "8b721d1e064d6b1cc7ba5be15690356db4e10e49674706990d7780ce306d2761",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/media_availability.py",
       "category": "application-code",
       "kind": "file",
       "bytes": 38250,
       "sha256": "7217d01dd758a6dadc10f1fb6d03bd64fd78b2551cbfc33b8fafa81447a1ba57",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/media_background_work.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 11897,
+      "sha256": "067e542457ae0055f9b740bea94682763d9ce2a0b34ff978b790fd25cd42e14b",
       "mode": "0o644"
     },
     {
@@ -2843,8 +2859,8 @@
       "path": "backend/media_contract.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 48113,
-      "sha256": "597a05c0d58a88f26fb53f0b11955315aacee7d4ae7303ad8d2ad3c310a474e9",
+      "bytes": 51069,
+      "sha256": "315090fb6812ca270f430989af09f7fb1bf74e62800991a067dd248fec190232",
       "mode": "0o644"
     },
     {
@@ -2867,8 +2883,8 @@
       "path": "backend/media_health_audit.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 57500,
-      "sha256": "a882c048245627c3429c662f9c69a3764885b705df187d4ee3307a2eede5d375",
+      "bytes": 58274,
+      "sha256": "fa2108574af1156e87f3ed1fe1ad3ccaa44bff76f3d1ee49402956c55af90149",
       "mode": "0o644"
     },
     {
@@ -2891,16 +2907,16 @@
       "path": "backend/media_index.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 38075,
-      "sha256": "cb0f9321aa597a1d18959f149f143f27c0c4099c6f872ea1646090fcb99a26bc",
+      "bytes": 41861,
+      "sha256": "04ede4b9703e8533f14984bbf4862238d66687945a6d2e804a882eb701f4f850",
       "mode": "0o644"
     },
     {
       "path": "backend/media_initial_validation.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 3204,
-      "sha256": "87d30307a197cb973277926e4cbefdb79fbcccd07e226f5a28ef5a2f3c401e6a",
+      "bytes": 2845,
+      "sha256": "e16a8bc5fe7b38665841bbcee92b814ad99ff4a43d7dc884393851cd69417932",
       "mode": "0o644"
     },
     {
@@ -2915,8 +2931,8 @@
       "path": "backend/media_paged_service.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 46842,
-      "sha256": "dd48f04acd711eb7b02b1e377a8c165c15977b3c52d9e4686d23bab80cbf1120",
+      "bytes": 53314,
+      "sha256": "681760d3c4a4455ab75fc5ca51ec2cd9eb411addcc0bbaf5e4c619ffa2808cc7",
       "mode": "0o644"
     },
     {
@@ -2925,6 +2941,14 @@
       "kind": "file",
       "bytes": 4757,
       "sha256": "75041801825464a5196e2a09915670302b8055e194023980209dc0e64fa20c21",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/media_quick_availability.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 10898,
+      "sha256": "7f062fd61f6133538e44231f58ad3986f8021985e54c38584c438b23a191e76a",
       "mode": "0o644"
     },
     {
@@ -15072,11 +15096,19 @@
       "mode": "0o644"
     },
     {
+      "path": "qml/components/MediaFullscreenControls.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 10510,
+      "sha256": "567a38d30e50d87d776fbaede6a8b80f36f5942189925f2e0f654a0e63d1a0a4",
+      "mode": "0o644"
+    },
+    {
       "path": "qml/components/MediaSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 107925,
-      "sha256": "f05c25f8f94213e04a955b1faed04334a958df30a3506d98ec69f02b80022844",
+      "bytes": 123060,
+      "sha256": "18747f06c216cc92cdb933a7dd80423b2c5bc75e5f5f6d40bc752da76e218025",
       "mode": "0o644"
     },
     {
@@ -16331,8 +16363,8 @@
       "path": "setup-windows.cmd",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 869,
-      "sha256": "7abf0505e04cc4265a0e54014ecf0a49a1d2fe07462d96cf247bf38e167ffa92",
+      "bytes": 849,
+      "sha256": "3a1a297928f946db43f03f4637df774aa577ba101d597c943336477d7671a646",
       "mode": "0o644"
     },
     {
@@ -19392,6 +19424,22 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_media_audio_metadata.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11388,
+      "sha256": "d64f272d9395fdeb5d983ed86d08331770eadcee5213e22a1c8fb0b810e71df3",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_media_audio_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11281,
+      "sha256": "3be41765a506804be10f9b1c30b101cd583eac6e7cdd037fca4c30fd67394a7c",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_media_availability.py",
       "category": "tests",
       "kind": "file",
@@ -19400,27 +19448,43 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_media_background_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 4813,
+      "sha256": "de7f92e05e73868d51935ef93fe7275a25c1558b1f9a97dbd61fb2a40b41ae1c",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_media_background_work.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 13122,
+      "sha256": "3e3d2e62fa0101f69609533c535ac82cc92a703ccb9f5d7b97cb0152a4f0c0f2",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_media_browse_session.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 4657,
-      "sha256": "c0af89457cfca529e527cfaef8ac50dba0ab7cb0250a36f928de83b6de8bb3e4",
+      "bytes": 4797,
+      "sha256": "07358465649ff9c13c200c0ebc37bd51e32cb9bf5a0056e738c89d74e6545063",
       "mode": "0o644"
     },
     {
       "path": "tests/test_media_catalog_index.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 25260,
-      "sha256": "b7836fc9f64eea6d5884e104b263bb55dba49819f37ff9cf9555c6bee1ed65c1",
+      "bytes": 38127,
+      "sha256": "8a02d8a0dbe64a40eab18c70d6ff6308c4f627a566cbaa2c912b8aa3522d40a2",
       "mode": "0o644"
     },
     {
       "path": "tests/test_media_catalog_service.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 100044,
-      "sha256": "d7ae640d7fe396fcc3cb395a3f79c76e1315b108f0229411df9390ff871df2fc",
+      "bytes": 114604,
+      "sha256": "4913a6c621d1ddcf5fcbec067b91e98878ecb0e907ec05a18aaf3ce95d7abf29",
       "mode": "0o644"
     },
     {
@@ -19456,11 +19520,19 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_media_fullscreen_controls.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 21731,
+      "sha256": "5e845c69937aadee93bcaa158e32778cf6edaedf3db3390f36a77314b1e93483",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_media_health_audit.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 40322,
-      "sha256": "9b883ee06bb5827f56cd1ab128be986ba2888664761c48373dccabb26868482c",
+      "bytes": 40987,
+      "sha256": "05f89d69a98eebd0086e1d08d1c5de21a7af0417ab479f144e11f241541f7cd1",
       "mode": "0o644"
     },
     {
@@ -19475,8 +19547,8 @@
       "path": "tests/test_media_initial_validation.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 12264,
-      "sha256": "e4bc088b34a259902c0ae942edd558999b3e3ba7d0d102f81b2cdcbf423bb7fd",
+      "bytes": 12497,
+      "sha256": "ccf4e7de89dd83ef370f5b1f7ed5cb0319c98b9afe178eb6ea35bb815beb863c",
       "mode": "0o644"
     },
     {
@@ -19491,16 +19563,16 @@
       "path": "tests/test_media_library_ui.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 52082,
-      "sha256": "46e9d6b3f9120f5bb715dc6122c2d9b67999a0908e9afedf03fad5af831b40ae",
+      "bytes": 53780,
+      "sha256": "51fca3f3fbca4c09618bf48f697dc44d59c272d903b1c28ff55d9c86529b08f4",
       "mode": "0o644"
     },
     {
       "path": "tests/test_media_loading.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 27669,
-      "sha256": "fc2d43039b62c53d7fcb53ed020a015855d05ade7e2caaf3e6c84d6b4e98f24b",
+      "bytes": 28053,
+      "sha256": "3925cbb94e6377593c5818c45958a6132a671805b08843c062c1eecea13cd0ec",
       "mode": "0o644"
     },
     {
@@ -19528,11 +19600,27 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_media_quick_availability.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 12743,
+      "sha256": "92467403f3ab276a79721d5e885c2f8689fe32fdb6b0e5647ac382ad3372e876",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_media_reconnect.py",
       "category": "tests",
       "kind": "file",
       "bytes": 10731,
       "sha256": "7a88044b96358ee81d9bf5c4757b2d6da3bb4af701f81fa33c43b04532c865d0",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_media_selection_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 12494,
+      "sha256": "75d21898448165f1c60efe3f521cc801e95233b6eb1642efb074abc120e05870",
       "mode": "0o644"
     },
     {

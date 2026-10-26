@@ -2064,6 +2064,16 @@ class ChatSurfaceHost(QObject):
         self._media_library_service().refresh()
         return self._media_changed(media_host.status_payload())
 
+    @Slot(bool, result=str)
+    def mediaLibraryBackground(self, enabled: bool) -> str:
+        self._media_library_service().background(bool(enabled))
+        return self._media_changed(media_host.status_payload())
+
+    @Slot(result=str)
+    def mediaLibraryBackgroundStatus(self) -> str:
+        service = self._media_library_service()
+        return json.dumps(service._background_status, separators=(",", ":"))
+
     @Slot(str, str, str, str, str, str, int, result=str)
     def mediaLibraryBrowse(self, page: str, letter: str, category: str, language: str, season: str, query: str, offset: int) -> str:
         self._media_library_service().browse(page, letter, category, language, season, query, offset)

@@ -48,7 +48,11 @@ class MediaHealthAuditTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory(prefix="gg-media-health-")
         self.index = MediaIndex(Path(self.temporary.name) / "library.sqlite3")
-        self.audit = MediaHealthAudit(self.index)
+        # This legacy suite exercises optional provider/decoded diagnostics;
+        # default quick file/HTTP behavior has its own transport fixtures.
+        self.audit = MediaHealthAudit(self.index,
+            verifier=lambda row, **kw: audit_module.availability.verify(row, **kw),
+            identity=lambda row: audit_module.prepare_identity(row), deep_checks=True)
         self.audit.initialize()
         self.stack = ExitStack()
         self.stack.enter_context(patch.object(audit_module.library, "_cached_json", side_effect=AssertionError("Unexpected network")))
@@ -152,7 +156,9 @@ class MediaHealthAuditTests(unittest.TestCase):
         self.index.ingest([movie("later", "Later film")])
         self.assertEqual(self.audit.start(), run_id)
         self.assertEqual(self.audit.status()["total"], 3)
-        result = MediaHealthAudit(MediaIndex(self.index.path)).run(run_id, workers=2)
+        result = MediaHealthAudit(MediaIndex(self.index.path),
+            verifier=lambda row, **kw: audit_module.availability.verify(row, **kw),
+            identity=lambda row: audit_module.prepare_identity(row), deep_checks=True).run(run_id, workers=2)
         self.assertEqual((result["status"], result["healthy"]), ("complete", 3))
         self.assertEqual(self.verifier.call_count, 3)
         next_id = self.audit.start()
@@ -439,7 +445,9 @@ class MediaHealthAuditTests(unittest.TestCase):
         self.assertEqual(self.audit.run(run_id)["healthy"], 1)
         with self.index.connection() as db:
             db.execute("UPDATE media_audit_runs SET audit_policy='' WHERE id=?", (run_id,))
-        upgraded = MediaHealthAudit(MediaIndex(self.index.path))
+        upgraded = MediaHealthAudit(MediaIndex(self.index.path),
+            verifier=lambda row, **kw: audit_module.availability.verify(row, **kw),
+            identity=lambda row: audit_module.prepare_identity(row), deep_checks=True)
         result = upgraded.status(run_id)  # Performs local policy migration only.
         self.assertEqual((result["status"], result["healthy"], result["pending"]), ("paused", 0, 1))
         self.assertEqual(self.health("one"), ("unknown", 0, 0))

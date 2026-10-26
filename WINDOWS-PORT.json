@@ -3466,6 +3466,257 @@
       "relocated_export_new_home": "PASS: exact catalogue export, application import, full QML startup and bundled skill registration with new user home",
       "catalog_files": 2578,
       "changed_files": 83
+    },
+    "media_background_control_2026_10_26": {
+      "result": "PASS",
+      "scope": "Explicit MEDIA discovery and source checks; stable channel-selection viewport",
+      "background": {
+        "default": "Paused; no automatic bulk work on open or Refresh",
+        "manual_control": "UTOKA above Search; explicit Start/Pause; existing external audit pausable",
+        "workers": 2,
+        "budget_seconds": 300,
+        "max_check_jobs": 240,
+        "discovery_pages_per_view": 1,
+        "views": [
+          "movies",
+          "series"
+        ],
+        "hidden_view": "Explicit work continues within its budget",
+        "close": "Owned work cancelled",
+        "progress": "Unique newly checked films, series and episodes, separate candidate discoveries; private checkpoint state",
+        "existing_audits": "Existing standalone audits can be paused with checkpoints retained"
+      },
+      "list_stability": [
+        "Keep accepted session after existing-channel playback",
+        "Defer shifting positive admissions in scrolled views",
+        "Restore healthy visible anchors and selection after withdrawal",
+        "Acknowledge new snapshot before requesting restored continuation",
+        "Preserve each surviving fallback anchor pixel offset"
+      ],
+      "regressions": [
+        {
+          "test": "test_media_catalog_service.py",
+          "passed": 78
+        },
+        {
+          "test": "test_media_background_work.py",
+          "passed": 12
+        },
+        {
+          "test": "test_media_selection_ui.py",
+          "passed": 5
+        },
+        {
+          "test": "test_media_library_ui.py",
+          "passed": 3
+        },
+        {
+          "test": "test_media_background_ui.py",
+          "passed": 1
+        },
+        {
+          "test": "test_media_loading.py",
+          "passed": 3
+        },
+        {
+          "test": "test_media_controls_integration.py",
+          "passed": 1
+        },
+        {
+          "test": "test_windows_desktop.py",
+          "passed": 1
+        }
+      ],
+      "loading": {
+        "items": 50000,
+        "gui_browse_ms": 0.43,
+        "service_heartbeat_max_ms": 11.19,
+        "qml_heartbeat_max_ms": 18.28,
+        "qml_warnings": 0,
+        "gui_database_or_network": false
+      },
+      "protected": "Video geometry, Utilities, EQ and reactive audio renderer retained",
+      "review": "Fresh independent review reproduced and verified anchor-offset and acknowledgement-order fixes",
+      "restart": "Full app restart required; user session not restarted"
+    },
+    "media_fullscreen_controls_2026_10_26": {
+      "result": "PASS",
+      "scope": "Compact auto-hiding fullscreen seek and shared volume controls",
+      "geometry": {
+        "row_height_px": 34,
+        "handle_height_px": 14,
+        "vertical_hover_padding_px": 10,
+        "screen_edge_margin_px": 12,
+        "layout": "One fixed horizontal rectangle; video geometry unchanged"
+      },
+      "interaction": [
+        "Reveal only inside compact hover rectangle or keyboard focus",
+        "Keep visible while dragging outside rectangle",
+        "Preview seek then commit once on release",
+        "Cancel old seek gesture when playback identity changes",
+        "Paused seek and seek to zero follow actual decoder",
+        "Shared Utilities app master; native-unavailable fallback; zero preserved without double gain",
+        "Cancelled volume grab commits once and clears hidden polling",
+        "Escape and top-right exit button both work"
+      ],
+      "live": "Volume remains available; timeline enabled only with positive duration and decoder seek support",
+      "regressions": [
+        {
+          "test": "test_media_fullscreen_controls.py",
+          "passed": 3,
+          "real_decoder": true
+        },
+        {
+          "test": "test_media_video.py",
+          "passed": 21
+        },
+        {
+          "test": "test_media_video_playback.py",
+          "passed": 3,
+          "real_local_hls": true
+        },
+        {
+          "test": "test_media_controls_integration.py",
+          "passed": 1,
+          "real_decoder": true
+        }
+      ],
+      "qml_warnings": 0,
+      "fresh_review": "Cancelled grab reproduced and independently verified fixed in master and fallback paths",
+      "protected_sources": "Utilities, EQ, reactive audio source byte-identical",
+      "runtime": "Fullscreen transitions preserve the selected playback source"
+    },
+    "media_fast_availability_and_audio_2026_10_26": {
+      "result": "PASS",
+      "scope": "Restore RADIO and all local music; fast source checks across MEDIA",
+      "policy": {
+        "browsing": "Meaningful catalogue metadata is selectable without prior playback or decoder proof",
+        "definite_failures": "Temporarily withdrawn until retry",
+        "inconclusive": "Metadata remains visible; selected actual player can attempt playback without fabricated positive proof",
+        "quick_check": {
+          "max_seconds": 4,
+          "max_bytes": 65536,
+          "decoder_processes": false,
+          "scopes": [
+            "local_file",
+            "http_media",
+            "hls_media"
+          ]
+        },
+        "deep_diagnostics": "Optional explicit MediaHealthAudit deep_checks=True; not normal admission or playback gate",
+        "source_identity": "Source/header/title and archive-file structural guards retained; stale reports rejected"
+      },
+      "audio": {
+        "local_files": "All configured roots, without former depth/count truncation; bounded cancellable tag reading",
+        "tags": [
+          "artist",
+          "title",
+          "album",
+          "genre",
+          "track"
+        ],
+        "metadata_cache": "Private file size/mtime cache, outside source export",
+        "display": "LOCAL/ONLINE markers; artist selector and artist/title sorting; title A-O and search combine",
+        "duplicate_titles": "Separate files keep separate rows",
+        "radio": "Presets and last-good station metadata load without HTTP on opening"
+      },
+      "regressions": [
+        {
+          "test": "test_media_catalog_service.py",
+          "passed": 81
+        },
+        {
+          "test": "test_media_catalog_index.py",
+          "passed": 35
+        },
+        {
+          "test": "test_media_background_work.py",
+          "passed": 12
+        },
+        {
+          "test": "test_media_audio_metadata.py",
+          "passed": 13
+        },
+        {
+          "test": "test_media_quick_availability.py",
+          "passed": 11
+        },
+        {
+          "test": "test_media_initial_validation.py",
+          "passed": 13
+        },
+        {
+          "test": "test_media_health_audit.py",
+          "passed": 41
+        },
+        {
+          "test": "test_media_browse_session.py",
+          "passed": 6
+        },
+        {
+          "test": "test_media_audio_ui.py",
+          "passed": 2
+        },
+        {
+          "test": "test_media_loading.py",
+          "passed": 3
+        },
+        {
+          "test": "test_windows_desktop.py",
+          "passed": 1
+        },
+        {
+          "test": "test_media_library_ui.py",
+          "passed": 3
+        },
+        {
+          "test": "test_media_selection_ui.py",
+          "passed": 5
+        },
+        {
+          "test": "test_media_fullscreen_controls.py",
+          "passed": 3
+        }
+      ],
+      "fixtures": {
+        "local_tracks": 1500,
+        "artists": 318,
+        "catalogue_rows": 50000,
+        "qml_warnings": 0
+      },
+      "performance": {
+        "gui_cold_status_ms": 36.1,
+        "gui_browse_ms": 0.4,
+        "service_heartbeat_max_ms": 11.85,
+        "qml_heartbeat_max_ms": 17.75,
+        "gui_database_or_network": false
+      },
+      "review": "Fresh read-only review; fast availability and tag fixtures use no decoder; deep diagnostics remain independently exercised",
+      "limits": "Quick reachability is not whole-programme viewing, semantic identity or a guarantee of codec compatibility",
+      "restart": "Full app restart required to load new backend and interface"
+    },
+    "media_followup_release_2026_10_26": {
+      "result": "PASS",
+      "scope": "MEDIA follow-up source patch after the earlier library release",
+      "release_regressions": {
+        "test_media_audio_metadata.py": 13,
+        "test_media_quick_availability.py": 11,
+        "test_media_background_work.py": 12,
+        "test_media_initial_validation.py": 13,
+        "test_media_audio_ui.py": 2,
+        "test_media_selection_ui.py": 5,
+        "test_media_fullscreen_controls.py": 3
+      },
+      "release_regression_count": 59,
+      "policy_regression": "Transient network outage keeps metadata visible without a fabricated availability or decoded proof; explicit retry remains bounded",
+      "review": "Independent read-only source comparison and privacy review; no material blocker",
+      "protected_sources": "Utilities, EQ and reactive audio sources byte-identical to the previous public patch",
+      "distribution": "Catalog allowlist only; no private libraries, sessions, credentials or audit state",
+      "restart": "User-controlled full app restart required; active desktop left running",
+      "relocated_export_new_home": "PASS: 9 application-bundle tests, including isolated full QML startup, application import and bundled skill registration with a fresh user home",
+      "source_contract": "PASS",
+      "catalog_files": 2589,
+      "changed_files": 30
     }
   },
   "verification_before_2026_10_21": {

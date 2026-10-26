@@ -60,7 +60,9 @@ class BrowseSessionTests(unittest.TestCase):
         self.assertTrue(session.page(0)["items"])
         self.index.meta("health_policy", "legacy")
         self.index.initialize()
-        self.assertEqual(self.index.browse(view_request("movies"))["items"], [])
+        rows = self.index.browse(view_request("movies"))["items"]
+        self.assertEqual(len(rows), 80)
+        self.assertTrue(all(row["availability"] == "unknown" and not row["availability_decoded"] for row in rows))
         with self.assertRaises(SnapshotInvalid):
             session.page(0)
 

@@ -738,6 +738,7 @@ def run_scroll_fixture(project):
                            current["library_language"], current["library_season"], current["library_query"], 0)
     proposal.update(library_background_refresh=True, library_catalog_revision="view:pending-admission")
     before_proposal = listing.property("count")
+    membership_y = listing.property("contentY") - listing.property("originY")
     bridge.publish(**proposal)
     QTest.qWait(20)
     assert scene.root.property("catalogUpdatePending")
@@ -778,6 +779,22 @@ def run_scroll_fixture(project):
                            current["library_language"], current["library_season"], current["library_query"], 80)["items"]
     assert loaded_ids[80:160] == [row["id"] for row in expected], "Replacement block skipped a shifted title"
 
+    def catalogue_idle():
+        return (not scene.root.property("libraryBusy") and not scene.root.property("chunkBusy")
+                and not scene.root.property("catalogSyncing")
+                and scene.root.property("catalogRowsReady")
+                and not scene.root.property("pendingListRestore"))
+
+    # Restoring an offscreen selection can request another prefix block. Wait
+    # for that real continuation before changing the worker's next revision;
+    # otherwise loadMore correctly coalesces behind the still active request.
+    until(catalogue_idle, "membership viewport restoration")
+    restored_id = scene.evaluate("catalogModel.get(" + str(listing.property("currentIndex")) + ").entry.id")
+    restored_y = listing.property("contentY") - listing.property("originY")
+    restored_count = listing.property("count")
+    assert restored_id == clicked, "Withdrawal changed the selected healthy programme"
+    assert abs(restored_y - membership_y) < 1, "Withdrawal moved the restored viewport"
+
     # An independently refreshed catalogue cannot splice mismatched offsets
     # into the visited prefix. Its explicit retry reloads the local first block.
     bridge.catalogue_revision = "3:50000"
@@ -786,8 +803,10 @@ def run_scroll_fixture(project):
     QTest.qWait(30)
     before = len(bridge.requests)
     scene.click("mediaLibraryChunkRetry")
-    until(lambda: listing.property("count") == 160 and not scene.root.property("libraryBusy")
-          and not scene.root.property("catalogSyncing"), "catalogue local reload")
+    until(lambda: listing.property("count") >= 160 and catalogue_idle(), "catalogue local reload")
+    assert listing.property("count") <= restored_count + 160, "Local retry rebuilt an unbounded prefix"
+    assert scene.evaluate("catalogModel.get(" + str(listing.property("currentIndex")) + ").entry.id") == restored_id
+    assert abs(listing.property("contentY") - listing.property("originY") - restored_y) < 1, "Local retry moved the viewport"
     assert len(bridge.requests) == before + 1
     assert scene.root.property("catalogStructureRevision") == bridge.catalogue_revision
     assert not any(call[0] == "refresh" for call in bridge.calls), "Local retry unexpectedly refreshed providers"
@@ -798,7 +817,10 @@ def run_scroll_fixture(project):
     bridge.invalidate_next = True
     scene.root.loadMore(False)
     until(lambda: scene.root.property("catalogStructureRevision") == "view:after-invalid"
-          and listing.property("count") == 160 and not scene.root.property("chunkBusy"), "automatic session recovery")
+          and listing.property("count") >= 160 and catalogue_idle(), "automatic session recovery")
+    assert listing.property("count") <= restored_count + 160, "Session recovery rebuilt an unbounded prefix"
+    assert scene.evaluate("catalogModel.get(" + str(listing.property("currentIndex")) + ").entry.id") == restored_id
+    assert abs(listing.property("contentY") - listing.property("originY") - restored_y) < 1, "Session recovery moved the viewport"
     assert len(bridge.requests) == before + 1
     assert bridge.acknowledgements[-1] == "view:after-invalid"
     before = len(bridge.requests)
