@@ -206,7 +206,7 @@ class MediaScene:
         found = self.root.findChild(QObject, name)
         if found is not None:
             return found
-        pending = [self.root]
+        pending = [self.root, self.window.contentItem()]
         while pending:
             item = pending.pop()
             if item.objectName() == name:
@@ -881,6 +881,7 @@ def run_paging_fixture(project):
             self.calls.append(("collection", identifier))
             selected = next(row for row in self.catalogues["series"] if row["id"] == identifier)
             self.payload.update(library_collection=selected["title"], items=[], library_total=0,
+                                library_language="all", library_available_only=False,
                                 library_has_more=False, library_loading_id=identifier,
                                 library_selection_error="", library_busy=False)
             return self.raw()

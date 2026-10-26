@@ -24,6 +24,7 @@ import uuid
 
 from backend import media_availability as availability, media_contract as contract, media_library as library
 from backend import media_quick_availability as quick_availability
+from backend import media_languages as languages
 from backend.media_index import MediaIndex
 
 SCHEMA = "gg.media.health-audit.v1"
@@ -298,6 +299,7 @@ class MediaHealthAudit:
         self._provider_lock = threading.Lock()
         self._provider_slots = {}
         self._database_gate = threading.RLock()
+        self._selected_languages = None
 
     @contextmanager
     def _connection(self):
@@ -358,6 +360,8 @@ class MediaHealthAudit:
                 db.execute("ALTER TABLE media_audit_runs ADD COLUMN last_worker_error TEXT NOT NULL DEFAULT ''")
             if "lanes" not in columns:
                 db.execute("ALTER TABLE media_audit_runs ADD COLUMN lanes TEXT NOT NULL DEFAULT '[]'")
+            if "search_languages" not in columns:
+                db.execute("ALTER TABLE media_audit_runs ADD COLUMN search_languages TEXT NOT NULL DEFAULT '[]'")
             legacy = db.execute("SELECT id,owner,lease_until FROM media_audit_runs WHERE audit_policy<>?",
                                 (AUDIT_POLICY,)).fetchall()
             for run in legacy:
@@ -553,6 +557,27 @@ class MediaHealthAudit:
             db.execute("UPDATE media_audit_runs SET snapshot_items=? WHERE id=?", (snapshot_items, run_id))
         return run_id
 
+    def recheck(self, run_id, *, lanes, selected_languages=None, before=None):
+        """Explicitly revisit saved selected sources; a paused cycle resumes elsewhere."""
+        self.initialize()
+        lanes = tuple(lanes)
+        if not lanes or any(lane not in LANES for lane in lanes):
+            raise ValueError("MEDIA_AUDIT_LANES_INVALID")
+        where = "j.run_id=? AND j.lane IN (" + ",".join("?" for _ in lanes) + ") AND j.checked_at<?"
+        args = [run_id, *lanes, float(before or time.time())]
+        chosen = languages.selection(selected_languages)
+        if chosen is not None:
+            where += " AND (gg_language_match(json_extract(j.payload,'$.language'),?)=1 OR gg_language_match(json_extract(j.payload,'$.language'),'unknown')=1)"
+            args.append("; ".join(chosen))
+        with self._connection() as db:
+            db.execute("BEGIN IMMEDIATE")
+            run = db.execute("SELECT owner,lease_until FROM media_audit_runs WHERE id=?", (run_id,)).fetchone()
+            if not run or run[0] and run[1] > time.time():
+                raise RuntimeError("MEDIA_AUDIT_RUNNING")
+            db.execute("UPDATE media_audit_jobs AS j SET state='queued',attempts=0,lease_until=0,report='{}',checked_at=0 WHERE " + where, args)
+            db.execute("UPDATE media_audit_groups SET sampled=0,last_claimed=0 WHERE run_id=?", (run_id,))
+            db.execute("UPDATE media_audit_runs SET status='paused',updated_at=? WHERE id=?", (time.time(), run_id))
+
     def _latest(self, run_id=None):
         with self._connection() as db:
             row = db.execute("SELECT id FROM media_audit_runs " + ("WHERE id=?" if run_id else "ORDER BY id DESC LIMIT 1"),
@@ -568,11 +593,18 @@ class MediaHealthAudit:
         except ValueError:
             return dict(schema=SCHEMA, status="not_started", total=0, done=0, healthy=0, failed=0, unknown=0, pending=0)
         with self._connection() as db:
-            run = db.execute("SELECT status,snapshot_items,expanded_sources,updated_at,cancel_requested,last_worker_error,lanes FROM media_audit_runs WHERE id=?", (run_id,)).fetchone()
+            run = db.execute("SELECT status,snapshot_items,expanded_sources,updated_at,cancel_requested,last_worker_error,lanes,search_languages FROM media_audit_runs WHERE id=?", (run_id,)).fetchone()
             counts = {row[0]: row[1] for row in db.execute("SELECT state,COUNT(*) FROM media_audit_jobs WHERE run_id=? GROUP BY state", (run_id,))}
             lanes = tuple(lane for lane in json.loads(run[6] or "[]") if lane in LANES) or LANES
+            chosen = languages.codes(json.loads(run[7] or "[]"))
+            language_where = (" AND (gg_language_match(json_extract(payload,'$.language'),?)=1 OR "
+                              "gg_language_match(json_extract(payload,'$.language'),'unknown')=1)") if chosen else ""
             focused = dict(db.execute("SELECT state,COUNT(*) FROM media_audit_jobs WHERE run_id=? AND lane IN (" +
-                ",".join("?" for _ in lanes) + ") GROUP BY state", [run_id, *lanes]))
+                ",".join("?" for _ in lanes) + ")" + language_where +
+                " AND EXISTS (SELECT 1 FROM items visible WHERE visible.source_key=media_audit_jobs.source_key "
+                "AND NOT EXISTS (SELECT 1 FROM media_hidden_items h WHERE h.item_id=visible.id) "
+                "AND NOT EXISTS (SELECT 1 FROM media_hidden_groups h WHERE h.group_key=visible.group_key)) GROUP BY state",
+                [run_id, *lanes] + (["; ".join(chosen)] if chosen else [])))
         total = sum(counts.values())
         done = sum(counts.get(state, 0) for state in TERMINAL)
         return dict(schema=SCHEMA, status=run[0], total=total, done=done, healthy=counts.get("healthy", 0),
@@ -580,7 +612,7 @@ class MediaHealthAudit:
                     expanded=counts.get("expanded", 0), pending=counts.get("queued", 0), running=counts.get("running", 0),
                     snapshot_items=run[1], expanded_sources=run[2], updated_at=run[3], cancel_requested=bool(run[4]),
                     last_worker_error=run[5], active_lanes=list(lanes), focus_total=sum(focused.values()),
-                    focus_done=sum(focused.get(state, 0) for state in TERMINAL))
+                    focus_done=sum(focused.get(state, 0) for state in TERMINAL), selected_languages=list(chosen))
 
     def stop(self, run_id=None):
         self.initialize()
@@ -595,13 +627,21 @@ class MediaHealthAudit:
             # First sample each title/series before spending the whole run on
             # hundreds of episodes of one show. Expanded descriptors keep their
             # group unsampled until one actual child has been checked.
+            language_where, language_args = "", []
+            if self._selected_languages is not None:
+                language_where = " AND (gg_language_match(json_extract(j.payload,'$.language'),?)=1 OR gg_language_match(json_extract(j.payload,'$.language'),'unknown')=1)"
+                language_args = ["; ".join(self._selected_languages)]
             row = db.execute("""SELECT j.source_key,j.payload,j.lane,j.coverage_key
                 FROM media_audit_jobs j JOIN media_audit_groups g
                   ON g.run_id=j.run_id AND g.lane=j.lane AND g.coverage_key=j.coverage_key
-                WHERE j.run_id=? AND j.state='queued'""" + (" AND j.lane=?" if lane else "") +
+                WHERE j.run_id=? AND j.state='queued'""" + (" AND j.lane=?" if lane else "") + language_where +
+                " AND NOT EXISTS (SELECT 1 FROM media_hidden_sources hidden WHERE hidden.source_key=j.source_key)" +
+                " AND EXISTS (SELECT 1 FROM items visible WHERE visible.source_key=j.source_key AND NOT EXISTS "
+                "(SELECT 1 FROM media_hidden_groups hidden WHERE hidden.group_key=visible.group_key) AND NOT EXISTS "
+                "(SELECT 1 FROM media_hidden_items hidden WHERE hidden.item_id=visible.id))" +
                 " ORDER BY CASE WHEN j.priority<0 THEN 0 ELSE 1 END,g.sampled,j.descriptor,"
                 "g.last_claimed,j.priority,j.source_key LIMIT 1",
-                (run_id, lane) if lane else (run_id,)).fetchone()
+                ([run_id, lane] if lane else [run_id]) + language_args).fetchone()
             if row is None:
                 return None
             db.execute("UPDATE media_audit_jobs SET state='running',attempts=attempts+1,lease_until=? WHERE run_id=? AND source_key=?",
@@ -671,6 +711,22 @@ class MediaHealthAudit:
                 self._member_result(run_id, key, row, "changed", _identity("unknown", "source", "source_changed"))
                 continue
             try:
+                if self._selected_languages is not None and not languages.codes(row.get("language")):
+                    identified = languages.identify_remote(row, cancel=cancelled)
+                    if identified.get("language"):
+                        with self._database_gate:
+                            row = self.index.correct_metadata(identified, expected=row)
+                            encoded = json.dumps(row, ensure_ascii=False, separators=(",", ":"))
+                            with self._connection() as db:
+                                db.execute("UPDATE media_audit_members SET payload=? WHERE run_id=? AND source_key=? AND item_id=?",
+                                           (encoded, run_id, key, str(row["id"])))
+                                db.execute("UPDATE media_audit_jobs SET payload=? WHERE run_id=? AND source_key=?",
+                                           (encoded, run_id, key))
+                if self._selected_languages is not None and not languages.matches(row.get("language"), self._selected_languages):
+                    reason = "language_pending" if not row.get("language") else "language_not_selected"
+                    self._member_result(run_id, key, row, "unknown", _identity("unknown", "audio_language", reason,
+                                        retryable=reason == "language_pending"))
+                    continue
                 prepared, identity = self._identity(row)
                 if identity["status"] == "consistent" and self.index.identity_key(prepared) != self.index.identity_key(row):
                     with self._database_gate:
@@ -798,7 +854,9 @@ class MediaHealthAudit:
         finally:
             slots.release()
 
-    def run(self, run_id=None, *, workers=2, max_seconds=300, max_jobs=1000, cancel=None, lanes=None):
+    def run(self, run_id=None, *, workers=2, max_seconds=300, max_jobs=1000, cancel=None, lanes=None,
+            selected_languages=None):
+        self._selected_languages = languages.selection(selected_languages)
         selected_lanes = tuple(dict.fromkeys(lanes if lanes is not None else LANES))
         if not selected_lanes or any(lane not in LANES for lane in selected_lanes):
             raise ValueError("MEDIA_AUDIT_LANES_INVALID")
@@ -819,7 +877,8 @@ class MediaHealthAudit:
                 unavailable = True
             else:
                 db.execute("UPDATE media_audit_runs SET owner=?,lease_until=?,status='running',cancel_requested=0,"
-                           "last_worker_error='',lanes=? WHERE id=?", (owner, now + 60, json.dumps(selected_lanes), run_id))
+                           "last_worker_error='',lanes=?,search_languages=? WHERE id=?",
+                           (owner, now + 60, json.dumps(selected_lanes), json.dumps(self._selected_languages or []), run_id))
                 db.execute("UPDATE media_audit_jobs SET state='queued',lease_until=0 WHERE run_id=? AND state='running'", (run_id,))
         if unavailable:
             return self.status(run_id)

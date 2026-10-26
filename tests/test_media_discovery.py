@@ -38,7 +38,8 @@ class DiscoveryTests(unittest.TestCase):
 
     def checkpoint(self, page="movies"):
         import hashlib
-        signature = hashlib.sha256(discovery.QUERIES[page].encode()).hexdigest()[:16]
+        from backend.media_languages import archive_clause
+        signature = hashlib.sha256((discovery.QUERIES[page] + " AND " + archive_clause()).encode()).hexdigest()[:16]
         return self.index.meta("discovery_last_" + page + "_" + signature)
 
     def test_keyset_advances_with_zero_offset_past_deep_paging_boundary(self):

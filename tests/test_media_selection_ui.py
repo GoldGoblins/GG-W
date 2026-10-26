@@ -79,7 +79,7 @@ class SelectionBridge(LibraryBridge):
                      library_background_refresh=False, library_requires_reset=False)
 
     def publish_first_page(self, **overrides):
-        values = self.page("live", "all", "all", "all", "all", "", 0)
+        values = self.page("live", "all", "all", self.payload.get("library_language", "all"), "all", "", 0)
         values.update(overrides)
         self.publish(**values)
 

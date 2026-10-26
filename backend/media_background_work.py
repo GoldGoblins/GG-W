@@ -13,6 +13,8 @@ import time
 from contextlib import closing
 
 from backend.media_discovery import discover
+from backend import media_languages as languages
+from backend import media_search_scope as scope
 
 MAX_SECONDS = 300.0
 MAX_JOBS = 240
@@ -30,7 +32,10 @@ def empty_status():
     return dict(running=False, pausing=False, paused=True, phase="paused", external=False,
                 workers=0, discovered_movies=0, discovered_series=0, new_movies=0,
                 new_series=0, new_episodes=0, errors=0, notice="", budget_seconds=300,
-                remaining_seconds=0)
+                remaining_seconds=0, discovered_live=0, new_live=0,
+                operation="expand", checked_existing=0, available_existing=0, failed_existing=0, unknown_existing=0, check_video_prepared=False,
+                **{"new_" + key: 0 for key in ("music", "radio", "games", "downloads")},
+                **{"discovered_" + key: 0 for key in ("music", "radio", "games", "downloads")})
 
 
 class _Deadline:
@@ -79,7 +84,8 @@ class MediaBackgroundWork:
                 tables = {r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
                 saved = db.execute("SELECT value FROM meta WHERE key=?", (META_KEY,)).fetchone() if "meta" in tables else None
                 session = json.loads(saved[0]) if saved else {}
-                for key in ("phase", "discovered_movies", "discovered_series", "errors", "notice"):
+                for key in ("phase", "errors", "notice", "selected_types", "operation", "checked_existing", "available_existing",
+                            "failed_existing", "unknown_existing", "check_video_prepared", *["discovered_" + key for key in scope.DEFAULT_TYPES]):
                     if key in session:
                         status[key] = session[key]
                 deadline = float(session.get("deadline") or 0)
@@ -124,9 +130,15 @@ class MediaBackgroundWork:
     def _groups_query(self, now):
         healthy = self.index._catalogued_sql("i")
         return ("SELECT DISTINCT 'movies' AS kind,i.group_key FROM items i WHERE i.type='movie' AND " + healthy +
+                " UNION SELECT DISTINCT 'live',i.group_key FROM items i WHERE i.type='live' AND " + healthy +
                 " UNION SELECT DISTINCT 'episodes',i.group_key FROM items i WHERE i.type='episode' AND " + healthy +
-                " UNION SELECT DISTINCT 'series',i.parent_key FROM items i WHERE i.type='episode' AND i.parent_key<>'' AND " + healthy,
-                [now, now, now])
+                " UNION SELECT DISTINCT 'series',i.parent_key FROM items i WHERE i.type='episode' AND i.parent_key<>'' AND " + healthy +
+                " UNION SELECT DISTINCT CASE i.kind WHEN 'MUSIC' THEN 'music' WHEN 'RADIO' THEN 'radio' "
+                "WHEN 'GAME' THEN 'games' WHEN 'FETCH' THEN 'downloads' END,i.group_key FROM items i "
+                "WHERE i.kind IN ('MUSIC','RADIO','GAME','FETCH') AND COALESCE(json_extract(i.payload,'$.source'),'')<>'' "
+                "AND NOT EXISTS (SELECT 1 FROM media_hidden_items hidden WHERE hidden.item_id=i.id) "
+                "AND NOT EXISTS (SELECT 1 FROM media_hidden_groups hidden WHERE hidden.group_key=i.group_key)",
+                [now, now, now, now])
 
     def _save(self, **updates):
         with self._lock:
@@ -142,7 +154,7 @@ class MediaBackgroundWork:
             notify(status)
         return status
 
-    def _baseline(self, budget):
+    def _baseline(self, budget, selected_types=None):
         query, parameters = self._groups_query(time.time())
         with self.index.connection() as db:
             db.execute("BEGIN IMMEDIATE")
@@ -150,13 +162,15 @@ class MediaBackgroundWork:
             db.execute("DELETE FROM media_background_baseline")
             db.execute("INSERT INTO media_background_baseline(kind,group_key) " + query, parameters)
             self._session = dict(phase="starting", discovered_movies=0, discovered_series=0, errors=0,
+                                 selected_types=list(selected_types or ("movies", "series")),
                                  notice="", started_at=time.time(), deadline=time.time() + budget)
             db.execute("INSERT OR REPLACE INTO meta(key,value) VALUES(?,?)", (META_KEY, json.dumps(self._session)))
 
-    def run(self, cancel, *, max_seconds=MAX_SECONDS, notify=None):
+    def run(self, cancel, *, max_seconds=MAX_SECONDS, notify=None, selected_languages=None, page=None, selected_types=None, check_only=False):
         """One explicitly requested slice. No timer or browse calls this."""
         if cancel.is_set():
             return self.read_status()
+        targets = scope.types(selected_types) if selected_types is not None else (("live",) if page == "live" else ("movies", "series"))
         existing = self._inspect()
         if existing and existing["active"]:
             # Never silently take over or stop the prior command-line job.
@@ -170,22 +184,56 @@ class MediaBackgroundWork:
                 return self.read_status()
             self._local_active, self._local_cancel = True, cancel
         try:
-            self._baseline(budget)
+            previous = json.loads(self.index.meta(META_KEY) or "{}")
+            chosen_languages = list(languages.selection(selected_languages) or [])
+            resume = bool(check_only and previous.get("operation") == "check" and previous.get("phase") in ("paused", "pausing", "error")
+                          and previous.get("selected_types") == list(targets) and previous.get("selected_languages") == chosen_languages)
+            cycle_started = float(previous.get("check_started_at") or time.time()) if resume else time.time()
+            self._baseline(budget, targets)
+            self._save(operation="check" if check_only else "expand", selected_languages=chosen_languages,
+                       check_started_at=cycle_started, check_video_prepared=bool(resume and previous.get("check_video_prepared")),
+                       **{key: int(previous.get(key) or 0) if resume else 0 for key in
+                          ("checked_existing", "available_existing", "failed_existing", "unknown_existing")})
             self._notify(notify)
-            for page in ("movies", "series"):
+            pages = tuple(target for target in targets if target in ("live", "movies", "series"))
+            for target in (() if check_only else targets):
                 if bounded.is_set():
                     break
-                self._save(phase="discovering_" + page)
+                self._save(phase="discovering_" + target)
                 self._notify(notify)
-                result = discover(self.index, page, cancel=bounded, max_pages=1)
-                updates = {"discovered_" + page: max(0, int(result.get("new_candidates") or 0))}
+                try:
+                    if target in ("movies", "series"):
+                        result = discover(self.index, target, cancel=bounded, max_pages=1, selected_languages=selected_languages)
+                    else:
+                        result = scope.collect(self.index, target, cancel=bounded, selected_languages=selected_languages)
+                except (OSError, RuntimeError, ValueError, TimeoutError):
+                    result = {"error": "source_unavailable"}
+                updates = {"discovered_" + target: max(0, int(result.get("new_candidates", result.get("new_sources")) or 0))}
                 if result.get("error"):
                     updates.update(errors=int(self._session.get("errors") or 0) + 1,
                                    notice="En källsökning kunde inte slutföras. Sparade kandidater kontrolleras ändå.")
                 self._save(**updates)
                 self._notify(notify)
+            other_pending = False
+            other_checked = 0
+            if check_only:
+                from backend.media_existing_checks import check_saved
+                self._save(phase="checking")
+                self._notify(notify)
+                checked = check_saved(self.index, targets, selected_languages=selected_languages, cycle_started=cycle_started,
+                                      cancel=bounded, max_jobs=MAX_JOBS // 2 if pages else MAX_JOBS)
+                other_pending = checked["pending"]
+                other_checked = checked["checked"]
+                self._save(**{key + "_existing": int(self._session.get(key + "_existing") or 0) + checked[key]
+                              for key in ("checked", "available", "failed", "unknown")})
+                self._notify(notify)
             if bounded.is_set():
                 self._save(phase="paused", notice="Pausad. Framstegen är sparade.")
+                raise _Finished
+            if not pages:
+                self._save(phase="paused" if other_pending else "complete", notice="Pausad. Starta källkontrollen för att fortsätta."
+                           if other_pending else "Källkontrollen är klar." if check_only else "Sökningen är klar med källfel. Sparade träffar finns kvar."
+                           if self._session.get("errors") else "Sökningen är klar. Valda mediatyper har uppdaterats.")
                 raise _Finished
             audit = _make_audit(self.index)
             latest = self._inspect()
@@ -197,14 +245,17 @@ class MediaBackgroundWork:
                 audit.include(run_id)
             else:
                 run_id = audit.start(force=False)
+            if check_only and not self._session.get("check_video_prepared"):
+                audit.recheck(run_id, lanes=pages, selected_languages=selected_languages, before=cycle_started)
+                self._save(check_video_prepared=True)
             if bounded.is_set():
                 self._save(phase="paused", notice="Pausad. Framstegen är sparade.")
                 raise _Finished
             self._save(phase="checking")
             self._notify(notify)
             result = audit.run(run_id, workers=2, max_seconds=max(.1, deadline - time.monotonic()),
-                               max_jobs=MAX_JOBS, cancel=bounded, lanes=("movies", "series"))
-            complete = result.get("status") == "complete"
+                               max_jobs=max(1, MAX_JOBS - other_checked), cancel=bounded, lanes=pages, selected_languages=selected_languages)
+            complete = not other_pending and (result.get("status") == "complete" or ("focus_total" in result and result["focus_done"] >= result["focus_total"]))
             self._save(phase="complete" if complete else "paused",
                        notice="Kontrollen är klar." if complete else "Pausad. Framstegen är sparade; starta för att fortsätta.")
         except _Finished:
@@ -224,7 +275,7 @@ class MediaBackgroundWork:
             if self._local_cancel is not None:
                 self._local_cancel.set()
         latest = self._inspect()
-        if latest:
+        if latest and latest["active"]:
             self._save(phase="pausing", notice="Pausar pågående källkontroller…")
             _make_audit(self.index).stop(latest["id"])
             self._notify(notify)
@@ -238,6 +289,6 @@ class MediaBackgroundWork:
         with self._lock:
             local = self._local_active
         if not local and not (latest and latest["active"]):
-            if self.index.path.is_file():
+            if self.index.path.is_file() and self.read_status().get("phase") != "complete":
                 self._save(phase="paused", notice="Pausad. Framstegen är sparade.")
         return self._notify(notify)

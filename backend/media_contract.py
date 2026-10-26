@@ -638,6 +638,7 @@ def radio_browser_stations(
                 "id": item_id("RADIO", source),
                 "kind": "RADIO",
                 "title": title,
+                "language": item.get("languagecodes") or item.get("language") or "",
                 "source": source,
                 "media": "stream",
                 "system": "",

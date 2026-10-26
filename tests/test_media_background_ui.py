@@ -59,17 +59,18 @@ def scenario(project):
     assert bridge.toggles == [True]
     assert toggle.property("text") == "UTÖKA · PÅ"
     # Candidate discoveries are distinct from independently checked additions.
+    scene.root.selectPage("movies")
     work = dict(bridge.payload["library_background"], new_movies=3, new_series=2,
         new_episodes=17, discovered_movies=40, discovered_series=8)
     bridge.publish(library_background=work)
     QTest.qWait(20)
-    assert scene.find("mediaBackgroundCounts").property("text") == "Film +3 · Serier +2 · Avsnitt +17"
-    assert "Film +3" in scene.find("mediaLibraryLoadState").property("text")
+    assert scene.find("mediaBackgroundCounts").property("text") == "Alla medier +5"
+    assert "Alla medier +5" in scene.find("mediaLibraryLoadState").property("text")
     assert "40 filmer" in toggle.property("tip") and "8 serier" in toggle.property("tip")
     scene.click(toggle)
     assert bridge.toggles == [True, False]
     assert toggle.property("text") == "UTÖKA · AV"
-    assert "Film +3" in scene.find("mediaLibraryLoadState").property("text")
+    assert "Alla medier +5" in scene.find("mediaLibraryLoadState").property("text")
     bridge.publish(library_background=dict(work, running=True, pausing=True, phase="pausing"))
     QTest.qWait(20)
     assert not toggle.isEnabled() and toggle.property("text") == "PAUSAR…"

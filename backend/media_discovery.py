@@ -8,6 +8,7 @@ import threading
 from urllib.parse import urlencode
 
 from backend import media_library as library
+from backend import media_languages as languages
 
 PAGE_ITEMS = 200
 MAX_PAGES_PER_RUN = 64
@@ -116,7 +117,8 @@ def _candidate(metadata, page):
     return row
 
 
-def discover(index, page: str, *, cancel: threading.Event | None = None, max_pages: int = MAX_PAGES_PER_RUN):
+def discover(index, page: str, *, cancel: threading.Event | None = None, max_pages: int = MAX_PAGES_PER_RUN,
+             selected_languages=languages.DEFAULT_LANGUAGES):
     """Import the next bounded portion of real provider metadata.
 
     A television upload can be one episode or a duplicate. Series are grouped
@@ -125,7 +127,9 @@ def discover(index, page: str, *, cancel: threading.Event | None = None, max_pag
     Further refreshes resume the cursor until the provider is exhausted.
     """
     page = "series" if page == "series" else "movies"
-    signature = hashlib.sha256(QUERIES[page].encode()).hexdigest()[:16]
+    clause = languages.archive_clause(selected_languages)
+    base_query = QUERIES[page] + (" AND " + clause if clause else "")
+    signature = hashlib.sha256(base_query.encode()).hexdigest()[:16]
     checkpoint = "discovery_last_" + page + "_" + signature
     last_identifier = index.meta(checkpoint)
     def unique_count():
@@ -136,16 +140,17 @@ def discover(index, page: str, *, cancel: threading.Event | None = None, max_pag
     added = 0
     calls = failures = 0
     error = ""
-    exhausted = index.meta("discovery_exhausted_" + page) == "true"
+    exhaustion_key = "discovery_exhausted_" + page + "_" + signature
+    exhausted = index.meta(exhaustion_key) == "true"
     # The limit includes retries, rather than silently doubling a64-page run.
     for _ in range(max(0, min(MAX_PAGES_PER_RUN, int(max_pages)))):
         if cancel and cancel.is_set():
             break
-        query = QUERIES[page]
+        query = base_query
         if last_identifier:
             query = "(" + query + ') AND identifier:{"' + last_identifier + '" TO *}'
         params = {"q": query, "rows": str(PAGE_ITEMS),
-                  "fl[]": ["identifier", "title", "year", "date", "language", "subject", "mediatype", "series", "series_title"],
+                  "fl[]": ["identifier", "title", "year", "date", "language", "description", "subject", "mediatype", "series", "series_title"],
                   "sort[]": "identifier asc", "output": "json"}
         validator = lambda payload: _valid(payload, query=query, after=last_identifier)
         calls += 1
@@ -169,7 +174,7 @@ def discover(index, page: str, *, cancel: threading.Event | None = None, max_pag
             if not isinstance(metadata, dict):
                 continue
             row = _candidate(metadata, page)
-            if row is not None:
+            if row is not None and (languages.matches(row.get("language"), selected_languages) or not row.get("language")):
                 rows.append(row)
         index.ingest_discovered(rows)
         added += len(rows)
@@ -181,11 +186,11 @@ def discover(index, page: str, *, cancel: threading.Event | None = None, max_pag
         index.meta("discovery_imported_" + page, imported)
         index.meta("discovery_total_" + page, int(payload["response"].get("numFound") or 0))
         if not payload["response"]["docs"] or next_identifier == last_identifier:
-            index.meta("discovery_exhausted_" + page, "true")
+            index.meta(exhaustion_key, "true")
             exhausted = True
             break
         exhausted = len(payload["response"]["docs"]) >= int(payload["response"]["numFound"])
-        index.meta("discovery_exhausted_" + page, "true" if exhausted else "false")
+        index.meta(exhaustion_key, "true" if exhausted else "false")
         last_identifier = next_identifier
         if exhausted:
             break

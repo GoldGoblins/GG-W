@@ -29,6 +29,7 @@ from backend.chat_surface_host import ChatSurfaceHost
 
 
 def video(identifier, title, kind="TV", **values):
+    values.setdefault("language", "en")
     return dict(id=identifier, title=title, kind=kind,
                 source="https://example.invalid/" + identifier + ".mp4",
                 media="vod", content_type="movie", play="video", player="qml", **values)
@@ -111,6 +112,9 @@ class CatalogServiceTests(unittest.TestCase):
         media_contract.save_prefs({"mode": "TV"})
         self.bridge = IsolatedBridge()
         self.service = self.bridge._media_library_service()
+        # Paging/selection race fixtures opt into their two video providers;
+        # the mixed-media routing tests below exercise the full selection.
+        self.service._search_types = ("movies", "series")
         self.gui_database_calls = []
         main_thread = threading.get_ident()
         original_connection = MediaIndex.connection
@@ -1041,7 +1045,7 @@ class CatalogServiceTests(unittest.TestCase):
             self.assertEqual(self.identifiers(), ["film-alpha"])
             scene.click("mediaLibrarySearchButton")
             self.until(lambda: not scene.root.property("libraryBusy"))
-            self.archive.assert_called_with("alpha", limit=200)
+            self.archive.assert_called_with("alpha", limit=200, selected_languages=("sv", "en"))
             with patch.object(media_host, "_halt_audio"):
                 scene.click("mediaCatalogRow_film-alpha")
                 self.until(lambda: bool(media_host._item))
@@ -1084,7 +1088,7 @@ class CatalogServiceTests(unittest.TestCase):
         from backend.media_background_work import empty_status
         started, cancelled = threading.Event(), threading.Event()
         self.service.set_active(False)
-        def run(cancel, *, notify):
+        def run(cancel, *, notify, **kwargs):
             started.set()
             notify(dict(empty_status(), running=True, paused=False, phase="checking"))
             if cancel.wait(2):
@@ -1107,6 +1111,112 @@ class CatalogServiceTests(unittest.TestCase):
             self.assertFalse(cancelled.is_set(), "Hiding MEDIA cancelled explicitly started background work")
             self.service.close()
             self.assertTrue(cancelled.wait(1))
+
+    def test_search_languages_persist_even_when_browsing_cancels_an_unrelated_search(self):
+        self.bridge.mediaLibraryLanguages("sv; en; de")
+        self.browse("movies", query="Alpha")
+        self.settled()
+        from backend.media_languages import PREFERENCE_KEY
+        self.assertEqual(self.db_work(lambda: self.service.index.meta(PREFERENCE_KEY)), "sv; en; de")
+        self.assertEqual(self.service._search_languages, ("sv", "en", "de"))
+        self.assertEqual(media_host._library_page_state["library_discovery_languages"], ["sv", "en", "de"])
+
+    def test_media_types_persist_and_background_follows_selection_instead_of_active_page(self):
+        from backend import media_search_scope as scope
+        from backend.media_background_work import empty_status
+        self.bridge.mediaLibraryTypes("music; games")
+        self.browse("live")
+        self.settled()
+        self.assertEqual(self.db_work(lambda: self.service.index.meta(scope.PREFERENCE_KEY)), "music; games")
+        self.assertEqual(media_host._library_page_state["library_discovery_types"], ["music", "games"])
+        with patch.object(self.service._background_work, "run", return_value=empty_status()) as worker:
+            self.bridge.mediaLibraryBackground(True)
+            self.until(lambda: worker.called)
+            self.assertEqual(worker.call_args.kwargs["selected_types"], ("music", "games"))
+            self.assertNotIn("page", worker.call_args.kwargs)
+
+    def test_search_routes_selected_types_independently_of_the_open_tab(self):
+        from backend import media_search_scope as scope
+        self.bridge.mediaLibraryTypes("music; radio; games")
+        self.browse("movies")
+        with patch.object(scope, "search", return_value="") as search:
+            self.bridge.mediaLibrarySearch("Alpha")
+            self.settled()
+        self.assertEqual(search.call_args.kwargs["selected_types"], ("music", "radio", "games"))
+        self.assertEqual(search.call_args.args[1], "Alpha")
+        self.archive.assert_not_called()
+
+    def test_explicit_source_check_uses_check_only_worker_and_stop_cancels_it(self):
+        from backend.media_background_work import empty_status
+        started, stopped = threading.Event(), threading.Event()
+        def check(cancel, **kwargs):
+            self.assertTrue(kwargs["check_only"])
+            started.set()
+            if cancel.wait(2):
+                stopped.set()
+            return dict(empty_status(), operation="check")
+        with patch.object(self.service._background_work, "run", side_effect=check):
+            self.bridge.mediaLibraryCheck(True)
+            self.until(started.is_set)
+            self.assertEqual(media_host._library_page_state["library_background"]["operation"], "check")
+            self.bridge.mediaLibraryCheck(False)
+            self.until(stopped.is_set)
+
+    def test_next_and_previous_follow_the_playing_list_after_browsing_elsewhere(self):
+        self.browse("movies")
+        self.bridge.mediaPlay("film-alpha")
+        self.settled()
+        self.browse("series")
+        self.bridge.mediaLibraryStep(1, False)
+        self.settled()
+        self.assertEqual(media_host._item["id"], "film-beta")
+        self.bridge.mediaLibraryStep(-1, False)
+        self.settled()
+        self.assertEqual(media_host._item["id"], "film-alpha")
+
+    def test_episode_auto_next_is_opt_in_and_advances_only_once_per_request(self):
+        episodes = [dict(video("queue-" + str(n), "Queue S01E" + str(n)), content_type="episode",
+                         series_title="Queue", season=1, episode=n) for n in (1, 2, 10)]
+        self.ingest(episodes)
+        self.browse("series")
+        parent = self.identifiers()[0]
+        self.bridge.mediaOpenCollection(parent)
+        self.settled()
+        self.bridge.mediaPlay("queue-1")
+        self.settled()
+        self.bridge.mediaLibraryStep(1, True)
+        self.settled()
+        self.assertEqual(media_host._item["id"], "queue-1")
+        self.bridge.mediaLibraryAutoNext(True)
+        self.settled()
+        self.bridge.mediaLibraryStep(1, True)
+        self.bridge.mediaLibraryStep(1, True)
+        self.settled()
+        self.assertEqual(media_host._item["id"], "queue-2")
+        self.assertEqual(self.db_work(lambda: self.service.index.meta("media_auto_next_episode")), "true")
+
+    def test_remove_and_undo_are_ordered_and_survive_a_page_change(self):
+        self.browse("movies")
+        self.settled()
+        from backend.media_index import view_request
+        baseline = self.db_work(lambda: self.service.index.browse(view_request("movies")))["library_total"]
+        self.bridge.mediaLibraryHideSource("film-alpha", True)
+        self.browse("series")
+        self.settled()
+        self.assertEqual(self.db_work(lambda: self.service.index.browse(view_request("movies")))["library_total"], baseline - 1)
+        self.bridge.mediaLibraryHideSource("film-alpha", False)
+        self.settled()
+        self.assertEqual(self.db_work(lambda: self.service.index.browse(view_request("movies")))["library_total"], baseline)
+
+    def test_diagnostic_slot_publishes_a_report_without_starting_playback(self):
+        self.browse("movies")
+        self.settled()
+        self.bridge.mediaLibraryDiagnose("film-alpha")
+        self.settled()
+        report = media_host._library_page_state["library_diagnostic"]
+        self.assertFalse(report["running"])
+        self.assertIn("mediedata", report["message"])
+        self.assertFalse(media_host._item)
 
     def test_filter_change_cancels_abandoned_snapshot_builds_before_latest_view(self):
         began = {page: threading.Event() for page in ("movies", "series")}

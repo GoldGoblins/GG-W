@@ -25,6 +25,8 @@ Item {
     property bool playerRetryExhausted: false
     property bool playerResetting: false
     property bool playerEnded: false
+    property bool autoNextEpisodes: false
+    property string autoNextHandledKey: ""
     property bool playerResolving: false
     property int playerResolveTicket: 0
     property int playerGeneration: -1
@@ -42,6 +44,15 @@ Item {
     property string libraryLetter: "all"
     property string categoryFilter: "all"
     property string languageFilter: "all"
+    property bool availableOnly: false
+    property var discoveryLanguages: ["sv", "en"]
+    property var discoveryTypes: ["live", "movies", "series", "music", "radio", "downloads", "games"]
+    property var discoveryLanguageOptions: [{value: "sv", label: "Svenska"}, {value: "en", label: "Engelska"}]
+    property string removedItemId: ""
+    property string removedItemTitle: ""
+    property string diagnosticTitle: ""
+    readonly property bool videoLibrary: ["live", "movies", "series"].indexOf(root.libraryPage) >= 0
+    readonly property string defaultLanguageFilter: root.videoLibrary ? "sv; en" : "all"
     property string seasonFilter: "all"
     property string localQuery: ""
     property var localCollection: []
@@ -88,7 +99,7 @@ Item {
         && (root.catalogRowsReady || root.restoringCatalogPosition)
         && root.catalogModel.count > 0 && root.catalogModel.count < root.catalogTotal
     readonly property bool hasLibraryFilters: root.libraryLetter !== "all" || root.categoryFilter !== "all"
-        || root.languageFilter !== "all" || root.seasonFilter !== "all" || root.localQuery.trim().length > 0
+        || root.languageFilter !== root.defaultLanguageFilter || root.availableOnly || root.seasonFilter !== "all" || root.localQuery.trim().length > 0
     readonly property bool pagedLibrary: !!root.surfaceHost && !!root.surfaceHost.mediaLibraryBrowse
     readonly property string desiredBrowseKey: root.browseKey(root.libraryPage, root.libraryLetter,
         root.categoryFilter, root.languageFilter, root.seasonFilter, root.localQuery, root.pageOffset)
@@ -116,17 +127,30 @@ Item {
     readonly property bool backgroundRunning: root.libraryBackground.running === true
     readonly property bool backgroundPausing: root.libraryBackground.pausing === true
     readonly property bool hasBackgroundControl: !!root.surfaceHost && !!root.surfaceHost.mediaLibraryBackground
-    readonly property string backgroundCounts: "Film +" + Number(root.libraryBackground.new_movies || 0)
-        + " · Serier +" + Number(root.libraryBackground.new_series || 0)
-        + " · Avsnitt +" + Number(root.libraryBackground.new_episodes || 0)
+    readonly property bool hasSourceCheckControl: !!root.surfaceHost && !!root.surfaceHost.mediaLibraryCheck
+    readonly property bool sourceCheckRunning: root.backgroundRunning
+        && (root.libraryBackground.operation === "check" || root.libraryBackground.external === true && root.hasSourceCheckControl)
+    readonly property bool expansionRunning: root.backgroundRunning && !root.sourceCheckRunning
+    readonly property string backgroundCountDetails: root.discoveryTypes.map(function(key) {
+        return root.mediaTypeLabel(key) + " +" + Number(root.libraryBackground["new_" + key] || 0)
+    }).concat(root.discoveryTypes.indexOf("series") >= 0
+        ? ["Avsnitt +" + Number(root.libraryBackground.new_episodes || 0)] : []).join(" · ")
+    readonly property string backgroundCounts: root.discoveryTypes.length <= 2 ? root.backgroundCountDetails
+        : (root.discoveryTypes.length === root.libraryNav.length ? "Alla medier" : root.discoveryTypes.length + " mediatyper")
+            + " +" + root.discoveryTypes.reduce(function(total, key) { return total + Number(root.libraryBackground["new_" + key] || 0) }, 0)
+    readonly property string sourceCheckProgress: root.libraryBackground.check_video_prepared === true && Number(root.libraryAudit.total || 0) > 0
+        ? Number(root.libraryAudit.done || 0) + "/" + Number(root.libraryAudit.total)
+        : Number(root.libraryBackground.checked_existing || 0) + " kontrollerade"
     readonly property string backgroundSummary: root.backgroundPausing ? "Pausar · sparar framsteg…"
-        : root.backgroundRunning ? (String(root.libraryBackground.phase || "").indexOf("discovering_") === 0
-            ? "Söker · Fynd: " + Number(root.libraryBackground.discovered_movies || 0) + " filmer · "
-                + Number(root.libraryBackground.discovered_series || 0) + " serier"
-            : "Kontrollerar · " + root.backgroundCounts)
         : root.libraryBackground.phase === "error" ? String(root.libraryBackground.notice || "Källkontrollen kunde inte starta.")
-        : Number(root.libraryBackground.new_movies || 0) + Number(root.libraryBackground.new_series || 0)
-            + Number(root.libraryBackground.new_episodes || 0) > 0 ? "Pausad · " + root.backgroundCounts : ""
+        : root.libraryBackground.operation === "check" ? (root.sourceCheckRunning ? "Källkontroll · "
+            : root.libraryBackground.phase === "complete" ? "Kontroll klar · " : "Kontroll pausad · ") + root.sourceCheckProgress
+        : root.backgroundRunning ? (String(root.libraryBackground.phase || "").indexOf("discovering_") === 0
+            ? "Söker · " + root.mediaTypeLabel(String(root.libraryBackground.phase).slice(12))
+            : "Kontrollerar · " + root.backgroundCounts)
+        : root.discoveryTypes.some(function(key) { return Number(root.libraryBackground["new_" + key] || 0) > 0 })
+            || root.discoveryTypes.indexOf("series") >= 0 && Number(root.libraryBackground.new_episodes || 0) > 0
+            ? (root.libraryBackground.phase === "complete" ? "Klar · " : "Pausad · ") + root.backgroundCounts : ""
     readonly property string auditProgressText: Number(root.libraryAudit.total || 0) > 0
         ? "Källkontroll " + Number(root.libraryAudit.done || 0) + "/" + Number(root.libraryAudit.total)
             + " · Bibliotek " + root.pageTotal
@@ -184,14 +208,16 @@ Item {
         root.status.buffering_id || root.pendingPlayId || root.now.id || ""
     )
 
-    function browseKey(page, letter, category, language, season, query, offset) {
+    function browseKey(page, letter, category, language, season, query, offset, available) {
         return JSON.stringify([String(page), String(letter || "all"), String(category || "all"),
-            String(language || "all"), String(season || "all"), String(query || "").trim(), Number(offset || 0)])
+            String(language || "all"), String(season || "all"), String(query || "").trim(), Number(offset || 0),
+            available === undefined ? root.availableOnly : available === true])
     }
 
     function snapshotBrowseKey(snapshot) {
         return root.browseKey(snapshot.library_page, snapshot.library_letter, snapshot.library_category,
-            snapshot.library_language, snapshot.library_season, snapshot.library_query, snapshot.library_offset)
+            snapshot.library_language, snapshot.library_season, snapshot.library_query, snapshot.library_offset,
+            snapshot.library_available_only === true)
     }
 
     function queueBrowse(resetOffset) {
@@ -218,8 +244,13 @@ Item {
         root.browsePending = true
         root.browseError = ""
         try {
-            root.applyStatus(root.surfaceHost.mediaLibraryBrowse(root.libraryPage, root.libraryLetter,
-                root.categoryFilter, root.languageFilter, root.seasonFilter, root.localQuery.trim(), root.pageOffset))
+            if (root.surfaceHost.mediaLibraryBrowseFiltered)
+                root.applyStatus(root.surfaceHost.mediaLibraryBrowseFiltered(root.libraryPage, root.libraryLetter,
+                root.categoryFilter, root.languageFilter, root.seasonFilter, root.localQuery.trim(), root.pageOffset,
+                root.availableOnly))
+            else
+                root.applyStatus(root.surfaceHost.mediaLibraryBrowse(root.libraryPage, root.libraryLetter,
+                    root.categoryFilter, root.languageFilter, root.seasonFilter, root.localQuery.trim(), root.pageOffset))
         } catch (err) {
             root.browsePending = false
             root.browseError = "Kunde inte läsa biblioteket. Försök igen."
@@ -281,9 +312,13 @@ Item {
         root.chunkTicket += 1
         chunkTimeout.restart()
         try {
-            root.surfaceHost.mediaLibraryChunk(root.libraryPage, root.libraryLetter,
+            if (root.surfaceHost.mediaLibraryChunkFiltered)
+                root.surfaceHost.mediaLibraryChunkFiltered(root.libraryPage, root.libraryLetter,
                 root.categoryFilter, root.languageFilter, root.seasonFilter, root.localQuery.trim(),
-                root.chunkOffset, root.chunkTicket)
+                root.chunkOffset, root.chunkTicket, root.availableOnly)
+            else
+                root.surfaceHost.mediaLibraryChunk(root.libraryPage, root.libraryLetter,
+                    root.categoryFilter, root.languageFilter, root.seasonFilter, root.localQuery.trim(), root.chunkOffset, root.chunkTicket)
         } catch (err) {
             root.chunkBusy = false
             root.chunkError = "Kunde inte läsa fler titlar. Försök igen."
@@ -570,6 +605,7 @@ Item {
     function rememberParentView() {
         var first = Math.max(0, Math.floor((catalogList.contentY - catalogList.originY) / 50))
         root.parentLibraryView = {letter: root.libraryLetter, category: root.categoryFilter,
+            availableOnly: root.availableOnly,
             language: root.languageFilter, query: root.localQuery, offset: root.pageOffset,
             selectedId: catalogList.currentIndex >= 0 && catalogList.currentIndex < catalogModel.count
                 ? String(catalogModel.get(catalogList.currentIndex).key) : "",
@@ -611,6 +647,7 @@ Item {
     onLibraryLetterChanged: root.queueBrowse(true)
     onCategoryFilterChanged: root.queueBrowse(true)
     onLanguageFilterChanged: root.queueBrowse(true)
+    onAvailableOnlyChanged: root.queueBrowse(true)
     onSeasonFilterChanged: root.queueBrowse(true)
     onLocalQueryChanged: root.queueBrowse(true)
     onPageOffsetChanged: root.queueBrowse(false)
@@ -632,6 +669,73 @@ Item {
         if (Array.isArray(value))
             return value.join(" / ")
         return String(value)
+    }
+
+    function languageLabel(row) {
+        if (row.language_label) return String(row.language_label)
+        var names = {sv: "Svenska", en: "Engelska", no: "Norska", da: "Danska", fi: "Finska",
+            de: "Tyska", fr: "Franska", es: "Spanska", it: "Italienska", ar: "Arabiska"}
+        return root.rowValue(row, "language").split(/\s*[;,/]\s*/).map(function(code) {
+            if (names[code]) return names[code]
+            var option = root.discoveryLanguageOptions.filter(function(item) { return item.value === code })[0]
+            return option ? option.label : "Okänt språk"
+        }).join(" / ")
+    }
+
+    function chooseDiscoveryLanguage(value) {
+        var chosen = root.discoveryLanguages.slice()
+        var index = chosen.indexOf(value)
+        if (index >= 0) {
+            if (chosen.length === 1) return
+            chosen.splice(index, 1)
+        } else chosen.push(value)
+        root.discoveryLanguages = chosen
+        if (root.surfaceHost && root.surfaceHost.mediaLibraryLanguages)
+            root.applyStatus(root.surfaceHost.mediaLibraryLanguages(chosen.join("; ")))
+    }
+
+    function mediaTypeLabel(value) {
+        var option = root.libraryNav.filter(function(row) { return row.id === value })[0]
+        return option ? option.label : "Media"
+    }
+
+    function setDiscoveryTypes(chosen) {
+        if (!chosen.length || root.backgroundRunning || root.backgroundPausing) return
+        root.discoveryTypes = root.libraryNav.filter(function(row) { return chosen.indexOf(row.id) >= 0 })
+            .map(function(row) { return row.id })
+        if (root.surfaceHost && root.surfaceHost.mediaLibraryTypes)
+            root.applyStatus(root.surfaceHost.mediaLibraryTypes(root.discoveryTypes.join("; ")))
+    }
+
+    function chooseDiscoveryType(value) {
+        var chosen = root.discoveryTypes.slice()
+        var index = chosen.indexOf(value)
+        if (index >= 0) {
+            if (chosen.length === 1) return
+            chosen.splice(index, 1)
+        } else chosen.push(value)
+        root.setDiscoveryTypes(chosen)
+    }
+
+    function diagnoseItem(row) {
+        if (!root.surfaceHost || !root.surfaceHost.mediaLibraryDiagnose) return
+        root.diagnosticTitle = root.rowTitle(row)
+        root.applyStatus(root.surfaceHost.mediaLibraryDiagnose(String(row.id)))
+        diagnosticPopup.open()
+    }
+
+    function removeItem(row) {
+        if (!root.surfaceHost || !root.surfaceHost.mediaLibraryHideSource) return
+        root.removedItemId = String(row.id)
+        root.removedItemTitle = root.rowTitle(row)
+        root.applyStatus(root.surfaceHost.mediaLibraryHideSource(root.removedItemId, true))
+    }
+
+    function undoRemove() {
+        if (root.removedItemId && root.surfaceHost && root.surfaceHost.mediaLibraryHideSource)
+            root.applyStatus(root.surfaceHost.mediaLibraryHideSource(root.removedItemId, false))
+        root.removedItemId = ""
+        root.removedItemTitle = ""
     }
 
     function rowTitle(row) {
@@ -710,7 +814,12 @@ Item {
             }
             if (root.categoryFilter !== "all" && root.rowValue(row, "category") !== root.categoryFilter)
                 return false
-            if (root.languageFilter !== "all" && root.rowValue(row, "language") !== root.languageFilter)
+            var rowLanguages = root.rowValue(row, "language").split(/\s*[;,/]\s*/)
+            var chosenLanguages = root.languageFilter.split(/\s*[;,/]\s*/)
+            if (root.languageFilter === "unknown" ? rowLanguages.join("").length > 0
+                : root.languageFilter !== "all" && !chosenLanguages.some(function(code) { return rowLanguages.indexOf(code) >= 0 }))
+                return false
+            if (root.availableOnly && ["verified", "available"].indexOf(String(row.availability || "")) < 0)
                 return false
             if (root.seasonFilter !== "all" && String(row.season === undefined ? 1 : row.season) !== root.seasonFilter)
                 return false
@@ -722,6 +831,17 @@ Item {
     }
 
     function filterOptions(field, label) {
+        if (field === "language") {
+            var languageRows = [{value: "all", label: "Alla språk"}, {value: "sv; en", label: "Svenska och engelska"}]
+            var languageCodes = ["sv", "en"]
+            root.pageItems.forEach(function(row) {
+                root.rowValue(row, "language").split(/\s*[;,/]\s*/).forEach(function(code) {
+                    if (code && languageCodes.indexOf(code) < 0) languageCodes.push(code)
+                })
+            })
+            return languageRows.concat(languageCodes.map(function(code) { return {value: code, label: root.languageLabel({language: code})} }))
+                .concat([{value: "unknown", label: "Okänt språk · identifiering väntar"}])
+        }
         var values = []
         var seen = {}
         root.pageItems.forEach(function(row) {
@@ -761,7 +881,7 @@ Item {
         }
         if (String(row.kind || "") === "RADIO") {
             var radioParts = ["RADIO"]
-            if (row.language) radioParts.push(root.rowValue(row, "language"))
+            if (row.language) radioParts.push(root.languageLabel(row))
             if (row.country || row.provider) radioParts.push(String(row.country || row.provider))
             return radioParts.join(" · ")
         }
@@ -783,8 +903,10 @@ Item {
             parts.push(row._members.length + " avsnitt")
         if (type !== "episode" && row.year)
             parts.push(String(row.year))
-        if (row.language)
-            parts.push(root.rowValue(row, "language"))
+        if (row.language || root.videoLibrary)
+            parts.push(root.languageLabel(row))
+        if (["live", "movie", "episode", "series"].indexOf(type) >= 0)
+            parts.push(["available", "verified"].indexOf(String(row.availability || "")) >= 0 ? "Tillgänglig" : "Ej kontrollerad")
         var provider = row.provider || row.source_label || row.artist || row.country || row.year
         if (provider)
             parts.push(String(provider))
@@ -819,7 +941,8 @@ Item {
         root.pageOffset = 0
         root.libraryLetter = "all"
         root.categoryFilter = "all"
-        root.languageFilter = "all"
+        root.languageFilter = root.defaultLanguageFilter
+        root.availableOnly = false
         root.seasonFilter = "all"
         root.localQuery = ""
         searchBox.text = ""
@@ -846,6 +969,10 @@ Item {
         }
         if (target.mode !== root.mode)
             root.setMode(target.mode)
+        if (!sameLibrary && selectedQuery.length > 0) {
+            root.localQuery = selectedQuery
+            searchBox.text = selectedQuery
+        }
         catalogList.currentIndex = -1
         catalogList.positionViewAtBeginning()
     }
@@ -858,12 +985,15 @@ Item {
             root.localCollection = row._members
             root.localCollectionTitle = root.rowTitle(row)
             root.clearFilters()
+            root.languageFilter = "all"
         } else if ((root.contentType(row) === "series" || root.contentType(row) === "collection")
                    && root.surfaceHost && root.surfaceHost.mediaOpenCollection) {
             root.rememberParentView()
             root.expectedCollectionKey = String(row.collection_key || "")
             root.expectedCollectionTitle = root.rowTitle(row)
             root.clearFilters()
+            root.languageFilter = "all"
+            root.availableOnly = false
             if (root.pagedLibrary) {
                 browseTimer.stop()
                 root.browsePending = true
@@ -917,6 +1047,7 @@ Item {
             root.libraryLetter = parentView.letter
             root.categoryFilter = parentView.category
             root.languageFilter = parentView.language
+            root.availableOnly = parentView.availableOnly === true
             root.localQuery = parentView.query
             searchBox.text = parentView.query
             root.pageOffset = parentView.offset
@@ -937,12 +1068,21 @@ Item {
     }
 
     function toggleBackgroundLibrary() {
-        if (!root.hasBackgroundControl || root.backgroundPausing)
+        if (!root.hasBackgroundControl || root.backgroundPausing || root.sourceCheckRunning)
             return
         try {
-            root.applyStatus(root.surfaceHost.mediaLibraryBackground(!root.backgroundRunning))
+            root.applyStatus(root.surfaceHost.mediaLibraryBackground(!root.expansionRunning))
         } catch (err) {
             root.browseError = "Kunde inte ändra bakgrundsarbetet. Försök igen."
+        }
+    }
+
+    function toggleSourceCheck() {
+        if (!root.hasSourceCheckControl || root.backgroundPausing || root.expansionRunning) return
+        try {
+            root.applyStatus(root.surfaceHost.mediaLibraryCheck(!root.sourceCheckRunning))
+        } catch (err) {
+            root.browseError = "Källkontrollen kunde inte ändras. Försök igen."
         }
     }
 
@@ -1118,6 +1258,61 @@ Item {
             root.refresh()
     }
 
+    function playbackIndex() {
+        var identifier = String(root.now.id || "")
+        for (var i = 0; i < root.catalogModel.count; ++i)
+            if (String(root.catalogModel.get(i).entry.id || "") === identifier) return i
+        return -1
+    }
+
+    function canStepPlayback(direction) {
+        if (!root.now.id || root.loadingItemId || root.status.library_playback_busy === true) return false
+        var field = direction < 0 ? "library_playback_can_previous" : "library_playback_can_next"
+        if (root.surfaceHost && root.surfaceHost.mediaLibraryStep)
+            return root.status[field] !== false
+        var index = root.playbackIndex()
+        return index >= 0 && index + direction >= 0 && index + direction < root.catalogModel.count
+    }
+
+    function stepPlayback(direction, automatic) {
+        if (!root.surfaceHost || root.loadingItemId || root.status.library_playback_busy === true) return
+        if (automatic && !root.autoNextEpisodes) return
+        if (root.surfaceHost.mediaLibraryStep) {
+            root.applyStatus(root.surfaceHost.mediaLibraryStep(direction, automatic === true))
+            return
+        }
+        var index = root.playbackIndex() + direction
+        if (index < 0 || index >= root.catalogModel.count) return
+        var row = root.catalogModel.get(index).entry
+        if (automatic && (root.contentType(row) !== "episode"
+            || String(row.series_title || "") !== String(root.now.series_title || ""))) return
+        catalogList.currentIndex = index
+        catalogList.positionViewAtIndex(index, ListView.Contain)
+        root.activateItem(row)
+    }
+
+    function toggleAutoNext() {
+        root.autoNextEpisodes = !root.autoNextEpisodes
+        if (root.surfaceHost && root.surfaceHost.mediaLibraryAutoNext)
+            root.applyStatus(root.surfaceHost.mediaLibraryAutoNext(root.autoNextEpisodes))
+    }
+
+    function finishVideo() {
+        if (root.playerResetting || !root.qmlVideo || holePlayer.mediaStatus !== MediaPlayer.EndOfMedia
+            || Number(root.status.playback_generation || 0) !== root.playerGeneration) return
+        root.playerEnded = true
+        root.playerWantsPlay = false
+        if (!root.autoNextEpisodes || root.liveVideo || root.contentType(root.now) !== "episode"
+            || root.status.paused === true || root.loadingItemId || holePlayer.error !== MediaPlayer.NoError)
+            return
+        var duration = Number(holePlayer.duration || 0)
+        if (duration > 0 && Number(holePlayer.position || 0) + 1500 < duration) return
+        var key = JSON.stringify([String(root.now.id || ""), root.lastPlayUrl, root.playerGeneration])
+        if (root.autoNextHandledKey === key) return
+        root.autoNextHandledKey = key
+        root.stepPlayback(1, true)
+    }
+
     function openCliamp() {
         if (!root.surfaceHost)
             return
@@ -1148,6 +1343,9 @@ Item {
     function search(query) {
         if (root.pagedLibrary) {
             root.localQuery = String(query || "")
+            if (root.localQuery.trim().length > 0 && root.surfaceHost.mediaLibraryTypes
+                && root.discoveryTypes.indexOf(root.libraryPage) < 0)
+                root.selectPage(String(root.discoveryTypes[0]))
             root.pageOffset = 0
             root.browseNow()
             if (root.surfaceHost.mediaLibrarySearch)
@@ -1343,8 +1541,7 @@ Item {
         root.reportPlayerState()
         var status = holePlayer.mediaStatus
         if (status === MediaPlayer.EndOfMedia && !root.liveVideo) {
-            root.playerEnded = true
-            root.playerWantsPlay = false
+            root.finishVideo()
             root.reportPlayerState()
             return
         }
@@ -1496,6 +1693,14 @@ Item {
     }
 
     function syncStatusPlayer() {
+        if (root.status.library_discovery_languages)
+            root.discoveryLanguages = root.status.library_discovery_languages
+        if (root.status.library_discovery_language_options)
+            root.discoveryLanguageOptions = root.status.library_discovery_language_options
+        if (root.status.library_discovery_types)
+            root.discoveryTypes = root.status.library_discovery_types
+        if (root.status.library_auto_next !== undefined)
+            root.autoNextEpisodes = root.status.library_auto_next === true
         root.rememberCatalog()
         root.syncPlayer()
     }
@@ -1620,6 +1825,225 @@ Item {
             root.cancelChunk()
     }
 
+    Popup {
+        id: discoveryPopup
+        objectName: "mediaDiscoveryFilterPopup"
+        parent: root
+        x: Math.max(8, (root.width - width) / 2)
+        y: Math.max(8, (root.height - height) / 2)
+        width: Math.min(420, root.width - 16)
+        height: Math.min(580, root.height - 16)
+        padding: 16
+        focus: true
+        modal: true
+        background: Rectangle { color: "#191919"; radius: 6; border.color: "#686057" }
+        contentItem: Column {
+            id: discoveryContent
+            spacing: 10
+            Text { id: discoveryHeading; text: "Utöka / sök"; color: root.ink; font.pixelSize: 16; font.bold: true }
+            Text {
+                id: discoveryIntro
+                width: parent.width
+                text: "Välj en, flera eller alla mediatyper och vilka språk du vill söka efter. Träffar visas på respektive flik."
+                color: root.muted; wrapMode: Text.WordWrap; font.pixelSize: 12
+            }
+            Text {
+                id: discoveryExplanation
+                width: parent.width
+                text: root.backgroundRunning || root.backgroundPausing ? "Pausa Utöka för att ändra sökfiltret."
+                    : "Okänt språk undersöks via källans metadata och ljudspårens språktaggar. Osäkra fynd sparas för fortsatt identifiering."
+                color: root.gold; wrapMode: Text.WordWrap; font.pixelSize: 11
+            }
+            ScrollView {
+                width: parent.width
+                height: Math.max(50, discoveryPopup.availableHeight - discoveryHeading.height - discoveryIntro.height
+                    - discoveryExplanation.height - discoveryDone.height - 4 * discoveryContent.spacing)
+                clip: true
+                contentWidth: availableWidth
+                ScrollBar.vertical: GgScrollBar {
+                    keepVisible: true
+                    orientation: Qt.Vertical
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                }
+                Column {
+                    width: parent.width
+                    spacing: 4
+                    Row {
+                        width: parent.width
+                        visible: !!root.surfaceHost && !!root.surfaceHost.mediaLibraryTypes
+                        height: visible ? 28 : 0
+                        Text {
+                            width: Math.max(0, parent.width - allMediaTypesButton.width - 8)
+                            height: 28
+                            text: "Mediatyper"
+                            color: root.ink
+                            font.pixelSize: 13
+                            font.bold: true
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        MediaAction {
+                            id: allMediaTypesButton
+                            objectName: "mediaDiscoveryTypesAll"
+                            text: "Välj alla"
+                            enabled: !root.backgroundRunning && !root.backgroundPausing
+                                && root.discoveryTypes.length < root.libraryNav.length
+                            onClicked: root.setDiscoveryTypes(root.libraryNav.map(function(row) { return row.id }))
+                        }
+                    }
+                    Grid {
+                        width: parent.width
+                        visible: !!root.surfaceHost && !!root.surfaceHost.mediaLibraryTypes
+                        height: visible ? implicitHeight : 0
+                        columns: width >= 300 ? 2 : 1
+                        Repeater {
+                            model: root.libraryNav
+                            delegate: MediaSearchChoice {
+                                required property var modelData
+                                objectName: "mediaDiscoveryType_" + modelData.id
+                                width: (parent.width / parent.columns)
+                                text: modelData.label
+                                checked: root.discoveryTypes.indexOf(modelData.id) >= 0
+                                enabled: !root.backgroundRunning && !root.backgroundPausing
+                                    && (!checked || root.discoveryTypes.length > 1)
+                                onClicked: root.chooseDiscoveryType(modelData.id)
+                            }
+                        }
+                    }
+                    Text {
+                        width: parent.width
+                        topPadding: 8
+                        text: "Språk"
+                        color: root.ink
+                        font.pixelSize: 13
+                        font.bold: true
+                    }
+                    Repeater {
+                        model: root.discoveryLanguageOptions
+                        delegate: MediaSearchChoice {
+                            id: languageChoice
+                            required property var modelData
+                            objectName: "mediaDiscoveryLanguage_" + modelData.value
+                            width: parent.width
+                            text: modelData.label
+                            checked: root.discoveryLanguages.indexOf(modelData.value) >= 0
+                            enabled: !root.backgroundRunning && !root.backgroundPausing
+                                && (!checked || root.discoveryLanguages.length > 1)
+                            onClicked: root.chooseDiscoveryLanguage(modelData.value)
+                        }
+                    }
+                }
+            }
+            MediaAction { id: discoveryDone; text: "Klart"; width: parent.width; onClicked: discoveryPopup.close() }
+        }
+    }
+
+    Popup {
+        id: diagnosticPopup
+        objectName: "mediaDiagnosticPopup"
+        parent: root
+        x: Math.max(8, (root.width - width) / 2)
+        y: Math.max(8, (root.height - height) / 2)
+        width: Math.min(460, root.width - 16)
+        height: Math.min(root.height - 16, diagnosticContent.implicitHeight + 32)
+        padding: 16
+        focus: true
+        modal: true
+        background: Rectangle { color: "#191919"; radius: 6; border.color: "#686057" }
+        contentItem: Column {
+            id: diagnosticContent
+            spacing: 12
+            Text { text: "Felsök källa"; color: root.ink; font.pixelSize: 16; font.bold: true }
+            Text { width: parent.width; text: root.diagnosticTitle; wrapMode: Text.WordWrap; color: root.gold; font.pixelSize: 13 }
+            Text {
+                objectName: "mediaDiagnosticMessage"
+                width: parent.width
+                text: root.status.library_diagnostic && root.status.library_diagnostic.running ? "Kontrollerar länken och kända alternativ…"
+                    : String((root.status.library_diagnostic || {}).message || "Förbereder källkontroll…")
+                color: root.ink; wrapMode: Text.WordWrap; font.pixelSize: 12
+            }
+            MediaAction {
+                objectName: "mediaUseReplacement"
+                width: parent.width
+                visible: !!(root.status.library_diagnostic || {}).replacement_id
+                text: String((root.status.library_diagnostic || {}).action_label || "Spela ersättningskällan")
+                onClicked: {
+                    root.playItem(String(root.status.library_diagnostic.replacement_id))
+                    diagnosticPopup.close()
+                }
+            }
+            MediaAction { text: "Stäng"; width: parent.width; onClicked: diagnosticPopup.close() }
+        }
+    }
+
+    component MediaSearchChoice: CheckBox {
+        id: searchChoice
+        height: 28
+        padding: 3
+        font.pixelSize: 12
+        hoverEnabled: true
+        background: Rectangle { color: searchChoice.hovered ? "#252525" : "transparent"; radius: 3 }
+        indicator: Rectangle {
+            width: 18; height: 18; x: 4; y: (searchChoice.height - height) / 2
+            color: searchChoice.checked ? "#393227" : "#121212"
+            border.color: searchChoice.checked ? root.gold : "#636363"
+            radius: 3
+            Text { anchors.centerIn: parent; text: searchChoice.checked ? "✓" : ""; color: root.gold; font.pixelSize: 14 }
+        }
+        contentItem: Text {
+            text: searchChoice.text; leftPadding: 28
+            verticalAlignment: Text.AlignVCenter
+            color: searchChoice.checked ? root.ink : root.muted
+            font: searchChoice.font
+        }
+    }
+
+    component MediaRowAction: ToolButton {
+        id: rowAction
+        property bool removeIcon: false
+        property string tip: ""
+        width: 22
+        height: 22
+        padding: 2
+        hoverEnabled: true
+        Accessible.name: tip
+        ToolTip.visible: hovered
+        ToolTip.text: tip
+        ToolTip.delay: 500
+        background: Rectangle {
+            radius: 3
+            color: rowAction.down ? "#38312a" : rowAction.hovered ? "#303030" : "transparent"
+            border.color: rowAction.visualFocus ? root.gold : "transparent"
+        }
+        contentItem: Canvas {
+            opacity: rowAction.hovered || rowAction.visualFocus || rowAction.down ? 1 : 0.20
+            Behavior on opacity { NumberAnimation { duration: 120 } }
+            onPaint: {
+                var ctx = getContext("2d")
+                ctx.reset()
+                ctx.strokeStyle = rowAction.removeIcon && rowAction.hovered ? "#f29999" : "#c9cfd7"
+                ctx.lineWidth = 1.2
+                ctx.lineCap = "round"
+                ctx.lineJoin = "round"
+                ctx.beginPath()
+                if (rowAction.removeIcon) {
+                    ctx.moveTo(4, 4); ctx.lineTo(14, 14)
+                    ctx.moveTo(14, 4); ctx.lineTo(4, 14)
+                } else {
+                    ctx.moveTo(10, 16); ctx.lineTo(3, 16); ctx.lineTo(3, 2)
+                    ctx.lineTo(10, 2); ctx.lineTo(14, 6); ctx.lineTo(14, 8)
+                    ctx.moveTo(10, 2); ctx.lineTo(10, 6); ctx.lineTo(14, 6)
+                    ctx.moveTo(7, 3); ctx.lineTo(8, 7); ctx.lineTo(6, 9); ctx.lineTo(8, 12)
+                    ctx.moveTo(15.5, 12.5); ctx.arc(12.5, 12.5, 3, 0, Math.PI * 2)
+                    ctx.moveTo(14.7, 14.7); ctx.lineTo(17, 17)
+                }
+                ctx.stroke()
+            }
+            Connections { target: rowAction; function onHoveredChanged() { rowAction.contentItem.requestPaint() } }
+        }
+    }
+
     component MediaAction: Button {
         id: action
         property string tip: ""
@@ -1663,6 +2087,9 @@ Item {
         font.family: "monospace"
         font.pixelSize: 10
         Accessible.name: displayText
+        ToolTip.visible: hovered
+        ToolTip.text: displayText
+        ToolTip.delay: 500
         currentIndex: {
             for (var i = 0; i < model.length; ++i)
                 if (String(model[i].value) === selector.selectedValue)
@@ -1773,9 +2200,19 @@ Item {
                 height: parent.height
                 spacing: 7
                 visible: root.hasBackgroundControl
+                MediaAction {
+                    id: discoveryFilterButton
+                    objectName: "mediaDiscoveryFilterButton"
+                    visible: !!root.surfaceHost && !!root.surfaceHost.mediaLibraryLanguages
+                    height: 28
+                    text: "Sökfilter"
+                    tip: "Välj mediatyper och språk för Utöka och sökning"
+                    onClicked: discoveryPopup.open()
+                }
                 Text {
                     objectName: "mediaBackgroundCounts"
-                    visible: mediaFrame.width > navigationButtons.width + backgroundToggle.width + implicitWidth + 28
+                    visible: mediaFrame.width > navigationButtons.width + backgroundToggle.width
+                        + (discoveryFilterButton.visible ? discoveryFilterButton.width : 0) + implicitWidth + 40
                     height: parent.height
                     verticalAlignment: Text.AlignVCenter
                     text: root.backgroundCounts
@@ -1783,22 +2220,27 @@ Item {
                     color: root.muted
                     font.family: "monospace"
                     font.pixelSize: 10
+                    ToolTip.visible: backgroundCountsHover.containsMouse
+                    ToolTip.text: root.backgroundCountDetails
+                    MouseArea { id: backgroundCountsHover; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.NoButton }
                 }
                 MediaAction {
                     id: backgroundToggle
                     objectName: "mediaBackgroundToggle"
                     height: 28
-                    checked: root.backgroundRunning
-                    enabled: !root.backgroundPausing
-                    text: root.backgroundPausing ? "PAUSAR…" : root.backgroundRunning ? "UTÖKA · PÅ" : "UTÖKA · AV"
+                    checked: root.expansionRunning
+                    enabled: !root.backgroundPausing && !root.sourceCheckRunning
+                    text: root.backgroundPausing && root.libraryBackground.operation !== "check" ? "PAUSAR…" : root.expansionRunning ? "UTÖKA · PÅ" : "UTÖKA · AV"
                     tip: (root.backgroundRunning
                         ? "Pausa sökning och källkontroll. Framstegen sparas."
-                        : "Sök fler filmer och serier och kontrollera att de går att spela. Högst fem minuter per start.")
-                        + "\nSnabbkontrollerade: " + root.backgroundCounts
-                        + "\nHittade kandidater: " + Number(root.libraryBackground.discovered_movies || 0)
-                        + " filmer · " + Number(root.libraryBackground.discovered_series || 0) + " serier"
+                        : "Sök i valda mediatyper och språk. Uppdatera biblioteket och kontrollera videokällor. Högst fem minuter per start.")
+                        + "\nMediatyper: " + root.discoveryTypes.map(root.mediaTypeLabel).join(", ")
+                        + "\nNytt i biblioteket: " + root.backgroundCountDetails
+                        + "\nHittade kandidater: " + root.discoveryTypes.map(function(key) {
+                            return Number(root.libraryBackground["discovered_" + key] || 0) + " " + root.mediaTypeLabel(key).toLowerCase()
+                        }).join(" · ")
                         + (root.libraryBackground.notice ? "\n" + String(root.libraryBackground.notice) : "")
-                    Accessible.name: "Utöka mediebiblioteket " + (root.backgroundRunning ? "på" : "av")
+                    Accessible.name: "Utöka mediebiblioteket " + (root.expansionRunning ? "på" : "av")
                     onClicked: root.toggleBackgroundLibrary()
                 }
             }
@@ -1982,7 +2424,7 @@ Item {
                         Grid {
                             width: parent.width
                             height: visible ? implicitHeight : 0
-                            columns: width < 190 ? 1 : 2
+                            columns: width < 340 ? 1 : 2
                             spacing: 4
                             visible: root.collectionTitle.length === 0
                                 && (root.categoryOptions.length > 1 || root.languageOptions.length > 1)
@@ -2004,6 +2446,17 @@ Item {
                                 model: root.languageOptions
                                 onActivated: root.languageFilter = String(currentValue)
                             }
+                        }
+
+                        MediaSelect {
+                            objectName: "mediaAvailabilitySelector"
+                            width: parent.width
+                            visible: root.videoLibrary
+                            height: visible ? 26 : 0
+                            selectedValue: root.availableOnly ? "available" : "all"
+                            model: [{value: "all", label: "Alla katalogposter"},
+                                {value: "available", label: "Bara kontrollerat tillgängliga"}]
+                            onActivated: root.availableOnly = String(currentValue) === "available"
                         }
 
                         MediaSelect {
@@ -2099,8 +2552,10 @@ Item {
                             highlighted: ListView.isCurrentItem
                             contentItem: Item {
                                 Text {
+                                    id: rowTitleText
+                                    objectName: "mediaRowTitle_" + String(catalogRow.modelData.id)
                                     anchors.left: parent.left
-                                    anchors.right: rowMark.left
+                                    anchors.right: rowTools.left
                                     anchors.rightMargin: rowChevron.visible ? 16 : 3
                                     anchors.top: parent.top
                                     height: 18
@@ -2112,6 +2567,26 @@ Item {
                                     font.bold: catalogRow.rowActive
                                     verticalAlignment: Text.AlignVCenter
                                     elide: Text.ElideRight
+                                }
+                                Row {
+                                    id: rowTools
+                                    anchors.right: parent.right
+                                    anchors.top: parent.top
+                                    spacing: 1
+                                    z: 2
+                                    MediaRowAction {
+                                        objectName: "mediaDiagnose_" + String(catalogRow.modelData.id)
+                                        visible: !!root.surfaceHost && !!root.surfaceHost.mediaLibraryDiagnose
+                                        tip: "Felsök källa och leta efter en ersättning"
+                                        onClicked: root.diagnoseItem(catalogRow.modelData)
+                                    }
+                                    MediaRowAction {
+                                        objectName: "mediaRemove_" + String(catalogRow.modelData.id)
+                                        visible: !!root.surfaceHost && !!root.surfaceHost.mediaLibraryHideSource
+                                        removeIcon: true
+                                        tip: "Ta bort från min lista"
+                                        onClicked: root.removeItem(catalogRow.modelData)
+                                    }
                                 }
                                 Text {
                                     anchors.left: parent.left
@@ -2129,7 +2604,7 @@ Item {
                                 BufferMark {
                                     id: rowMark
                                     objectName: "mediaItemBuffer"
-                                    anchors.right: parent.right
+                                    anchors.right: rowTools.left
                                     anchors.top: parent.top
                                     anchors.topMargin: 4
                                     active: catalogRow.rowBuffering
@@ -2192,11 +2667,83 @@ Item {
                         anchors.bottom: parent.bottom
                         anchors.margins: 6
                         spacing: 4
+                        Row {
+                            objectName: "mediaPlaybackNavigation"
+                            width: parent.width
+                            height: visible ? 28 : 0
+                            spacing: 4
+                            visible: !!root.surfaceHost && !!root.surfaceHost.mediaPlay
+                            MediaAction {
+                                objectName: "mediaPlayPrevious"
+                                width: 30; height: 28
+                                text: "‹"
+                                font.pixelSize: 18
+                                enabled: root.canStepPlayback(-1)
+                                tip: "Spela föregående avsnitt, film, låt eller kanal i uppspelningslistan"
+                                Accessible.name: "Spela föregående"
+                                onClicked: root.stepPlayback(-1, false)
+                            }
+                            MediaAction {
+                                objectName: "mediaPlayNext"
+                                width: 30; height: 28
+                                text: "›"
+                                font.pixelSize: 18
+                                enabled: root.canStepPlayback(1)
+                                tip: "Spela nästa avsnitt, film, låt eller kanal i uppspelningslistan"
+                                Accessible.name: "Spela nästa"
+                                onClicked: root.stepPlayback(1, false)
+                            }
+                            MediaAction {
+                                objectName: "mediaAutoNextEpisodes"
+                                width: Math.max(26, parent.width - 68); height: 28
+                                text: width < 90 ? "Auto" : "Auto nästa"
+                                checked: root.autoNextEpisodes
+                                tip: "Spela nästa avsnitt automatiskt i samma serie. Ett valt säsongsfilter begränsar uppspelningen till den säsongen."
+                                Accessible.name: "Automatiskt nästa avsnitt " + (root.autoNextEpisodes ? "på" : "av")
+                                onClicked: root.toggleAutoNext()
+                            }
+                        }
+                        MediaAction {
+                            objectName: "mediaSourceCheckToggle"
+                            width: parent.width
+                            visible: root.hasSourceCheckControl
+                            height: visible ? 26 : 0
+                            checked: root.sourceCheckRunning
+                            enabled: !root.backgroundPausing && !root.expansionRunning
+                            text: root.backgroundPausing && root.libraryBackground.operation === "check" ? "Källkontroll · pausar…"
+                                : (width < 190 ? "Kontroll" : "Källkontroll") + (root.sourceCheckRunning ? " · Pausa" : " · Starta")
+                            Accessible.name: root.sourceCheckRunning ? "Pausa källkontrollen" : "Starta eller fortsätt källkontrollen"
+                            tip: root.expansionRunning ? "Pausa Utöka för att starta en separat källkontroll."
+                                : root.sourceCheckRunning ? "Pausa kontrollen. Framstegen sparas så att du kan fortsätta senare."
+                                : "Kontrollera befintliga källor enligt valda mediatyper och språk. Söker inte efter nya titlar. Högst fem minuter per omgång."
+                            onClicked: root.toggleSourceCheck()
+                        }
+                        Row {
+                            visible: root.removedItemId.length > 0
+                            width: parent.width
+                            height: visible ? 26 : 0
+                            spacing: 4
+                            Text {
+                                width: Math.max(0, parent.width - undoRemoveButton.width - 4)
+                                height: 26
+                                text: "Borttagen: " + root.removedItemTitle
+                                elide: Text.ElideRight
+                                color: root.muted
+                                font.pixelSize: 11
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            MediaAction {
+                                id: undoRemoveButton
+                                objectName: "mediaUndoRemove"
+                                text: "Ångra"
+                                onClicked: root.undoRemove()
+                            }
+                        }
                         Text {
                             objectName: "mediaLibraryLoadState"
                             width: parent.width
                             height: 15
-                            text: root.chunkError || root.libraryError || (root.loadingItemId ? "Laddar vald titel…"
+                            text: root.chunkError || root.libraryError || String(root.status.library_playback_notice || "") || (root.loadingItemId ? "Laddar vald titel…"
                                 : root.chunkBusy ? "Laddar fler titlar…"
                                 : root.libraryBusy ? "Laddar katalog…"
                                 : root.libraryIndexing ? "Uppdaterar katalog…"
@@ -2387,8 +2934,7 @@ Item {
                                 if (root.liveVideo)
                                     root.schedulePlayerRetry()
                                 else {
-                                    root.playerEnded = true
-                                    root.playerWantsPlay = false
+                                    root.finishVideo()
                                 }
                             }
                             root.reportPlayerState()

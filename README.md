@@ -281,6 +281,54 @@ alternate object angles require additional authored images.
 
 Restart the desktop after installing the backend update.
 
+## Patch notes · 2026-10-26 · MEDIA languages, source controls and next episode
+
+MEDIA now lets you choose which languages and media types to find, inspect
+broken sources, and move through the playing list without selecting each row.
+
+- **Language filters** show full language names, with Swedish and English as
+  the default selection. Browsing and discovery have separate saved language
+  choices. Missing tags are investigated using provider metadata, explicit
+  audio labels and HLS audio-language tags. Unresolved entries remain stored
+  for further checking; an English-looking title alone is not treated as proof
+  of spoken language.
+- **Sökfilter** selects one, several or all media types: channels, films,
+  series, music, radio, completed downloads and games. Search and **UTÖKA** use
+  that selection independently of the open tab. Results appear in their
+  corresponding tabs, and the discovery counter reflects the selected scope.
+- Each title has a small **diagnose** button and **remove** button. Diagnosis
+  checks the chosen link and up to three alternatives for the same title.
+  Removal is reversible and survives rediscovery. The icons stay faint until
+  hovered or focused, leaving titles easy to scan.
+- **Källkontroll** starts, pauses and resumes checks of the saved library
+  without searching for new material. A fresh cycle can recheck previously
+  healthy sources. It follows the selected languages and media types, shares
+  the bounded background worker with UTÖKA, and preserves progress when paused.
+  Each start remains limited to five minutes and 240 source-check jobs.
+- **Previous / Next** above Källkontroll follows the playing list across loaded
+  page boundaries, including episodes, films, tracks and channels. Browsing
+  elsewhere does not replace that queue, and reaching its end stops playback.
+- **Auto nästa** is a saved, opt-in setting for series episodes. It advances
+  after an episode finishes, uses numeric episode order and respects a chosen
+  season. It does not advance on a playback error, an early end signal or a
+  pause, and duplicate end signals cannot start another episode twice.
+- MEDIA service definitions load with the backend behind the startup screen,
+  keeping their first import out of the interactive status request. Catalogue
+  reads and source work continue to run on workers.
+
+Verification covers 238 MEDIA tests, including the production QML controls,
+language and media-type routing, pause/resume, playback order and a 50,000-row
+library. Release packaging and relocation checks are recorded in
+`WINDOWS-PORT.json`. Source checks indicate current reachability; they do not
+guarantee complete playback, permanent availability or a spoken language when
+no reliable language metadata exists. Games are checked as resources, not by
+running them. Personal libraries, removal history and audit state stay local.
+
+Update with `git pull` in GG-W, then close and restart the entire desktop.
+RELOAD alone does not replace the Python backend. Select the desired languages
+and media types in Sökfilter before searching or enabling UTÖKA; use
+Källkontroll to check what is already saved.
+
 ## Patch notes · 2026-10-26 · MEDIA playback, radio and local music
 
 This follow-up patch keeps MEDIA responsive while restoring immediate access

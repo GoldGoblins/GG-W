@@ -21,6 +21,7 @@ from urllib.parse import quote, unquote, urlencode, urlsplit
 import urllib.request
 
 from backend.application_paths import PROJECT_ROOT
+from backend import media_languages as languages
 
 SEED_PATH = PROJECT_ROOT / "config" / "media-library.json"
 MAX_SEED_BYTES = 8 * 1024 * 1024
@@ -43,10 +44,6 @@ _EPISODE = re.compile(r"(?i)(?<![a-z0-9])(?:episode|episod|avsnitt|ep|e)[ ._#-]*
 _COMMA_EPISODE = re.compile(r"(?i)[ _]*-[ _]*(\d{2}),(\d{2,3})[ _]*-")
 _ENCODE_SUFFIX = re.compile(r"(?i)(?:[ ._-]+(?:\d{3,4}p|\d+kb|h[ ._-]?26[45]|x26[45]|hevc|av1|web[ ._-]?dl|dvdrip|bluray|hq|hd))+$")
 _SERIES_SIGNAL = re.compile(r"(?i)\b(?:episodes?|avsnitt|seasons?|säsonger?|complete\s+series|TV\s+show|TV[ -]series|cartoons|collection|recordings|tapes)\b")
-_LANGUAGES = {"swe": "sv", "swedish": "sv", "svenska": "sv", "eng": "en", "english": "en",
-              "en-us": "en", "en-gb": "en", "nor": "no", "nob": "no", "norsk": "no",
-              "dan": "da", "danish": "da", "fin": "fi", "finnish": "fi", "deu": "de", "ger": "de",
-              "german": "de", "fra": "fr", "fre": "fr", "french": "fr", "spa": "es", "spanish": "es"}
 
 
 def _text(value: Any, limit: int = 300) -> str:
@@ -65,13 +62,7 @@ def _number(value: Any, maximum: int = 999) -> int:
 
 
 def _language(value: Any) -> str:
-    parts = value if isinstance(value, list) else re.split(r"[;,/]", _text(value, 200))
-    languages = []
-    for part in parts[:12]:
-        cleaned = _text(part, 30).casefold()
-        if cleaned:
-            languages.append(_LANGUAGES.get(cleaned, cleaned))
-    return "; ".join(dict.fromkeys(languages))
+    return "; ".join(languages.codes(value))
 
 
 def _year(value: Any) -> int:
@@ -127,7 +118,7 @@ def annotate(row: dict[str, Any]) -> dict[str, Any]:
     Existing provider metadata wins over filename inference. The filename is
     inspected before the user-facing title, so shortening a title is harmless.
     """
-    item = dict(row)
+    item = languages.classify(row)
     source = _text(item.get("source"), 3000)
     basename = _name(source)
     stem = basename.rsplit(".", 1)[0] if "." in basename else basename
@@ -345,6 +336,7 @@ def _descriptor(metadata: dict[str, Any]) -> dict[str, Any] | None:
            "media": "collection" if content_type == "series" else "vod", "player": "qml", "play": "video",
            "content_type": content_type, "provider": "Internet Archive", "is_live": False, "stream": False,
            "language": metadata.get("language"), "year": metadata.get("year") or metadata.get("date"),
+           "description": _text(metadata.get("description"), 8000),
            "subject": _text(metadata.get("subject"), 1000), "rights": _text(metadata.get("rights"), 1600),
            "licenseurl": _text(metadata.get("licenseurl"), 1000), "availability": "metadata", "playable": False}
     if episode:
@@ -356,7 +348,8 @@ def _descriptor(metadata: dict[str, Any]) -> dict[str, Any] | None:
     return annotate(row)
 
 
-def search_archive(query: str, limit: int = 100) -> list[dict[str, Any]]:
+def search_archive(query: str, limit: int = 100, *, selected_languages=languages.DEFAULT_LANGUAGES,
+                   selected_media_types=None) -> list[dict[str, Any]]:
     """Search public movie metadata; matches still require file resolution.
 
     User input is quoted as terms instead of accepting arbitrary Lucene fields.
@@ -380,13 +373,26 @@ def search_archive(query: str, limit: int = 100) -> list[dict[str, Any]]:
     params = {"q": "mediatype:movies AND -access-restricted-item:true AND (" + expression + ")",
               "fl[]": ["identifier", "title", "year", "date", "language", "subject", "rights", "licenseurl"],
               "rows": str(max(1, min(_number(limit, MAX_SEARCH), MAX_SEARCH))), "page": "1", "sort[]": "downloads desc", "output": "json"}
+    language_clause = languages.archive_clause(selected_languages)
+    if language_clause:
+        params["q"] += " AND " + language_clause
+    if selected_media_types is not None:
+        from backend.media_discovery import QUERIES
+        selected_media_types = tuple(page for page in selected_media_types if page in QUERIES)
+        if not selected_media_types:
+            return []
+        params["q"] += " AND (" + " OR ".join("(" + QUERIES[page] + ")" for page in selected_media_types) + ")"
     payload = _cached_json("https://archive.org/advancedsearch.php?" + urlencode(params, doseq=True), _valid_search)
     rows, seen = [], set()
     for metadata in payload["response"]["docs"][:MAX_SEARCH]:
         if not isinstance(metadata, dict):
             continue
         row = _descriptor(metadata)
-        if row and row["id"] not in seen:
+        if row and selected_media_types is not None:
+            page = "series" if row["content_type"] in ("series", "episode") else "movies"
+            if page not in selected_media_types:
+                continue
+        if row and (languages.matches(row.get("language"), selected_languages) or not row.get("language")) and row["id"] not in seen:
             seen.add(row["id"])
             rows.append(row)
         if len(rows) >= max(1, min(_number(limit, MAX_SEARCH), MAX_SEARCH)):

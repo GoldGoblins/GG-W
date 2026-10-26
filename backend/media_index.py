@@ -15,6 +15,7 @@ from typing import Any, Iterable
 from urllib.parse import quote
 
 from backend.media_library import annotate, _IDENTIFIER, _file_allowed
+from backend import media_languages as languages
 
 PAGE_SIZE = 80
 LIVE_CATALOG_RETENTION_SECONDS = 7 * 86400
@@ -42,12 +43,14 @@ def view_request(page="live", letter="all", category="all", language="all", seas
                 language=str(language)[:100] or "all", season=str(season)[:8] or "all",
                 query=str(query).strip()[:160], offset=max(0, min(1000000, int(offset or 0))),
                 collection_key=str(extra.get("collection_key") or "")[:300],
-                collection_title=str(extra.get("collection_title") or "")[:180])
+                collection_title=str(extra.get("collection_title") or "")[:180],
+                available_only=bool(extra.get("available_only", False)))
 
 
 def echo(view: dict[str, Any]) -> dict[str, Any]:
     return {"mode": PAGES[view["page"]][0], **{"library_" + key: view[key] for key in
             ("page", "letter", "category", "language", "season", "query", "offset")},
+            "library_available_only": bool(view.get("available_only")),
             "library_collection": view.get("collection_title", ""),
             "library_collection_key": view.get("collection_key", ""), "library_page_size": PAGE_SIZE}
 
@@ -67,6 +70,7 @@ class MediaIndex:
         db = sqlite3.connect(self.path, timeout=2)
         db.row_factory = sqlite3.Row
         db.create_function("gg_casefold", 1, _key, deterministic=True)
+        db.create_function("gg_language_match", 2, languages.sql_match, deterministic=True)
         db.execute("PRAGMA busy_timeout=2000")
         try:
             yield db
@@ -76,6 +80,9 @@ class MediaIndex:
 
     def initialize(self):
         with self.connection() as db:
+            db.execute("CREATE TABLE IF NOT EXISTS media_hidden_sources(source_key TEXT PRIMARY KEY,hidden_at REAL NOT NULL)")
+            db.execute("CREATE TABLE IF NOT EXISTS media_hidden_groups(group_key TEXT PRIMARY KEY,hidden_at REAL NOT NULL)")
+            db.execute("CREATE TABLE IF NOT EXISTS media_hidden_items(item_id TEXT PRIMARY KEY,group_key TEXT NOT NULL,hidden_at REAL NOT NULL)")
             db.executescript("""
                 PRAGMA journal_mode=WAL;
                 CREATE TABLE IF NOT EXISTS items (
@@ -90,6 +97,8 @@ class MediaIndex:
                 CREATE INDEX IF NOT EXISTS media_health ON items(status,verified_until,retry_at);
                 CREATE INDEX IF NOT EXISTS media_series ON items(parent_key,season,episode);
                 CREATE INDEX IF NOT EXISTS media_identity ON items(group_key,verified_until);
+                CREATE INDEX IF NOT EXISTS media_source_identity ON items(source_key);
+                CREATE INDEX IF NOT EXISTS media_source_checks ON items(kind,checked_at,id);
                 CREATE INDEX IF NOT EXISTS media_series_health ON items(parent_key,status,verified_until);
                 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
             """)
@@ -217,9 +226,12 @@ class MediaIndex:
                                  or self._descriptor_of_resolved(existing, row)):
                     merged = dict(existing)
                     for key, value in row.items():
-                        if (key in ("referrer", "user_agent") and value != merged.get(key)
+                        if (key == "language" and not languages.codes(merged.get(key)) and languages.codes(value)
+                                or key in ("referrer", "user_agent") and value != merged.get(key)
                                 or key not in protected and merged.get(key) in (None, "", 0, [], {})):
                             merged[key] = value
+                    if not languages.codes(existing.get("language")) and languages.codes(merged.get("language")):
+                        merged["language_evidence"] = row.get("language_evidence") or "source_metadata"
                     if merged != existing:
                         incoming.append(merged)
                 else:
@@ -409,6 +421,9 @@ class MediaIndex:
         mode, content_type = PAGES[view["page"]]
         clauses, args = ["i.kind IN ('TV','FETCH')" if mode == "TV" else "i.kind=?"], ([] if mode == "TV" else [mode])
         collection = view.get("collection_key")
+        clauses.append("NOT EXISTS (SELECT 1 FROM media_hidden_sources hidden WHERE hidden.source_key=i.source_key)")
+        clauses.append("NOT EXISTS (SELECT 1 FROM media_hidden_groups hidden WHERE hidden.group_key=i.group_key)")
+        clauses.append("NOT EXISTS (SELECT 1 FROM media_hidden_items hidden WHERE hidden.item_id=i.id)")
         if collection:
             clauses.append("i.parent_key=?")
             args.append(collection)
@@ -421,10 +436,13 @@ class MediaIndex:
         if not collection and view["letter"] != "all":
             clauses.append("i.letter=?")
             args.append(view["letter"])
-        for field in ("category", "language"):
+        for field in ("category",):
             if view[field] != "all":
                 clauses.append("i." + field + "=?")
                 args.append(view[field])
+        if view["language"] != "all":
+            clauses.append("gg_language_match(i.language,?)=1")
+            args.append(view["language"])
         if view["season"] != "all" and collection:
             clauses.append("i.season=?")
             args.append(int(view["season"]) if view["season"].isdigit() else -1)
@@ -438,6 +456,11 @@ class MediaIndex:
                 word = word.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
                 args.extend(["%" + word + "%"] * len(search))
         now = time.time()
+        if view.get("available_only"):
+            clauses.append("((i.status='verified' AND i.verified_until>?) OR (i.type='series' AND EXISTS "
+                           "(SELECT 1 FROM items child WHERE child.parent_key=i.group_key AND "
+                           "child.status='verified' AND child.verified_until>?)))")
+            args.extend([now, now])
         if verified:
             # Importing meaningful metadata makes it selectable. Only a
             # definite failed check temporarily withdraws it. A timeout or
@@ -559,6 +582,8 @@ class MediaIndex:
                     {"value": "all", "label": label}] + [{"value": str(row[0]), "label":
                      ("Utan säsongsnummer" if row[0] == 0 else "Säsong " + str(row[0])) if field == "season" else str(row[0])}
                      for row in values if row[0] != ""]
+                if field == "language":
+                    options["library_languages"] = languages.options([row[0] for row in values])
             counts = db.execute("SELECT COUNT(*),SUM(i.checked_at>0),SUM(" + self._catalogued_sql() + "),"
                                 "MIN(CASE WHEN " + self._catalogued_sql() + " THEN " + self._catalog_until_sql() + " END) FROM items i",
                                 (now, now)).fetchone()
@@ -631,6 +656,43 @@ class MediaIndex:
         next_position = positions[PAGE_SIZE - 1] if has_more else position
         return rows[:PAGE_SIZE], next_position, has_more
 
+    def playback_neighbor(self, view, identifier, direction, *, groups=None, episodes_only=False):
+        """Find a neighbour across saved pages, rechecking current membership."""
+        direction = -1 if int(direction) < 0 else 1
+        anchor = self.get(str(identifier))
+        if not anchor:
+            return None
+        view = dict(view, offset=0)
+        if episodes_only:
+            if anchor.get("content_type") != "episode":
+                return None
+            collection = anchor.get("collection_key") or self.series_key(anchor)
+            season = view["season"] if view.get("collection_key") == collection else "all"
+            view = view_request("series", season=season, collection_key=collection,
+                                collection_title=anchor.get("series_title") or "")
+            groups = None
+        if groups is None:
+            groups = self.snapshot_groups(view)
+        with self.connection() as db:
+            stored = db.execute("SELECT group_key FROM items WHERE id=?", (str(identifier),)).fetchone()
+            if not stored or stored[0] not in groups:
+                return None
+            position = groups.index(stored[0])
+            candidates = groups[position + 1:] if direction > 0 else groups[:position][::-1]
+            where, args = self._where(view, verified=True)
+            for offset in range(0, len(candidates), 256):
+                batch = candidates[offset:offset + 256]
+                alive = {row[0] for row in db.execute("SELECT DISTINCT i.group_key FROM items i WHERE " + where +
+                    " AND i.group_key IN (" + ",".join("?" for _ in batch) + ")", [*args, *batch])}
+                group = next((key for key in batch if key in alive), None)
+                if group is not None:
+                    now = time.time()
+                    row = db.execute("SELECT i.payload FROM items i WHERE " + where + " AND i.group_key=? ORDER BY "
+                                     + self._source_order() + " LIMIT 1", [*args, group, now, now]).fetchone()
+                    if row:
+                        return dict(item=json.loads(row[0]), view=view, groups=groups)
+        return None
+
     def collection_descriptors(self, collection_key, limit=12):
         """Provider descriptors for one selected series, excluding fake parents."""
         output, seen = [], set()
@@ -662,7 +724,8 @@ class MediaIndex:
             group = db.execute("SELECT group_key FROM items WHERE id=?", (str(identifier),)).fetchone()
             if group is None:
                 return []
-            records = db.execute("SELECT i.payload FROM items i WHERE i.group_key=? ORDER BY "
+            records = db.execute("SELECT i.payload FROM items i WHERE i.group_key=? AND NOT EXISTS "
+                                 "(SELECT 1 FROM media_hidden_sources hidden WHERE hidden.source_key=i.source_key) ORDER BY "
                                  + self._source_order() + " LIMIT ?",
                                  [group[0], time.time(), time.time(), max(1, min(24, int(limit)))]).fetchall()
         return [json.loads(record[0]) for record in records]
@@ -689,3 +752,33 @@ class MediaIndex:
                 return str(value)
             row = db.execute("SELECT value FROM meta WHERE key=?", (key,)).fetchone()
             return row[0] if row else ""
+
+    def hide_source(self, identifier, *, hidden=True):
+        """A reversible personal exclusion, preserved across provider refreshes."""
+        with self.connection() as db:
+            row = db.execute("SELECT group_key FROM items WHERE id=?", (str(identifier),)).fetchone()
+            if row is None:
+                raise ValueError("MEDIA_ITEM_UNKNOWN")
+            if hidden:
+                db.execute("INSERT OR REPLACE INTO media_hidden_groups VALUES(?,?)", (row[0], time.time()))
+                db.execute("INSERT OR REPLACE INTO media_hidden_items SELECT id,group_key,? FROM items WHERE group_key=?",
+                           (time.time(), row[0]))
+            else:
+                saved = db.execute("SELECT group_key FROM media_hidden_items WHERE item_id=?", (str(identifier),)).fetchone()
+                group = saved[0] if saved else row[0]
+                db.execute("DELETE FROM media_hidden_groups WHERE group_key=?", (group,))
+                db.execute("DELETE FROM media_hidden_items WHERE group_key=?", (group,))
+            self._changed(db, structural=True, withdrawn=hidden)
+
+    def classify_saved_languages(self):
+        """Recover explicit evidence in legacy rows without opening any source."""
+        if self.meta("language_metadata_policy") == "audio-evidence-v1":
+            return
+        with self.connection() as db:
+            cursor = db.execute("SELECT payload FROM items WHERE gg_language_match(language,'unknown')=1")
+            while records := cursor.fetchmany(200):
+                inferred = [languages.classify(json.loads(record[0])) for record in records]
+                rows = [row for row in inferred if row.get("language") and row.get("source")]
+                if rows:
+                    self.ingest_discovered(rows)
+        self.meta("language_metadata_policy", "audio-evidence-v1")

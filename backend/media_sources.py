@@ -17,6 +17,7 @@ from urllib.parse import urljoin, urlsplit
 import urllib.request
 
 from backend import media_contract as contract, media_library as library
+from backend import media_languages as languages
 from backend.media_index import MediaIndex
 from backend.media_request import public_headers
 
@@ -130,12 +131,13 @@ def _candidate(stream, channels, feeds, main_feeds):
         source=source, media="stream", play="video", player="qml", is_live=True,
         channel_id=channel_id, base_channel_id=base_channel, feed=feed,
         category=category or "Live", country=library._text(channel.get("country"), 8),
-        language=library._language(feed_metadata.get("languages")),
+        language=library._language(feed_metadata.get("languages") or channel.get("languages")),
         provider="IPTV.org", source_label="IPTV.org API", source_page="https://github.com/iptv-org/api",
         quality=library._text(stream.get("quality"), 24),
         source_labels=[library._text(label, 60) for label in labels[:8]] if isinstance(labels, list) else [],
         availability="metadata", playable=False,
     )
+    row = languages.classify(row, feed_metadata, channel)
     if referrer:
         row["referrer"] = referrer
     if user_agent:
@@ -143,7 +145,7 @@ def _candidate(stream, channels, feeds, main_feeds):
     return library.annotate(row)
 
 
-def refresh(index: MediaIndex, *, cancel=None, metadata=True):
+def refresh(index: MediaIndex, *, cancel=None, metadata=True, selected_languages=languages.DEFAULT_LANGUAGES):
     """Import a finite official source snapshot in batches of at most 200 rows.
 
     Optional channel/feed failure leaves the stream's own correct title and
@@ -153,7 +155,8 @@ def refresh(index: MediaIndex, *, cancel=None, metadata=True):
     started = time.monotonic()
     deadline = started + MAX_SECONDS
     result = dict(schema=SCHEMA, provider="IPTV.org", api_calls=0, candidate_sources=0,
-                  new_sources=0, rejected_streams=0, duplicate_urls=0,
+                  new_sources=0, rejected_streams=0, duplicate_urls=0, filtered_languages=0,
+                  classified_existing=0,
                   metadata_warnings=[], cancelled=False, error="", verified_by_import=0)
     if _cancelled(cancel):
         return dict(result, cancelled=True)
@@ -187,7 +190,20 @@ def refresh(index: MediaIndex, *, cancel=None, metadata=True):
         return dict(result, cancelled=True)
     # Reading IDs alone is bounded to the actual source snapshot, not the
     # complete video index; source bodies never enter a GUI model.
-    seen, batch = set(), []
+    seen, batch, classifications = set(), [], []
+
+    def enrich_existing():
+        if not classifications:
+            return
+        with index.connection() as db:
+            existing = {record[0] for record in db.execute("SELECT id FROM items WHERE id IN (" +
+                ",".join("?" for _ in classifications) + ") AND gg_language_match(language,'unknown')=1",
+                [row["id"] for row in classifications])}
+        rows = [row for row in classifications if row["id"] in existing]
+        if rows:
+            index.ingest_discovered(rows)
+            result["classified_existing"] += len(rows)
+        classifications.clear()
 
     def publish():
         if not batch:
@@ -210,6 +226,12 @@ def refresh(index: MediaIndex, *, cancel=None, metadata=True):
         except (ValueError, TypeError):
             result["rejected_streams"] += 1
             continue
+        if row.get("language") and not languages.matches(row.get("language"), selected_languages):
+            result["filtered_languages"] += 1
+            classifications.append(row)
+            if len(classifications) >= BATCH_SIZE:
+                enrich_existing()
+            continue
         if row["source"] in seen:
             result["duplicate_urls"] += 1
             continue
@@ -219,6 +241,7 @@ def refresh(index: MediaIndex, *, cancel=None, metadata=True):
             publish()
     if not result["cancelled"]:
         publish()
+        enrich_existing()
     result["elapsed_seconds"] = round(time.monotonic() - started, 3)
     return result
 
@@ -228,10 +251,11 @@ def main(argv=None):
     parser.add_argument("operation", choices=("import",))
     parser.add_argument("--index", type=Path)
     parser.add_argument("--streams-only", action="store_true")
+    parser.add_argument("--languages", default="sv,en", help="Language codes, or all for an explicit unrestricted import")
     args = parser.parse_args(argv)
     index = MediaIndex(args.index)
     index.initialize()
-    print(json.dumps(refresh(index, metadata=not args.streams_only), ensure_ascii=False, separators=(",", ":")))
+    print(json.dumps(refresh(index, metadata=not args.streams_only, selected_languages=args.languages), ensure_ascii=False, separators=(",", ":")))
     return 0
 
 

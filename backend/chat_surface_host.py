@@ -44,6 +44,9 @@ from backend import node_flow
 from backend import libretro_host
 from backend import marketplace_host
 from backend import media_host
+# Load catalogue definitions with the backend, before the first interactive
+# MEDIA status request. Construction still starts no catalogue IO or workers.
+from backend.media_catalog_service import MediaCatalogService
 from backend import live_vision
 from backend import osint_host
 from backend import research_desk
@@ -2033,7 +2036,6 @@ class ChatSurfaceHost(QObject):
 
     def _media_library_service(self):
         if self._media_catalog is None:
-            from backend.media_catalog_service import MediaCatalogService
             service = MediaCatalogService(self)
             service.changed.connect(self._media_library_updated)
             service.playReady.connect(self._media_library_play_ready)
@@ -2068,6 +2070,56 @@ class ChatSurfaceHost(QObject):
     def mediaLibraryBackground(self, enabled: bool) -> str:
         self._media_library_service().background(bool(enabled))
         return self._media_changed(media_host.status_payload())
+
+    @Slot(str, result=str)
+    def mediaLibraryLanguages(self, selected: str) -> str:
+        try:
+            self._media_library_service().configure_languages(selected)
+        except ValueError as error:
+            return json.dumps({"error": str(error)}, ensure_ascii=False)
+        return self._media_changed(media_host.status_payload())
+
+    @Slot(bool, result=str)
+    def mediaLibraryCheck(self, enabled: bool) -> str:
+        self._media_library_service().background(bool(enabled), check_only=True)
+        return self._media_changed(media_host.status_payload())
+
+    @Slot(int, bool, result=str)
+    def mediaLibraryStep(self, direction: int, automatic: bool) -> str:
+        self._media_library_service().step(direction, automatic=automatic)
+        return self._media_changed(media_host.status_payload())
+
+    @Slot(bool, result=str)
+    def mediaLibraryAutoNext(self, enabled: bool) -> str:
+        self._media_library_service().configure_auto_next(enabled)
+        return self._media_changed(media_host.status_payload())
+
+    @Slot(str, bool, result=str)
+    def mediaLibraryHideSource(self, identifier: str, hidden: bool) -> str:
+        self._media_library_service().hide_source(identifier, hidden)
+        return self._media_changed(media_host.status_payload())
+
+    @Slot(str, result=str)
+    def mediaLibraryTypes(self, selected: str) -> str:
+        try:
+            self._media_library_service().configure_types(selected)
+        except ValueError as error:
+            return json.dumps({"error": str(error)}, ensure_ascii=False)
+        return self._media_changed(media_host.status_payload())
+
+    @Slot(str, result=str)
+    def mediaLibraryDiagnose(self, identifier: str) -> str:
+        self._media_library_service().diagnose(identifier)
+        return self._media_changed(media_host.status_payload())
+
+    @Slot(str, str, str, str, str, str, int, bool, result=str)
+    def mediaLibraryBrowseFiltered(self, page, letter, category, language, season, query, offset, available_only):
+        self._media_library_service().browse(page, letter, category, language, season, query, offset, available_only)
+        return self._media_changed(media_host.status_payload())
+
+    @Slot(str, str, str, str, str, str, int, int, bool)
+    def mediaLibraryChunkFiltered(self, page, letter, category, language, season, query, offset, ticket, available_only):
+        self._media_library_service().chunk(page, letter, category, language, season, query, offset, ticket, available_only)
 
     @Slot(result=str)
     def mediaLibraryBackgroundStatus(self) -> str:

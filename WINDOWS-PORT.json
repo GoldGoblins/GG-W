@@ -20,7 +20,7 @@
     },
     "README.md": {
       "upstream_sha256": "1fa0f62e802aa8e200ac4de9147d20d5777b395dd14ba58299be28e2b9f50eae",
-      "windows_sha256": "ea2fc2501a02792a9c8071830781fcd9904894d812b7acb92f2795a0f60c513d"
+      "windows_sha256": "fc4977b98588b7e353196540c70c0d14702670fee9b1a4ba9a99feea90adeab3"
     },
     "backend/application_paths.py": {
       "upstream_sha256": "20ec0345b0b2415f2586b8e08a1df58efba42b8e818dfd45345f601a5d56a2c1",
@@ -40,7 +40,7 @@
     },
     "backend/chat_surface_host.py": {
       "upstream_sha256": "51ddab5617c74e707efdcd1f0ea11ae0a753f920051fdf00cfdea1e9ecfafa0f",
-      "windows_sha256": "5fafa167e0e59fe5a2158339878d4da0e1e2336767b3d8df705805513d3bc571"
+      "windows_sha256": "b8e63de06a0969132ed753b6e8c85a4f9d7f2f6727b310ac9191e1520138ab04"
     },
     "backend/codex_image_storage.py": {
       "upstream_sha256": "4ba52652bc8898c0f998a81085076ca3a69d7578ad564b7e6080439636dbfa5c",
@@ -323,8 +323,8 @@
       "windows_sha256": "aa6c1fbbb3fd953e03b1c33cea8c0c5c2e9bee27e9f9e872761825df9825a6be"
     },
     "qml/components/MediaSurface.qml": {
-      "upstream_sha256": null,
-      "windows_sha256": "9dae5489450b9308d1f5595f5a2fff7e2ab35c29289b9cbe5edb034a145f68c4"
+      "upstream_sha256": "dd321980b7a653f869c9ff8e73d6c1da4de340c346afcb18594da55ebdfd956d",
+      "windows_sha256": "8059ddb9923280160fa002e8cb52e643d2a7d4a78a0db661fac0bfd8483ae85f"
     },
     "qml/components/QipSurface.qml": {
       "upstream_sha256": null,
@@ -1049,6 +1049,102 @@
     "docs/LIVE-EYES-INDICATOR-2026-10-25.txt": {
       "upstream_sha256": null,
       "windows_sha256": "9a018f5152c0011b8f7098e5345c18c0098945c5a55d29c380cbaa92560fc0c5"
+    },
+    "backend/media_background_work.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "7b4800cf1a01e968577e3e85f7de9644a11dde2e929d7a229197ab125a1c19e5"
+    },
+    "backend/media_contract.py": {
+      "upstream_sha256": "ce001a07ec13e5bd6e9c2cf7fa4a6b3623f48fb6334dab46d4624da6646fb158",
+      "windows_sha256": "edfe04f8e77abd5f9721dad04ae06eefb4ca938c7fb063afe0db3e595c53291e"
+    },
+    "backend/media_diagnostics.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "3d6457eaddd278088e82cce83562a6c140226ddcb1d7f38a5caeb23878cde9b2"
+    },
+    "backend/media_discovery.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "33466167f690f71a729e57a917bf7218cc9d4549bd9f6a75ea7c565c45bf897a"
+    },
+    "backend/media_existing_checks.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "7ace36a5f39cf4995a09bac5dec0b06e41f1bfe12c678546b0a2f48c939f43ae"
+    },
+    "backend/media_health_audit.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "0936b65691640c06133a9fba59fda4e3497fb5bb4cad8205a2e33e2a585a616b"
+    },
+    "backend/media_index.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "f3013dc3d764fa9374c4dcddbe6373da41626a9079adde78f07ba96284c50aae"
+    },
+    "backend/media_initial_validation.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "cee8ed7423fbbad90230f5506aa7954cdf00230f55ec197bd51ff85d0051e5d3"
+    },
+    "backend/media_languages.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "17bc87ed192c093c90e336821610b9fa6cf6408325dfced38344752fd3dda7be"
+    },
+    "backend/media_library.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "bef51a87f15cb99b8e83c14459c6d65879eaba53a99c575175c92a135ae5b6fe"
+    },
+    "backend/media_paged_service.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "916eb7ee06aa9cdbcfe29741ecefb75b0f39a9124c5abe241ef9b27e6be02891"
+    },
+    "backend/media_search_scope.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "efadaff1dc9773615e2a9e14f11558215be1934fb398d3c92d1d7539d9b08f74"
+    },
+    "backend/media_sources.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "ef8d8046419b63530eacb9368df74e55adccd8a6ea5403926aec2fe6a37b68d8"
+    },
+    "tests/test_media_background_ui.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "d87baddeb6e9549b1724b2ae73f047282e5899f44edeaff88df6420f8dc887f3"
+    },
+    "tests/test_media_catalog_service.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "eba829fe7fb27f5cc05c7f9fcee3ca7c9db3988adde8f8570d02e8e62801ba39"
+    },
+    "tests/test_media_discovery.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "af058aa3ba443f1da6756553fbe2a58e563079424f52eda77cf4203dbb9ddcd8"
+    },
+    "tests/test_media_filter_actions_ui.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "94e3cc8b1e064978fffd9cc1a9a1904859a90664132205d8e6cf9c9eb9463625"
+    },
+    "tests/test_media_language_filters.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "a051687028f139c6f761c2ce496b062f18ffc377192468e79f59c4c555dc6491"
+    },
+    "tests/test_media_library_ui.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "7183395e07bd19551b5eb5d7269247521480f15c165170c30dee13b398e2fa0e"
+    },
+    "tests/test_media_playback_navigation_ui.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "7121c37e09dfe6c0569f23d3ebefe76775ca2c15e18e852478a7905796bc80a7"
+    },
+    "tests/test_media_playback_queue.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "29e21ac2c8d3b870c8587dc10471c6eb868b1e82668021e892a9a15fa1d12551"
+    },
+    "tests/test_media_search_scope.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "30268dc21b841fc86bb73fc8d382ff2c35d44c3bfb39023099e808e05a4fd2c7"
+    },
+    "tests/test_media_selection_ui.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "6631633e8a121c3713216f761b57bab0bca30002b467877f57d9347c87983e55"
+    },
+    "tests/test_media_sources.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "b60ea20cbbc852a3a2c9399341d7870221815d715f1adb044e24654ab14e9e9c"
     }
   },
   "container_runtime": {
@@ -1288,7 +1384,31 @@
     "tools/install_web_filter.py",
     "tools/research/profile_game_asset_scene.py",
     "tools/verify_site_runtime.py",
-    "tools/world/build_windows_native.py"
+    "tools/world/build_windows_native.py",
+    "backend/media_background_work.py",
+    "backend/media_contract.py",
+    "backend/media_diagnostics.py",
+    "backend/media_discovery.py",
+    "backend/media_existing_checks.py",
+    "backend/media_health_audit.py",
+    "backend/media_index.py",
+    "backend/media_initial_validation.py",
+    "backend/media_languages.py",
+    "backend/media_library.py",
+    "backend/media_paged_service.py",
+    "backend/media_search_scope.py",
+    "backend/media_sources.py",
+    "tests/test_media_background_ui.py",
+    "tests/test_media_catalog_service.py",
+    "tests/test_media_discovery.py",
+    "tests/test_media_filter_actions_ui.py",
+    "tests/test_media_language_filters.py",
+    "tests/test_media_library_ui.py",
+    "tests/test_media_playback_navigation_ui.py",
+    "tests/test_media_playback_queue.py",
+    "tests/test_media_search_scope.py",
+    "tests/test_media_selection_ui.py",
+    "tests/test_media_sources.py"
   ],
   "installed_tools": {
     "ffmpeg": "9.0.2",
@@ -2891,10 +3011,10 @@
           "error"
         ],
         "captions": [
-          "ÖGON · FÅNGAR",
-          "ÖGON · VIDEO",
-          "ÖGON · NYSS",
-          "ÖGON · FEL"
+          "\u00d6GON \u00b7 F\u00c5NGAR",
+          "\u00d6GON \u00b7 VIDEO",
+          "\u00d6GON \u00b7 NYSS",
+          "\u00d6GON \u00b7 FEL"
         ],
         "completed_current_fps": 0,
         "completed_current_frame_age": null,
@@ -3717,6 +3837,55 @@
       "source_contract": "PASS",
       "catalog_files": 2589,
       "changed_files": 30
+    },
+    "media_language_source_navigation_patch_2026_10_26": {
+      "application_bundle_and_relocated_new_home": {
+        "failed": 0,
+        "passed": 9
+      },
+      "distribution": "Catalog allowlist; no personal libraries, hidden-item history, sessions, credentials or audit databases",
+      "features": [
+        "Separate persisted browse and discovery language choices; Swedish and English defaults and full names",
+        "Missing language recovered from explicit audio/provider/HLS metadata; unresolved entries retained",
+        "One, multiple or all seven media types searched independently of the selected tab",
+        "Same-title source diagnostics and reversible removal with low-opacity row actions",
+        "Explicit saved-library source check with pause/resume and fresh recheck cycles",
+        "Playing-list previous/next across page boundaries and opt-in season-aware episode autoplay"
+      ],
+      "initial_media_regression_run": {
+        "failed": 1,
+        "failure": "Cold first status exceeded 50 ms while importing service definitions",
+        "passed": 237,
+        "total": 238
+      },
+      "known_limits": [
+        "Public providers and every saved source were not exhaustively live-tested for this release",
+        "Reliable metadata is required to establish language; no claim of complete speech recognition",
+        "Quick reachability does not guarantee codecs, whole-programme playback or permanent availability",
+        "Game checks inspect resource reachability/readability and do not run games",
+        "Automatic next is for explicitly identified episodes and stops at the selected season or series end"
+      ],
+      "performance": {
+        "cold_status_ms": 2.6,
+        "fixture_library_rows": 50000,
+        "gui_database_or_network": false,
+        "mode_change_ms": 7.13,
+        "paged_browse_max_ms": 0.6
+      },
+      "post_fix_service_and_loading_regressions": {
+        "failed": 0,
+        "passed": 92
+      },
+      "restart": "User-controlled full application restart required; active desktop left running",
+      "result": "PASS",
+      "scope": "MEDIA language and type filters, source diagnostics/removal, saved-library checks and playback navigation",
+      "source_work_bounds": {
+        "discovery_on_status_or_render": false,
+        "jobs_per_start": 240,
+        "seconds_per_start": 300
+      },
+      "startup_fix": "Import service definitions during backend loading behind the startup screen, before interactive MEDIA calls; no source work during import",
+      "unique_media_cases_passing_after_targeted_recheck": 238
     }
   },
   "verification_before_2026_10_21": {

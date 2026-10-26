@@ -58,7 +58,7 @@ class SourcesTests(unittest.TestCase):
                           result["verified_by_import"]), (1, 12001, 12001, 0))
         self.assertEqual(max(batches), 200)
         self.assertEqual(batches[-1], 1)
-        self.assertEqual(self.index.browse(view_request("live"))["library_total"], 0)
+        self.assertEqual(self.index.browse(view_request("live", language="sv; en"))["library_total"], 0)
         with self.index.connection() as db:
             self.assertEqual(db.execute("SELECT COUNT(*) FROM items WHERE status='verified'").fetchone()[0], 0)
             self.assertEqual(db.execute("SELECT COUNT(DISTINCT group_key) FROM items").fetchone()[0], 1)

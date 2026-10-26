@@ -13,7 +13,7 @@ MAX_SECONDS = 300.0
 MAX_JOBS = 240
 
 
-def validate_initial(index, *, cancel, max_seconds=MAX_SECONDS, explicit=False):
+def validate_initial(index, *, cancel, max_seconds=MAX_SECONDS, explicit=False, selected_languages=None):
     if cancel.is_set():
         return {"state": "cancelled", "notice": ""}
     # Inspect before initialization: policy migrations and another process's
@@ -49,7 +49,7 @@ def validate_initial(index, *, cancel, max_seconds=MAX_SECONDS, explicit=False):
         audit.repair(run_id, initial_retry=True)
         audit.include(run_id)
     result = audit.run(run_id, workers=2, max_seconds=min(MAX_SECONDS, max_seconds),
-                       max_jobs=MAX_JOBS, cancel=cancel)
+                       max_jobs=MAX_JOBS, cancel=cancel, selected_languages=selected_languages)
     state = "cancelled" if cancel.is_set() else str(result.get("status") or "paused")
     notice = "" if state == "complete" or cancel.is_set() else "Källkontrollen är pausad. Välj uppdatera för att kontrollera fler titlar."
     return {"state": state, "notice": notice}

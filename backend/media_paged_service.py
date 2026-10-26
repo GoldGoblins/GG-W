@@ -4,6 +4,7 @@ from __future__ import annotations
 from concurrent.futures import Future, ThreadPoolExecutor
 from collections import OrderedDict
 import threading
+import json
 import time
 import sqlite3
 from typing import Any, Callable
@@ -14,6 +15,8 @@ from backend import media_contract as contract, media_host as host, media_librar
 from backend.media_index import MediaIndex, PAGES, echo, view_request
 from backend.media_browse_session import BrowseSession, SnapshotInvalid
 from backend.media_background_work import MediaBackgroundWork, empty_status
+from backend import media_languages as languages
+from backend import media_search_scope as scope
 
 
 class MediaCatalogService(QObject):
@@ -32,13 +35,26 @@ class MediaCatalogService(QObject):
         self._discovery_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="gg-media-discover")
         self._initial_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="gg-media-initial")
         self._background_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="gg-media-background")
+        self._edit_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="gg-media-edits")
+        self._preference_lock = threading.Lock()
+        self._edit_count = 0
         self._background_work = MediaBackgroundWork(self.index)
         self._background_status = empty_status()
         self._background_cancel = threading.Event()
         self._background_future = None
         self._background_pause_future = None
         self._background_generation = 0
-        self._generation = {"browse": 0, "play": 0, "search": 0, "collection": 0, "chunk": 0, "audit": 0}
+        self._search_languages = languages.DEFAULT_LANGUAGES
+        self._languages_loaded = False
+        self._search_types = scope.DEFAULT_TYPES
+        self._types_loaded = False
+        self._diagnostic = {}
+        self._auto_next = False
+        self._auto_next_loaded = False
+        self._playback_view = None
+        self._playback_groups = None
+        self._navigation = {}
+        self._generation = {"browse": 0, "play": 0, "search": 0, "collection": 0, "chunk": 0, "audit": 0, "diagnostic": 0, "settings": 0, "step": 0, "navigation": 0}
         self._futures: dict[str, Future] = {}
         self._pending: set[str] = set()
         self._closed = False
@@ -94,6 +110,7 @@ class MediaCatalogService(QObject):
         connection = None
         try:
             connection = sqlite3.connect(self.index.path.resolve().as_uri() + "?mode=ro", uri=True, timeout=.25)
+            connection.create_function("gg_language_match", 2, languages.sql_match, deterministic=True)
             structure = connection.execute("SELECT value FROM meta WHERE key='inventory_structure_revision'").fetchone()
             revision = str(structure[0]) if structure else "0"
             tables = connection.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table' "
@@ -102,6 +119,7 @@ class MediaCatalogService(QObject):
                 return {"_inventory_structure_revision": revision}
             columns = {row[1] for row in connection.execute("PRAGMA table_info(media_audit_runs)")}
             run = connection.execute("SELECT id,status," + ("lanes" if "lanes" in columns else "'[]'") +
+                                     "," + ("search_languages" if "search_languages" in columns else "'[]'") +
                                      " FROM media_audit_runs ORDER BY id DESC LIMIT 1").fetchone()
             if run is None:
                 return {"_inventory_structure_revision": revision}
@@ -109,8 +127,17 @@ class MediaCatalogService(QObject):
             lanes = tuple(value for value in json.loads(run[2] or "[]") if value in ("live", "movies", "series"))
             job_columns = {row[1] for row in connection.execute("PRAGMA table_info(media_audit_jobs)")}
             focus = " AND lane IN (" + ",".join("?" for _ in lanes) + ")" if lanes and "lane" in job_columns else ""
+            parameters = [run[0], *lanes] if focus else [run[0]]
+            selected = languages.codes(json.loads(run[3] or "[]"))
+            if selected:
+                focus += " AND (gg_language_match(json_extract(payload,'$.language'),?)=1 OR gg_language_match(json_extract(payload,'$.language'),'unknown')=1)"
+                parameters.append("; ".join(selected))
+            if "media_hidden_items" in {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}:
+                focus += (" AND EXISTS (SELECT 1 FROM items visible WHERE visible.source_key=media_audit_jobs.source_key "
+                          "AND NOT EXISTS (SELECT 1 FROM media_hidden_items h WHERE h.item_id=visible.id) "
+                          "AND NOT EXISTS (SELECT 1 FROM media_hidden_groups h WHERE h.group_key=visible.group_key))")
             counts = dict(connection.execute("SELECT state,COUNT(*) FROM media_audit_jobs WHERE run_id=?" + focus + " GROUP BY state",
-                                             [run[0], *lanes] if focus else [run[0]]))
+                                             parameters))
             total = sum(counts.values())
             terminal = ("healthy", "failed", "unknown", "expanded", "changed")
             return dict(total=total, done=sum(counts.get(state, 0) for state in terminal),
@@ -140,7 +167,7 @@ class MediaCatalogService(QObject):
         self._background_status = dict(status)
         host._library_page_state["library_background"] = dict(status)
 
-    def background(self, enabled):
+    def background(self, enabled, *, check_only=False):
         """Explicit source work; browsing and Refresh do not start this lane."""
         if self._closed:
             return
@@ -154,6 +181,8 @@ class MediaCatalogService(QObject):
         current = dict(self._background_status)
         current.update(running=bool(enabled), pausing=not enabled, paused=False,
                        phase="starting" if enabled else "pausing", notice="")
+        if enabled:
+            current["operation"] = "check" if check_only else "expand"
         self._publish_background(current)
         self.changed.emit()
         def notify(status):
@@ -163,7 +192,8 @@ class MediaCatalogService(QObject):
             cancelled = self._background_cancel = threading.Event()
             def work():
                 self._bootstrap()
-                return self._background_work.run(cancelled, notify=notify)
+                return self._background_work.run(cancelled, notify=notify,
+                                                selected_languages=self._search_languages, selected_types=self._search_types, check_only=check_only)
         else:
             self._background_cancel.set()
             cancelled = self._background_cancel
@@ -196,6 +226,20 @@ class MediaCatalogService(QObject):
             if self._ready:
                 return
             self.index.initialize()
+            if not self._languages_loaded:
+                saved = self.index.meta(languages.PREFERENCE_KEY)
+                self._search_languages = languages.codes(saved) or languages.DEFAULT_LANGUAGES
+                self._languages_loaded = True
+            if not self._types_loaded:
+                saved_types = self.index.meta(scope.PREFERENCE_KEY)
+                try:
+                    self._search_types = scope.types(saved_types) if saved_types else scope.DEFAULT_TYPES
+                except ValueError:
+                    self._search_types = scope.DEFAULT_TYPES
+                self._types_loaded = True
+            if not self._auto_next_loaded:
+                self._auto_next = self.index.meta("media_auto_next_episode") == "true"
+                self._auto_next_loaded = True
             if self.index.meta("starter_version") != "verified-paged-v1":
                 self.index.ingest(contract.parse_m3u(contract.BUNDLED_CHANNELS, "TV"))
                 self.index.meta("starter_version", "verified-paged-v1")
@@ -203,6 +247,7 @@ class MediaCatalogService(QObject):
             if self.index.meta("starter_content_revision") != content_revision:
                 self.index.ingest_discovered(library.starter_catalog())
                 self.index.meta("starter_content_revision", content_revision)
+            self.index.classify_saved_languages()
             # Persisted catalogue startup never opens sources or probes players.
             self._ready = True
             self._initial_eligible = True
@@ -222,7 +267,8 @@ class MediaCatalogService(QObject):
         started = time.monotonic()
         def work():
             from backend.media_initial_validation import validate_initial
-            return validate_initial(self.index, cancel=cancelled, max_seconds=self._initial_remaining, explicit=explicit)
+            return validate_initial(self.index, cancel=cancelled, max_seconds=self._initial_remaining, explicit=explicit,
+                                    selected_languages=self._search_languages)
         future = self._initial_pool.submit(work)
         self._initial_future = future
         def done(result):
@@ -243,7 +289,7 @@ class MediaCatalogService(QObject):
             # RADIO uses presets/last-good cache, never waits on every provider.
             rows = (contract.radio_catalog(refresh=False) if mode == "RADIO"
                     else contract.music_catalog(cancel=self._cancel) if mode == "MUSIC"
-                    else contract.catalog_for(mode))
+                    else contract.game_catalog() if mode == "GAME" else contract.catalog_for(mode))
             self.index.ingest(rows)
             if mode == "FETCH":
                 host._library_fetch_info = host.fetch_status()
@@ -300,13 +346,14 @@ class MediaCatalogService(QObject):
         if not self._ready and "browse" not in self._pending:
             mode = contract.load_prefs()["mode"]
             page = {"TV": "live", "MUSIC": "music", "FETCH": "downloads", "RADIO": "radio", "GAME": "games"}[mode]
-            self.browse(page, "all", "all", "all", "all", "", 0)
+            self.browse(page, "all", "all", "sv; en" if page in ("live", "movies", "series") else "all", "all", "", 0)
 
-    def browse(self, page, letter, category, language, season, query, offset):
+    def browse(self, page, letter, category, language, season, query, offset, available_only=None):
         self._reset_snapshot()
         self._cancel_chunk()
         keep = self._view if page == self._view["page"] else {}
         view = view_request(page, letter, category, language, season, query, offset,
+                            available_only=keep.get("available_only", False) if available_only is None else available_only,
                             collection_key=keep.get("collection_key"), collection_title=keep.get("collection_title"))
         if (self._restore_parent_snapshot and self._parent_restore_context_seen and self._parent_snapshot is not None
                 and self._chunk_context(view) != self._parent_snapshot.context):
@@ -327,7 +374,7 @@ class MediaCatalogService(QObject):
     @staticmethod
     def _chunk_context(view):
         return tuple(view.get(key, "") for key in
-                     ("page", "letter", "category", "language", "season", "query", "collection_key", "lookup_query"))
+                     ("page", "letter", "category", "language", "season", "query", "collection_key", "lookup_query", "available_only"))
 
     def _reset_snapshot(self):
         self._browse_cancel.set()
@@ -368,10 +415,11 @@ class MediaCatalogService(QObject):
         if future:
             future.cancel()
 
-    def chunk(self, page, letter, category, language, season, query, offset, ticket):
+    def chunk(self, page, letter, category, language, season, query, offset, ticket, available_only=None):
         """Read one more saved page without changing the active catalogue/player."""
         active = dict(self._view)
         view = view_request(page, letter, category, language, season, query, offset,
+                            available_only=active.get("available_only", False) if available_only is None else available_only,
                             collection_key=active.get("collection_key"),
                             collection_title=active.get("collection_title"))
         if active.get("lookup_query"):
@@ -516,6 +564,17 @@ class MediaCatalogService(QObject):
                 self._refresh_timer.start()
                 self.changed.emit()
             return
+        if lane == "edited":
+            self._edit_count = max(0, self._edit_count - 1)
+            if not self._edit_count:
+                self._pending.discard("edits")
+            if error:
+                self._notice = error
+            if self._active:
+                self._reset_snapshot()
+                self._refresh_timer.start()
+                self.changed.emit()
+            return
         if lane == "audit":
             if ticket != self._generation["audit"]:
                 return
@@ -572,6 +631,36 @@ class MediaCatalogService(QObject):
         if ticket != self._generation.get(lane):
             return
         self._pending.discard(lane)
+        if action in ("step", "navigation"):
+            if context.get("anchor") != str((host._item or {}).get("id") or ""):
+                return
+            if action == "navigation":
+                self._navigation = value or {}
+                host._library_page_state.update(self._navigation)
+            else:
+                host._library_page_state["library_playback_busy"] = False
+                if context.get("automatic") and not self._auto_next:
+                    self.changed.emit()
+                    return
+                if value:
+                    self.play_id(value["item"]["id"], playback_view=value["view"], playback_groups=value["groups"])
+                else:
+                    host._library_page_state["library_playback_notice"] = "Seriens eller säsongens slut." if context.get("automatic") else "Listans början eller slut."
+            self.changed.emit()
+            return
+        if action == "settings":
+            host._library_page_state["library_discovery_languages"] = list(self._search_languages)
+            host._library_page_state["library_discovery_types"] = list(self._search_types)
+            host._library_page_state["library_auto_next"] = self._auto_next
+            self.changed.emit()
+            return
+        if action == "diagnostic":
+            self._diagnostic = value or dict(running=False, title="Källkontroll", message=error)
+            host._library_page_state["library_diagnostic"] = dict(self._diagnostic)
+            self.changed.emit()
+            if self._active:
+                self._refresh_timer.start()
+            return
         if action == "enrich":
             self._notice = error or str(value or "")
             if self._active:
@@ -596,6 +685,13 @@ class MediaCatalogService(QObject):
             payload["library_loading_id"] = self._loading_id
             payload["library_selection_error"] = self._selection_error
             payload["library_background"] = dict(self._background_status)
+            payload["library_discovery_languages"] = list(self._search_languages)
+            payload["library_discovery_types"] = list(self._search_types)
+            payload["library_discovery_language_options"] = languages.options(discovery=True)
+            payload["library_diagnostic"] = dict(self._diagnostic)
+            payload["library_auto_next"] = self._auto_next
+            payload.update(self._navigation)
+            payload["library_playback_busy"] = "step" in self._pending
             if self._audit_snapshot:
                 payload["library_audit"] = dict(self._audit_snapshot)
             host.library_publish_page(payload)
@@ -624,6 +720,7 @@ class MediaCatalogService(QObject):
                 host.library_store(value)
                 self._refresh_selected_id = str(value.get("id") or "")
                 self.playReady.emit(value)
+                self._refresh_navigation(str(value["id"]))
         self.changed.emit()
         if action == "play" and self._active:
             # Reflect only this chosen source's new status in the local list.
@@ -642,7 +739,7 @@ class MediaCatalogService(QObject):
         def work():
             from backend.media_discovery import discover
             self._bootstrap()
-            return discover(self.index, page, cancel=self._cancel)
+            return discover(self.index, page, cancel=self._cancel, selected_languages=self._search_languages)
         future = self._discovery_pool.submit(work)
         def done(result):
             try:
@@ -726,19 +823,105 @@ class MediaCatalogService(QObject):
         host.library_begin()
         # Publish already verified matches without waiting for external search.
         self._query()
-        if not cleaned or PAGES[view["page"]][0] != "TV":
+        if not cleaned:
             return
         def work():
             self._bootstrap()
             if direct:
                 self.index.ingest_discovered([library.annotate(direct)])
             else:
-                try:
-                    self.index.ingest_discovered(library.search_archive(cleaned, limit=200))
-                except (OSError, RuntimeError, ValueError, TimeoutError):
-                    return "Arkivsökningen svarar inte. Titlar i det sparade biblioteket visas."
+                return scope.search(self.index, cleaned, selected_types=self._search_types,
+                                    selected_languages=self._search_languages, cancel=self._cancel)
             return ""
         self._queue("search", "enrich", work, pool=self._metadata_pool, view=view)
+
+    def configure_languages(self, value):
+        chosen = languages.codes(value)
+        if not chosen:
+            raise ValueError("Välj minst ett språk.")
+        if self._background_status.get("running") or self._background_status.get("pausing"):
+            raise ValueError("Pausa Utöka innan du ändrar sökspråk.")
+        self._search_languages, self._languages_loaded = chosen, True
+        host._library_page_state["library_discovery_languages"] = list(chosen)
+        self._save_search_preferences()
+
+    def configure_types(self, value):
+        chosen = scope.types(value)
+        if self._background_status.get("running") or self._background_status.get("pausing"):
+            raise ValueError("Pausa Utöka innan du ändrar mediatyper.")
+        self._search_types, self._types_loaded = chosen, True
+        host._library_page_state["library_discovery_types"] = list(chosen)
+        self._save_search_preferences()
+
+    def _save_search_preferences(self):
+        def work():
+            self._bootstrap()
+            with self._preference_lock:
+                self.index.meta(languages.PREFERENCE_KEY, "; ".join(self._search_languages))
+                self.index.meta(scope.PREFERENCE_KEY, "; ".join(self._search_types))
+                self.index.meta("media_auto_next_episode", "true" if self._auto_next else "false")
+            return ""
+        self._queue("settings", "settings", work, pool=self._pool)
+        self.changed.emit()
+
+    def configure_auto_next(self, enabled):
+        self._auto_next, self._auto_next_loaded = bool(enabled), True
+        host._library_page_state["library_auto_next"] = self._auto_next
+        self._save_search_preferences()
+
+    def _refresh_navigation(self, anchor):
+        view = dict(self._playback_view or self._view)
+        groups = self._playback_groups
+        def work():
+            queue_groups = groups if groups is not None else self.index.snapshot_groups(view)
+            previous = self.index.playback_neighbor(view, anchor, -1, groups=queue_groups)
+            following = self.index.playback_neighbor(view, anchor, 1, groups=queue_groups)
+            return dict(library_playback_can_previous=previous is not None,
+                        library_playback_can_next=following is not None)
+        self._queue("navigation", "navigation", work, anchor=anchor)
+
+    def step(self, direction, *, automatic=False):
+        anchor = str((host._item or {}).get("id") or "")
+        if not anchor or "play" in self._pending or "step" in self._pending:
+            return
+        if automatic and not self._auto_next:
+            return
+        view, groups = dict(self._playback_view or self._view), self._playback_groups
+        host._library_page_state.update(library_playback_busy=True, library_playback_notice="")
+        def work():
+            self._bootstrap()
+            return self.index.playback_neighbor(view, anchor, direction, groups=groups, episodes_only=automatic)
+        self._queue("step", "step", work, anchor=anchor, automatic=automatic)
+        self.changed.emit()
+
+    def hide_source(self, identifier, hidden=True):
+        self._edit_count += 1
+        self._pending.add("edits")
+        def work():
+            self._bootstrap()
+            self.index.hide_source(identifier, hidden=hidden)
+            return ""
+        future = self._edit_pool.submit(work)
+        def done(result):
+            error = ""
+            try:
+                result.result()
+            except Exception:
+                error = "Titeln kunde inte ändras i listan. Försök igen."
+            if not self._closed:
+                self._completed.emit(("edited", 0, "edited", {}, None, error))
+        future.add_done_callback(done)
+
+    def diagnose(self, identifier):
+        """Check the chosen source and a finite set of its real alternatives."""
+        self._diagnostic = dict(running=True, title="Kontrollerar källa…")
+        host._library_page_state["library_diagnostic"] = dict(self._diagnostic)
+        self.changed.emit()
+        def work():
+            self._bootstrap()
+            from backend.media_diagnostics import diagnose
+            return diagnose(self.index, identifier, cancel=self._cancel)
+        self._queue("diagnostic", "diagnostic", work, pool=self._metadata_pool)
 
     def open_collection(self, identifier):
         row = host.item_by_id(identifier)
@@ -757,7 +940,7 @@ class MediaCatalogService(QObject):
         self._view.pop("lookup_query", None)
         collection = row.get("collection_key") or MediaIndex.series_key(row)
         self._view.update(collection_key=collection, collection_title=str(row["title"]), offset=0,
-                          letter="all", category="all", language="all", season="all", query="")
+                          letter="all", category="all", language="all", season="all", query="", available_only=False)
         host.library_begin()
         self._selection(str(identifier))
         host.library_publish_page({**echo(self._view), "items": [], "library_total": 0,
@@ -820,9 +1003,15 @@ class MediaCatalogService(QObject):
     def play(self, row):
         self.play_id(str(row["id"]), fallback=row)
 
-    def play_id(self, identifier, *, fallback=None):
+    def play_id(self, identifier, *, fallback=None, playback_view=None, playback_groups=None):
         """Resolve and check only the selected source, including off-page IDs."""
         self.cancel_play()
+        self._playback_view = dict(playback_view or self._view)
+        self._playback_groups = (playback_groups if playback_view is not None else self._accepted_snapshot.groups
+                                 if self._accepted_snapshot is not None
+                                 and self._accepted_snapshot.context == self._chunk_context(self._playback_view) else None)
+        self._navigation = {}
+        host._library_page_state.update(library_playback_notice="", library_playback_busy=False)
         self._cancel_collection()
         self._selection(str(identifier))
         host._library_error = ""
@@ -1026,6 +1215,9 @@ class MediaCatalogService(QObject):
         self._selection()
         self._generation["play"] += 1
         self._pending.discard("play")
+        for lane in ("step", "navigation"):
+            self._generation[lane] += 1
+            self._pending.discard(lane)
         future = self._futures.get("play")
         if future:
             future.cancel()
@@ -1046,4 +1238,5 @@ class MediaCatalogService(QObject):
         self._discovery_pool.shutdown(wait=False, cancel_futures=True)
         self._initial_pool.shutdown(wait=False, cancel_futures=True)
         self._background_pool.shutdown(wait=False, cancel_futures=True)
+        self._edit_pool.shutdown(wait=False, cancel_futures=True)
         self._pool.shutdown(wait=False, cancel_futures=True)
