@@ -6032,12 +6032,15 @@ class ChatSurfaceHost(QObject):
         self._desk_start(command)
 
     def _desk_window(self):
-        hole = self._tui_hole()
-        if hole is not None:
-            win = hole.window()
-            if win is not None:
-                return win
+        from PySide6.QtCore import Qt
+        from PySide6.QtQuick import QQuickWindow
+
         root = self._qml_root
+        # ApplicationWindow is itself a QQuickWindow and has no window()
+        # accessor. Never let an unrelated, possibly hidden popup take its
+        # place merely because Qt lists that popup first.
+        if isinstance(root, QQuickWindow):
+            return root
         if root is not None and hasattr(root, "window"):
             try:
                 win = root.window()
@@ -6045,10 +6048,20 @@ class ChatSurfaceHost(QObject):
                 win = None
             if win is not None:
                 return win
+        hole = self._tui_hole()
+        if hole is not None:
+            win = hole.window()
+            if win is not None:
+                return win
         from PySide6.QtGui import QGuiApplication
 
-        wins = QGuiApplication.topLevelWindows()
-        return wins[0] if wins else None
+        excluded = {Qt.WindowType.Popup, Qt.WindowType.ToolTip,
+                    Qt.WindowType.SubWindow, Qt.WindowType.Desktop}
+        wins = [win for win in QGuiApplication.topLevelWindows()
+                if win.isVisible()
+                and win.flags() & Qt.WindowType.WindowType_Mask not in excluded]
+        focused = QGuiApplication.focusWindow()
+        return focused if focused in wins else wins[0] if wins else None
 
     def _desk_find(self, name: str):
         if not name:
@@ -6719,21 +6732,20 @@ class ChatSurfaceHost(QObject):
         qt_button = mapping.get(button, Qt.MouseButton.LeftButton)
         point = QPointF(float(x), float(y))
         modifiers = Qt.KeyboardModifier.NoModifier
-        for event_type, pressed_buttons in (
+        # ScrollView/Flickable uses event timestamps when deciding whether a
+        # press/release is a click. Default-zero synthetic timestamps can make
+        # an otherwise valid click disappear inside a popup's ScrollView.
+        timestamp = max(1, int(time.monotonic() * 1000),
+                        getattr(self, "_desk_last_input_timestamp", 0) + 1)
+        for index, (event_type, pressed_buttons) in enumerate((
             (QEvent.Type.MouseButtonPress, qt_button),
             (QEvent.Type.MouseButtonRelease, Qt.MouseButton.NoButton),
-        ):
-            QCoreApplication.postEvent(
-                win,
-                QMouseEvent(
-                    event_type,
-                    point,
-                    point,
-                    qt_button,
-                    pressed_buttons,
-                    modifiers,
-                ),
-            )
+        )):
+            event = QMouseEvent(event_type, point, point, qt_button,
+                                pressed_buttons, modifiers)
+            event.setTimestamp(timestamp + index)
+            QCoreApplication.postEvent(win, event)
+        self._desk_last_input_timestamp = timestamp + 1
 
     def _desk_send_key(self, key: str) -> None:
         embed = self._external_embed

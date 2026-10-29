@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from backend.application_paths import STATE_ROOT
 from backend.platform_files import (
     NOFOLLOW,
     mode_matches,
@@ -14,7 +15,6 @@ from backend.platform_support import (
     desktop_relative_path,
     executable_path,
     host_environment,
-    platform_path,
     private_runtime_root,
     workspace_root,
 )
@@ -6072,7 +6072,7 @@ class ChatBridge(QObject):
     def initialize_startup_task_state(self) -> None:
         try:
             runtime = private_runtime_root()
-            ledger_parent = Path(platform_path("/home/GG/.local/state/goldgoblins"))
+            ledger_parent = STATE_ROOT.parent
             ledger_parent.mkdir(parents=True, exist_ok=True, mode=0o700)
             self._task_ledger = control_contract.TaskLedger(
                 ledger_parent / "workbench-control-v2",

@@ -19,7 +19,7 @@ import time
 import unicodedata
 
 VIEWS=('WALLET','MARKETPLACE','NETWORK')
-FOREGROUND_COMMANDS=frozenset({'network.start','dag.live_start','lan.start'})
+FOREGROUND_COMMANDS=frozenset({'network.start','dag.live_start','lan.start','lan.join_file'})
 SENSITIVE={'password','passphrase','mnemonic','words','answers','privatekey','private_key','secret','seed','seed_phrase',
            'validator_seed','node_seed','signing_key'}
 _ESCAPE=re.compile(r'\x1b(?:\][^\x07\x1b]*(?:\x07|\x1b\\)|\[[0-?]*[ -/]*[@-~]|[PX^_][^\x1b]*(?:\x1b\\)|[@-_])')
@@ -668,7 +668,7 @@ class TerminalApp:
 def foreground_summary(command, body):
     """Bounded public observations; no wallet refresh, peer or signing input."""
     body=_object(body)
-    if command=='lan.start':
+    if command in {'lan.start','lan.join_file'}:
         lan=_object(body.get('lan'));setup=_object(body.get('lan_setup'))
         tokens=_object(body.get('test_tokens'));circle=_object(body.get('token_circle'))
         return {'schema':'gg.terminal.foreground.v1','engine':'DAGOBLIN_PRIVATE_LAN',
@@ -715,7 +715,7 @@ def foreground_session(service, command, started, *, json_output=False):
             else:print('LOCAL · Ctrl+C stoppar den ägda sessionen · '+encoded,flush=True)
             prior=encoded
         time.sleep(1)
-        current=service.dispatch({'dag.live_start':'dag.status','lan.start':'lan.status'}.get(command,'network.status'),{})
+        current=service.dispatch({'dag.live_start':'dag.status','lan.start':'lan.status','lan.join_file':'lan.status'}.get(command,'network.status'),{})
 
 
 def main(argv=None,service_factory=None):
@@ -724,7 +724,7 @@ def main(argv=None,service_factory=None):
     parser.add_argument('--once',action='store_true',help='Skriv aktuell vy en gång utan helskärm.')
     parser.add_argument('--command',help='Kör ett servicekommando; inget skal används.')
     parser.add_argument('--args',default='{}',help='Publika kommandoargument som JSON-objekt; inga lösenord eller nycklar.')
-    parser.add_argument('--foreground',action='store_true',help='Behåll uttryckligt dag.live_start, lan.start eller lokalt network.start tills Ctrl+C; ingen daemon.')
+    parser.add_argument('--foreground',action='store_true',help='Behåll uttryckligt dag.live_start, lan.start, lan.join_file eller lokalt network.start tills Ctrl+C; ingen daemon.')
     parser.add_argument('--bootstrap-file',help='Signerad publik LAN-bootstrap för lan.start; inga privata nycklar.')
     parser.add_argument('--bootstrap-out',help='Skapa en ny publik LAN-bootstrapfil vid --foreground lan.start; skriver inte över.')
     parser.add_argument('--invite-out',help='Skapa en ny signerad publik LAN-inbjudan vid --foreground lan.start; skriver inte över.')

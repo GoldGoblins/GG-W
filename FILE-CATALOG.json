@@ -15,7 +15,7 @@
     "interface": 291,
     "native-engine": 1188,
     "shared-support": 93,
-    "tests": 547,
+    "tests": 549,
     "tools": 38
   },
   "files": [
@@ -83,24 +83,24 @@
       "path": "README.md",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 124059,
-      "sha256": "954dc524f0f24d137da6340b48e0cb5baddf2fc3de4e2e94ac429786eb047c9e",
+      "bytes": 125773,
+      "sha256": "f8d80cc88350a7b835542568803d81c003dd681646554d4c65153a732f2dce1d",
       "mode": "0o600"
     },
     {
       "path": "SOURCE-MANIFEST.json",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 566412,
-      "sha256": "409d2a2d5b7a799044b55b1543151a2aa1cf546ed0d0bb5e650da21cc0771018",
+      "bytes": 566728,
+      "sha256": "7dfcf5314fa28b3e4f27278a847751e08f476214bf604e3f26655ca23728925e",
       "mode": "0o644"
     },
     {
       "path": "WINDOWS-PORT.json",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 1555947,
-      "sha256": "7511bfacf621268cb4a5ca12208b1e567c2becf00b89a0de528dba1a3f99dfeb",
+      "bytes": 1557989,
+      "sha256": "a36cd3286809810fcb398d3e5afb4a23203de1de06838d6b2bf87b7582397536",
       "mode": "0o644"
     },
     {
@@ -315,8 +315,8 @@
       "path": "backend/chat_surface_host.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 282071,
-      "sha256": "fdf3cf0d57fe38a634bac1b23922e3c1f1a124eda82be2aa0cccf99165c733ed",
+      "bytes": 283137,
+      "sha256": "af299be78262a6b2b49cfc68b00e718c4af1f37d61302ff2312ebbd9fcb181ed",
       "mode": "0o600"
     },
     {
@@ -2611,8 +2611,8 @@
       "path": "backend/lan_dag_runtime.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 19000,
-      "sha256": "2faa55269b3482c7c0e9f86cf7d3153227ad79d4d4baa7cf5f70719787b1632e",
+      "bytes": 19287,
+      "sha256": "34aeeecb26a9dbb8a493e7a4b90eef62de02011c71241bece1c554276ec09fb9",
       "mode": "0o644"
     },
     {
@@ -3571,8 +3571,8 @@
       "path": "backend/omni_service.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 13607,
-      "sha256": "d67061c0862bbea49a213dd11d4260ac62b551980b0b4368bf86c26f63a2493a",
+      "bytes": 13627,
+      "sha256": "45e9ca6a75b6d484826b2244d9ea2536c0e04c4b171c1606c82c2f3dee49c049",
       "mode": "0o644"
     },
     {
@@ -4011,8 +4011,8 @@
       "path": "backend/terminal_cli.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 46602,
-      "sha256": "c01f10b98178774a80b6b0986d6507dd5259096cd4cd647111d2a2a11a842629",
+      "bytes": 46682,
+      "sha256": "2857cdfd7545c688fa1f5ed1a38ad3815965dc6aa5e9aca24bc7761c809babff",
       "mode": "0o644"
     },
     {
@@ -4027,8 +4027,8 @@
       "path": "backend/terminal_service.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 25816,
-      "sha256": "e10568e756ec44d51ea83cc4c9a34b58a0a63cd4deabbd646d10a139fd5c3ae2",
+      "bytes": 25836,
+      "sha256": "01a374dcf8064496f11c9530e19ecb91676c219b2f63ce1dbdf1907a00d70bd3",
       "mode": "0o644"
     },
     {
@@ -4443,8 +4443,8 @@
       "path": "docs/PATCH-NOTES-2026-10-29.txt",
       "category": "documentation",
       "kind": "file",
-      "bytes": 8061,
-      "sha256": "df4006dc0c5b2cc4e5cb3f117090cceae571973a61299972ac5d996e36fe4168",
+      "bytes": 9513,
+      "sha256": "3c0d4e3c062432c22a00c5383ede2301792e88eed056a2cd0c7cc491cb4bf03b",
       "mode": "0o644"
     },
     {
@@ -4651,8 +4651,8 @@
       "path": "knowledge/dagoblin-lan.md",
       "category": "gpt-knowledge",
       "kind": "file",
-      "bytes": 6646,
-      "sha256": "7f9a77458e7b4bfa69aaae9ee0f420756e0c8ea57bb51cb05cae7686cf58aadb",
+      "bytes": 6982,
+      "sha256": "161c3059c8d7cda85aa628a162531d01af61707a471453a85c3797711d08c8bf",
       "mode": "0o644"
     },
     {
@@ -5907,8 +5907,8 @@
       "path": "main.py",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 401445,
-      "sha256": "26859913dca2a02427112b2870760afea8c4e143dafe69381673579be098311e",
+      "bytes": 401436,
+      "sha256": "e0bc4123ca43d650b133b86dda648bbae231f5e91e5cec65d91cd128a6a50770",
       "mode": "0o644"
     },
     {
@@ -16235,8 +16235,8 @@
       "path": "qml/components/LanDagSetupPopup.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 17938,
-      "sha256": "4a8a6702c1a45044dbe55594fa14fed44dabb4f0a55a66e1130749fae31cac2e",
+      "bytes": 18937,
+      "sha256": "aab4f530e0580d2db45f89f212c8da7fdf5dc2b80bc052cb153e8b5799046496",
       "mode": "0o644"
     },
     {
@@ -19528,6 +19528,14 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_desktop_operator_input.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 4240,
+      "sha256": "46b05577e3bd1e9d821e6c5afe538eb79371a50d2d58c500b6143c0a3c3a6c05",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_desktop_settings.py",
       "category": "tests",
       "kind": "file",
@@ -21485,6 +21493,14 @@
       "kind": "file",
       "bytes": 9064,
       "sha256": "863aa28725d7bb8a72903fab78f7158abe36db04d41f5a204adedb2b3f28f9ab",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_desktop_join.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 9885,
+      "sha256": "da4637a5be5551b21bcd136946343c9d2939ad69c0a4735250a8f11ec9f8cc8a",
       "mode": "0o644"
     },
     {

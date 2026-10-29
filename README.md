@@ -8,13 +8,12 @@ Windows repo: [github.com/GoldGoblins/GG-W](https://github.com/GoldGoblins/GG-W)
 
 | Version | Repository | Start here |
 |---|---|---|
-| Original Linux version | [GG](https://github.com/GoldGoblins/GG) | `run-gg-ai-desktop.sh` |
+| Linux desktop (same full source) | [GG-W](https://github.com/GoldGoblins/GG-W) | `run-gg-ai-desktop.sh`; see Linux setup below |
 | Windows version | [GG-W](https://github.com/GoldGoblins/GG-W) | `setup-windows.cmd`, then `run-gg-ai-desktop.cmd` |
 
 GG-W contains the Windows port, including ConPTY chat,
 native WebView2 video, optional original uBlock Origin filtering, Windows
-screen observation, TMoG meters and Qt audio. The original Linux version
-remains available in the separate GG repository. The Windows desktop core is verified; optional
+screen observation, TMoG meters and Qt audio. The same full source includes Linux desktop entry points and shared LAN joining. The Windows desktop core is verified; optional
 features and remaining limitations are recorded in [WINDOWS-PORT.json](WINDOWS-PORT.json).
 
 To get this version on Windows:
@@ -40,6 +39,39 @@ Windows pins PySide6/Qt to 6.11.2: a local regression test reproduces a crash
 in 6.12.0 when a QObject-returning slot returns an absent optional object.
 The launcher uses UTF-8 and Qt's Windows platform plugin and Basic controls.
 The original Fedora launch scripts remain available.
+
+### Full GG-W desktop on Linux
+
+For the three-device LAN test, Linux uses this same full GG-W source checkout.
+Clone `https://github.com/GoldGoblins/GG-W.git` (or run `git pull` in the existing
+GG-W checkout), then run from that directory in the Linux graphical session:
+
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python gg-setup --prepare
+PYTHON="$PWD/.venv/bin/python" bash run-gg-ai-desktop.sh
+```
+
+The desktop currently uses Qt's xcb backend, so X11 or a working XWayland
+`DISPLAY` is required. Missing system Qt libraries and optional native/game,
+Blender or screen-capture helpers must be checked on that Linux installation;
+these source changes do not claim complete Linux hardware parity.
+
+In Linux Desktop choose **CRYPTO → NÄTVERK → DAGoblin → LAN**, set the node name,
+enable private testtokens for the token test, and choose **Anslut med publik
+bootstrap…** to read the Windows coordinator's `gg-lan-bootstrap.json`.
+The Linux desktop keeps its own signer keys in RAM and shows its own LAN graph.
+The phone uses GG-CLI in Termux. See the [three-device procedure](knowledge/dagoblin-lan.md).
+
+### Follow-up · 2026-10-29 · Linux joining and desktop input
+
+The follow-up after the complete October 29 patch adds the Linux Desktop
+bootstrap join flow, puts startup task state under the current user's selected
+profile, and fixes visible desktop clicks in popup controls by choosing the
+actual visible owner window and supplying monotonic input timestamps.
+The complete earlier patch and MEDIA/KNOWLEDGE history remain included.
+Full physical three-device and Linux hardware validation are still pending.
 
 
 RESEARCH contains backlog, evidence, source/method memory, web-skill checks,

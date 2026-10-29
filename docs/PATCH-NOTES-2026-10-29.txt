@@ -1,6 +1,27 @@
 GG-W update · 2026-10-29
 Complete desktop and headless source update since the published 2026-10-26 patch
 
+Follow-up after the complete October 29 publication
+
+- Full GG-W Desktop on Linux can join the Windows coordinator by opening its
+  signed public bootstrap file in DAGoblin -> LAN. Joining retains the existing
+  signature, private-subnet and file-size checks, explicit local testtoken choice,
+  owned signer keys, automatic invitation announcement and coordinator approval.
+  Joining and coordinator start share the local-DAG/active-session fences.
+- Linux startup task state follows the current user's selected STATE_ROOT parent
+  instead of assuming the account is named GG. Explicit profile overrides and
+  the existing runtime migration path are retained.
+- Visible desktop input chooses the actual visible root/owner window rather
+  than an unrelated hidden popup. Mouse press/release events receive monotonic
+  timestamps, so ScrollView popup controls accept initial and repeated clicks.
+- The shared lan.join_file command also supports explicit foreground lifetime
+  and Ctrl+C cleanup. Copied startup commands no longer require an unnecessary
+  invitation-export file; signed announcements are sufficient for pairing.
+- Source-bound software-QML, routing, startup and input regression checks cover
+  these changes. No user node is restarted by release verification. Full Linux
+  hardware parity and the physical three-device token-circle proof remain pending.
+  The full prior October 29 update and earlier MEDIA/KNOWLEDGE work are preserved.
+
 Scope
 
 This release candidate includes the entire reviewed distributable source delta

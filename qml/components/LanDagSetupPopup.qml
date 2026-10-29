@@ -24,6 +24,7 @@ Popup {
     readonly property var circle:state.token_circle||({})
     readonly property bool circleRunning:["RUNNING","STOPPING"].indexOf(String(circle.state||""))>=0
     readonly property bool allTokenOptedIn:candidates.length===3&&candidates.every(function(peer){return peer.allow_test_tokens===true})
+    readonly property bool canStart:root.canAct&&!root.owned&&!root.localRunning&&labelField.text.trim().length>0&&/^[0-9]{4,5}$/.test(portField.text)&&Number(portField.text)>=1024&&Number(portField.text)<=65535
     property string formError:""
     property string operationError:""
     signal actionRequested(string name,var args)
@@ -46,8 +47,9 @@ Popup {
         var fraction=text.slice(-d).replace(/0+$/,"")
         return text.slice(0,-d)+(fraction?"."+fraction:"")
     }
-    function command(label){return (label==="Termux"?'python':'python3')+' gg-cli.py --foreground --command "lan.start label='+label+(root.setup.allow_test_tokens===true?' allow_test_tokens=true':'')+'" --bootstrap-file gg-lan-bootstrap.json --invite-out gg-lan-'+label.toLowerCase()+'.json'}
+    function command(label){return (label==="Termux"?'python':'python3')+' gg-cli.py --foreground --command "lan.start label='+label+(root.setup.allow_test_tokens===true?' allow_test_tokens=true':'')+'" --bootstrap-file gg-lan-bootstrap.json'}
     function addPasted(){try{var value=JSON.parse(inviteInput.text);run("lan_peer_add",{invite:value});inviteInput.text=""}catch(error){formError="Klistra in en signerad publik inbjudan som JSON."}}
+    function joinBootstrap(path){if(root.canStart)root.run("lan_join_file",{path:String(path),label:labelField.text.trim(),port:Number(portField.text),bind_host:"auto",allow_test_tokens:tokenOptIn.checked})}
     component Label:GGText {font.family:"monospace";font.pixelSize:10;color:RuntimeTheme.GGTheme.text;textFormat:Text.PlainText;wrapMode:Text.Wrap}
     component Action:CryptoButton {height:27;font.pixelSize:10;enabled:root.canAct}
     component Section:Rectangle {color:"transparent";border.width:1;border.color:RuntimeTheme.GGTheme.line;width:body.width;radius:2}
@@ -66,13 +68,15 @@ Popup {
                 Label {objectName:"lanSetupError";colorKey:"ui.lan.error";width:parent.width;visible:text.length>0;text:root.formError||root.operationError||String(root.setup.announcement_error||root.lan.last_error||"");color:RuntimeTheme.GGTheme.negative}
                 Section {height:startBody.height+18
                     Column {id:startBody;x:9;y:9;width:parent.width-18;spacing:7
-                        Label {colorKey:"ui.lan.step.start";text:"1 · Starta koordinatorn på den här datorn";font.bold:true}
+                        Label {colorKey:"ui.lan.step.start";text:"1 · Starta koordinator eller anslut den här datorn";font.bold:true}
                         Row {width:parent.width;spacing:7
-                            CryptoField {id:labelField;objectName:"lanLabel";property string uiColorScope:"ui.lan.field.label";width:Math.max(70,parent.width-229);height:27;text:"GG Windows";maximumLength:64;enabled:root.canAct&&!root.owned&&!root.localRunning;placeholderText:"Nodnamn"}
+                            CryptoField {id:labelField;objectName:"lanLabel";property string uiColorScope:"ui.lan.field.label";width:Math.max(70,parent.width-229);height:27;text:Qt.platform.os==="linux"?"GG Linux":"GG Windows";maximumLength:64;enabled:root.canAct&&!root.owned&&!root.localRunning;placeholderText:"Nodnamn"}
                             CryptoField {id:portField;objectName:"lanPort";property string uiColorScope:"ui.lan.field.port";width:75;height:27;text:"16120";maximumLength:5;enabled:labelField.enabled;inputMethodHints:Qt.ImhDigitsOnly;Accessible.name:"Privat TCP-port"}
-                            Action {objectName:"lanStart";width:140;text:"Starta LAN · auto";enabled:labelField.enabled&&labelField.text.trim().length>0&&/^[0-9]{4,5}$/.test(portField.text)&&Number(portField.text)>=1024&&Number(portField.text)<=65535;onClicked:root.run("lan_start",{label:labelField.text.trim(),port:Number(portField.text),bind_host:"auto",allow_test_tokens:tokenOptIn.checked})}
+                            Action {objectName:"lanStart";width:140;text:"Starta LAN · auto";enabled:root.canStart;onClicked:root.run("lan_start",{label:labelField.text.trim(),port:Number(portField.text),bind_host:"auto",allow_test_tokens:tokenOptIn.checked})}
                         }
                         CryptoToggle {id:tokenOptIn;objectName:"lanAllowTestTokens";property string uiColorScope:"ui.lan.token.optin";width:parent.width;text:"Tillåt privata GG-LAN-testtokens och koordinatorstyrt cirkelprov";enabled:labelField.enabled;checked:false}
+                        Action {objectName:"lanBootstrapJoin";text:"Anslut med publik bootstrap…";enabled:root.canStart;onClicked:bootstrapJoinFile.open()}
+                        Label {colorKey:"ui.lan.join.note";width:parent.width;text:"Har Windows redan startat koordinatorn? Läs dess delade gg-lan-bootstrap.json här för att ansluta. Koordinatorn godkänner sedan de tre apparaterna.";color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
                         Label {colorKey:"ui.lan.start.note";width:parent.width;text:root.localRunning&&!root.owned?"Stoppa den lokala DAG-sessionen före LAN-start.":"Lokal privat IPv4 väljs automatiskt först när du startar. Ingenting ansluts vid vanlig statusvisning.";color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
                     }
                 }
@@ -85,9 +89,9 @@ Popup {
                             Action {text:"Spara egen inbjudan…";enabled:root.canAct&&root.owned;onClicked:inviteExport.open()}
                             Action {objectName:"lanAnnounce";text:"Annonsera igen";visible:root.owned&&!root.coordinator;enabled:root.canAct&&!root.ready;onClicked:root.run("lan_announce",{})}
                         }
-                        Label {colorKey:"ui.lan.bootstrap.note";width:parent.width;text:"Lägg gg-lan-bootstrap.json bredvid gg-cli.py på respektive apparat. Starta sedan ett av kommandona nedan. Apparatens egen adress hittas automatiskt och dess signerade inbjudan återannonseras till koordinatorn.";color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
+                        Label {colorKey:"ui.lan.bootstrap.note";width:parent.width;text:"I Linux Desktop: välj Anslut med publik bootstrap i steg 1 och läs filen. I Termux: lägg gg-lan-bootstrap.json bredvid gg-cli.py och kör telefonkommandot. Egen adress hittas automatiskt och signerad inbjudan återannonseras till koordinatorn.";color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
                         Row {width:parent.width;spacing:7
-                            Action {objectName:"lanLinuxCommand";text:"Kopiera Linux-kommando";enabled:root.owned&&root.coordinator;onClicked:root.copy(root.command("Linux"))}
+                            Action {objectName:"lanLinuxCommand";text:"Linux CLI (valfritt)";enabled:root.owned&&root.coordinator;onClicked:root.copy(root.command("Linux"))}
                             Action {objectName:"lanTermuxCommand";text:"Kopiera Termux-kommando";enabled:root.owned&&root.coordinator;onClicked:root.copy(root.command("Termux"))}
                         }
                         Label {colorKey:"ui.lan.bootstrap.keys";width:parent.width;text:"Endast publika inbjudningar och konfiguration delas. Varje peer behåller sina egna två producentnycklar i RAM. Omstart kräver ny parning; walletnycklar berörs inte.";color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
@@ -153,6 +157,7 @@ Popup {
         }
     }
     FileDialog {id:bootstrapFile;objectName:"lanBootstrapFileDialog";title:"Spara publik LAN-bootstrap som gg-lan-bootstrap.json (ny fil)";fileMode:FileDialog.SaveFile;defaultSuffix:"json";nameFilters:["JSON (*.json)"];onAccepted:root.run("lan_export_bootstrap",{path:String(selectedFile)})}
+    FileDialog {id:bootstrapJoinFile;objectName:"lanBootstrapJoinFileDialog";title:"Anslut med koordinatorns publika gg-lan-bootstrap.json";fileMode:FileDialog.OpenFile;nameFilters:["JSON (*.json)"];onAccepted:root.joinBootstrap(selectedFile)}
     FileDialog {id:inviteExport;objectName:"lanInviteExportDialog";title:"Spara egen publik LAN-inbjudan (ny fil)";fileMode:FileDialog.SaveFile;defaultSuffix:"json";nameFilters:["JSON (*.json)"];onAccepted:root.run("lan_export_invite",{path:String(selectedFile)})}
     FileDialog {id:inviteFile;objectName:"lanInviteFileDialog";title:"Läs signerad publik LAN-inbjudan";fileMode:FileDialog.OpenFile;nameFilters:["JSON (*.json)"];onAccepted:root.run("lan_peer_file",{path:String(selectedFile)})}
 }

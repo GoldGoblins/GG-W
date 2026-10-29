@@ -290,7 +290,7 @@ class TerminalService:
             if command=='status':return self.snapshot()
             if command=='activity':return {'activity':assets.events()}
             if command.startswith('lan.'):
-                if command=='lan.start' and self._dag_engine is not None and self._dag_engine.snapshot().get('state')!='STOPPED':
+                if command in {'lan.start','lan.join_file'} and self._dag_engine is not None and self._dag_engine.snapshot().get('state')!='STOPPED':
                     raise ValueError('GG_LAN_STOP_LOCAL_DAG_FIRST')
                 return self._lan().dispatch(command,args)
             if command=='network.readiness':

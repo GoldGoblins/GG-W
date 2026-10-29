@@ -54,7 +54,7 @@ def _action(name,raw='{}',*,refresh_price=False):
     if name in {'reveal_mnemonic','export_mnemonic'}:raise ValueError('OMNI_PRIVATE_WALLET_OPERATION_REQUIRED')
     if name.startswith('lan_'):
         from backend import lan_dag_runtime,gg_parallel_dag
-        if name=='lan_start' and gg_parallel_dag.snapshot().get('state')!='STOPPED':raise ValueError('GG_LAN_STOP_LOCAL_DAG_FIRST')
+        if name in {'lan_start','lan_join_file'} and gg_parallel_dag.snapshot().get('state')!='STOPPED':raise ValueError('GG_LAN_STOP_LOCAL_DAG_FIRST')
         lan_dag_runtime.action(name,args)
     elif name=='select_asset':
         store.asset(args['id']); store.preference('selected_asset',args['id'])

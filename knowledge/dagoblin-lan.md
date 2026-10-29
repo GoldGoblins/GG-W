@@ -47,17 +47,23 @@ Välj före start **Tillåt privata GG-LAN-testtokens** om tokenprovet ska köra
 Filen innehåller koordinatorns publika identitet och endpoint, inga privata
 nycklar. Nycklar lever bara under processen: en omstart kräver ny parning.
 
-Linux och telefonen kör respektive egen foregroundprocess med bootstrapfilen.
-Exempel från den uppackade paketmappen:
+På Linux med full GG-W Desktop öppnas samma DAGoblin → LAN-dialog.
+Ange nodnamn, välj **Tillåt privata GG-LAN-testtokens** om provet ska köras
+och klicka **Anslut med publik bootstrap…**. Läs filen som Windows sparade.
+Starta ingen extra koordinator på Linux. Appen annonserar sin signerade
+inbjudan till Windows och visar den anslutna peerens graf i Desktop.
+
+Telefonen kör sin egen foregroundprocess med bootstrapfilen bredvid
+`gg-cli.py`. Exempel från GG-CLI-mappen i Termux:
 
 ```sh
-python3 gg-cli.py --foreground --command "lan.start label=Linux allow_test_tokens=true" --bootstrap-file gg-lan-bootstrap.json --invite-out gg-lan-linux.json
+python gg-cli.py --foreground --command "lan.start label=Termux allow_test_tokens=true" --bootstrap-file gg-lan-bootstrap.json
 ```
 
-I Termux används samma kommando med `label=Termux` och en annan publik
-inbjudningsfil, till exempel `gg-lan-termux.json`. Om Python heter `python`
-används det namnet. Filerna får inte redan finnas: export skriver aldrig över
-en befintlig fil. Detta är inte ett kommando för lösenord eller privata nycklar.
+Linux CLI är ett valfritt alternativ med `python3` och `label=Linux`.
+`--invite-out` behövs inte för automatisk annonsering. Om en publik inbjudan
+ändå exporteras måste filnamnet vara nytt: export skriver aldrig över en
+befintlig fil. Detta är inte ett kommando för lösenord eller privata nycklar.
 
 Deras lokala IPv4 väljs genom operativsystemets route till koordinatorn;
 ingen manuell IP-inmatning behövs på dessa enheter. Kontrollera kandidaternas
