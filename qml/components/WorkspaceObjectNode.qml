@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 
 Item {
@@ -15,7 +17,7 @@ Item {
     property string activityState: "IDLE"
     property bool current: false
     property bool editorDirty: false
-    property color accentColor: "#8b949e"
+    property color accentColor: RuntimeTheme.GGTheme.accent
 
     signal activated(string objectId)
 
@@ -28,7 +30,7 @@ Item {
     height: 128
     clip: true
 
-    GgFrame {
+    GgFrame { property string uiColorScope: "ui.widget.WorkspaceObjectNode.GgFrame.1";
         id: frame
         anchors.fill: parent
         leftLegend: root.objectType
@@ -40,45 +42,45 @@ Item {
                     : root.activityState
             )
         backgroundColor: root.current ? "#121416" : "#090d12"
-        borderColor: "#6a6a6a"
+        borderColor: RuntimeTheme.GGTheme.edge
         rightLegendColor: root.current
             ? root.accentColor
             : (
                 root.syntheticFixture
-                    ? "#c8a97e"
-                    : "#8b949e"
+                    ? RuntimeTheme.GGTheme.accent
+                    : RuntimeTheme.GGTheme.dim
             )
         padding: 10
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceObjectNode.1";
             width: parent.width
             text: root.title
-            color: "#e6edf3"
+            color: RuntimeTheme.GGTheme.bright
             elide: Text.ElideRight
             font.pixelSize: 12
             font.bold: true
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceObjectNode.2";
             width: parent.width
             text: root.objectId
-            color: "#7d8590"
+            color: RuntimeTheme.GGTheme.dim
             elide: Text.ElideMiddle
             font.family: "monospace"
             font.pixelSize: 12
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceObjectNode.3";
             width: parent.width
             text: root.realLocalFile
                 ? "REAL_LOCAL_FILE"
                 : root.provenanceClass
-            color: root.syntheticFixture ? "#c8a97e" : "#c8cdd4"
+            color: root.syntheticFixture ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.text
             font.family: "monospace"
             font.pixelSize: 12
         }
 
-        ActivityStrip {
+        ActivityStrip { property string uiColorScope: "ui.widget.WorkspaceObjectNode.ActivityStrip.2";
             width: parent.width
             visible: !root.syntheticFixture
             activityState: root.activityState
@@ -92,7 +94,7 @@ Item {
             percentage: -1
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceObjectNode.4";
             visible: root.syntheticFixture
             width: parent.width
             text: "DEMO / SAMPLE · NO EXECUTION"

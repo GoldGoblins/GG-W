@@ -1,5 +1,8 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Shapes
 import QtMultimedia
 import QtQuick.Window
 
@@ -8,7 +11,7 @@ Item {
     objectName: "workspaceMediaPane"
 
     property var surfaceHost: null
-    property color frameBorder: "#6a6a6a"
+    property color frameBorder: RuntimeTheme.GGTheme.edge
     property int frameRadius: 4
     property string statusJson: "{}"
     property var catalogItems: []
@@ -107,9 +110,9 @@ Item {
     readonly property int pageTotal: root.pagedLibrary ? root.catalogTotal : root.filteredItems.length
     readonly property bool hasNextPage: root.pagedLibrary && root.displayedPageMatches
         && root.catalogHasMore && root.pageOffset + root.catalogPageSize < root.catalogTotal
-    readonly property color ink: "#e6edf3"
-    readonly property color muted: "#9299a3"
-    readonly property color gold: "#c8a97e"
+    readonly property color ink: RuntimeTheme.GGTheme.bright
+    readonly property color muted: RuntimeTheme.GGTheme.muted
+    readonly property color gold: RuntimeTheme.GGTheme.accent
     readonly property var libraryNav: [
         {id: "live", label: "Kanaler", mode: "TV"},
         {id: "movies", label: "Filmer", mode: "TV"},
@@ -1840,14 +1843,14 @@ Item {
         contentItem: Column {
             id: discoveryContent
             spacing: 10
-            Text { id: discoveryHeading; text: "Utöka / sök"; color: root.ink; font.pixelSize: 16; font.bold: true }
-            Text {
+            GGText { colorKey: "ui.MediaSurface.1"; id: discoveryHeading; text: "Utöka / sök"; color: root.ink; font.pixelSize: 16; font.bold: true }
+            GGText { colorKey: "ui.MediaSurface.2";
                 id: discoveryIntro
                 width: parent.width
                 text: "Välj en, flera eller alla mediatyper och vilka språk du vill söka efter. Träffar visas på respektive flik."
                 color: root.muted; wrapMode: Text.WordWrap; font.pixelSize: 12
             }
-            Text {
+            GGText { colorKey: "ui.MediaSurface.3";
                 id: discoveryExplanation
                 width: parent.width
                 text: root.backgroundRunning || root.backgroundPausing ? "Pausa Utöka för att ändra sökfiltret."
@@ -1860,7 +1863,7 @@ Item {
                     - discoveryExplanation.height - discoveryDone.height - 4 * discoveryContent.spacing)
                 clip: true
                 contentWidth: availableWidth
-                ScrollBar.vertical: GgScrollBar {
+                ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.MediaSurface.GgScrollBar.1";
                     keepVisible: true
                     orientation: Qt.Vertical
                     anchors.right: parent.right
@@ -1874,7 +1877,7 @@ Item {
                         width: parent.width
                         visible: !!root.surfaceHost && !!root.surfaceHost.mediaLibraryTypes
                         height: visible ? 28 : 0
-                        Text {
+                        GGText { colorKey: "ui.MediaSurface.4";
                             width: Math.max(0, parent.width - allMediaTypesButton.width - 8)
                             height: 28
                             text: "Mediatyper"
@@ -1883,7 +1886,7 @@ Item {
                             font.bold: true
                             verticalAlignment: Text.AlignVCenter
                         }
-                        MediaAction {
+                        MediaAction { property string uiColorScope: "ui.control.MediaSurface.1";
                             id: allMediaTypesButton
                             objectName: "mediaDiscoveryTypesAll"
                             text: "Välj alla"
@@ -1899,7 +1902,7 @@ Item {
                         columns: width >= 300 ? 2 : 1
                         Repeater {
                             model: root.libraryNav
-                            delegate: MediaSearchChoice {
+                            delegate: MediaSearchChoice { property string uiColorScope: "ui.control.MediaSurface.2";
                                 required property var modelData
                                 objectName: "mediaDiscoveryType_" + modelData.id
                                 width: (parent.width / parent.columns)
@@ -1911,7 +1914,7 @@ Item {
                             }
                         }
                     }
-                    Text {
+                    GGText { colorKey: "ui.MediaSurface.5";
                         width: parent.width
                         topPadding: 8
                         text: "Språk"
@@ -1921,7 +1924,7 @@ Item {
                     }
                     Repeater {
                         model: root.discoveryLanguageOptions
-                        delegate: MediaSearchChoice {
+                        delegate: MediaSearchChoice { property string uiColorScope: "ui.control.MediaSurface.3";
                             id: languageChoice
                             required property var modelData
                             objectName: "mediaDiscoveryLanguage_" + modelData.value
@@ -1935,7 +1938,7 @@ Item {
                     }
                 }
             }
-            MediaAction { id: discoveryDone; text: "Klart"; width: parent.width; onClicked: discoveryPopup.close() }
+            MediaAction { property string uiColorScope: "ui.control.MediaSurface.4"; id: discoveryDone; text: "Klart"; width: parent.width; onClicked: discoveryPopup.close() }
         }
     }
 
@@ -1954,16 +1957,16 @@ Item {
         contentItem: Column {
             id: diagnosticContent
             spacing: 12
-            Text { text: "Felsök källa"; color: root.ink; font.pixelSize: 16; font.bold: true }
-            Text { width: parent.width; text: root.diagnosticTitle; wrapMode: Text.WordWrap; color: root.gold; font.pixelSize: 13 }
-            Text {
+            GGText { colorKey: "ui.MediaSurface.6"; text: "Felsök källa"; color: root.ink; font.pixelSize: 16; font.bold: true }
+            GGText { colorKey: "ui.MediaSurface.7"; width: parent.width; text: root.diagnosticTitle; wrapMode: Text.WordWrap; color: root.gold; font.pixelSize: 13 }
+            GGText { colorKey: "ui.MediaSurface.8";
                 objectName: "mediaDiagnosticMessage"
                 width: parent.width
                 text: root.status.library_diagnostic && root.status.library_diagnostic.running ? "Kontrollerar länken och kända alternativ…"
                     : String((root.status.library_diagnostic || {}).message || "Förbereder källkontroll…")
                 color: root.ink; wrapMode: Text.WordWrap; font.pixelSize: 12
             }
-            MediaAction {
+            MediaAction { property string uiColorScope: "ui.control.MediaSurface.5";
                 objectName: "mediaUseReplacement"
                 width: parent.width
                 visible: !!(root.status.library_diagnostic || {}).replacement_id
@@ -1973,7 +1976,7 @@ Item {
                     diagnosticPopup.close()
                 }
             }
-            MediaAction { text: "Stäng"; width: parent.width; onClicked: diagnosticPopup.close() }
+            MediaAction { property string uiColorScope: "ui.control.MediaSurface.6"; text: "Stäng"; width: parent.width; onClicked: diagnosticPopup.close() }
         }
     }
 
@@ -1986,12 +1989,12 @@ Item {
         background: Rectangle { color: searchChoice.hovered ? "#252525" : "transparent"; radius: 3 }
         indicator: Rectangle {
             width: 18; height: 18; x: 4; y: (searchChoice.height - height) / 2
-            color: searchChoice.checked ? "#393227" : "#121212"
+            color: searchChoice.checked ? "#393227" : RuntimeTheme.GGTheme.canvas
             border.color: searchChoice.checked ? root.gold : "#636363"
             radius: 3
-            Text { anchors.centerIn: parent; text: searchChoice.checked ? "✓" : ""; color: root.gold; font.pixelSize: 14 }
+            GGText { colorKey: "ui.MediaSurface.9"; anchors.centerIn: parent; text: searchChoice.checked ? "✓" : ""; color: root.gold; font.pixelSize: 14 }
         }
-        contentItem: Text {
+        contentItem: GGText { colorKey: "ui.MediaSurface.10";
             text: searchChoice.text; leftPadding: 28
             verticalAlignment: Text.AlignVCenter
             color: searchChoice.checked ? root.ink : root.muted
@@ -2013,34 +2016,24 @@ Item {
         ToolTip.delay: 500
         background: Rectangle {
             radius: 3
-            color: rowAction.down ? "#38312a" : rowAction.hovered ? "#303030" : "transparent"
+            color: rowAction.down ? "#38312a" : rowAction.hovered ? RuntimeTheme.GGTheme.selected : "transparent"
             border.color: rowAction.visualFocus ? root.gold : "transparent"
         }
-        contentItem: Canvas {
+        contentItem: Shape {
+            objectName: "mediaRowActionGlyph"
             opacity: rowAction.hovered || rowAction.visualFocus || rowAction.down ? 1 : 0.20
-            Behavior on opacity { NumberAnimation { duration: 120 } }
-            onPaint: {
-                var ctx = getContext("2d")
-                ctx.reset()
-                ctx.strokeStyle = rowAction.removeIcon && rowAction.hovered ? "#f29999" : "#c9cfd7"
-                ctx.lineWidth = 1.2
-                ctx.lineCap = "round"
-                ctx.lineJoin = "round"
-                ctx.beginPath()
-                if (rowAction.removeIcon) {
-                    ctx.moveTo(4, 4); ctx.lineTo(14, 14)
-                    ctx.moveTo(14, 4); ctx.lineTo(4, 14)
-                } else {
-                    ctx.moveTo(10, 16); ctx.lineTo(3, 16); ctx.lineTo(3, 2)
-                    ctx.lineTo(10, 2); ctx.lineTo(14, 6); ctx.lineTo(14, 8)
-                    ctx.moveTo(10, 2); ctx.lineTo(10, 6); ctx.lineTo(14, 6)
-                    ctx.moveTo(7, 3); ctx.lineTo(8, 7); ctx.lineTo(6, 9); ctx.lineTo(8, 12)
-                    ctx.moveTo(15.5, 12.5); ctx.arc(12.5, 12.5, 3, 0, Math.PI * 2)
-                    ctx.moveTo(14.7, 14.7); ctx.lineTo(17, 17)
+        preferredRendererType: Shape.GeometryRenderer
+            ShapePath {
+                strokeColor: rowAction.removeIcon && rowAction.hovered ? "#f29999" : RuntimeTheme.GGTheme.text
+                strokeWidth: 1.2
+                capStyle: ShapePath.RoundCap
+                joinStyle: ShapePath.RoundJoin
+                fillColor: "transparent"
+                PathSvg {
+                    path: rowAction.removeIcon ? "M4 4 L14 14 M14 4 L4 14"
+                        : "M10 16 H3 V2 H10 L14 6 V8 M10 2 V6 H14 M7 3 L8 7 L6 9 L8 12 M15.5 12.5 A3 3 0 1 1 9.5 12.5 A3 3 0 1 1 15.5 12.5 M14.7 14.7 L17 17"
                 }
-                ctx.stroke()
             }
-            Connections { target: rowAction; function onHoveredChanged() { rowAction.contentItem.requestPaint() } }
         }
     }
 
@@ -2060,12 +2053,12 @@ Item {
         ToolTip.delay: 500
         background: Rectangle {
             radius: 3
-            color: action.down ? "#34383d" : action.checked ? "#292d32"
-                : action.hovered ? "#242424" : "#161616"
-            border.color: action.visualFocus ? "#c8cdd4" : action.checked ? "#747b84" : "#3a3a3a"
+            color: action.down ? RuntimeTheme.GGTheme.line : action.checked ? "#292d32"
+                : action.hovered ? "#242424" : RuntimeTheme.GGTheme.panel
+            border.color: action.visualFocus ? RuntimeTheme.GGTheme.text : action.checked ? "#747b84" : RuntimeTheme.GGTheme.selected
             opacity: action.enabled ? 1 : 0.45
         }
-        contentItem: Text {
+        contentItem: GGText { colorKey: "ui.MediaSurface.11";
             text: action.text
             textFormat: Text.PlainText
             font: action.font
@@ -2097,11 +2090,11 @@ Item {
             return 0
         }
         background: Rectangle {
-            color: "#161616"
+            color: RuntimeTheme.GGTheme.panel
             radius: 3
-            border.color: selector.activeFocus ? "#9299a3" : selector.hovered ? "#656a72" : "#3a3a3a"
+            border.color: selector.activeFocus ? RuntimeTheme.GGTheme.muted : selector.hovered ? "#656a72" : RuntimeTheme.GGTheme.selected
         }
-        contentItem: Text {
+        contentItem: GGText { colorKey: "ui.MediaSurface.12";
             text: selector.displayText
             textFormat: Text.PlainText
             color: selector.selectedValue === "all" ? root.muted : root.ink
@@ -2109,20 +2102,20 @@ Item {
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
         }
-        indicator: Text {
+        indicator: GGText { colorKey: "ui.MediaSurface.13";
             x: selector.width - width - 7
             anchors.verticalCenter: parent.verticalCenter
             text: "▾"
             color: root.muted
             font.pixelSize: 11
         }
-        delegate: ItemDelegate {
+        delegate: ItemDelegate { property string uiColorScope: "ui.control.MediaSurface.7";
             required property var modelData
             required property int index
             width: Math.max(selector.width, 180)
             height: 28
             highlighted: selector.highlightedIndex === index
-            contentItem: Text {
+            contentItem: GGText { colorKey: "ui.MediaSurface.14";
                 text: modelData.label
                 textFormat: Text.PlainText
                 color: root.ink
@@ -2130,20 +2123,20 @@ Item {
                 verticalAlignment: Text.AlignVCenter
                 elide: Text.ElideRight
             }
-            background: Rectangle { color: parent.highlighted ? "#34383d" : "#1a1a1a" }
+            background: Rectangle { color: parent.highlighted ? RuntimeTheme.GGTheme.line : RuntimeTheme.GGTheme.raised }
         }
         popup: Popup {
             y: selector.height + 2
             width: Math.max(selector.width, 192)
             padding: 3
             implicitHeight: Math.min(300, contentItem.implicitHeight + 6)
-            background: Rectangle { color: "#1a1a1a"; border.color: "#656a72"; radius: 3 }
+            background: Rectangle { color: RuntimeTheme.GGTheme.raised; border.color: "#656a72"; radius: 3 }
             contentItem: ListView {
                 clip: true
                 implicitHeight: contentHeight
                 model: selector.popup.visible ? selector.delegateModel : null
                 currentIndex: selector.highlightedIndex
-                ScrollBar.vertical: GgScrollBar { keepVisible: true }
+                ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.MediaSurface.GgScrollBar.8"; keepVisible: true }
             }
         }
     }
@@ -2181,7 +2174,7 @@ Item {
                     spacing: 4
                     Repeater {
                         model: root.libraryNav
-                        delegate: MediaAction {
+                        delegate: MediaAction { property string uiColorScope: "ui.control.MediaSurface.8";
                             required property var modelData
                             objectName: "mediaNav_" + modelData.id
                             text: modelData.label
@@ -2192,7 +2185,7 @@ Item {
                         }
                     }
                 }
-                ScrollBar.horizontal: GgScrollBar {}
+                ScrollBar.horizontal: GgScrollBar { property string uiColorScope: "ui.widget.MediaSurface.GgScrollBar.10";}
             }
             Row {
                 id: backgroundControls
@@ -2200,7 +2193,7 @@ Item {
                 height: parent.height
                 spacing: 7
                 visible: root.hasBackgroundControl
-                MediaAction {
+                MediaAction { property string uiColorScope: "ui.control.MediaSurface.9";
                     id: discoveryFilterButton
                     objectName: "mediaDiscoveryFilterButton"
                     visible: !!root.surfaceHost && !!root.surfaceHost.mediaLibraryLanguages
@@ -2209,7 +2202,7 @@ Item {
                     tip: "Välj mediatyper och språk för Utöka och sökning"
                     onClicked: discoveryPopup.open()
                 }
-                Text {
+                GGText { colorKey: "ui.MediaSurface.15";
                     objectName: "mediaBackgroundCounts"
                     visible: mediaFrame.width > navigationButtons.width + backgroundToggle.width
                         + (discoveryFilterButton.visible ? discoveryFilterButton.width : 0) + implicitWidth + 40
@@ -2224,7 +2217,7 @@ Item {
                     ToolTip.text: root.backgroundCountDetails
                     MouseArea { id: backgroundCountsHover; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.NoButton }
                 }
-                MediaAction {
+                MediaAction { property string uiColorScope: "ui.control.MediaSurface.10";
                     id: backgroundToggle
                     objectName: "mediaBackgroundToggle"
                     height: 28
@@ -2279,10 +2272,10 @@ Item {
                     }
                     background: Rectangle {
                         radius: 3
-                        color: "#121212"
-                        border.color: searchBox.activeFocus ? "#9299a3" : "#464646"
+                        color: RuntimeTheme.GGTheme.canvas
+                        border.color: searchBox.activeFocus ? RuntimeTheme.GGTheme.muted : "#464646"
                     }
-                    BufferMark {
+                    BufferMark { property string uiColorScope: "ui.widget.MediaSurface.BufferMark.13";
                         objectName: "mediaSearchBuffer"
                         anchors.right: parent.right
                         anchors.rightMargin: 7
@@ -2291,7 +2284,7 @@ Item {
                         cell: 4
                     }
                 }
-                MediaAction {
+                MediaAction { property string uiColorScope: "ui.control.MediaSurface.11";
                     id: searchButton
                     objectName: "mediaLibrarySearchButton"
                     text: "Sök"
@@ -2321,7 +2314,7 @@ Item {
                             : stage.width)
                     height: parent.height
                     visible: width > 8
-                    color: "#111111"
+                    color: RuntimeTheme.GGTheme.base
                     radius: 3
                     border.color: "#363636"
                     clip: true
@@ -2337,7 +2330,7 @@ Item {
                         Item {
                             width: parent.width
                             height: 25
-                            Text {
+                            GGText { colorKey: "ui.MediaSurface.16";
                                 anchors.left: parent.left
                                 anchors.right: libraryRefresh.left
                                 anchors.rightMargin: 5
@@ -2354,7 +2347,7 @@ Item {
                                 font.bold: true
                                 elide: Text.ElideRight
                             }
-                            MediaAction {
+                            MediaAction { property string uiColorScope: "ui.control.MediaSurface.12";
                                 id: libraryRefresh
                                 objectName: "mediaLibraryRefresh"
                                 anchors.right: parent.right
@@ -2370,13 +2363,13 @@ Item {
                             height: visible ? 26 : 0
                             spacing: 5
                             visible: root.collectionTitle.length > 0
-                            MediaAction {
+                            MediaAction { property string uiColorScope: "ui.control.MediaSurface.13";
                                 objectName: "mediaLibraryBack"
                                 text: "‹"
                                 tip: "Tillbaka till biblioteket"
                                 onClicked: root.goBack()
                             }
-                            Text {
+                            GGText { colorKey: "ui.MediaSurface.17";
                                 id: collectionHeading
                                 width: Math.max(0, parent.width - 35)
                                 height: 26
@@ -2399,7 +2392,7 @@ Item {
                             height: visible ? 26 : 0
                             spacing: 4
                             visible: root.collectionTitle.length === 0
-                            MediaSelect {
+                            MediaSelect { property string uiColorScope: "ui.control.MediaSurface.14";
                                 objectName: "mediaLetterSelector"
                                 width: parent.width - (clearLibraryFilters.visible ? clearLibraryFilters.width + 4 : 0)
                                 selectedValue: root.libraryLetter
@@ -2409,7 +2402,7 @@ Item {
                                     }))
                                 onActivated: root.libraryLetter = String(currentValue)
                             }
-                            MediaAction {
+                            MediaAction { property string uiColorScope: "ui.control.MediaSurface.15";
                                 id: clearLibraryFilters
                                 objectName: "mediaClearFilters"
                                 visible: root.hasLibraryFilters
@@ -2428,7 +2421,7 @@ Item {
                             spacing: 4
                             visible: root.collectionTitle.length === 0
                                 && (root.categoryOptions.length > 1 || root.languageOptions.length > 1)
-                            MediaSelect {
+                            MediaSelect { property string uiColorScope: "ui.control.MediaSurface.16";
                                 objectName: "mediaCategorySelector"
                                 width: parent.columns === 2 && root.languageOptions.length > 1
                                     ? (parent.width - 4) / 2 : parent.width
@@ -2437,7 +2430,7 @@ Item {
                                 model: root.categoryOptions
                                 onActivated: root.categoryFilter = String(currentValue)
                             }
-                            MediaSelect {
+                            MediaSelect { property string uiColorScope: "ui.control.MediaSurface.17";
                                 objectName: "mediaLanguageSelector"
                                 width: parent.columns === 2 && root.categoryOptions.length > 1
                                     ? (parent.width - 4) / 2 : parent.width
@@ -2448,7 +2441,7 @@ Item {
                             }
                         }
 
-                        MediaSelect {
+                        MediaSelect { property string uiColorScope: "ui.control.MediaSurface.18";
                             objectName: "mediaAvailabilitySelector"
                             width: parent.width
                             visible: root.videoLibrary
@@ -2459,7 +2452,7 @@ Item {
                             onActivated: root.availableOnly = String(currentValue) === "available"
                         }
 
-                        MediaSelect {
+                        MediaSelect { property string uiColorScope: "ui.control.MediaSurface.19";
                             objectName: "mediaSeasonSelector"
                             width: parent.width
                             visible: root.collectionTitle.length > 0 && root.seasonOptions.length > 1
@@ -2469,7 +2462,7 @@ Item {
                             onActivated: root.seasonFilter = String(currentValue)
                         }
 
-                        Rectangle { width: parent.width; height: 1; color: "#333333" }
+                        Rectangle { width: parent.width; height: 1; color: RuntimeTheme.GGTheme.line }
                     }
 
                     ListView {
@@ -2498,7 +2491,7 @@ Item {
                         }
                         onHeightChanged: Qt.callLater(root.maybeLoadMore)
                         onVerticalVelocityChanged: root.maybeLoadMore()
-                        ScrollBar.vertical: GgScrollBar { keepVisible: true }
+                        ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.MediaSurface.GgScrollBar.23"; keepVisible: true }
                         Keys.onReturnPressed: {
                             if (currentIndex >= 0 && currentIndex < catalogModel.count)
                                 root.activateItem(catalogModel.get(currentIndex).entry)
@@ -2523,7 +2516,7 @@ Item {
                             }
                         }
 
-                        delegate: ItemDelegate {
+                        delegate: ItemDelegate { property string uiColorScope: "ui.control.MediaSurface.20";
                             id: catalogRow
                             required property var entry
                             required property string signature
@@ -2546,12 +2539,12 @@ Item {
                             background: Rectangle {
                                 radius: 3
                                 color: catalogRow.rowActive ? "#292d32"
-                                    : catalogRow.highlighted || catalogRow.hovered ? "#202020" : "#161616"
-                                border.color: catalogRow.activeFocus ? "#9299a3" : catalogRow.rowActive ? "#646b73" : "transparent"
+                                    : catalogRow.highlighted || catalogRow.hovered ? RuntimeTheme.GGTheme.raised : RuntimeTheme.GGTheme.panel
+                                border.color: catalogRow.activeFocus ? RuntimeTheme.GGTheme.muted : catalogRow.rowActive ? "#646b73" : "transparent"
                             }
                             highlighted: ListView.isCurrentItem
                             contentItem: Item {
-                                Text {
+                                GGText { colorKey: "ui.MediaSurface.18";
                                     id: rowTitleText
                                     objectName: "mediaRowTitle_" + String(catalogRow.modelData.id)
                                     anchors.left: parent.left
@@ -2561,7 +2554,7 @@ Item {
                                     height: 18
                                     text: (catalogRow.rowActive ? "▶ " : "") + root.displayTitle(catalogRow.modelData)
                                     textFormat: Text.PlainText
-                                    color: catalogRow.rowActive ? root.ink : "#c9cfd7"
+                                    color: catalogRow.rowActive ? root.ink : RuntimeTheme.GGTheme.text
                                     font.family: "monospace"
                                     font.pixelSize: 11
                                     font.bold: catalogRow.rowActive
@@ -2574,13 +2567,13 @@ Item {
                                     anchors.top: parent.top
                                     spacing: 1
                                     z: 2
-                                    MediaRowAction {
+                                    MediaRowAction { property string uiColorScope: "ui.control.MediaSurface.21";
                                         objectName: "mediaDiagnose_" + String(catalogRow.modelData.id)
                                         visible: !!root.surfaceHost && !!root.surfaceHost.mediaLibraryDiagnose
                                         tip: "Felsök källa och leta efter en ersättning"
                                         onClicked: root.diagnoseItem(catalogRow.modelData)
                                     }
-                                    MediaRowAction {
+                                    MediaRowAction { property string uiColorScope: "ui.control.MediaSurface.22";
                                         objectName: "mediaRemove_" + String(catalogRow.modelData.id)
                                         visible: !!root.surfaceHost && !!root.surfaceHost.mediaLibraryHideSource
                                         removeIcon: true
@@ -2588,7 +2581,7 @@ Item {
                                         onClicked: root.removeItem(catalogRow.modelData)
                                     }
                                 }
-                                Text {
+                                GGText { colorKey: "ui.MediaSurface.19";
                                     anchors.left: parent.left
                                     anchors.right: parent.right
                                     anchors.bottom: parent.bottom
@@ -2601,7 +2594,7 @@ Item {
                                     verticalAlignment: Text.AlignVCenter
                                     elide: Text.ElideRight
                                 }
-                                BufferMark {
+                                BufferMark { property string uiColorScope: "ui.widget.MediaSurface.BufferMark.26";
                                     id: rowMark
                                     objectName: "mediaItemBuffer"
                                     anchors.right: rowTools.left
@@ -2610,7 +2603,7 @@ Item {
                                     active: catalogRow.rowBuffering
                                     cell: 4
                                 }
-                                Text {
+                                GGText { colorKey: "ui.MediaSurface.20";
                                     id: rowChevron
                                     anchors.right: parent.right
                                     anchors.verticalCenter: parent.verticalCenter
@@ -2631,7 +2624,7 @@ Item {
                             }
                         }
 
-                        Text {
+                        GGText { colorKey: "ui.MediaSurface.21";
                             visible: catalogList.count === 0
                             anchors.centerIn: parent
                             width: Math.max(0, parent.width - 16)
@@ -2651,7 +2644,7 @@ Item {
                             wrapMode: Text.WordWrap
                             font.pixelSize: 11
                         }
-                        Text {
+                        GGText { colorKey: "ui.MediaSurface.22";
                             visible: root.restoringCatalogPosition && !root.chunkError && catalogList.count > 0
                             anchors.centerIn: parent
                             text: "Uppdaterar listan…"
@@ -2673,7 +2666,7 @@ Item {
                             height: visible ? 28 : 0
                             spacing: 4
                             visible: !!root.surfaceHost && !!root.surfaceHost.mediaPlay
-                            MediaAction {
+                            MediaAction { property string uiColorScope: "ui.control.MediaSurface.23";
                                 objectName: "mediaPlayPrevious"
                                 width: 30; height: 28
                                 text: "‹"
@@ -2683,7 +2676,7 @@ Item {
                                 Accessible.name: "Spela föregående"
                                 onClicked: root.stepPlayback(-1, false)
                             }
-                            MediaAction {
+                            MediaAction { property string uiColorScope: "ui.control.MediaSurface.24";
                                 objectName: "mediaPlayNext"
                                 width: 30; height: 28
                                 text: "›"
@@ -2693,7 +2686,7 @@ Item {
                                 Accessible.name: "Spela nästa"
                                 onClicked: root.stepPlayback(1, false)
                             }
-                            MediaAction {
+                            MediaAction { property string uiColorScope: "ui.control.MediaSurface.25";
                                 objectName: "mediaAutoNextEpisodes"
                                 width: Math.max(26, parent.width - 68); height: 28
                                 text: width < 90 ? "Auto" : "Auto nästa"
@@ -2703,7 +2696,7 @@ Item {
                                 onClicked: root.toggleAutoNext()
                             }
                         }
-                        MediaAction {
+                        MediaAction { property string uiColorScope: "ui.control.MediaSurface.26";
                             objectName: "mediaSourceCheckToggle"
                             width: parent.width
                             visible: root.hasSourceCheckControl
@@ -2723,7 +2716,7 @@ Item {
                             width: parent.width
                             height: visible ? 26 : 0
                             spacing: 4
-                            Text {
+                            GGText { colorKey: "ui.MediaSurface.23";
                                 width: Math.max(0, parent.width - undoRemoveButton.width - 4)
                                 height: 26
                                 text: "Borttagen: " + root.removedItemTitle
@@ -2732,14 +2725,14 @@ Item {
                                 font.pixelSize: 11
                                 verticalAlignment: Text.AlignVCenter
                             }
-                            MediaAction {
+                            MediaAction { property string uiColorScope: "ui.control.MediaSurface.27";
                                 id: undoRemoveButton
                                 objectName: "mediaUndoRemove"
                                 text: "Ångra"
                                 onClicked: root.undoRemove()
                             }
                         }
-                        Text {
+                        GGText { colorKey: "ui.MediaSurface.24";
                             objectName: "mediaLibraryLoadState"
                             width: parent.width
                             height: 15
@@ -2772,7 +2765,7 @@ Item {
                             height: visible ? 26 : 0
                             spacing: 4
                             visible: root.pagedLibrary && (root.continuousLibrary || root.pageTotal > root.catalogPageSize || root.pageOffset > 0 || root.catalogHasMore)
-                            MediaAction {
+                            MediaAction { property string uiColorScope: "ui.control.MediaSurface.28";
                                 objectName: "mediaLibraryPrevious"
                                 text: "‹"
                                 tip: "Föregående sida"
@@ -2781,7 +2774,7 @@ Item {
                                 enabled: !root.libraryBusy && root.pageOffset > 0
                                 onClicked: root.browsePage(-1)
                             }
-                            Text {
+                            GGText { colorKey: "ui.MediaSurface.25";
                                 objectName: "mediaLibraryPageRange"
                                 width: Math.max(0, parent.width - (root.continuousLibrary ? 0 : 60))
                                 height: 26
@@ -2803,7 +2796,7 @@ Item {
                                 font.pixelSize: 10
                                 elide: Text.ElideRight
                             }
-                            MediaAction {
+                            MediaAction { property string uiColorScope: "ui.control.MediaSurface.29";
                                 objectName: "mediaLibraryNext"
                                 text: "›"
                                 tip: "Nästa sida"
@@ -2813,21 +2806,21 @@ Item {
                                 onClicked: root.browsePage(1)
                             }
                         }
-                        MediaAction {
+                        MediaAction { property string uiColorScope: "ui.control.MediaSurface.30";
                             objectName: "mediaLibraryChunkRetry"
                             visible: root.continuousLibrary && root.chunkError.length > 0
                             width: parent.width
                             text: root.chunkNeedsRefresh ? "Uppdatera listan" : "Försök läsa fler titlar igen"
                             onClicked: root.retryChunk()
                         }
-                        MediaAction {
+                        MediaAction { property string uiColorScope: "ui.control.MediaSurface.31";
                             width: parent.width
                             visible: root.mode === "FETCH" && !!(root.status.fetch && root.status.fetch.present)
                             text: root.status.fetch && root.status.fetch.running ? "Öppna hämtaren ↗" : "Hämtverktyg ↗"
                             tip: "Öppna Torlink. Färdiga filer spelas direkt i biblioteket."
                             onClicked: root.openFetch()
                         }
-                        MediaAction {
+                        MediaAction { property string uiColorScope: "ui.control.MediaSurface.32";
                             width: parent.width
                             visible: (root.mode === "MUSIC" || root.mode === "RADIO")
                                 && !!(root.status.tools && root.status.tools.cliamp && root.status.tools.cliamp.present)
@@ -2976,7 +2969,7 @@ Item {
                             fillMode: VideoOutput.PreserveAspectFit
                         }
 
-                        MediaFullscreenControls {
+                        MediaFullscreenControls { property string uiColorScope: "ui.widget.MediaSurface.MediaFullscreenControls.37";
                             id: fullscreenControls
                             anchors.left: parent.left
                             anchors.right: parent.right
@@ -3005,9 +2998,9 @@ Item {
                             width: fullscreenExitLabel.implicitWidth + 18
                             height: 24
                             radius: 2
-                            color: fullscreenExitMouse.containsMouse ? "#303030" : "#181818"
+                            color: fullscreenExitMouse.containsMouse ? RuntimeTheme.GGTheme.selected : RuntimeTheme.GGTheme.panel
                             opacity: fullscreenExitMouse.containsMouse ? 1.0 : 0.0
-                            border.color: "#6a6a6a"
+                            border.color: RuntimeTheme.GGTheme.edge
                             border.width: 1
                             z: 2
 
@@ -3015,11 +3008,11 @@ Item {
                                 NumberAnimation { duration: 140 }
                             }
 
-                            Text {
+                            GGText { colorKey: "ui.MediaSurface.26";
                                 id: fullscreenExitLabel
                                 anchors.centerIn: parent
                                 text: "EXIT FULLSCREEN"
-                                color: "#e6edf3"
+                                color: RuntimeTheme.GGTheme.bright
                                 font.family: "monospace"
                                 font.pixelSize: 11
                                 font.bold: true
@@ -3042,7 +3035,7 @@ Item {
                         }
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.MediaSurface.27";
                         anchors.centerIn: parent
                         visible: !root.qmlVideo && !root.libretro && !root.screenOn
                         width: parent.width - 24
@@ -3055,13 +3048,13 @@ Item {
                                 : (root.mode === "FETCH"
                                     ? "TORLINK"
                                     : "DISPLAY"))
-                        color: "#3a3a3a"
+                        color: RuntimeTheme.GGTheme.selected
                         font.family: "monospace"
                         font.pixelSize: 18
                         font.bold: true
                     }
 
-                    BufferMark {
+                    BufferMark { property string uiColorScope: "ui.widget.MediaSurface.BufferMark.38";
                         objectName: "mediaHoleBuffer"
                         anchors.right: parent.right
                         anchors.top: parent.top
@@ -3080,9 +3073,9 @@ Item {
                         width: fullscreenLabel.implicitWidth + 18
                         height: 22
                         radius: 2
-                        color: fullscreenMouse.containsMouse ? "#303030" : "#181818"
+                        color: fullscreenMouse.containsMouse ? RuntimeTheme.GGTheme.selected : RuntimeTheme.GGTheme.panel
                         opacity: fullscreenMouse.containsMouse ? 1.0 : 0.0
-                        border.color: "#6a6a6a"
+                        border.color: RuntimeTheme.GGTheme.edge
                         border.width: 1
                         visible: root.qmlVideo
                         z: 4
@@ -3091,11 +3084,11 @@ Item {
                             NumberAnimation { duration: 140 }
                         }
 
-                        Text {
+                        GGText { colorKey: "ui.MediaSurface.28";
                             id: fullscreenLabel
                             anchors.centerIn: parent
                             text: root.videoFullscreen ? "EXIT FULLSCREEN" : "FULLSCREEN"
-                            color: "#e6edf3"
+                            color: RuntimeTheme.GGTheme.bright
                             font.family: "monospace"
                             font.pixelSize: 11
                             font.bold: true
@@ -3110,7 +3103,7 @@ Item {
                         }
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.MediaSurface.29";
                         id: holeError
                         objectName: "workspaceMediaVideoError"
                         anchors.left: parent.left
@@ -3119,7 +3112,7 @@ Item {
                         anchors.margins: 8
                         text: root.playerError || String(root.status.embed_error || "")
                         visible: text.length > 0
-                        color: "#c8a97e"
+                        color: RuntimeTheme.GGTheme.accent
                         wrapMode: Text.WordWrap
                         horizontalAlignment: Text.AlignHCenter
                         font.family: "monospace"

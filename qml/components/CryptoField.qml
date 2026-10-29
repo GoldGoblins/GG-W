@@ -1,12 +1,14 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
 TextField {
     id: control
-    color: "#e6e6e6"
-    placeholderTextColor: "#92969d"
-    selectedTextColor: "#f2f2f2"
-    selectionColor: "#3a3a3a"
+    color: RuntimeTheme.GGTheme.bright
+    placeholderTextColor: RuntimeTheme.GGTheme.muted
+    selectedTextColor: RuntimeTheme.GGTheme.bright
+    selectionColor: RuntimeTheme.GGTheme.line
     font.family: "monospace"
     font.pixelSize: 12
     selectByMouse: true
@@ -16,9 +18,9 @@ TextField {
     bottomPadding: 5
     implicitHeight: 26
     background: Rectangle {
-        color: "#121212"
+        color: RuntimeTheme.GGTheme.canvas
         border.width: 1
-        border.color: control.activeFocus ? "#8a8a8a" : "#6a6a6a"
+        border.color: control.activeFocus ? RuntimeTheme.GGTheme.muted : RuntimeTheme.GGTheme.dim
         radius: 2
         antialiasing: false
     }

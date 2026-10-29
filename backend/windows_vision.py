@@ -21,6 +21,7 @@ if str(PROJECT) not in sys.path:
 from backend.live_vision import (FrameRing, MAX_DETAIL_BYTES, MAX_REPLY_BYTES,
                                 RING_SECONDS, TARGET_FPS)
 from backend import windows_vision_activity as activity
+from backend import sensitive_ui_guard
 
 PREVIEW_SIZE = (960, 540)
 DETAIL_SIZE = (4096, 2160)
@@ -29,6 +30,8 @@ DETAIL_SIZE = (4096, 2160)
 def status() -> dict:
     # This getter is also used on the app's UI thread. Never capture or spawn
     # from it, and never report "live" merely because a provider is installed.
+    if sensitive_ui_guard.active():
+        return {'state':'suspended','reason':'SENSITIVE_UI_ACTIVE','provider':'windows-gdi','target_fps':TARGET_FPS,'buffer_bytes':0,'received_fps':0,'frame_age_ms':None,'storage':'RAM'}
     try:
         value = activity.snapshot()
     except (OSError, RuntimeError, ValueError):
@@ -69,6 +72,7 @@ def request(op: str, *, timeout: float = 8, **parameters) -> dict:
     if op == "stop":
         activity.stop()
         return status()
+    guard_token=sensitive_ui_guard.capture_token()
     if op == "start":
         return {**status(), "state": "ready", "requires_selection": False,
                 "message": "Windows är redo för frame eller clip på begäran."}
@@ -95,6 +99,7 @@ def request(op: str, *, timeout: float = 8, **parameters) -> dict:
             raise RuntimeError("Windows screen capture stopped: " + trigger)
         if code != 0:
             raise RuntimeError("Windows screen capture helper failed")
+        sensitive_ui_guard.require_capture_allowed(guard_token)
         answer = json.loads(output)
         if not isinstance(answer, dict) or not answer.get("ok"):
             raise RuntimeError("Windows screen capture failed")
@@ -128,6 +133,7 @@ def _screen_size() -> tuple[int, int]:
 
 def capture(command: dict, *, grab=None, screen_size=None, on_frame=None, cancelled=None) -> dict:
     """Capture one bounded interval; injectable source permits headless tests."""
+    guard_token=sensitive_ui_guard.capture_token()
     from PIL import Image, ImageGrab
     command = validate(command)
     if grab is None:
@@ -147,13 +153,16 @@ def capture(command: dict, *, grab=None, screen_size=None, on_frame=None, cancel
     limit = min(150, int(command["seconds"] * command["fps"]) + 1)
     capture_costs = []
     for _ in range(limit):
+        sensitive_ui_guard.require_capture_allowed(guard_token)
         if cancelled is not None and cancelled():
             raise RuntimeError("Windows screen capture stopped: CANCELLED")
         remaining = next_at - time.monotonic()
         if remaining > 0:
             time.sleep(remaining)
         began = time.monotonic()
+        sensitive_ui_guard.require_capture_allowed(guard_token)
         with grab(bbox=bbox) as frame:
+            sensitive_ui_guard.require_capture_allowed(guard_token)
             captured = time.monotonic()
             capture_costs.append((captured - began) * 1000)
             if first is None:
@@ -165,6 +174,7 @@ def capture(command: dict, *, grab=None, screen_size=None, on_frame=None, cancel
             stream = io.BytesIO()
             frame.save(stream, "JPEG", quality=88 if command["op"] == "frame" else 70)
             ring.append(stream.getvalue(), frame.width, frame.height, None, captured=captured)
+        sensitive_ui_guard.require_capture_allowed(guard_token)
         if on_frame is not None:
             progress = ring.status()
             on_frame(frames=ring.seq, last_frame_at=captured,
@@ -173,6 +183,7 @@ def capture(command: dict, *, grab=None, screen_size=None, on_frame=None, cancel
             break
         next_at = max(next_at + period, time.monotonic())
     result = ring.observation(seconds=command["seconds"], fps=command["fps"])
+    sensitive_ui_guard.require_capture_allowed(guard_token)
     measured = ring.status()
     result.update(provider="windows-gdi", capture_mode="on_demand",
                   image_kind="native_detail" if command["op"] == "frame" else "motion_preview",
@@ -202,6 +213,7 @@ def main() -> None:
             raise RuntimeError("Observation exceeds transport limit")
     except (OSError, ValueError, RuntimeError, IndexError) as exc:
         packet = json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=True).encode()
+    if sensitive_ui_guard.active():packet=json.dumps({'ok':False,'error':'SENSITIVE_UI_ACTIVE'}).encode()
     sys.stdout.buffer.write(packet)
 
 

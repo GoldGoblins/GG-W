@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 
 Item {
@@ -83,20 +85,20 @@ Item {
         }
     }
 
-    Text {
+    GGText { colorKey: "ui.ActivityStrip.1";
         id: statusLine
         anchors.left: parent.left
         anchors.right: totalLine.left
         anchors.rightMargin: 8
         anchors.verticalCenter: parent.verticalCenter
         text: ":: " + root.statusText + "  " + root.formatSegment(root.segmentMs)
-        color: "#c8a97e"
+        color: RuntimeTheme.GGTheme.accent
         font.family: "monospace"
         font.pixelSize: 12
         elide: Text.ElideRight
     }
 
-    Text {
+    GGText { colorKey: "ui.ActivityStrip.2";
         id: totalLine
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
@@ -105,7 +107,7 @@ Item {
                 ? root.elapsedSeconds * 1000
                 : root.elapsedMs
         )
-        color: "#c8cdd4"
+        color: RuntimeTheme.GGTheme.text
         font.family: "monospace"
         font.pixelSize: 12
     }

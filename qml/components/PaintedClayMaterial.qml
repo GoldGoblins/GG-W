@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick3D
 
 // Shared image atlas, mapped in stable object coordinates for native instances.
-GgBatchMaterial {
+GgBatchMaterial { property string uiColorScope: "ui.widget.PaintedClayMaterial.GgBatchMaterial.1";
     property real uLampEmission: 0
     property int uSurfaceKind: 0 // architecture / flora / terrain / character
     shadingMode: CustomMaterial.Shaded

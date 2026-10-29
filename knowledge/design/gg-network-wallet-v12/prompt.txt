@@ -1,0 +1,21 @@
+Mode: built-in image_gen, ui-mockup. Reference inputs: user's composed network
+dashboard and compact wallet screenshots. Output is a new concept, not a live
+screen or verified benchmark. The design was generated before the subsequent
+price-source and recovery-flow clarifications; those are documented separately.
+
+Render a flat native TUI-inspired Swedish GG AI DESKTOP network and wallet
+workspace. Use true gaps in thin frame borders, monospace text, dark-gray/white
+neutrals and the shared muted xterm256 blue/cyan/purple/orange/red/green/yellow.
+Main frame legend CRYPTO · GG NÄTVERK. Compact network navigation and engine
+tabs, real Hardhat parameters, 32-sample latency bars, actual parent-linked
+block graph immediately below, bounded recent transaction/account/event lists,
+compact transfer controls and a grouped telemetry rail. Important non-list
+information fits without whole-page scrolling. Never invent a Kaspa DAG,
+60 block/s, huge TPS, or globally verified consensus.
+
+Wallet: centered total inside a thin upper allocation semicircle, per-token
+clickable dots after ticker, matching arc colors and a 16/32/64 swatch popup.
+Use exact existing quantities; SOL is priced and GGHB is unpriced in the
+reference. Do not invent a GGHB weight. Keep compact controls and sparklines.
+Caption KONCEPT · EXEMPELVÄRDEN. No glow, visual padding tricks or decoration
+that implies a working protocol or a measured result.

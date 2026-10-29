@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Window
@@ -10,14 +12,17 @@ Item {
 
     required property Window targetWindow
     required property Item titleFrame
-    property color backgroundColor: "#161616"
-    property color foregroundColor: "#e6edf3"
+    property color backgroundColor: RuntimeTheme.GGTheme.panel
+    property color foregroundColor: RuntimeTheme.GGTheme.bright
     property bool desktopShell: false
     property bool fullscreen: false
     readonly property bool maximized: root.targetWindow.visibility === Window.Maximized
     readonly property bool resizable: !root.desktopShell && !root.fullscreen
                                      && root.targetWindow.visibility === Window.Windowed
     readonly property int resizeMargin: 6
+    // Coordinates are relative to the title frame, for its border opening.
+    readonly property real controlsStart: controlsPlate.x - root.titleFrame.x
+    readonly property real controlsWidth: controlsPlate.width
 
     signal windowModeChangeRequested()
     signal maximizeRequested()
@@ -45,22 +50,20 @@ Item {
         }
     }
 
-    Rectangle {
+    Item {
         id: controlsPlate
         objectName: "windowControlsPlate"
         x: root.titleFrame.x + root.titleFrame.width - width - 12
         y: Math.max(0, root.titleFrame.y - 10)
         width: controls.implicitWidth + 12
         height: 24
-        color: root.backgroundColor
-        radius: 2
 
         Row {
             id: controls
             anchors.centerIn: parent
             spacing: 2
 
-            WindowButton {
+            WindowButton { property string uiColorScope: "ui.control.GgWindowChrome.1";
                 objectName: "windowMinimizeButton"
                 text: "−"
                 Accessible.name: "Minimera"
@@ -70,7 +73,7 @@ Item {
                 }
             }
 
-            WindowButton {
+            WindowButton { property string uiColorScope: "ui.control.GgWindowChrome.2";
                 objectName: "windowMaximizeButton"
                 text: root.maximized || root.fullscreen ? "❐" : "□"
                 Accessible.name: root.fullscreen ? "Lämna helskärm"
@@ -78,7 +81,7 @@ Item {
                 onClicked: root.maximizeRequested()
             }
 
-            WindowButton {
+            WindowButton { property string uiColorScope: "ui.control.GgWindowChrome.3";
                 objectName: "windowCloseButton"
                 text: "×"
                 closeButton: true
@@ -97,14 +100,14 @@ Item {
         hoverEnabled: true
         activeFocusOnTab: true
         background: Rectangle {
-            color: control.down ? (control.closeButton ? "#a63232" : "#383838")
-                                : (control.hovered ? (control.closeButton ? "#823030" : "#292929")
-                                                   : root.backgroundColor)
+            color: control.down ? (control.closeButton ? "#a63232" : RuntimeTheme.GGTheme.line)
+                                : (control.hovered ? (control.closeButton ? "#823030" : RuntimeTheme.GGTheme.hover)
+                                                   : "transparent")
             border.width: control.visualFocus ? 1 : 0
             border.color: root.foregroundColor
             radius: 2
         }
-        contentItem: Text {
+        contentItem: GGText { colorKey: "ui.GgWindowChrome.1";
             text: control.text
             color: root.foregroundColor
             font.family: "monospace"

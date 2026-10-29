@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
@@ -573,25 +575,35 @@ Item {
     property bool showProductSourceTabs: false
     property real chatWidthRatio: 0.31
     property int telemetryWidth: 168
-    property color accentColor: "#8a8a8a"
-    property color frameBorder: "#6a6a6a"
+    property color accentColor: RuntimeTheme.GGTheme.accent
+    property var paletteRoles: ({})
+    property color frameBorder: RuntimeTheme.GGTheme.edge
     property int frameRadius: 4
     property bool showOpenTabInInput: false
     property bool showInnerEditorChrome: true
     property bool settingsOpen: false
+    property bool keepSettings: false
     property bool chatBusy: false
     property string engineTarget: "GROK_TUI"
     property string hostKind: "CODE"
+    property string pendingCryptoSection:""
+    property bool keepExternal: false
     property bool keepGameEngine: false
     property bool keepResearch: false
     property string pendingResearchSection: ""
     onHostKindChanged: {
+        if (hostKind === "MARKETPLACE") {
+            root.setHostKind("MARKETPLACE")
+            return
+        }
         if (hostKind !== "WEB" && root.pendingWebOpPayload.length === 0)
             root.cancelWebOperator(String(root._webOpCurrent.command_id || ""), "PANE_HIDDEN")
         if (hostKind === "QIP") {
             root.openResearch("WASM LAB")
             return
         }
+        if (hostKind === "EXTERNAL")
+            keepExternal = true
         if (hostKind === "RESEARCH")
             keepResearch = true
         if (hostKind === "GAME_ENGINE")
@@ -642,6 +654,7 @@ Item {
     signal chatWidthRatioRequested(real value)
     signal telemetryWidthRequested(int value)
     signal accentColorRequested(color value)
+    signal paletteRolesRequested(var value)
     signal frameBorderRequested(color value)
     signal frameRadiusRequested(int value)
     signal demoVisibilityRequested(bool value)
@@ -951,6 +964,19 @@ Item {
         }
     }
 
+    function openCrypto(section) {
+        root.pendingCryptoSection = String(section || "WALLET")
+        root.setHostKind("CRYPTO")
+        if (root.hostKind !== "CRYPTO") {
+            root.pendingCryptoSection = ""
+            return
+        }
+        if (cryptoPane.item) {
+            cryptoPane.item.navigateSpace(root.pendingCryptoSection)
+            root.pendingCryptoSection = ""
+        }
+    }
+
     function setHostKind(kind) {
         var requestedKind = String(kind || "").toUpperCase()
         if (requestedKind === "QIP") {
@@ -960,6 +986,21 @@ Item {
         if (!root.hostKindEnabled(requestedKind)) {
             if (requestedKind !== "CODE")
                 root.setHostKind("CODE")
+            return
+        }
+        if (requestedKind === "MARKETPLACE") {
+            root.pendingCryptoSection = "MARKETPLACE"
+            root.setHostKind("CRYPTO")
+            if (root.hostKind !== "CRYPTO") {
+                root.pendingCryptoSection = ""
+                return
+            }
+            Qt.callLater(function() {
+                if (root.hostKind === "CRYPTO" && cryptoPane.item && root.pendingCryptoSection.length) {
+                    cryptoPane.item.navigateSpace(root.pendingCryptoSection)
+                    root.pendingCryptoSection = ""
+                }
+            })
             return
         }
         kind = requestedKind
@@ -2244,6 +2285,8 @@ Item {
     onChatBusyChanged: root.syncObjectActivities()
     onEngineTargetChanged: root.syncObjectActivities()
     onSettingsOpenChanged: {
+        if (settingsOpen)
+            root.keepSettings = true
         if (root.settingsOpen)
             root.sitePreviewFullscreen = false
     }
@@ -2350,7 +2393,7 @@ Item {
         visible: false
         color: "#00c8a97e"
         border.width: 2
-        border.color: "#c8a97e"
+        border.color: RuntimeTheme.GGTheme.accent
         x: root.chromeX - width / 2
         y: root.chromeY - height / 2
 
@@ -2416,8 +2459,8 @@ Item {
     }
 
     Connections {
-        target: Window.window && Window.window.surfaceHost
-            ? Window.window.surfaceHost
+        target: root.Window.window && root.Window.window.surfaceHost
+            ? root.Window.window.surfaceHost
             : null
         ignoreUnknownSignals: true
 
@@ -2787,19 +2830,9 @@ Item {
 
     }
 
-    Rectangle {
-        z: 5
-        anchors.left: tabs.left
-        anchors.leftMargin: -6
-        anchors.top: tabs.top
-        width: tabs.width + 12
-        height: 18
-        color: "#161616"
-        visible: tabs.width > 0
-    }
-
     readonly property string frameKindLabel: root.settingsOpen
         ? "SETTINGS"
+        : root.hostKind === "CRYPTO" ? ((cryptoPane.item && cryptoPane.item.workspaceFrameLabel) || "CRYPTO")
         : (root.hostKind === "GAME_ENGINE"
             ? "GAME ENGINE"
             : (root.hostKind === "NODES"
@@ -2862,7 +2895,7 @@ Item {
                     : 0
                 height: 18
 
-                Text {
+                GGText { colorKey: "ui.WorkspaceSurface.1";
                     id: sepText
                     text: " | "
                     height: 18
@@ -2883,24 +2916,24 @@ Item {
                         }
                         return false
                     }
-                    color: "#a8b0b8"
+                    color: RuntimeTheme.GGTheme.muted
                     font.family: "monospace"
                     font.pixelSize: 12
                 }
 
-                Text {
+                GGText { colorKey: "ui.WorkspaceSurface.2";
                     id: tabText
                     anchors.left: sepText.visible ? sepText.right : parent.left
                     height: 18
                     verticalAlignment: Text.AlignVCenter
                     text: tabButton.title
-                    color: tabButton.tabCurrent ? "#d8dee9" : "#a8b0b8"
+                    color: tabButton.tabCurrent ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
                     font.family: "monospace"
                     font.pixelSize: 12
                     font.bold: tabButton.tabCurrent
                 }
 
-                Text {
+                GGText { colorKey: "ui.WorkspaceSurface.3";
                     id: closeText
                     objectName: "workspaceCloseInstanceButton"
                     z: 12
@@ -2909,7 +2942,7 @@ Item {
                     height: 18
                     verticalAlignment: Text.AlignVCenter
                     text: " ×"
-                    color: "#c8a97e"
+                    color: RuntimeTheme.GGTheme.accent
                     font.family: "monospace"
                     font.pixelSize: 12
                     visible: root.isSpawnedObject(tabButton.objectId)
@@ -2960,16 +2993,16 @@ Item {
                 id: spawnTabRow
                 spacing: 0
 
-                Text {
+                GGText { colorKey: "ui.WorkspaceSurface.4";
                     text: " | "
-                    color: "#a8b0b8"
+                    color: RuntimeTheme.GGTheme.muted
                     font.family: "monospace"
                     font.pixelSize: 12
                 }
 
-                Text {
+                GGText { colorKey: "ui.WorkspaceSurface.5";
                     text: "+"
-                    color: "#c8cdd4"
+                    color: RuntimeTheme.GGTheme.text
                     font.family: "monospace"
                     font.pixelSize: 12
                 }
@@ -2991,25 +3024,25 @@ Item {
                 id: settingsTabRow
                 spacing: 0
 
-                Text {
+                GGText { colorKey: "ui.WorkspaceSurface.6";
                     text: " | "
-                    color: "#a8b0b8"
+                    color: RuntimeTheme.GGTheme.muted
                     font.family: "monospace"
                     font.pixelSize: 12
                 }
 
-                Text {
+                GGText { colorKey: "ui.WorkspaceSurface.7";
                     text: "Settings"
-                    color: "#d8dee9"
+                    color: RuntimeTheme.GGTheme.text
                     font.family: "monospace"
                     font.pixelSize: 12
                     font.bold: true
                 }
 
-                Text {
+                GGText { colorKey: "ui.WorkspaceSurface.8";
                     objectName: "settingsTabCloseButton"
                     text: " ×"
-                    color: "#c8cdd4"
+                    color: RuntimeTheme.GGTheme.text
                     font.family: "monospace"
                     font.pixelSize: 12
 
@@ -3039,21 +3072,16 @@ Item {
         height: 18
         width: scratchSaveRow.implicitWidth + 12
 
-        Rectangle {
-            anchors.fill: parent
-            color: "#161616"
-        }
-
         Row {
             id: scratchSaveRow
             anchors.centerIn: parent
             spacing: 10
 
-            Text {
+            GGText { colorKey: "ui.WorkspaceSurface.9";
                 height: 18
                 verticalAlignment: Text.AlignVCenter
                 text: root.editorDirty ? "SAVE" : "SAVED"
-                color: "#c8cdd4"
+                color: RuntimeTheme.GGTheme.text
                 font.family: "monospace"
                 font.pixelSize: 12
                 font.bold: true
@@ -3065,12 +3093,12 @@ Item {
                 }
             }
 
-            Text {
+            GGText { colorKey: "ui.WorkspaceSurface.10";
                 objectName: "workspaceSaveScratchButton"
                 height: 18
                 verticalAlignment: Text.AlignVCenter
                 text: "SAVE AS"
-                color: "#c8cdd4"
+                color: RuntimeTheme.GGTheme.text
                 font.family: "monospace"
                 font.pixelSize: 12
                 font.bold: true
@@ -3084,13 +3112,30 @@ Item {
         }
     }
 
-    GgFrame {
+    GgFrame { property string uiColorScope: "ui.widget.WorkspaceSurface.GgFrame.1";
         id: workspaceFrame
+        objectName: "workspaceNativeFrame"
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 8
+        // Tabs and actions occupy real openings in the frame. They do not
+        // paint a matching surface over a continuous border.
+        topGaps: {
+            var gaps = []
+            if (tabs.visible && tabs.width > 0)
+                gaps.push({start: tabs.x - workspaceFrame.x - 6,
+                           end: tabs.x - workspaceFrame.x + tabs.width + 6})
+            if (codeActions.visible && codeActions.width > 0)
+                gaps.push({start: codeActions.x - workspaceFrame.x,
+                           end: codeActions.x - workspaceFrame.x + codeActions.width})
+            return gaps
+        }
+        bottomGaps: hostKindFooter.visible && hostKindFooter.width > 0
+            ? [{start: hostKindFooter.x - workspaceFrame.x - 6,
+                end: hostKindFooter.x - workspaceFrame.x + hostKindFooter.width + 6}]
+            : []
         leftLegend: root.frameKindLabel
         busy: root.chatBusy
             || root.liveAidState === "QUEUED"
@@ -3107,9 +3152,9 @@ Item {
                     : "GENERATING"
             )
             : (root.hostKind === "CRYPTO"
-                ? ((cryptoPane.item && cryptoPane.item.legend) || "TESTNET")
+                ? ((cryptoPane.item && cryptoPane.item.workspaceNetworkLabel) || "LÄSLÄGE / LABB")
                 : (root.hostKind === "MARKETPLACE"
-                    ? ((marketplacePane.item && marketplacePane.item.legend) || "TESTNET")
+                    ? ((marketplacePane.item && marketplacePane.item.workspaceNetworkLabel) || "PUBLIKT / LOKALT")
                     : (root.hostKind === "GAME_ENGINE"
                         ? ((gameEnginePane.item && gameEnginePane.item.legend)
                             || "LOCAL · FIXED 60 HZ")
@@ -3126,7 +3171,8 @@ Item {
                     : "BUFFER · UNSAVED"
             )
             : ""
-        backgroundColor: "#161616"
+        edgeContent: !root.settingsOpen && (root.hostKind === "CRYPTO" || root.hostKind === "MARKETPLACE")
+        backgroundColor: edgeContent ? RuntimeTheme.GGTheme.base : RuntimeTheme.GGTheme.panel
         borderColor: root.frameBorder
         radius: root.frameRadius
 
@@ -3156,7 +3202,7 @@ Item {
                     width: 0
                     height: 0
 
-                    WorkspaceObjectNode {
+                    WorkspaceObjectNode { property string uiColorScope: "ui.widget.WorkspaceSurface.WorkspaceObjectNode.2";
                         id: objectNode
                         width: objectNodeWrap.width
                         height: objectNodeWrap.height
@@ -3183,11 +3229,10 @@ Item {
         }
 
         Item {
-            width: parent.width
-            height: Math.max(
-                160,
-                root.height - 44
-            )
+            id: workspaceBody
+            objectName: "workspaceTabContent"
+            parent: workspaceFrame.contentItem
+            anchors.fill: parent
 
             Row {
                 id: authoringSurface
@@ -3221,7 +3266,7 @@ Item {
                     width: authoringSurface.width
                     height: authoringSurface.height
 
-                    CodeRunnerBar {
+                    CodeRunnerBar { property string uiColorScope: "ui.widget.WorkspaceSurface.CodeRunnerBar.3";
                         id: codeRunnerBar
                         objectName: "workspaceCodeRunnerBar"
                         anchors.left: parent.left
@@ -3270,8 +3315,8 @@ Item {
                         anchors.topMargin: codeRunnerBar.implicitHeight + 6
                         anchors.bottomMargin: 8
                         clip: true
-                        ScrollBar.horizontal: GgScrollBar {}
-                        ScrollBar.vertical: GgScrollBar {}
+                        ScrollBar.horizontal: GgScrollBar { property string uiColorScope: "ui.widget.WorkspaceSurface.GgScrollBar.4";}
+                        ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.WorkspaceSurface.GgScrollBar.5";}
 
                         TextArea {
                             id: codeEditor
@@ -3283,9 +3328,9 @@ Item {
                             persistentSelection: true
                             textFormat: TextEdit.PlainText
                             wrapMode: TextEdit.NoWrap
-                            color: "#e6e6e6"
-                            selectionColor: "#3a3a3a"
-                            selectedTextColor: "#f2f2f2"
+                            color: RuntimeTheme.GGTheme.bright
+                            selectionColor: RuntimeTheme.GGTheme.selected
+                            selectedTextColor: RuntimeTheme.GGTheme.bright
                             font.family: "monospace"
                             font.pixelSize: 12
                             leftPadding: 12
@@ -3293,7 +3338,7 @@ Item {
                             topPadding: 8
                             bottomPadding: 12
 
-                            SelectionGuard {
+                            SelectionGuard { property string uiColorScope: "ui.widget.WorkspaceSurface.SelectionGuard.6";
                                 editor: codeEditor
                             }
 
@@ -3329,7 +3374,7 @@ Item {
                             )
 
                             background: Rectangle {
-                                color: "#161616"
+                                color: RuntimeTheme.GGTheme.panel
                                 border.width: 0
                             }
 
@@ -3399,81 +3444,92 @@ Item {
                 }
             }
 
-            SettingsSurface {
+            DeferredSurface { property string uiColorScope: "ui.widget.WorkspaceSurface.DeferredSurface.7";
                 id: settingsSurface
                 anchors.fill: parent
                 anchors.margins: 10
                 visible: root.settingsOpen
-                chatWidthRatio: root.chatWidthRatio
-                telemetryWidth: root.telemetryWidth
-                accentColor: root.accentColor
-                frameBorder: root.frameBorder
-                frameRadius: root.frameRadius
-                showDemoFixtures: root.showDemoFixtures
-                showProductSourceTabs: root.showProductSourceTabs
-                showOpenTabInInput: root.showOpenTabInInput
-                showInnerEditorChrome: root.showInnerEditorChrome
-                hostKind: root.hostKind
-                engineTarget: root.engineTarget
-                utilityHeight: root.utilityHeight
-                desktopShell: root.desktopShell
+                objectName: "workspaceSettingsLoader"
+                active: root.keepSettings || root.settingsOpen
+                surfaceUrl: Qt.resolvedUrl("SettingsSurface.qml")
+                surfaceProperties: ({
+                    chatWidthRatio: Qt.binding(function() { return root.chatWidthRatio }),
+                    telemetryWidth: Qt.binding(function() { return root.telemetryWidth }),
+                    accentColor: Qt.binding(function() { return root.accentColor }),
+                    paletteRoles: Qt.binding(function() { return root.paletteRoles }),
+                    frameBorder: Qt.binding(function() { return root.frameBorder }),
+                    frameRadius: Qt.binding(function() { return root.frameRadius }),
+                    showDemoFixtures: Qt.binding(function() { return root.showDemoFixtures }),
+                    showProductSourceTabs: Qt.binding(function() { return root.showProductSourceTabs }),
+                    showOpenTabInInput: Qt.binding(function() { return root.showOpenTabInInput }),
+                    showInnerEditorChrome: Qt.binding(function() { return root.showInnerEditorChrome }),
+                    hostKind: Qt.binding(function() { return root.hostKind }),
+                    engineTarget: Qt.binding(function() { return root.engineTarget }),
+                    utilityHeight: Qt.binding(function() { return root.utilityHeight }),
+                    desktopShell: Qt.binding(function() { return root.desktopShell })
+                })
+                Connections {
+                    target: settingsSurface.item
+                    function onChatWidthRatioChangedByUser(value) {
+                        root.chatWidthRatioRequested(value)
+                    }
 
-                onChatWidthRatioChangedByUser: function(value) {
-                    root.chatWidthRatioRequested(value)
+                    function onTelemetryWidthChangedByUser(value) {
+                        root.telemetryWidthRequested(value)
+                    }
+
+                    function onAccentColorChangedByUser(value) {
+                        root.accentColorRequested(value)
+                    }
+                    function onPaletteRolesChangedByUser(value) {
+                        root.paletteRolesRequested(value)
+                    }
+
+                    function onFrameBorderChangedByUser(value) {
+                        root.frameBorderRequested(value)
+                    }
+
+                    function onFrameRadiusChangedByUser(value) {
+                        root.frameRadiusRequested(value)
+                    }
+
+                    function onDemoVisibilityChangedByUser(value) {
+                        root.demoVisibilityRequested(value)
+                    }
+
+                    function onProductSourceTabsChangedByUser(value) {
+                        root.showProductSourceTabs = value
+                        root.productSourceTabsRequested(value)
+                    }
+
+                    function onShowOpenTabInInputChangedByUser(value) {
+                        root.showOpenTabInInputRequested(value)
+                    }
+
+                    function onShowInnerEditorChromeChangedByUser(value) {
+                        root.showInnerEditorChromeRequested(value)
+                    }
+
+                    function onHostKindChangedByUser(value) {
+                        root.setHostKind(value)
+                    }
+
+                    function onSpawnInstanceRequested() { root.spawnHostInstance() }
+
+                    function onEngineTargetChangedByUser(value) {
+                        root.engineTargetRequested(value)
+                    }
+
+                    function onUtilityHeightChangedByUser(value) {
+                        root.utilityHeightRequested(value)
+                    }
+
+                    function onDesktopShellChangedByUser(value) {
+                        root.desktopShellRequested(value)
+                    }
+
+                    function onCloseRequested() { root.closeSettings() }
                 }
-
-                onTelemetryWidthChangedByUser: function(value) {
-                    root.telemetryWidthRequested(value)
-                }
-
-                onAccentColorChangedByUser: function(value) {
-                    root.accentColorRequested(value)
-                }
-
-                onFrameBorderChangedByUser: function(value) {
-                    root.frameBorderRequested(value)
-                }
-
-                onFrameRadiusChangedByUser: function(value) {
-                    root.frameRadiusRequested(value)
-                }
-
-                onDemoVisibilityChangedByUser: function(value) {
-                    root.demoVisibilityRequested(value)
-                }
-
-                onProductSourceTabsChangedByUser: function(value) {
-                    root.showProductSourceTabs = value
-                    root.productSourceTabsRequested(value)
-                }
-
-                onShowOpenTabInInputChangedByUser: function(value) {
-                    root.showOpenTabInInputRequested(value)
-                }
-
-                onShowInnerEditorChromeChangedByUser: function(value) {
-                    root.showInnerEditorChromeRequested(value)
-                }
-
-                onHostKindChangedByUser: function(value) {
-                    root.setHostKind(value)
-                }
-
-                onSpawnInstanceRequested: root.spawnHostInstance()
-
-                onEngineTargetChangedByUser: function(value) {
-                    root.engineTargetRequested(value)
-                }
-
-                onUtilityHeightChangedByUser: function(value) {
-                    root.utilityHeightRequested(value)
-                }
-
-                onDesktopShellChangedByUser: function(value) {
-                    root.desktopShellRequested(value)
-                }
-
-                onCloseRequested: root.closeSettings()
             }
 
             Item {
@@ -3512,8 +3568,8 @@ Item {
                 }
 
                 Connections {
-                    target: Window.window && Window.window.surfaceHost
-                        ? Window.window.surfaceHost
+                    target: root.Window.window && root.Window.window.surfaceHost
+                        ? root.Window.window.surfaceHost
                         : null
                     ignoreUnknownSignals: true
 
@@ -3532,7 +3588,7 @@ Item {
                     }
                 }
 
-                Text {
+                GGText { colorKey: "ui.WorkspaceSurface.11";
                     objectName: "workspaceSiteImportStatus"
                     z: 8
                     anchors.left: parent.left
@@ -3544,8 +3600,8 @@ Item {
                     textFormat: Text.PlainText
                     color: root.siteImportStatus.indexOf("FAIL") === 0
                         || root.siteImportStatus.indexOf("PARTIAL") === 0
-                        ? "#c98989"
-                        : "#8b949e"
+                        ? RuntimeTheme.GGTheme.negative
+                        : RuntimeTheme.GGTheme.dim
                     font.family: "monospace"
                     font.pixelSize: 12
                     elide: Text.ElideMiddle
@@ -3560,9 +3616,9 @@ Item {
                     anchors.right: parent.right
                     height: 18
 
-                    Text {
+                    GGText { colorKey: "ui.WorkspaceSurface.12";
                         text: "EDIT IN CODE"
-                        color: "#c8a97e"
+                        color: RuntimeTheme.GGTheme.accent
                         font.family: "monospace"
                         font.pixelSize: 12
                         MouseArea {
@@ -3572,9 +3628,9 @@ Item {
                         }
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.WorkspaceSurface.13";
                         text: root.sitePreviewRunning ? "STOP PREVIEW" : "PREVIEW"
-                        color: root.sitePreviewRunning ? "#d8dee9" : "#c8a97e"
+                        color: root.sitePreviewRunning ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.accent
                         font.family: "monospace"
                         font.pixelSize: 12
                         font.bold: root.sitePreviewRunning
@@ -3585,14 +3641,14 @@ Item {
                         }
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.WorkspaceSurface.14";
                         objectName: "workspaceSiteFullscreenButton"
                         text: root.sitePreviewFullscreen
                             ? "EXIT FULLSCREEN"
                             : "FULLSCREEN"
                         color: root.sitePreviewFullscreen
-                            ? "#d8dee9"
-                            : "#c8a97e"
+                            ? RuntimeTheme.GGTheme.text
+                            : RuntimeTheme.GGTheme.accent
                         opacity: root.sitePreviewRunning ? 1.0 : 0.55
                         font.family: "monospace"
                         font.pixelSize: 12
@@ -3604,9 +3660,9 @@ Item {
                         }
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.WorkspaceSurface.15";
                         text: "IMPORT SQL"
-                        color: "#c8a97e"
+                        color: RuntimeTheme.GGTheme.accent
                         font.family: "monospace"
                         font.pixelSize: 12
                         MouseArea {
@@ -3617,9 +3673,9 @@ Item {
                         }
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.WorkspaceSurface.16";
                         text: "IMPORT ZIP"
-                        color: "#c8a97e"
+                        color: RuntimeTheme.GGTheme.accent
                         font.family: "monospace"
                         font.pixelSize: 12
                         MouseArea {
@@ -3630,9 +3686,9 @@ Item {
                         }
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.WorkspaceSurface.17";
                         text: "IMPORT FOLDER"
-                        color: "#c8a97e"
+                        color: RuntimeTheme.GGTheme.accent
                         font.family: "monospace"
                         font.pixelSize: 12
                         MouseArea {
@@ -3643,10 +3699,10 @@ Item {
                         }
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.WorkspaceSurface.18";
                         objectName: "workspaceSiteHealthButton"
                         text: root.siteImportBusy ? "CANCEL" : "CHECK PHP"
-                        color: "#c8a97e"
+                        color: RuntimeTheme.GGTheme.accent
                         font.family: "monospace"
                         font.pixelSize: 12
                         MouseArea {
@@ -3657,7 +3713,7 @@ Item {
                     }
                 }
 
-                Text {
+                GGText { colorKey: "ui.WorkspaceSurface.19";
                     objectName: "workspaceSiteHealthStatus"
                     anchors.left: parent.left
                     anchors.right: parent.right
@@ -3668,7 +3724,7 @@ Item {
                     textFormat: Text.PlainText
                     font.family: "monospace"
                     font.pixelSize: 11
-                    color: "#8b949e"
+                    color: RuntimeTheme.GGTheme.dim
                     elide: Text.ElideRight
                 }
 
@@ -3687,18 +3743,18 @@ Item {
                         font.family: "monospace"
                         font.pixelSize: 11
                         placeholderText: "PHP version / vendor revision"
-                        color: "#d8dee9"
+                        color: RuntimeTheme.GGTheme.text
                         selectByMouse: true
                         maximumLength: 100
                         topPadding: 0
                         bottomPadding: 0
-                        background: Rectangle { color: "#161616"; border.color: "#454545" }
+                        background: Rectangle { color: RuntimeTheme.GGTheme.panel; border.color: "#454545" }
                         onAccepted: root.assessSitePhpVersion(text)
                     }
-                    Text {
+                    GGText { colorKey: "ui.WorkspaceSurface.20";
                         objectName: "workspaceSitePhpVersionAssess"
                         text: "ASSESS"
-                        color: "#c8a97e"
+                        color: RuntimeTheme.GGTheme.accent
                         font.family: "monospace"
                         font.pixelSize: 11
                         height: 20
@@ -3710,7 +3766,7 @@ Item {
                         }
                     }
                 }
-                Text {
+                GGText { colorKey: "ui.WorkspaceSurface.21";
                     objectName: "workspaceSitePhpVersionResult"
                     anchors.left: siteVersionRow.right
                     anchors.leftMargin: 12
@@ -3721,7 +3777,7 @@ Item {
                     textFormat: Text.PlainText
                     font.family: "monospace"
                     font.pixelSize: 11
-                    color: "#8b949e"
+                    color: RuntimeTheme.GGTheme.dim
                     elide: Text.ElideRight
                     verticalAlignment: Text.AlignVCenter
                 }
@@ -3748,7 +3804,7 @@ Item {
                 Window {
                     id: sitePreviewFullscreenWindow
                     objectName: "sitePreviewFullscreenWindow"
-                    color: "#161616"
+                    color: RuntimeTheme.GGTheme.panel
                     flags: Qt.FramelessWindowHint
                     visible: false
                     title: "SITE PREVIEW"
@@ -3794,13 +3850,13 @@ Item {
                         height: 24
                         radius: 2
                         color: sitePreviewFullscreenExitMouse.containsMouse
-                            ? "#303030"
-                            : "#181818"
+                            ? RuntimeTheme.GGTheme.selected
+                            : RuntimeTheme.GGTheme.panel
                         opacity: sitePreviewFullscreenHoverZone.containsMouse
                             || sitePreviewFullscreenExitMouse.containsMouse
                             ? 1.0
                             : 0.0
-                        border.color: "#6a6a6a"
+                        border.color: RuntimeTheme.GGTheme.edge
                         border.width: 1
                         z: 11
 
@@ -3808,11 +3864,11 @@ Item {
                             NumberAnimation { duration: 140 }
                         }
 
-                        Text {
+                        GGText { colorKey: "ui.WorkspaceSurface.22";
                             id: sitePreviewFullscreenExitLabel
                             anchors.centerIn: parent
                             text: "EXIT FULLSCREEN"
-                            color: "#e6edf3"
+                            color: RuntimeTheme.GGTheme.bright
                             font.family: "monospace"
                             font.pixelSize: 11
                             font.bold: true
@@ -3841,51 +3897,63 @@ Item {
                 }
             }
 
-            Loader {
+            DeferredSurface { property string uiColorScope: "ui.widget.WorkspaceSurface.DeferredSurface.8";
                 id: cryptoPane
                 objectName: "workspaceCryptoPane"
                 z: 20
                 anchors.fill: parent
-                anchors.bottomMargin: 18
+                anchors.bottomMargin: 0
                 active: !root.settingsOpen && root.hostKind === "CRYPTO"
                 visible: active
-                sourceComponent: Component {
-                    CryptoSurface {
-                        objectName: "workspaceCryptoPane"
-                        surfaceHost: root.scratchHost()
-                        frameBorder: root.frameBorder
-                        frameRadius: root.frameRadius
-                        onWalletLabelChanged: function(label) {
-                            root.cryptoWalletLabel = label
-                            var win = Window.window
-                            if (win)
-                                win.cryptoStatusJson = cryptoPane.item
-                                    ? cryptoPane.item.statusJson
-                                    : win.cryptoStatusJson
-                        }
+                surfaceUrl: Qt.resolvedUrl("CryptoSurface.qml")
+                surfaceProperties: ({
+                    objectName: "workspaceCryptoPane",
+                    surfaceHost: Qt.binding(function() { return root.scratchHost() }),
+                    frameBorder: Qt.binding(function() { return root.frameBorder }),
+                    frameRadius: Qt.binding(function() { return root.frameRadius })
+                })
+                onLoaded: {
+                    if (root.pendingCryptoSection) {
+                        item.navigateSpace(root.pendingCryptoSection)
+                        root.pendingCryptoSection = ""
                     }
+                }
+                Connections {
+                    target: cryptoPane.item
+                    function onWalletLabelChanged(label) {
+                        root.cryptoWalletLabel = label
+                        var win = root.Window.window
+                        if (win)
+                            win.cryptoStatusJson = cryptoPane.item
+                                ? cryptoPane.item.statusJson
+                                : win.cryptoStatusJson
+                    }
+                    function onBrowseRequested(url) { root.openWebTab(url) }
                 }
             }
 
-            Loader {
+            DeferredSurface { property string uiColorScope: "ui.widget.WorkspaceSurface.DeferredSurface.9";
                 id: marketplacePane
                 objectName: "workspaceMarketplacePane"
                 z: 20
                 anchors.fill: parent
-                anchors.bottomMargin: 18
+                anchors.bottomMargin: 0
                 active: !root.settingsOpen && root.hostKind === "MARKETPLACE"
                 visible: active
-                sourceComponent: Component {
-                    MarketplaceSurface {
-                        objectName: "workspaceMarketplacePane"
-                        surfaceHost: root.scratchHost()
-                        frameBorder: root.frameBorder
-                        frameRadius: root.frameRadius
-                    }
+                surfaceUrl: Qt.resolvedUrl("MarketplaceSurface.qml")
+                surfaceProperties: ({
+                    objectName: "workspaceMarketplacePane",
+                    surfaceHost: Qt.binding(function() { return root.scratchHost() }),
+                    frameBorder: Qt.binding(function() { return root.frameBorder }),
+                    frameRadius: Qt.binding(function() { return root.frameRadius })
+                })
+                Connections {
+                    target: marketplacePane.item
+                    function onCryptoRequested(section) { root.pendingCryptoSection=section;root.setHostKind("CRYPTO");Qt.callLater(function(){if(cryptoPane.item){cryptoPane.item.navigateSpace(section);root.pendingCryptoSection=""}}) }
                 }
             }
 
-            Loader {
+            DeferredSurface { property string uiColorScope: "ui.widget.WorkspaceSurface.DeferredSurface.10";
                 id: tmogPane
                 objectName: "workspaceTmogPane"
                 z: 20
@@ -3896,17 +3964,16 @@ Item {
                 anchors.bottomMargin: 18
                 active: !root.settingsOpen && root.hostKind === "TMOG"
                 visible: active
-                sourceComponent: Component {
-                    TmogSurface {
-                        objectName: "workspaceTmogPane"
-                        surfaceHost: root.scratchHost()
-                        frameBorder: root.frameBorder
-                        frameRadius: root.frameRadius
-                    }
-                }
+                surfaceUrl: Qt.resolvedUrl("TmogSurface.qml")
+                surfaceProperties: ({
+                    objectName: "workspaceTmogPane",
+                    surfaceHost: Qt.binding(function() { return root.scratchHost() }),
+                    frameBorder: Qt.binding(function() { return root.frameBorder }),
+                    frameRadius: Qt.binding(function() { return root.frameRadius })
+                })
             }
 
-            Loader {
+            DeferredSurface { property string uiColorScope: "ui.widget.WorkspaceSurface.DeferredSurface.11";
                 id: osintPane
                 objectName: "workspaceOsintPane"
                 z: 20
@@ -3917,49 +3984,49 @@ Item {
                 anchors.bottomMargin: 18
                 active: !root.settingsOpen && root.hostKind === "OSINT"
                 visible: !root.settingsOpen && root.hostKind === "OSINT"
-                sourceComponent: Component {
-                    OsintSurface {
-                        objectName: "workspaceOsintPane"
-                        surfaceHost: root.scratchHost()
-                        frameBorder: root.frameBorder
-                        frameRadius: root.frameRadius
-                        onResearchRequested: function(section) { root.openResearch(section) }
-                    }
+                surfaceUrl: Qt.resolvedUrl("OsintSurface.qml")
+                surfaceProperties: ({
+                    objectName: "workspaceOsintPane",
+                    surfaceHost: Qt.binding(function() { return root.scratchHost() }),
+                    frameBorder: Qt.binding(function() { return root.frameBorder }),
+                    frameRadius: Qt.binding(function() { return root.frameRadius })
+                })
+                Connections {
+                    target: osintPane.item
+                    function onResearchRequested(section) { root.openResearch(section) }
                 }
             }
 
-            Loader {
+            DeferredSurface { property string uiColorScope: "ui.widget.WorkspaceSurface.DeferredSurface.12";
                 id: mediaPane
                 objectName: "workspaceMediaPane"
                 z: 20
                 anchors.fill: parent
                 active: !root.settingsOpen && root.hostKind === "MEDIA"
                 visible: active
-                sourceComponent: Component {
-                    MediaSurface {
-                        objectName: "workspaceMediaPane"
-                        surfaceHost: root.scratchHost()
-                        frameBorder: root.frameBorder
-                        frameRadius: root.frameRadius
-                    }
-                }
+                surfaceUrl: Qt.resolvedUrl("MediaSurface.qml")
+                surfaceProperties: ({
+                    objectName: "workspaceMediaPane",
+                    surfaceHost: Qt.binding(function() { return root.scratchHost() }),
+                    frameBorder: Qt.binding(function() { return root.frameBorder }),
+                    frameRadius: Qt.binding(function() { return root.frameRadius })
+                })
             }
 
-            Loader {
+            DeferredSurface { property string uiColorScope: "ui.widget.WorkspaceSurface.DeferredSurface.13";
                 id: drawPane
                 objectName: "workspaceDrawPane"
                 z: 20
                 anchors.fill: parent
                 active: !root.settingsOpen && root.hostKind === "DRAW"
                 visible: active
-                sourceComponent: Component {
-                    DrawSurface {
-                        objectName: "workspaceDrawPane"
-                        surfaceHost: root.scratchHost()
-                        frameBorder: root.frameBorder
-                        frameRadius: root.frameRadius
-                    }
-                }
+                surfaceUrl: Qt.resolvedUrl("DrawSurface.qml")
+                surfaceProperties: ({
+                    objectName: "workspaceDrawPane",
+                    surfaceHost: Qt.binding(function() { return root.scratchHost() }),
+                    frameBorder: Qt.binding(function() { return root.frameBorder }),
+                    frameRadius: Qt.binding(function() { return root.frameRadius })
+                })
             }
 
             Loader {
@@ -3971,13 +4038,13 @@ Item {
                 anchors.rightMargin: 4
                 anchors.topMargin: 4
                 anchors.bottomMargin: 18
-                // Keep the pane alive when leaving EXT.  Destroying it used
+                // Create EXT on its first visit, then keep it alive. Destroying it used
                 // to spawn a second Blender (default cube) because the sidecar
                 // port was still held by the hidden first process.
-                active: true
+                active: root.keepExternal || root.hostKind === "EXTERNAL"
                 visible: !root.settingsOpen && root.hostKind === "EXTERNAL"
                 sourceComponent: Component {
-                    ExternalSurface {
+                    ExternalSurface { property string uiColorScope: "ui.widget.WorkspaceSurface.ExternalSurface.14";
                         objectName: "workspaceExternalPane"
                         surfaceHost: root.scratchHost()
                         frameBorder: root.frameBorder
@@ -3986,7 +4053,7 @@ Item {
                 }
             }
 
-            Loader {
+            DeferredSurface { property string uiColorScope: "ui.widget.WorkspaceSurface.DeferredSurface.15";
                 id: gameEnginePane
                 objectName: "workspaceGameEnginePane"
                 z: 20
@@ -4000,18 +4067,17 @@ Item {
                 // asset, which lagged the desktop and made props pop in.
                 active: root.keepGameEngine || root.hostKind === "GAME_ENGINE"
                 visible: !root.settingsOpen && root.hostKind === "GAME_ENGINE"
-                sourceComponent: Component {
-                    GameEngineSurface {
-                        objectName: "workspaceGameEnginePane"
-                        surfaceHost: root.scratchHost()
-                        frameBorder: root.frameBorder
-                        frameRadius: root.frameRadius
-                        paneLive: gameEnginePane.visible
-                    }
-                }
+                surfaceUrl: Qt.resolvedUrl("GameEngineSurface.qml")
+                surfaceProperties: ({
+                    objectName: "workspaceGameEnginePane",
+                    surfaceHost: Qt.binding(function() { return root.scratchHost() }),
+                    frameBorder: Qt.binding(function() { return root.frameBorder }),
+                    frameRadius: Qt.binding(function() { return root.frameRadius }),
+                    paneLive: Qt.binding(function() { return gameEnginePane.visible })
+                })
             }
 
-            Loader {
+            DeferredSurface { property string uiColorScope: "ui.widget.WorkspaceSurface.DeferredSurface.16";
                 id: nodePane
                 objectName: "workspaceNodePane"
                 z: 20
@@ -4022,17 +4088,16 @@ Item {
                 anchors.bottomMargin: 18
                 active: !root.settingsOpen && root.hostKind === "NODES"
                 visible: active
-                sourceComponent: Component {
-                    NodeSurface {
-                        objectName: "workspaceNodePane"
-                        surfaceHost: root.scratchHost()
-                        frameBorder: root.frameBorder
-                        frameRadius: root.frameRadius
-                    }
-                }
+                surfaceUrl: Qt.resolvedUrl("NodeSurface.qml")
+                surfaceProperties: ({
+                    objectName: "workspaceNodePane",
+                    surfaceHost: Qt.binding(function() { return root.scratchHost() }),
+                    frameBorder: Qt.binding(function() { return root.frameBorder }),
+                    frameRadius: Qt.binding(function() { return root.frameRadius })
+                })
             }
 
-            Loader {
+            DeferredSurface { property string uiColorScope: "ui.widget.WorkspaceSurface.DeferredSurface.17";
                 id: agentFlowPane
                 objectName: "workspaceAgentFlowPane"
                 z: 20
@@ -4043,17 +4108,16 @@ Item {
                 anchors.bottomMargin: 18
                 active: !root.settingsOpen && root.hostKind === "FLOW"
                 visible: active
-                sourceComponent: Component {
-                    AgentFlowSurface {
-                        objectName: "workspaceAgentFlowPane"
-                        surfaceHost: root.scratchHost()
-                        frameBorder: root.frameBorder
-                        frameRadius: root.frameRadius
-                    }
-                }
+                surfaceUrl: Qt.resolvedUrl("AgentFlowSurface.qml")
+                surfaceProperties: ({
+                    objectName: "workspaceAgentFlowPane",
+                    surfaceHost: Qt.binding(function() { return root.scratchHost() }),
+                    frameBorder: Qt.binding(function() { return root.frameBorder }),
+                    frameRadius: Qt.binding(function() { return root.frameRadius })
+                })
             }
 
-            Loader {
+            DeferredSurface { property string uiColorScope: "ui.widget.WorkspaceSurface.DeferredSurface.18";
                 id: researchPane
                 objectName: "workspaceResearchPane"
                 z: 20
@@ -4064,14 +4128,16 @@ Item {
                 anchors.bottomMargin: 18
                 active: root.keepResearch || root.hostKind === "RESEARCH"
                 visible: !root.settingsOpen && root.hostKind === "RESEARCH"
-                sourceComponent: Component {
-                    ResearchSurface {
-                        objectName: "workspaceResearchPane"
-                        surfaceHost: root.scratchHost()
-                        frameBorder: root.frameBorder
-                        frameRadius: root.frameRadius
-                        onDocumentationRequested: function(url) { root.goBrowse(url) }
-                    }
+                surfaceUrl: Qt.resolvedUrl("ResearchSurface.qml")
+                surfaceProperties: ({
+                    objectName: "workspaceResearchPane",
+                    surfaceHost: Qt.binding(function() { return root.scratchHost() }),
+                    frameBorder: Qt.binding(function() { return root.frameBorder }),
+                    frameRadius: Qt.binding(function() { return root.frameRadius })
+                })
+                Connections {
+                    target: researchPane.item
+                    function onDocumentationRequested(url) { root.goBrowse(url) }
                 }
                 onLoaded: {
                     if (root.pendingResearchSection.length)
@@ -4080,7 +4146,7 @@ Item {
                 }
             }
 
-            Loader {
+            DeferredSurface { property string uiColorScope: "ui.widget.WorkspaceSurface.DeferredSurface.19";
                 id: knowledgePane
                 objectName: "workspaceKnowledgeLoader"
                 z: 20
@@ -4091,13 +4157,15 @@ Item {
                 anchors.bottomMargin: 18
                 active: !root.settingsOpen && root.hostKind === "KNOWLEDGE"
                 visible: active
-                sourceComponent: Component {
-                    KnowledgeSurface {
-                        surfaceHost: root.scratchHost()
-                        frameBorder: root.frameBorder
-                        frameRadius: root.frameRadius
-                        onRequestToChat: function(prompt) { root.knowledgePromptRequested(prompt) }
-                    }
+                surfaceUrl: Qt.resolvedUrl("KnowledgeSurface.qml")
+                surfaceProperties: ({
+                    surfaceHost: Qt.binding(function() { return root.scratchHost() }),
+                    frameBorder: Qt.binding(function() { return root.frameBorder }),
+                    frameRadius: Qt.binding(function() { return root.frameRadius })
+                })
+                Connections {
+                    target: knowledgePane.item
+                    function onRequestToChat(prompt) { root.knowledgePromptRequested(prompt) }
                 }
             }
 
@@ -4165,7 +4233,7 @@ Item {
                                 height: 26
                                 spacing: 6
 
-                                GgField {
+                                GgField { property string uiColorScope: "ui.widget.WorkspaceSurface.GgField.20";
                                     id: tabBrowseBar
                                     objectName: "workspaceWebAddress"
                                     width: parent.width - (webBlocker.visible ? webBlocker.width + webBlockerSettings.width + 12 : 0)
@@ -4181,7 +4249,7 @@ Item {
                                     onAccepted: root.goBrowse(tabBrowseBar.text)
                                 }
 
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.WorkspaceSurface.1";
                                     id: webBlocker
                                     objectName: "workspaceWebBlocker"
                                     width: 82
@@ -4203,7 +4271,7 @@ Item {
                                         : "uBlock Origin · slå på eller av för den här webbplatsen"
                                 }
 
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.WorkspaceSurface.2";
                                     id: webBlockerSettings
                                     objectName: "workspaceWebBlockerSettings"
                                     width: 30
@@ -4275,7 +4343,7 @@ Item {
                     && root.hostKind === "TERMINAL"
                     && root.currentObjectType === "USER_TERMINAL"
 
-                WorkObject {
+                WorkObject { property string uiColorScope: "ui.widget.WorkspaceSurface.WorkObject.23";
                     anchors.fill: parent
                     fillHost: true
                     objectType: "TERMINAL"
@@ -4307,28 +4375,28 @@ Item {
                     && root.hostKind !== "RESEARCH"
                     && root.currentObjectProvenance === "SYNTHETIC_UI_FIXTURE"
 
-                Text {
+                GGText { colorKey: "ui.WorkspaceSurface.23";
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
                     text: root.currentObjectTitle
-                    color: "#e6edf3"
+                    color: RuntimeTheme.GGTheme.bright
                     font.pixelSize: 22
                     font.bold: true
                 }
 
-                Text {
+                GGText { colorKey: "ui.WorkspaceSurface.24";
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
                     text: root.currentObjectType
                         + " · "
                         + root.currentObjectProvenance
                         + " · DEMO / SAMPLE"
-                    color: "#c8a97e"
+                    color: RuntimeTheme.GGTheme.accent
                     font.family: "monospace"
                     font.pixelSize: 12
                 }
 
-                Text {
+                GGText { colorKey: "ui.WorkspaceSurface.25";
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
                     text:
@@ -4336,23 +4404,12 @@ Item {
                         + "for this SAMPLE object.\n"
                         + "Synthetic fixtures remain blocked from real "
                         + "@current context."
-                    color: "#c8cdd4"
+                    color: RuntimeTheme.GGTheme.text
                     wrapMode: Text.WordWrap
                     font.pixelSize: 12
                 }
             }
         }
-    }
-
-    Rectangle {
-        z: 5
-        anchors.left: hostKindFooter.left
-        anchors.leftMargin: -6
-        anchors.verticalCenter: hostKindFooter.verticalCenter
-        width: hostKindFooter.width + 12
-        height: hostKindFooter.height + 4
-        color: "#161616"
-        visible: hostKindFooter.width > 0
     }
 
     Row {
@@ -4365,10 +4422,10 @@ Item {
         height: implicitHeight
         spacing: 0
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.26";
             objectName: "workspaceKindCODE"
             text: "CODE"
-            color: root.hostKind === "CODE" ? "#d8dee9" : "#a8b0b8"
+            color: root.hostKind === "CODE" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: root.hostKind === "CODE"
@@ -4380,17 +4437,17 @@ Item {
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.27";
             text: " | "
-            color: "#a8b0b8"
+            color: RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.28";
             objectName: "workspaceKindTERMINAL"
             text: "CMD"
-            color: root.hostKind === "TERMINAL" ? "#d8dee9" : "#a8b0b8"
+            color: root.hostKind === "TERMINAL" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: root.hostKind === "TERMINAL"
@@ -4402,17 +4459,17 @@ Item {
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.29";
             text: " | "
-            color: "#a8b0b8"
+            color: RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.30";
             objectName: "workspaceKindWEB"
             text: "WEB"
-            color: root.hostKind === "WEB" ? "#d8dee9" : "#a8b0b8"
+            color: root.hostKind === "WEB" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: root.hostKind === "WEB"
@@ -4424,16 +4481,16 @@ Item {
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.31";
             text: " | "
-            color: "#a8b0b8"
+            color: RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.32";
             text: "EXT"
-            color: root.hostKind === "EXTERNAL" ? "#d8dee9" : "#a8b0b8"
+            color: root.hostKind === "EXTERNAL" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: root.hostKind === "EXTERNAL"
@@ -4445,17 +4502,17 @@ Item {
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.33";
             text: " | "
-            color: "#a8b0b8"
+            color: RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.34";
             objectName: "workspaceKindSITE"
             text: "SITE"
-            color: root.hostKind === "SITE" ? "#d8dee9" : "#a8b0b8"
+            color: root.hostKind === "SITE" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: root.hostKind === "SITE"
@@ -4467,16 +4524,16 @@ Item {
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.35";
             text: " | "
-            color: "#a8b0b8"
+            color: RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.36";
             text: "CRYPTO"
-            color: root.hostKind === "CRYPTO" ? "#d8dee9" : "#a8b0b8"
+            color: root.hostKind === "CRYPTO" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: root.hostKind === "CRYPTO"
@@ -4488,38 +4545,17 @@ Item {
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.37";
             text: " | "
-            color: "#a8b0b8"
+            color: RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
         }
 
-        Text {
-            text: "MP"
-            color: root.hostKind === "MARKETPLACE" ? "#d8dee9" : "#a8b0b8"
-            font.family: "monospace"
-            font.pixelSize: 12
-            font.bold: root.hostKind === "MARKETPLACE"
-
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.setHostKind("MARKETPLACE")
-            }
-        }
-
-        Text {
-            text: " | "
-            color: "#a8b0b8"
-            font.family: "monospace"
-            font.pixelSize: 12
-        }
-
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.38";
             objectName: "workspaceKindTMOG"
             text: "TMOG"
-            color: root.hostKind === "TMOG" ? "#d8dee9" : "#a8b0b8"
+            color: root.hostKind === "TMOG" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: root.hostKind === "TMOG"
@@ -4531,17 +4567,17 @@ Item {
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.39";
             text: " | "
-            color: "#a8b0b8"
+            color: RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.40";
             objectName: "workspaceKindOSINT"
             text: "OSINT"
-            color: root.hostKind === "OSINT" ? "#d8dee9" : "#a8b0b8"
+            color: root.hostKind === "OSINT" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: root.hostKind === "OSINT"
@@ -4553,17 +4589,17 @@ Item {
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.41";
             text: " | "
-            color: "#a8b0b8"
+            color: RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.42";
             objectName: "workspaceKindKnowledge"
             text: "KNOWLEDGE"
-            color: root.hostKind === "KNOWLEDGE" ? "#d8dee9" : "#a8b0b8"
+            color: root.hostKind === "KNOWLEDGE" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: root.hostKind === "KNOWLEDGE"
@@ -4574,17 +4610,17 @@ Item {
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.43";
             text: " | "
-            color: "#a8b0b8"
+            color: RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.44";
             objectName: "workspaceKindResearch"
             text: "RESEARCH"
-            color: root.hostKind === "RESEARCH" ? "#d8dee9" : "#a8b0b8"
+            color: root.hostKind === "RESEARCH" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: root.hostKind === "RESEARCH"
@@ -4596,16 +4632,16 @@ Item {
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.45";
             text: " | "
-            color: "#a8b0b8"
+            color: RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.46";
             text: "MEDIA"
-            color: root.hostKind === "MEDIA" ? "#d8dee9" : "#a8b0b8"
+            color: root.hostKind === "MEDIA" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: root.hostKind === "MEDIA"
@@ -4617,16 +4653,16 @@ Item {
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.47";
             text: " | "
-            color: "#a8b0b8"
+            color: RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.48";
             text: "DRAW"
-            color: root.hostKind === "DRAW" ? "#d8dee9" : "#a8b0b8"
+            color: root.hostKind === "DRAW" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: root.hostKind === "DRAW"
@@ -4638,17 +4674,17 @@ Item {
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.49";
             text: " | "
-            color: "#a8b0b8"
+            color: RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.50";
             objectName: "workspaceKindGameEngine"
             text: "GAME ENGINE"
-            color: root.hostKind === "GAME_ENGINE" ? "#d8dee9" : "#a8b0b8"
+            color: root.hostKind === "GAME_ENGINE" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: root.hostKind === "GAME_ENGINE"
@@ -4660,17 +4696,17 @@ Item {
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.51";
             text: " | "
-            color: "#a8b0b8"
+            color: RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.52";
             objectName: "workspaceKindNodes"
             text: "NODES"
-            color: root.hostKind === "NODES" ? "#d8dee9" : "#a8b0b8"
+            color: root.hostKind === "NODES" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: root.hostKind === "NODES"
@@ -4682,17 +4718,17 @@ Item {
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.53";
             text: " | "
-            color: "#a8b0b8"
+            color: RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkspaceSurface.54";
             objectName: "workspaceKindFlow"
             text: "FLOW"
-            color: root.hostKind === "FLOW" ? "#d8dee9" : "#a8b0b8"
+            color: root.hostKind === "FLOW" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: root.hostKind === "FLOW"

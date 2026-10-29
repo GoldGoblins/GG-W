@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 
 Item {
@@ -21,12 +23,15 @@ Item {
     implicitWidth: 420
 
     function colorForState(label) {
+        if (label === "WAITING_FOR_USER" || label === "WAITING")
+            return RuntimeTheme.GGTheme.warning
+
         if (
             label === "PASS"
             || label === "READY"
             || label === "SELECTED"
         )
-            return "#8db89a"
+            return RuntimeTheme.GGTheme.positive
 
         if (
             label === "FAIL"
@@ -34,23 +39,21 @@ Item {
             || label === "BLOCKED"
             || label === "TIMED_OUT"
         )
-            return "#c98989"
+            return RuntimeTheme.GGTheme.negative
 
         if (
             label === "RUNNING"
             || label === "STREAMING"
             || label === "STARTING"
             || label === "GENERATING"
-            || label === "WAITING"
-            || label === "WAITING_FOR_USER"
             || label === "QUEUED"
             || label === "STOPPING"
         )
-            return "#c8a97e"
+            return RuntimeTheme.GGTheme.accent
 
         // IDLE and unknown labels stay neutral. IDLE is not busy and
         // is not a PASS/FAIL claim.
-        return "#8b949e"
+        return RuntimeTheme.GGTheme.dim
     }
 
     function isPlainObject(value) {
@@ -127,7 +130,7 @@ Item {
             width: parent.width
             spacing: 8
 
-            Text {
+            GGText { colorKey: "ui.ChatActivityEvent.1";
                 text: root.stateLabel.length > 0
                     ? root.stateLabel
                     : root.nodeKind
@@ -137,31 +140,31 @@ Item {
                 font.bold: true
             }
 
-            Text {
+            GGText { colorKey: "ui.ChatActivityEvent.2";
                 visible: root.authorLabel.length > 0
                 text: root.authorLabel
-                color: "#9aa7b3"
+                color: RuntimeTheme.GGTheme.muted
                 font.family: "monospace"
                 font.pixelSize: 12
             }
 
-            Text {
+            GGText { colorKey: "ui.ChatActivityEvent.3";
                 text: root.nodeKind
-                color: "#9aa7b3"
+                color: RuntimeTheme.GGTheme.muted
                 font.family: "monospace"
                 font.pixelSize: 12
             }
 
-            Text {
+            GGText { colorKey: "ui.ChatActivityEvent.4";
                 visible: root.taskId.length > 0
                 text: root.taskId
-                color: "#a8b0b8"
+                color: RuntimeTheme.GGTheme.muted
                 font.family: "monospace"
                 font.pixelSize: 12
             }
         }
 
-        TextEdit {
+        TextEdit { property bool colorCustomizationExcluded:true;
             objectName: "chatActivityBodyText"
             visible: root.bodyText.length > 0
             width: parent.width
@@ -171,21 +174,21 @@ Item {
             selectByMouse: true
             selectByKeyboard: true
             persistentSelection: true
-            selectionColor: "#3a3a3a"
-            selectedTextColor: "#f2f2f2"
+            selectionColor: RuntimeTheme.GGTheme.selected
+            selectedTextColor: RuntimeTheme.GGTheme.bright
             textFormat: TextEdit.PlainText
             wrapMode: TextEdit.WordWrap
             height: implicitHeight
             font.family: "monospace"
             font.pixelSize: 12
 
-            SelectionGuard {}
+            SelectionGuard { property string uiColorScope: "ui.widget.ChatActivityEvent.SelectionGuard.1";}
         }
 
         Repeater {
             model: root.stageRows
 
-            delegate: TextEdit {
+            delegate: TextEdit { property bool colorCustomizationExcluded:true;
                 required property var modelData
 
                 width: eventColumn.width
@@ -198,28 +201,28 @@ Item {
                             ? " · " + String(modelData.text)
                             : ""
                     )
-                color: "#c8cdd4"
+                color: RuntimeTheme.GGTheme.text
                 readOnly: true
                 selectByMouse: true
                 selectByKeyboard: true
                 persistentSelection: true
-                selectionColor: "#3a3a3a"
-                selectedTextColor: "#f2f2f2"
+                selectionColor: RuntimeTheme.GGTheme.selected
+                selectedTextColor: RuntimeTheme.GGTheme.bright
                 textFormat: TextEdit.PlainText
                 wrapMode: TextEdit.WordWrap
                 height: implicitHeight
                 font.family: "monospace"
                 font.pixelSize: 12
 
-                SelectionGuard {}
+                SelectionGuard { property string uiColorScope: "ui.widget.ChatActivityEvent.SelectionGuard.2";}
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.ChatActivityEvent.5";
             visible: root.contextReference.length > 0
             width: parent.width
             text: "ctx " + root.contextReference
-            color: "#a8b0b8"
+            color: RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
         }

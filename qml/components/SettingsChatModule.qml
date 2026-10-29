@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
@@ -13,12 +15,12 @@ Item {
 
     implicitHeight: 168
 
-    GgFrame {
+    GgFrame { property string uiColorScope: "ui.widget.SettingsChatModule.GgFrame.1";
         anchors.fill: parent
         leftLegend: "CHAT"
         rightLegend: "MOTOR"
-        backgroundColor: "#161616"
-        borderColor: "#6a6a6a"
+        backgroundColor: RuntimeTheme.GGTheme.panel
+        borderColor: RuntimeTheme.GGTheme.edge
     }
 
     Column {
@@ -29,9 +31,9 @@ Item {
         anchors.bottomMargin: 12
         spacing: 8
 
-        Text {
+        GGText { colorKey: "ui.SettingsChatModule.1";
             text: "Engine"
-            color: "#d8dee9"
+            color: RuntimeTheme.GGTheme.text
             font.family: "monospace"
             font.pixelSize: 12
         }
@@ -40,11 +42,11 @@ Item {
             spacing: 0
             height: 18
 
-            Text {
+            GGText { colorKey: "ui.SettingsChatModule.2";
                 text: "GROK TUI"
                 color: root.engineTarget === "GROK_TUI"
-                    ? "#d8dee9"
-                    : "#5d6670"
+                    ? RuntimeTheme.GGTheme.text
+                    : RuntimeTheme.GGTheme.dim
                 font.family: "monospace"
                 font.pixelSize: 12
                 font.bold: root.engineTarget === "GROK_TUI"
@@ -56,17 +58,17 @@ Item {
                         root.engineTargetChangedByUser("GROK_TUI")
                 }
             }
-            Text {
+            GGText { colorKey: "ui.SettingsChatModule.3";
                 text: " | "
-                color: "#a8b0b8"
+                color: RuntimeTheme.GGTheme.muted
                 font.family: "monospace"
                 font.pixelSize: 12
             }
-            Text {
+            GGText { colorKey: "ui.SettingsChatModule.4";
                 text: "GPTUI"
                 color: root.engineTarget === "GPT_TUI"
-                    ? "#d8dee9"
-                    : "#5d6670"
+                    ? RuntimeTheme.GGTheme.text
+                    : RuntimeTheme.GGTheme.dim
                 font.family: "monospace"
                 font.pixelSize: 12
                 font.bold: root.engineTarget === "GPT_TUI"
@@ -78,17 +80,17 @@ Item {
                         root.engineTargetChangedByUser("GPT_TUI")
                 }
             }
-            Text {
+            GGText { colorKey: "ui.SettingsChatModule.5";
                 text: " | "
-                color: "#a8b0b8"
+                color: RuntimeTheme.GGTheme.muted
                 font.family: "monospace"
                 font.pixelSize: 12
             }
-            Text {
+            GGText { colorKey: "ui.SettingsChatModule.6";
                 text: "FLOW TUI"
                 color: root.engineTarget === "FLOW_TUI"
-                    ? "#d8dee9"
-                    : "#5d6670"
+                    ? RuntimeTheme.GGTheme.text
+                    : RuntimeTheme.GGTheme.dim
                 font.family: "monospace"
                 font.pixelSize: 12
                 font.bold: root.engineTarget === "FLOW_TUI"
@@ -102,7 +104,7 @@ Item {
             }
         }
 
-        GgCheck {
+        GgCheck { property string uiColorScope: "ui.widget.SettingsChatModule.GgCheck.2";
             id: openTabBox
             width: parent.width
             text: "Show the open tab name in the input frame"
@@ -111,12 +113,12 @@ Item {
                 root.showOpenTabInInputChangedByUser(openTabBox.checked)
         }
 
-        Text {
+        GGText { colorKey: "ui.SettingsChatModule.7";
             width: parent.width
             text: "Same GROK TUI | GPTUI | FLOW TUI switch as under INPUT. Motor only. "
                 + "The open tab name is optional chrome, not something "
                 + "you type."
-            color: "#8a8a8a"
+            color: RuntimeTheme.GGTheme.dim
             wrapMode: Text.WordWrap
             font.pixelSize: 12
         }

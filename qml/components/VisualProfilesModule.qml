@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 
 Item {
@@ -32,18 +34,18 @@ Item {
         width: parent.width
         spacing: 10
 
-        Text {
+        GGText { colorKey: "ui.VisualProfilesModule.1";
             text: "THEMES · PROFILES"
-            color: "#e6edf3"
+            color: RuntimeTheme.GGTheme.bright
             font.family: "monospace"
             font.pixelSize: 13
             font.bold: true
         }
 
-        Text {
+        GGText { colorKey: "ui.VisualProfilesModule.2";
             width: parent.width
             text: "A theme owns visual tokens. Each theme can contain several named profiles with independent surface geometry and source buffers."
-            color: "#a8b0b8"
+            color: RuntimeTheme.GGTheme.muted
             wrapMode: Text.WordWrap
             font.family: "monospace"
             font.pixelSize: 11
@@ -52,12 +54,12 @@ Item {
         Rectangle {
             width: parent.width
             height: 1
-            color: "#343a40"
+            color: RuntimeTheme.GGTheme.line
         }
 
-        Text {
+        GGText { colorKey: "ui.VisualProfilesModule.3";
             text: "THEME · " + root.themeId
-            color: "#c7a873"
+            color: RuntimeTheme.GGTheme.accent
             font.family: "monospace"
             font.pixelSize: 11
             font.bold: true
@@ -69,7 +71,7 @@ Item {
 
             Repeater {
                 model: root.rows(root.themesJson)
-                delegate: GgButton {
+                delegate: GgButton { property string uiColorScope: "ui.control.VisualProfilesModule.1";
                     required property var modelData
                     text: String(modelData.name || modelData.id || "THEME")
                     checkable: true
@@ -79,9 +81,9 @@ Item {
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.VisualProfilesModule.4";
             text: "PROFILE · " + root.profileId
-            color: "#c7a873"
+            color: RuntimeTheme.GGTheme.accent
             font.family: "monospace"
             font.pixelSize: 11
             font.bold: true
@@ -93,7 +95,7 @@ Item {
 
             Repeater {
                 model: root.rows(root.profilesJson)
-                delegate: GgButton {
+                delegate: GgButton { property string uiColorScope: "ui.control.VisualProfilesModule.2";
                     required property var modelData
                     text: String(modelData.name || modelData.id || "PROFILE")
                     checkable: true
@@ -107,13 +109,13 @@ Item {
             width: parent.width
             spacing: 8
 
-            GgField {
+            GgField { property string uiColorScope: "ui.widget.VisualProfilesModule.GgField.3";
                 id: themeName
                 width: Math.min(240, parent.width - saveTheme.implicitWidth - 8)
                 placeholderText: "new theme id"
             }
 
-            GgButton {
+            GgButton { property string uiColorScope: "ui.control.VisualProfilesModule.3";
                 id: saveTheme
                 text: "SAVE AS THEME"
                 onClicked: {
@@ -127,13 +129,13 @@ Item {
             width: parent.width
             spacing: 8
 
-            GgField {
+            GgField { property string uiColorScope: "ui.widget.VisualProfilesModule.GgField.5";
                 id: profileName
                 width: Math.min(260, parent.width - saveProfile.implicitWidth - 8)
                 placeholderText: "new profile id"
             }
 
-            GgButton {
+            GgButton { property string uiColorScope: "ui.control.VisualProfilesModule.4";
                 id: saveProfile
                 text: "SAVE AS PROFILE"
                 onClicked: {
@@ -142,16 +144,16 @@ Item {
                 }
             }
 
-            GgButton {
+            GgButton { property string uiColorScope: "ui.control.VisualProfilesModule.5";
                 text: "RESET PROFILE"
                 onClicked: root.resetProfileRequested()
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.VisualProfilesModule.5";
             width: parent.width
             text: "The Standard profile is the reset baseline. Saving a profile copies the current presentation state; it does not change engine or workspace functions."
-            color: "#77818b"
+            color: RuntimeTheme.GGTheme.dim
             wrapMode: Text.WordWrap
             font.family: "monospace"
             font.pixelSize: 10

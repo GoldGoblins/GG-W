@@ -1,10 +1,12 @@
+
+import "." as RuntimeTheme
 import QtQuick
 
 Item {
     id: root
     property string text: ""
     property bool selected: false
-    property color textColor: "#c8cdd4"
+    property color textColor: RuntimeTheme.GGTheme.text
     signal chosen()
     signal menuRequested()
 
@@ -13,16 +15,16 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: root.selected || hit.containsMouse ? "#1c1c1c" : "transparent"
+        color: root.selected || hit.containsMouse ? RuntimeTheme.GGTheme.raised : "transparent"
         radius: 1
     }
 
-    Text {
+    GGText { colorKey: "ui.TmogRow.1";
         anchors.fill: parent
         anchors.leftMargin: 2
         anchors.rightMargin: 2
         text: root.text
-        color: root.selected ? "#e6edf3" : root.textColor
+        color: root.selected ? RuntimeTheme.GGTheme.bright : root.textColor
         font.family: "monospace"
         font.pixelSize: 12
         elide: Text.ElideRight

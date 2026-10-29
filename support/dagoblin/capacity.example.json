@@ -1,0 +1,16 @@
+{
+  "operation": "capacity_bounds",
+  "parameters": {
+    "transactions_per_block": 1000,
+    "payload_bytes": 186,
+    "signature_bytes": 64,
+    "link": {"value": 6, "unit": "Gbit/s"},
+    "utilization": "4/5",
+    "memory": {
+      "budget_bytes": 314572800,
+      "reserved_bytes": 104857600,
+      "window_seconds": 2,
+      "overhead_factor": 2
+    }
+  }
+}

@@ -173,6 +173,27 @@ class ProgramAccounts(unittest.TestCase):
                 with self.assertRaises(p.AccountDecodeError):
                     p.decode_curve(account(raw[:-1]))
 
+    def test_official_151_byte_extended_curve_uses_zero_padded_current_layout(self):
+        # SDK4.1.0 PumpSdk.decodeBondingCurve documents this actual historical
+        # allocation; other partial lengths retain the strict failure path.
+        # Fixed public protocol values, deliberately independent of field lists.
+        raw = bytes([23,183,248,55,96,216,172,96]) + struct.pack(
+            '<QQQQQB', 1073000000000000, 30000000000, 793100000000000, 0, 1000000000000000, 0)
+        raw += bytes(151-len(raw))
+        decoded = p.decode_curve(account(raw))
+        self.assertEqual(decoded['layout_bytes'], 151)
+        self.assertEqual(decoded['serialized_bytes'], 166)
+        self.assertEqual(decoded['virtual_quote_reserves'], 30000000000)
+        self.assertEqual(decoded['quote_mint'], p.WSOL_MINT)
+        self.assertEqual(decoded['post_complete_base_out'], 0)
+        # Follow the upstream prefix semantics even when the first byte of
+        # the final field is set. The price adapter separately refuses it.
+        nonzero = raw[:-1] + b'\x01'
+        self.assertEqual(p.decode_curve(account(nonzero))['post_complete_base_out'], 1)
+        for size in (100,114,149,152,157):
+            with self.subTest(size=size), self.assertRaises(p.AccountDecodeError):
+                p.decode_curve(account(raw[:size] if size<151 else raw+bytes(size-151)))
+
     def test_signed_pool_and_fees_are_not_double_subtracted(self):
         raw = p._DISCRIMINATORS["Pool"] + fields(p._POOL_FIELDS, {"virtual_quote_reserves": -30,
                   "protocol_fees": 20, "creator_fees": 10, "base_mint": p.USDC_MINT})

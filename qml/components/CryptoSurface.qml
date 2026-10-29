@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
@@ -8,24 +10,30 @@ Item {
     objectName: "workspaceCryptoPane"
 
     property var surfaceHost: null
-    property color frameBorder: "#6a6a6a"
+    readonly property bool unified:!!surfaceHost && !!surfaceHost.explorerStatus
+    readonly property bool legacyVisible:!unified || ["MARKET","WALLET","MARKETPLACE","OMNI"].indexOf(page)<0
+    signal spaceRequested(string section)
+    signal browseRequested(string url)
+    property color frameBorder: RuntimeTheme.GGTheme.dim
     property int frameRadius: 4
-    readonly property color ink: "#e6edf3"
-    readonly property color text: "#c8cdd4"
-    readonly property color muted: "#8b949e"
-    readonly property color panel: "#181818"
-    readonly property color panelRaised: "#202020"
-    readonly property color selectedPanel: "#34383d"
-    readonly property color ledgerGold: "#c8a97e"
-    readonly property color ledgerGreen: "#8db89a"
+    readonly property color ink: RuntimeTheme.GGTheme.bright
+    readonly property color text: RuntimeTheme.GGTheme.text
+    readonly property color muted: RuntimeTheme.GGTheme.muted
+    readonly property color panel: RuntimeTheme.GGTheme.panel
+    readonly property color panelRaised: RuntimeTheme.GGTheme.raised
+    readonly property color selectedPanel: RuntimeTheme.GGTheme.line
+    readonly property color ledgerGold: RuntimeTheme.GGTheme.accent
+    readonly property color ledgerGreen: RuntimeTheme.GGTheme.positive
     property bool sidebarCollapsed: false
     readonly property bool compactSidebar: root.sidebarCollapsed || root.width < 880
     property string statusJson: "{}"
     property string botTab: "trader"
     property string botTape: "live"
-    property string page: "PORTFOLIO"
+    property string page: root.surfaceHost && root.surfaceHost.explorerStatus ? "WALLET" : "PORTFOLIO"
     property string assetPick: ""
     property bool walletToolsOpen: false
+    property bool chartExpanded: false
+    Keys.onEscapePressed: function(event) { if (root.chartExpanded) { root.chartExpanded = false; event.accepted = true } }
     property bool activityErrorsOnly: false
     readonly property var activityRows: {
         if (!root.activityErrorsOnly) return root.ledger
@@ -35,6 +43,9 @@ Item {
     }
     function pageHint() {
         var hints = {
+            "MARKET": "Utforska coins, token, nätverk och handelspooler",
+            "WALLET": "Samlad tillgångsvy för alla anslutna nätverk",
+            "OMNI": "Gemensamma tillgångar, NFT, bidrag och nätverkslabb",
             "PORTFOLIO": "Saldo, marknadsöversikt och tillgångar",
             "BACKTEST": "Jämför strategier på historiska prisserier",
             "TRADER": "Papperskonton · följ strategier utan riktiga affärer",
@@ -49,13 +60,25 @@ Item {
         return hints[root.page] || ""
     }
     function networkLabel() {
+        if (root.page === "WALLET" && walletOverview.showLab) return "GG-LABB · LOKALT"
+        if (["MARKET","WALLET","MARKETPLACE"].indexOf(root.page)>=0) return root.width<700 ? "OMNI · LÄSLÄGE" : "ALLA NÄTVERK · PUBLIK DATA"
+        if (root.page === "OMNI" && omniHub.page === "CONSENSUS") return root.width < 700 ? "GG · VALIDATORER" : "GG · FYRA LOKALA VALIDATORER"
+        if (root.page === "OMNI" && omniHub.page === "TESTNET") return root.width < 700 ? "GG · TESTNÄT" : "GG TESTNÄT · LOKAL EVM"
+        if (root.page === "OMNI" && omniHub.page === "DAG") {
+            var dag = omniHub.networkState.parallel_dag || ({})
+            return (dag.lan_setup || {}).active ? "DAGoblin · PRIVAT LAN-LABB" : "DAGoblin · LOKALT PROTOKOLLABB"
+        }
+        if (root.page === "OMNI" && (omniHub.page === "LAB" || omniHub.page === "NODE")) return "GG LABB · EN PROCESS"
+        if (root.page === "OMNI") return root.width < 700 ? "OMNI · LÄS / LABB" : "FLERA NÄTVERK · LÄS / LOKALT LABB"
         if (root.page === "PUMP") return "MAINNET · LÄSLÄGE"
         if (root.page === "POLY") return "ARKIV · LÄSLÄGE"
         if (["FACTORY", "DESK", "BACKTEST"].indexOf(root.page) >= 0) return "RESEARCH · PAPER"
-        if (root.asset === "KAS") return "KAS · " + String(root.kaspa.network || "paper").toUpperCase()
+        if (root.asset === "KAS") return root.kaspa.network === "mainnet" ? "KAS · LIVE / LÄSLÄGE" : root.kaspa.network === "testnet" ? "KAS · LOCAL SIMNET" : "KAS · PAPER"
         var network = String(root.wallet.network || "").toUpperCase()
-        return (network || root.legend) + (root.legend === "OBSERVE" ? " · LÄSLÄGE" : " · PAPER")
+        return network === "MAINNET" || root.legend === "OBSERVE" ? "SOL · LIVE / LÄSLÄGE" : "SOL · LOCAL LAB"
     }
+    readonly property string workspaceNetworkLabel:root.unified ? root.networkLabel() : root.legend
+    readonly property string workspaceFrameLabel: root.unified && root.page === "OMNI" && omniHub.networkPage ? "CRYPTO · GG NÄTVERK" : "CRYPTO"
     function inspectToken(mint) {
         if (!mint || !root.surfaceHost || !root.surfaceHost.cryptoPumpInspect || root.operationBusy)
             return
@@ -69,6 +92,9 @@ Item {
         return String((root.status.portfolio || {}).asset || "") === "KAS" ? "KAS" : "SOL"
     }
     readonly property var nav: [
+        "MARKET",
+        "WALLET",
+        "OMNI",
         "PORTFOLIO",
         "BACKTEST",
         "TRADER",
@@ -140,6 +166,31 @@ Item {
         String(root.strategyFactoryJob.state || "") === "running"
     readonly property var desk: root.status.desk || {}
     readonly property var kaspa: root.status.kaspa || {}
+    readonly property var activeConnection: (root.status.connections || {})[root.asset] || (root.asset === "KAS" ? root.kaspa.connection : null) || ({})
+    readonly property var activeLab: root.asset === "KAS" ? root.kaspa.node || ({}) : root.lab
+    CryptoConnectionPanel { property string uiColorScope: "ui.widget.CryptoSurface.CryptoConnectionPanel.1";
+        id: connectionPanel
+        asset: root.asset
+        network: root.asset === "KAS" ? String(root.kaspa.network || "paper") : String(root.wallet.network || "testnet")
+        connection: root.activeConnection
+        lab: root.activeLab
+        busy: root.operationBusy
+        onOpened: watchDraft = String(root.activeConnection.address || "")
+        onNetworkRequested: function(network) {
+            if (!root.surfaceHost) return
+            if (root.asset === "KAS") root.pickKasNetwork(network)
+            else if (root.surfaceHost.cryptoSetNetwork) root.statusJson = root.surfaceHost.cryptoSetNetwork(network)
+        }
+        onLabRequested: function(running) {
+            if (!root.surfaceHost) return
+            if (root.asset === "KAS") {
+                if (running && root.surfaceHost.cryptoKaspaLabOff) root.statusJson = root.surfaceHost.cryptoKaspaLabOff()
+                else if (root.surfaceHost.cryptoKaspaLabOn) root.statusJson = root.surfaceHost.cryptoKaspaLabOn()
+            } else root.statusJson = running ? root.surfaceHost.cryptoLabOff() : root.surfaceHost.cryptoLabOn()
+        }
+        onRefreshRequested: if (root.surfaceHost && root.surfaceHost.cryptoConnectionRefresh) root.statusJson = root.surfaceHost.cryptoConnectionRefresh(root.asset)
+        onWatchRequested: function(address) { if (root.surfaceHost && root.surfaceHost.cryptoKaspaWatch) root.statusJson = root.surfaceHost.cryptoKaspaWatch(address) }
+    }
     readonly property var deskJob: root.status.desk_job || {}
     readonly property bool deskRunning: String(root.deskJob.state || "") === "running"
     property string polyPreset: "SUMMARY"
@@ -185,7 +236,9 @@ Item {
 
     function navLabel(value) {
         var labels = {
-            "PORTFOLIO": "Portfolio",
+            "MARKET": "Marknaden",
+            "WALLET": "Kontoöversikt",
+            "PORTFOLIO": "SOL / KAS labb",
             "BACKTEST": "Backtest",
             "TRADER": "Trader",
             "PUMP": "Pump",
@@ -202,6 +255,9 @@ Item {
 
     function navIcon(value) {
         var icons = {
+            "MARKET": "◎",
+            "WALLET": "▣",
+            "OMNI": "◇",
             "PORTFOLIO": "⌂",
             "BACKTEST": "◒",
             "TRADER": "▥",
@@ -249,7 +305,7 @@ Item {
         if (id === "KASPA")
             return [
                 {"id": "paper", "name": "Paper"},
-                {"id": "testnet", "name": "Kaspa TN"},
+                {"id": "testnet", "name": "Local simnet"},
                 {"id": "mainnet", "name": "Kaspa live"}
             ]
         if (id === "SIGNAL")
@@ -594,7 +650,7 @@ Item {
     }
 
     function tokenColor(index) {
-        var colors = ["#c8a97e", "#6aa8c8", "#8db89a", root.ledgerGold, "#c98989", "#d4c84a"]
+        var colors = [RuntimeTheme.GGTheme.accent, RuntimeTheme.GGTheme.muted, RuntimeTheme.GGTheme.positive, root.ledgerGold, RuntimeTheme.GGTheme.negative, RuntimeTheme.GGTheme.accent]
         return colors[index % colors.length]
     }
 
@@ -831,7 +887,7 @@ Item {
             out.push({
                 "time": ts,
                 "position": buy ? "belowBar" : "aboveBar",
-                "color": buy ? "#8db89a" : "#c98989",
+                "color": buy ? RuntimeTheme.GGTheme.positive : RuntimeTheme.GGTheme.negative,
                 "shape": buy ? "arrowUp" : "arrowDown"
             })
         }
@@ -841,7 +897,7 @@ Item {
     Timer {
         objectName: "cryptoStatusRefreshTimer"
         interval: root.activeJobs ? 1000 : 20000
-        running: root.activeView
+        running: root.activeView && (root.legacyVisible || root.activeJobs)
         repeat: true
         onTriggered: {
             var wasBacktestRunning = root.backtestRunning
@@ -904,6 +960,8 @@ Item {
 
 
     onPageChanged: {
+        root.chartExpanded = false
+        if(root.unified && root.legacyVisible)Qt.callLater(root.refresh)
         if (root.page === "KASPA") {
             root.page = "PORTFOLIO"
             root.pickAsset("KAS")
@@ -917,18 +975,38 @@ Item {
             root.botTab = "trader"
     }
 
+    function navigateSpace(section) {
+        if(section==="BOTS"){page="OMNI";omniHub.page="BOTS"}
+        else if(section==="NETWORK"){page="OMNI";omniHub.page="CONSENSUS"}
+        else page=section
+    }
+    CryptoSpaceFrame { property string uiColorScope: "ui.widget.CryptoSurface.CryptoSpaceFrame.2";
+        id:spaceFrame;objectName:"cryptoPrimarySpace";anchors.fill:parent;visible:root.unified
+        detailsAvailable:root.page==="WALLET" || (root.page==="OMNI" && omniHub.networkPage)
+        detailsChecked:root.page==="WALLET" ? walletOverview.detailsVisible : omniHub.detailsVisible
+        onDetailsToggleRequested:if(root.page==="WALLET")walletOverview.toggleDetails();else omniHub.toggleDetails()
+        surfaceHost:root.surfaceHost
+        operation:root.page==="MARKET" ? marketExplorer.operation : root.page==="MARKETPLACE" ? mpContent.operation : root.page==="WALLET" ? walletOverview.operation : root.page==="OMNI" ? omniHub.operation : root.operation
+        events:root.page==="MARKET" ? marketExplorer.state.events || [] : root.page==="MARKETPLACE" ? (mpContent.status.public_catalog || {}).events || [] : root.page==="OMNI" || root.page==="WALLET" ? omniHub.state.events || [] : root.ledger
+        section:root.page==="OMNI" ? (omniHub.page==="BOTS" ? "BOTS" : "NETWORK") : root.page
+        title:root.page==="OMNI" ? ({BOTS:"Botar",CONSENSUS:"GG validatorer",TESTNET:"GG testnät",DAG:"Parallellt DAG-labb",LAB:"Nätverkslabb",WALLET:"Konton & tillgångar",NFT:"NFT-inspektör",ACTIVITY:"Aktivitet",NODE:"Nod"}[omniHub.page] || "Nätverk") : root.page==="MARKETPLACE" ? "Marketplace" : root.navLabel(root.page)
+        context:["MARKET","WALLET","MARKETPLACE"].indexOf(root.page)>=0 ? "Publik data / lokalt paper" : root.networkLabel()
+        onNavigate:function(section){root.navigateSpace(section)}
+    }
     Item {
         id: chrome
+        parent:root.unified ? spaceFrame.contentItem : root
         clip: true
         anchors.fill: parent
-        anchors.leftMargin: 8
-        anchors.rightMargin: 12
-        anchors.topMargin: 8
-        anchors.bottomMargin: 10
+        anchors.leftMargin: root.unified ? 0 : 8
+        anchors.rightMargin: root.unified ? 0 : 12
+        anchors.topMargin: root.unified ? 0 : 8
+        anchors.bottomMargin: root.unified ? 0 : 10
 
         Rectangle {
+            visible:!root.unified
             anchors.fill: parent
-            color: "#161616"
+            color: RuntimeTheme.GGTheme.panel
             border.color: root.frameBorder
             border.width: 1
             radius: root.frameRadius
@@ -936,13 +1014,14 @@ Item {
 
         Rectangle {
             id: sidebar
+            visible:!root.unified
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             objectName: "cryptoNavigation"
-            width: root.compactSidebar ? 48 : Math.max(164, Math.min(196, parent.width * 0.18))
+            width: root.unified ? 0 : root.compactSidebar ? 48 : Math.max(164, Math.min(196, parent.width * 0.18))
             color: root.panel
-            border.color: "#4a4a4a"
+            border.color: RuntimeTheme.GGTheme.edge
             border.width: 1
             radius: root.frameRadius
 
@@ -959,7 +1038,7 @@ Item {
                     spacing: 3
                     readonly property var kids: root.menuKids(modelData)
                     readonly property bool opened: !root.compactSidebar && root.page === modelData && kids.length > 0
-                    CryptoButton {
+                    CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.1";
                         id: navButton
                         objectName: "cryptoNav" + group.modelData
                         width: parent.width
@@ -971,17 +1050,18 @@ Item {
                         rightPadding: root.compactSidebar ? 2 : 10
                         text: root.navLabel(group.modelData)
                         contentItem: Item {
-                            Text {
-                                anchors.left: root.compactSidebar ? undefined : parent.left
-                                anchors.leftMargin: root.compactSidebar ? 0 : 3
-                                anchors.horizontalCenter: root.compactSidebar ? parent.horizontalCenter : undefined
+                            GGText { colorKey: "ui.CryptoSurface.1";
+                                objectName: "cryptoNavigationGlyph"
+                                x: root.compactSidebar ? (parent.width-width)/2 : 3
+                                width: 18
+                                horizontalAlignment: Text.AlignHCenter
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: root.navIcon(group.modelData)
                                 textFormat: Text.PlainText
                                 font.family: "monospace"; font.pixelSize: 14
                                 color: navButton.checked ? root.ledgerGold : root.muted
                             }
-                            Text {
+                            GGText { colorKey: "ui.CryptoSurface.2";
                                 visible: !root.compactSidebar
                                 x: 27; width: Math.max(0, parent.width - 39)
                                 anchors.verticalCenter: parent.verticalCenter
@@ -989,7 +1069,7 @@ Item {
                                 color: navButton.checked ? root.ink : root.text
                                 font: navButton.font; elide: Text.ElideRight
                             }
-                            Text {
+                            GGText { colorKey: "ui.CryptoSurface.3";
                                 visible: !root.compactSidebar && group.kids.length > 0
                                 anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
                                 text: group.opened ? "▾" : "▸"; color: root.muted
@@ -1003,7 +1083,7 @@ Item {
                     }
                     Repeater {
                         model: group.opened ? group.kids : []
-                        delegate: CryptoButton {
+                        delegate: CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.2";
                             required property var modelData
                             width: group.width - 10
                             x: 10
@@ -1032,14 +1112,14 @@ Item {
                 boundsBehavior: Flickable.StopAtBounds
                 contentWidth: width
                 contentHeight: navCol.height
-                ScrollBar.vertical: GgScrollBar {}
+                ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.CryptoSurface.GgScrollBar.5";}
 
                 Column {
                     id: navCol
                     width: navFlick.width
                     spacing: 3
 
-                    CryptoButton {
+                    CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.3";
                         objectName: "cryptoNavigationToggle"
                         width: navCol.width
                         height: 32
@@ -1062,10 +1142,10 @@ Item {
                     Rectangle {
                         width: navCol.width
                         height: 1
-                        color: "#3a3a3a"
+                        color: RuntimeTheme.GGTheme.line
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.4";
 
                         textFormat: Text.PlainText
                         width: navCol.width
@@ -1098,9 +1178,9 @@ Item {
                     anchors.right: parent.right
                     anchors.top: parent.top
                     height: 1
-                    color: "#3a3a3a"
+                    color: RuntimeTheme.GGTheme.line
                 }
-                Text {
+                GGText { colorKey: "ui.CryptoSurface.5";
                     textFormat: Text.PlainText
                     visible: !root.compactSidebar
                     anchors.left: parent.left
@@ -1114,19 +1194,19 @@ Item {
                     font.bold: true
                     font.letterSpacing: 1.2
                 }
-                Text {
+                GGText { colorKey: "ui.CryptoSurface.6";
                     textFormat: Text.PlainText
                     visible: !root.compactSidebar
                     anchors.left: parent.left
                     anchors.leftMargin: 14
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: 14
-                    text: root.legend === "OBSERVE" ? "MAINNET · LÄSLÄGE" : "PAPER / TESTNÄT"
+                    text: ["MARKET","WALLET","OMNI"].indexOf(root.page)>=0 ? "OMNI · PUBLIKT / LABB" : root.legend === "OBSERVE" ? "MAINNET · LÄSLÄGE" : "PAPER / TESTNÄT"
                     color: root.muted
                     font.family: "monospace"
                     font.pixelSize: 10
                 }
-                Text {
+                GGText { colorKey: "ui.CryptoSurface.7";
                     textFormat: Text.PlainText
                     visible: root.compactSidebar
                     anchors.centerIn: parent
@@ -1140,16 +1220,18 @@ Item {
 
         Rectangle {
             id: navSep
+            visible:!root.unified
             anchors.left: sidebar.right
             anchors.leftMargin: root.compactSidebar ? 6 : 12
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             width: 1
-            color: "#3a3a3a"
+            color: RuntimeTheme.GGTheme.line
         }
 
         Item {
             id: mainHeader
+            visible:!root.unified
             objectName: "cryptoPageHeader"
             anchors.left: navSep.right
             anchors.leftMargin: root.compactSidebar ? 10 : 18
@@ -1157,13 +1239,13 @@ Item {
             anchors.rightMargin: 10
             anchors.top: parent.top
             height: width < 440 ? 104 : 86
-            Text {
+            GGText { colorKey: "ui.CryptoSurface.8";
                 textFormat: Text.PlainText
                 anchors.left: parent.left; anchors.top: parent.top; anchors.topMargin: 4
                 text: "GG / CRYPTO"
                 color: root.muted; font.family: "monospace"; font.pixelSize: 10
             }
-            Text {
+            GGText { colorKey: "ui.CryptoSurface.9";
                 textFormat: Text.PlainText
                 id: pageTitle
                 anchors.left: parent.left; y: 23
@@ -1179,29 +1261,29 @@ Item {
                 spacing: 6
                 Rectangle {
                     width: networkText.implicitWidth + 16; height: 28; radius: 3
-                    color: "#161616"; border.color: root.frameBorder
-                    Text {
+                    color: RuntimeTheme.GGTheme.panel; border.color: root.frameBorder
+                    GGText { colorKey: "ui.CryptoSurface.10";
                         textFormat: Text.PlainText
                         id: networkText
                         anchors.centerIn: parent; text: root.networkLabel()
                         color: root.text; font.family: "monospace"; font.pixelSize: 10
                     }
                 }
-                CryptoButton {
-                    visible: root.page !== "PUMP"
+                CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.4";
+                    visible: ["PUMP","OMNI","MARKET","WALLET"].indexOf(root.page)<0
                     objectName: "cryptoLabToggle"
-                    text: String(root.lab.label || (root.lab.healthy ? "LAB ON" : "LAB OFF"))
+                    quiet: true
+                    text: root.activeConnection.simulated ? "PAPPER" : root.activeConnection.loading ? "ANSLUTER…" : root.activeConnection.healthy && !root.activeConnection.stale ? "ANSLUTEN" : "ANSLUTNING"
                     height: 28; font.pixelSize: 9
-                    color: root.lab.healthy ? root.ledgerGreen : root.muted
+                    color: root.activeConnection.healthy && !root.activeConnection.stale && !root.activeConnection.simulated ? root.ledgerGreen : root.muted
                     enabled: !root.operationBusy && !!root.surfaceHost
-                    tip: "Starta eller stoppa den lokala testmiljön"
+                    tip: "Visa anslutning, livekälla och lokalt labb för " + root.asset
                     onClicked: {
-                        root.statusJson = root.lab.running ? root.surfaceHost.cryptoLabOff() : root.surfaceHost.cryptoLabOn()
-                        root.refresh()
+                        connectionPanel.open()
                     }
                 }
             }
-            Text {
+            GGText { colorKey: "ui.CryptoSurface.11";
                 textFormat: Text.PlainText
                 anchors.left: parent.left; anchors.right: parent.right
                 y: 53
@@ -1209,7 +1291,7 @@ Item {
                 color: root.text; font.family: "monospace"; font.pixelSize: 11
                 wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight
             }
-            Text {
+            GGText { colorKey: "ui.CryptoSurface.12";
                 textFormat: Text.PlainText
                 objectName: "cryptoDataContext"
                 anchors.left: parent.left; anchors.right: cryptoBusy.left; anchors.rightMargin: 8
@@ -1221,7 +1303,7 @@ Item {
                 color: root.operationBusy || (root.asset === "KAS" ? (root.status.kas_chart || {}).stale : root.liveChart.stale) ? root.ledgerGold : root.muted
                 font.family: "monospace"; font.pixelSize: 10; elide: Text.ElideRight
             }
-            BufferMark {
+            BufferMark { property string uiColorScope: "ui.widget.CryptoSurface.BufferMark.8";
                 id: cryptoBusy; objectName: "cryptoBuffer"
                 anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.bottomMargin: 9
                 active: root.activeJobs; cell: 4
@@ -1231,16 +1313,16 @@ Item {
 
         Item {
             id: field
-            anchors.left: navSep.right
-            anchors.leftMargin: root.compactSidebar ? 10 : 18
+            anchors.left: root.unified ? parent.left : navSep.right
+            anchors.leftMargin: root.unified ? 0 : root.compactSidebar ? 10 : 18
             anchors.right: parent.right
-            anchors.rightMargin: 10
-            anchors.top: mainHeader.bottom
-            anchors.topMargin: 12
+            anchors.rightMargin: root.unified ? 0 : 10
+            anchors.top: root.unified ? parent.top : mainHeader.bottom
+            anchors.topMargin: root.unified ? 0 : 12
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 8
+            anchors.bottomMargin: root.unified ? 0 : 8
 
-            CryptoPumpPanel {
+            CryptoPumpPanel { property string uiColorScope: "ui.widget.CryptoSurface.CryptoPumpPanel.9";
                 anchors.fill: parent
                 visible: root.page === "PUMP"
                 snapshot: root.status.pump || ({})
@@ -1249,21 +1331,50 @@ Item {
                 onStatusReturned: function(raw) { root.statusJson = raw }
             }
 
+            OmniSurface { property string uiColorScope: "ui.widget.CryptoSurface.OmniSurface.10";
+                id:omniHub
+                onBrowseRequested: function(url) { root.browseRequested(url) }
+                embedded:root.unified
+                anchors.fill: parent
+                visible: root.page === "OMNI"
+                surfaceHost: root.surfaceHost
+            }
+            MarketplaceSurface { property string uiColorScope: "ui.widget.CryptoSurface.MarketplaceSurface.11";
+                id:mpContent
+                anchors.fill:parent;visible:root.page==="MARKETPLACE";embedded:true;surfaceHost:root.surfaceHost
+                onCryptoRequested:function(section){root.navigateSpace(section)}
+            }
+            MarketExplorer { property string uiColorScope: "ui.widget.CryptoSurface.MarketExplorer.12";
+                id:marketExplorer
+                anchors.fill:parent;visible:root.page==="MARKET";surfaceHost:root.surfaceHost
+                onWalletRequested:root.page="WALLET"
+                onBotsRequested:{root.page="OMNI";omniHub.page="BOTS"}
+                onNetworkRequested:{root.page="OMNI";omniHub.page="LAB"}
+            }
+            OmniWalletPanel { property string uiColorScope: "ui.widget.CryptoSurface.OmniWalletPanel.13";
+                id:walletOverview
+                anchors.fill:parent;visible:root.page==="WALLET";surfaceHost:root.surfaceHost;embedded:root.unified;dashboard:root.unified
+                onToolsRequested:{root.page="OMNI";omniHub.page="WALLET"}
+                onMarketRequested:root.page="MARKET"
+                onAssetRequested:function(id){root.page="MARKET";marketExplorer.openAsset(id)}
+            }
+
             Column {
                 id: portHead
                 objectName: "cryptoPortfolioHeader"
                 width: parent.width
                 spacing: 8
-                visible: root.page === "PORTFOLIO"
-                CryptoPortfolioSummary {
+                visible: root.page === "PORTFOLIO" && !root.chartExpanded
+                CryptoPortfolioSummary { property string uiColorScope: "ui.widget.CryptoSurface.CryptoPortfolioSummary.14";
                     width: parent.width
+                    compact:root.unified
                     snapshot: root.portfolioView
                     symbol: root.asset
-                    mode: root.asset === "KAS" ? "SIMULERAT · KAS COVENANT"
+                    mode: root.asset === "KAS" ? (root.kaspa.network === "mainnet" ? "KASPA · LIVE / LÄSLÄGE" : root.kaspa.network === "testnet" ? "KASPA · LOCAL SIMNET" : "SIMULERAT · KAS COVENANT")
                         : root.legend === "OBSERVE" || root.legend === "MAINNET" || String(root.wallet.network || "").toLowerCase() === "mainnet"
                             ? "SOLANA · LÄSLÄGE" : "SIMULERAT · " + String(root.wallet.network || root.legend || "NÄT SAKNAS").toUpperCase()
                     quantity: {
-                        var balance = root.asset === "KAS" ? root.kaspa.value_kas : root.wallet.balance_sol
+                        var balance = root.asset === "KAS" ? (root.kaspa.network === "paper" ? root.kaspa.value_kas : root.activeConnection.balance_kas) : root.wallet.balance_sol
                         return balance === undefined || balance === null ? "—" : String(balance)
                     }
                     quoteCurrency: String((root.asset === "KAS" ? root.status.kas_chart || {} : root.liveChart).quote_currency || "USD")
@@ -1272,7 +1383,7 @@ Item {
                     width: parent.width; spacing: 5
                     Repeater {
                         model: ["SOL", "KAS"]
-                        delegate: CryptoButton {
+                        delegate: CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.5";
                             required property var modelData
                             objectName: "cryptoAsset" + modelData
                             width: 45; height: 28
@@ -1283,7 +1394,7 @@ Item {
                     }
                     Repeater {
                         model: ["1m", "5m", "15m", "1h", "4h", "1d"]
-                        delegate: CryptoButton {
+                        delegate: CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.6";
                             required property var modelData
                             objectName: "cryptoInterval" + modelData
                             width: 34; height: 28
@@ -1293,25 +1404,30 @@ Item {
                             onClicked: root.pickInterval(String(modelData))
                         }
                     }
-                    CryptoButton {
+                    CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.7";
                         objectName: "cryptoChartFit"
                         text: "Återställ graf"; height: 28
                         tip: "Visa senaste perioden. Dra grafen för att panorera, scrolla för att zooma."
                         onClicked: solPlot.fitEnd()
                     }
-                    CryptoButton {
+                    ResearchAction { property string uiColorScope: "ui.widget.CryptoSurface.ResearchAction.18";
+                        objectName: "cryptoChartExpand"
+                        iconKind: "open"; hint: "Förstora grafen"
+                        onClicked: { root.chartExpanded = true; root.forceActiveFocus(); Qt.callLater(solPlot.fitEnd) }
+                    }
+                    CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.8";
                         visible: root.asset === "KAS"
                         text: "Paper"; height: 28; checked: String(root.kaspa.network || "paper") === "paper"
                         onClicked: root.pickKasNetwork("paper")
                     }
-                    CryptoButton {
+                    CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.9";
                         visible: root.asset === "KAS"
-                        text: "Testnet"; height: 28; checked: String(root.kaspa.network || "") === "testnet"
+                        text: "LOCAL LAB"; height: 28; checked: String(root.kaspa.network || "") === "testnet"
                         onClicked: root.pickKasNetwork("testnet")
                     }
-                    CryptoButton {
+                    CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.10";
                         visible: root.asset === "KAS"
-                        text: "Mainnet"; height: 28; checked: String(root.kaspa.network || "") === "mainnet"
+                        text: "LIVE · läsläge"; height: 28; checked: String(root.kaspa.network || "") === "mainnet"
                         onClicked: root.pickKasNetwork("mainnet")
                     }
                 }
@@ -1327,7 +1443,7 @@ Item {
                 contentWidth: width
                 contentHeight: btContent.height
                 boundsBehavior: Flickable.StopAtBounds
-                ScrollBar.vertical: GgScrollBar {}
+                ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.CryptoSurface.GgScrollBar.22";}
                 Column {
                     id: btContent
                     width: parent.width
@@ -1335,46 +1451,46 @@ Item {
                     Flow {
                         width: parent.width
                         spacing: 6
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.11";
                             text: "LIVE"
-                            color: root.botTape === "live" ? "#d8dee9" : "#a8b0b8"
+                            color: root.botTape === "live" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: root.botTape === "live"
                             enabled: !root.operationBusy
                             onClicked: root.botTape = "live"
                         }
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.12";
                             visible: (((root.trader.backtest || {}).chart || {}).closes || []).length > 1
                             text: {
                                 var t = String((root.trader.backtest || {}).ran_at || "")
                                 return "BACKTEST 1  " + String((root.trader.backtest || {}).book || "").toUpperCase() + " " + t
                             }
-                            color: root.botTape === "bt0" ? "#d8dee9" : "#a8b0b8"
+                            color: root.botTape === "bt0" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: root.botTape === "bt0"
                             enabled: !root.operationBusy
                             onClicked: root.botTape = "bt0"
                         }
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.13";
                             visible: (((root.trader.backtest_prev || {}).chart || {}).closes || []).length > 1
                             text: {
                                 var t = String((root.trader.backtest_prev || {}).ran_at || "")
                                 return "BACKTEST 2  " + String((root.trader.backtest_prev || {}).book || "").toUpperCase() + " " + t
                             }
-                            color: root.botTape === "bt1" ? "#d8dee9" : "#a8b0b8"
+                            color: root.botTape === "bt1" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: root.botTape === "bt1"
                             enabled: !root.operationBusy
                             onClicked: root.botTape = "bt1"
                         }
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.14";
                             text: root.backtestRunning
                                 ? "BACKTEST…"
                                 : ("RUN  " + String(root.trader.book || "gg").toUpperCase())
-                            color: root.backtestRunning ? "#c8a97e" : "#8db89a"
+                            color: root.backtestRunning ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.positive
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: true
@@ -1392,9 +1508,9 @@ Item {
                     Flow {
                         width: parent.width
                         spacing: 6
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.15";
                             text: root.trader.armed ? "TRADER OFF" : (root.traderAvailable ? "STARTA VALD BOT" : "OBSERVE")
-                            color: root.trader.armed ? "#c8a97e" : "#8db89a"
+                            color: root.trader.armed ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.positive
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: true
@@ -1406,9 +1522,9 @@ Item {
                                     root.refresh()
                                 }
                         }
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.16";
                             text: root.paperTickRunning ? "TICK…" : "TICK"
-                            color: "#c8a97e"
+                            color: RuntimeTheme.GGTheme.accent
                             font.family: "monospace"
                             font.pixelSize: 12
                             enabled: !root.operationBusy
@@ -1418,9 +1534,9 @@ Item {
                                     root.refresh()
                                 }
                         }
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.17";
                             text: "RESET BOOK"
-                            color: "#c8cdd4"
+                            color: RuntimeTheme.GGTheme.text
                             font.family: "monospace"
                             font.pixelSize: 12
                             enabled: !root.operationBusy
@@ -1431,17 +1547,17 @@ Item {
                                     root.refresh()
                                 }
                         }
-                        Text {
+                        GGText { colorKey: "ui.CryptoSurface.13";
                             textFormat: Text.PlainText
                             text: root.trader.armed
                                 ? "paper ticks 15s · " + String(root.trader.book || "gg")
                                 : String(root.trader.book || "gg") + " · paper only"
-                            color: "#a8b0b8"
+                            color: RuntimeTheme.GGTheme.muted
                             font.family: "monospace"
                             font.pixelSize: 12
                         }
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.14";
                         textFormat: Text.PlainText
                         width: parent.width
                         visible: root.backtestRunning
@@ -1449,12 +1565,12 @@ Item {
                         text: root.backtestRunning
                             ? String((root.status.backtest_job || {}).note || "BACKTEST…")
                             : String((root.status.backtest_job || {}).note || "backtest failed")
-                        color: root.backtestRunning ? "#c8a97e" : "#c98989"
+                        color: root.backtestRunning ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.negative
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.15";
                         textFormat: Text.PlainText
                         width: parent.width
                         visible: ((root.trader.backtest || {}).comparison || []).length > 0
@@ -1464,7 +1580,7 @@ Item {
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.16";
                         textFormat: Text.PlainText
                         width: parent.width
                         visible: String((root.trader.backtest || {}).tokens || "").length > 0
@@ -1489,15 +1605,15 @@ Item {
                                 + (bt.range ? ("  " + String(bt.range)) : "")
                         }
                         color: String((root.trader.backtest || {}).verdict || "") === "GOOD"
-                            ? "#8db89a"
+                            ? RuntimeTheme.GGTheme.positive
                             : (String((root.trader.backtest || {}).verdict || "") === "WEAK"
-                                ? "#c98989"
-                                : "#c8a97e")
+                                ? RuntimeTheme.GGTheme.negative
+                                : RuntimeTheme.GGTheme.accent)
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.17";
                         textFormat: Text.PlainText
                         width: parent.width
                         visible: (((root.trader.backtest || {}).weeks || []).length > 0
@@ -1549,7 +1665,7 @@ Item {
                                 parts.push(wp.join("  ·  "))
                             return parts.join("\n")
                         }
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
@@ -1564,23 +1680,30 @@ Item {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
-                anchors.topMargin: (root.page === "BACKTEST" ? btHead.height : portHead.height) + 14
+                anchors.topMargin: root.chartExpanded ? 0 : (root.page === "BACKTEST" ? btHead.height : portHead.height) + 14
                 anchors.bottom: parent.bottom
                 objectName: "cryptoPortfolioChart"
                 // Keep a full holdings row reachable, including with narrow wallet tools.
-                anchors.bottomMargin: root.page === "PORTFOLIO"
-                    ? Math.max(0, field.height - anchors.topMargin
+                anchors.bottomMargin: root.page === "PORTFOLIO" && !root.chartExpanded
+                    ? root.unified ? Math.min(Math.max(0,field.height-anchors.topMargin-180),100+Math.min(3,Math.max(1,(root.portfolioView.assets || []).length))*58+(root.walletToolsOpen ? 146 : 0)) : Math.max(0, field.height - anchors.topMargin
                         - Math.max(root.walletToolsOpen ? 55 : 70, Math.min(210, field.height * 0.32,
                             field.height - anchors.topMargin - (root.walletToolsOpen ? 280 : 180))))
                     : 0
 
-                GgFrame {
+                GgFrame { property string uiColorScope: "ui.widget.CryptoSurface.GgFrame.30";
                     anchors.fill: parent
                     leftLegend: "PRISGRAF · " + root.asset
                     rightLegend: root.activeTf
-                    backgroundColor: "#161616"
+                    backgroundColor: RuntimeTheme.GGTheme.panel
                     borderColor: root.frameBorder
                     radius: root.frameRadius
+                }
+                ResearchAction { property string uiColorScope: "ui.widget.CryptoSurface.ResearchAction.31";
+                    objectName: "cryptoChartRestore"
+                    anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 8
+                    z: 3; visible: root.chartExpanded
+                    iconKind: "stop"; hint: "Återgå till portföljen"
+                    onClicked: { root.chartExpanded = false; Qt.callLater(solPlot.fitEnd) }
                 }
                 Canvas {
                     id: solPlot
@@ -2067,9 +2190,9 @@ Item {
                         var plotH = Math.max(8, h - padT - padB)
                         var pts = series || []
                         var times = stamps || []
-                        ctx.fillStyle = "#161616"
+                        ctx.fillStyle = RuntimeTheme.GGTheme.panel
                         ctx.fillRect(0, 0, w, h)
-                        ctx.strokeStyle = "#2b2b2b"
+                        ctx.strokeStyle = RuntimeTheme.GGTheme.hover
                         ctx.lineWidth = 1
                         var g
                         for (g = 0; g <= 4; g++) {
@@ -2136,7 +2259,7 @@ Item {
                             return "$" + n.toFixed(Math.min(digits, 8))
                         }
                         ctx.font = "11px monospace"
-                        ctx.fillStyle = "#8b949e"
+                        ctx.fillStyle = RuntimeTheme.GGTheme.muted
                         ctx.textAlign = "right"
                         ctx.textBaseline = "middle"
                         for (g = 0; g <= 4; g++) {
@@ -2184,7 +2307,7 @@ Item {
                         ctx.moveTo(xAt(i0), yAt(pts[i0]))
                         for (i = 1; i < lineIndices.length; i++)
                             ctx.lineTo(xAt(lineIndices[i]), yAt(pts[lineIndices[i]]))
-                        ctx.strokeStyle = up ? "#8db89a" : "#c98989"
+                        ctx.strokeStyle = up ? RuntimeTheme.GGTheme.positive : RuntimeTheme.GGTheme.negative
                         ctx.lineWidth = 1.6
                         ctx.stroke()
                         var lastIdx = pts.length - 1
@@ -2192,7 +2315,7 @@ Item {
                         var lastInside = lastIdx >= left && lastIdx <= right
                             && lastY >= padT && lastY <= padT + plotH
                         if (lastInside) {
-                            ctx.strokeStyle = up ? "#8db89a" : "#c98989"
+                            ctx.strokeStyle = up ? RuntimeTheme.GGTheme.positive : RuntimeTheme.GGTheme.negative
                             ctx.globalAlpha = 0.45
                             ctx.beginPath()
                             ctx.moveTo(padL, lastY)
@@ -2208,9 +2331,9 @@ Item {
                             if (tagX + tagW > w - 2)
                                 tagX = w - 2 - tagW
                             var tagY = Math.max(padT, Math.min(padT + plotH - 14, lastY - 7))
-                            ctx.fillStyle = up ? "#1c2a22" : "#241818"
+                            ctx.fillStyle = up ? RuntimeTheme.GGTheme.raised : RuntimeTheme.GGTheme.panel
                             ctx.fillRect(tagX, tagY, tagW, 14)
-                            ctx.fillStyle = up ? "#8db89a" : "#c98989"
+                            ctx.fillStyle = up ? RuntimeTheme.GGTheme.positive : RuntimeTheme.GGTheme.negative
                             ctx.textAlign = "left"
                             ctx.textBaseline = "middle"
                             ctx.fillText(tag, tagX + 5, tagY + 7)
@@ -2236,7 +2359,7 @@ Item {
                                 ctx.lineTo(mx + 4.5, my - 3)
                             }
                             ctx.closePath()
-                            ctx.fillStyle = buy ? "#8db89a" : "#c98989"
+                            ctx.fillStyle = buy ? RuntimeTheme.GGTheme.positive : RuntimeTheme.GGTheme.negative
                             ctx.fill()
                         }
                         var hi = hoverIndex
@@ -2245,7 +2368,7 @@ Item {
                             var hyRaw = yAt(pts[hi])
                             var hyIn = hyRaw >= padT && hyRaw <= padT + plotH
                             var hy = hyIn ? hyRaw : (hyRaw < padT ? padT + 8 : padT + plotH - 8)
-                            ctx.strokeStyle = "#c8a97e"
+                            ctx.strokeStyle = RuntimeTheme.GGTheme.accent
                             ctx.globalAlpha = 0.7
                             ctx.lineWidth = 1
                             ctx.beginPath()
@@ -2260,7 +2383,7 @@ Item {
                             if (hyIn) {
                                 ctx.beginPath()
                                 ctx.arc(hx, hy, 3.2, 0, Math.PI * 2)
-                                ctx.fillStyle = "#c8a97e"
+                                ctx.fillStyle = RuntimeTheme.GGTheme.accent
                                 ctx.fill()
                             }
                             var hStamp = Number(times[hi] || 0)
@@ -2289,12 +2412,12 @@ Item {
                                 tipY = hy + 10
                             if (tipY + tipH > padT + plotH)
                                 tipY = padT + plotH - tipH
-                            ctx.fillStyle = "#181818"
+                            ctx.fillStyle = RuntimeTheme.GGTheme.panel
                             ctx.fillRect(tipX, tipY, tipW, tipH)
-                            ctx.strokeStyle = "#c8a97e"
+                            ctx.strokeStyle = RuntimeTheme.GGTheme.accent
                             ctx.lineWidth = 1
                             ctx.strokeRect(tipX + 0.5, tipY + 0.5, tipW - 1, tipH - 1)
-                            ctx.fillStyle = "#e6edf3"
+                            ctx.fillStyle = RuntimeTheme.GGTheme.bright
                             ctx.textAlign = "left"
                             ctx.textBaseline = "middle"
                             ctx.fillText(tip, tipX + 6, tipY + tipH / 2)
@@ -2305,9 +2428,9 @@ Item {
                                 if (axisX + axisW > w - 2)
                                     axisX = w - 2 - axisW
                                 var axisY = Math.max(padT, Math.min(padT + plotH - 14, hy - 7))
-                                ctx.fillStyle = "#2a261c"
+                                ctx.fillStyle = RuntimeTheme.GGTheme.raised
                                 ctx.fillRect(axisX, axisY, axisW, 14)
-                                ctx.fillStyle = "#c8a97e"
+                                ctx.fillStyle = RuntimeTheme.GGTheme.accent
                                 ctx.fillText(axisTag, axisX + 5, axisY + 7)
                             }
                         }
@@ -2428,7 +2551,7 @@ Item {
                             ? (((root.status.kas_chart || {}).closes || []).length < 2)
                             : root.closes.length < 2
                     )
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.18";
                         textFormat: Text.PlainText
                         width: parent.width
                         text: (root.asset === "KAS" ? root.status.kas_chart || {} : root.liveChart).refreshing
@@ -2440,7 +2563,7 @@ Item {
                         font.family: "monospace"
                         font.pixelSize: 13
                     }
-                    CryptoButton {
+                    CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.18";
                         width: parent.width
                         text: "FÖRSÖK IGEN"
                         horizontalAlignment: Text.AlignHCenter
@@ -2457,13 +2580,13 @@ Item {
             Item {
                 id: portfolioBottom
                 objectName: "cryptoPortfolioBottom"
-                visible: root.page === "PORTFOLIO"
+                visible: root.page === "PORTFOLIO" && !root.chartExpanded
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: tapeLoader.bottom
                 anchors.topMargin: 12
                 anchors.bottom: parent.bottom
-                CryptoHoldings {
+                CryptoHoldings { property string uiColorScope: "ui.widget.CryptoSurface.CryptoHoldings.33";
                     id: holdingsTable
                     anchors.fill: parent
                     anchors.bottomMargin: walletTools.height + walletBar.height + 8 + recentActivity.height + (recentActivity.visible ? 8 : 0)
@@ -2483,7 +2606,7 @@ Item {
                     height: visible ? 132 : 0
                     Column {
                         width: parent.width; spacing: 9
-                        Text {
+                        GGText { colorKey: "ui.CryptoSurface.19";
                             textFormat: Text.PlainText
                             text: "SENASTE AKTIVITET"; color: root.ledgerGold
                             font.family: "monospace"; font.pixelSize: 11; font.bold: true
@@ -2493,14 +2616,14 @@ Item {
                             delegate: Column {
                                 width: recentActivity.width; spacing: 3
                                 readonly property var row: root.ledger[index] || {}
-                                Text {
+                                GGText { colorKey: "ui.CryptoSurface.20";
                                     textFormat: Text.PlainText
                                     width: parent.width; elide: Text.ElideRight
                                     text: String(parent.row.side || "EVENT").toUpperCase() + " · " + String(parent.row.mode || "") + " · " + String(parent.row.status || "")
-                                    color: parent.row.error ? "#c98989" : root.ink
+                                    color: parent.row.error ? RuntimeTheme.GGTheme.negative : root.ink
                                     font.family: "monospace"; font.pixelSize: 11
                                 }
-                                Text {
+                                GGText { colorKey: "ui.CryptoSurface.21";
                                     textFormat: Text.PlainText
                                     width: parent.width; elide: Text.ElideRight
                                     text: String(parent.row.hint || parent.row.error || "")
@@ -2531,16 +2654,16 @@ Item {
                 Row {
                     spacing: 8
                     width: parent.width
-                    CryptoField {
+                    CryptoField { property string uiColorScope: "ui.widget.CryptoSurface.CryptoField.34";
                         id: pubkeyField
                         width: Math.max(80, parent.width - 108)
                         height: 26
                         placeholderText: "Solana pubkey"
                         text: String(root.wallet.pubkey || "")
                     }
-                    CryptoButton {
+                    CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.19";
                         text: "CONNECT"
-                        color: "#c8a97e"
+                        color: RuntimeTheme.GGTheme.accent
                         font.family: "monospace"
                         font.pixelSize: 12
                         font.bold: true
@@ -2552,9 +2675,9 @@ Item {
                 Flow {
                     width: parent.width
                     spacing: 12
-                    CryptoButton {
+                    CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.20";
                         text: "CREATE TEST WALLET"
-                        color: "#c8a97e"
+                        color: RuntimeTheme.GGTheme.accent
                         font.family: "monospace"
                         font.pixelSize: 12
                         enabled: !root.operationBusy
@@ -2564,9 +2687,9 @@ Item {
                                 root.refresh()
                             }
                     }
-                    CryptoButton {
+                    CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.21";
                         text: "AIRDROP 100 SOL"
-                        color: "#8db89a"
+                        color: RuntimeTheme.GGTheme.positive
                         font.family: "monospace"
                         font.pixelSize: 12
                         enabled: !root.operationBusy
@@ -2576,17 +2699,17 @@ Item {
                                 root.refresh()
                             }
                     }
-                    CryptoButton {
+                    CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.22";
                         text: "IMPORT KEYPAIR"
-                        color: "#c8a97e"
+                        color: RuntimeTheme.GGTheme.accent
                         font.family: "monospace"
                         font.pixelSize: 12
                         enabled: !root.operationBusy
                         onClicked: keypairDialog.open()
                     }
-                    CryptoButton {
+                    CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.23";
                         text: "DISCONNECT"
-                        color: "#c8cdd4"
+                        color: RuntimeTheme.GGTheme.text
                         font.family: "monospace"
                         font.pixelSize: 12
                         enabled: !root.operationBusy
@@ -2607,9 +2730,9 @@ Item {
                 Flow {
                     width: parent.width
                     spacing: 14
-                    CryptoButton {
+                    CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.24";
                         text: "GENESIS"
-                        color: "#8db89a"
+                        color: RuntimeTheme.GGTheme.positive
                         font.family: "monospace"
                         font.pixelSize: 12
                         font.bold: true
@@ -2619,9 +2742,9 @@ Item {
                                     root.statusJson = root.surfaceHost.cryptoKaspaGenesis()
                             }
                     }
-                    CryptoButton {
+                    CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.25";
                         text: "ADD 5"
-                        color: "#8db89a"
+                        color: RuntimeTheme.GGTheme.positive
                         font.family: "monospace"
                         font.pixelSize: 12
                         font.bold: true
@@ -2631,9 +2754,9 @@ Item {
                                     root.statusJson = root.surfaceHost.cryptoKaspaTransition("add", 5)
                             }
                     }
-                    CryptoButton {
+                    CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.26";
                         text: "SUB 3"
-                        color: "#c8a97e"
+                        color: RuntimeTheme.GGTheme.accent
                         font.family: "monospace"
                         font.pixelSize: 12
                         font.bold: true
@@ -2643,7 +2766,7 @@ Item {
                                     root.statusJson = root.surfaceHost.cryptoKaspaTransition("subtract", 3)
                             }
                     }
-                    CryptoButton {
+                    CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.27";
                         text: "SILVERC"
                         color: root.ledgerGold
                         font.family: "monospace"
@@ -2656,26 +2779,26 @@ Item {
                             }
                     }
                 }
-                Text {
+                GGText { colorKey: "ui.CryptoSurface.22";
                     textFormat: Text.PlainText
                     width: parent.width
                     text: String(root.kaspa.address || "No covenant yet. GENESIS funds 1 KAS on paper.")
-                    color: "#c8cdd4"
+                    color: RuntimeTheme.GGTheme.text
                     font.family: "monospace"
                     font.pixelSize: 12
                     elide: Text.ElideMiddle
                 }
-                Text {
+                GGText { colorKey: "ui.CryptoSurface.23";
                     textFormat: Text.PlainText
                     width: parent.width
                     visible: String(root.kaspa.covenant_id || "").length > 0
                     text: "cov  " + String(root.kaspa.covenant_id || "")
-                    color: "#7f8994"
+                    color: RuntimeTheme.GGTheme.muted
                     font.family: "monospace"
                     font.pixelSize: 12
                     elide: Text.ElideMiddle
                 }
-                Text {
+                GGText { colorKey: "ui.CryptoSurface.24";
                     textFormat: Text.PlainText
                     width: parent.width
                     visible: root.kaspa.mainnet_observe === true
@@ -2685,29 +2808,29 @@ Item {
                     font.pixelSize: 12
                     elide: Text.ElideRight
                 }
-                Text {
+                GGText { colorKey: "ui.CryptoSurface.25";
                     textFormat: Text.PlainText
                     width: parent.width
                     visible: String(root.kaspa.compile_note || "").length > 0
                     text: String(root.kaspa.compile_note || "")
-                    color: root.kaspa.compiled ? "#8db89a" : root.ledgerGold
+                    color: root.kaspa.compiled ? RuntimeTheme.GGTheme.positive : root.ledgerGold
                     font.family: "monospace"
                     font.pixelSize: 12
                     elide: Text.ElideRight
                 }
-                Text {
+                GGText { colorKey: "ui.CryptoSurface.26";
                     textFormat: Text.PlainText
                     width: parent.width
                     visible: (root.kaspa.history || []).length === 0
                     text: String(root.kaspa.hint || "Covenant id stays. Address changes with count.")
-                    color: "#8b949e"
+                    color: RuntimeTheme.GGTheme.muted
                     font.family: "monospace"
                     font.pixelSize: 12
                     elide: Text.ElideRight
                 }
                 Repeater {
                     model: Math.min(3, (root.kaspa.history || []).length)
-                    delegate: Text {
+                    delegate: GGText { colorKey: "ui.CryptoSurface.27";
                     textFormat: Text.PlainText
                         width: kasFoot.width
                         readonly property var row: (root.kaspa.history || [])[
@@ -2716,7 +2839,7 @@ Item {
                         text: String(row.op || "")
                             + "  count=" + String(row.count)
                             + "  " + String(row.note || "")
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         elide: Text.ElideRight
@@ -2729,8 +2852,8 @@ Item {
                     id: walletBar
                     width: parent.width; height: 34
                     anchors.bottom: parent.bottom
-                    Rectangle { width: parent.width; height: 1; color: "#353535" }
-                    Text {
+                    Rectangle { width: parent.width; height: 1; color: RuntimeTheme.GGTheme.line }
+                    GGText { colorKey: "ui.CryptoSurface.28";
                         textFormat: Text.PlainText
                         anchors.left: parent.left; anchors.right: walletLinks.left; anchors.rightMargin: 12
                         anchors.verticalCenter: parent.verticalCenter
@@ -2743,14 +2866,14 @@ Item {
                         id: walletLinks
                         anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
                         spacing: 5
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.28";
                             height: 26; font.pixelSize: 10
                             text: "AKTIVITET"; color: root.ledgerGold; font.family: "monospace"
                             enabled: !root.operationBusy
                             onClicked: root.page = "ACTIVITY"
                         }
-                        CryptoButton {
-                            text: (root.walletToolsOpen ? "▾ " : "▸ ") + (root.asset === "KAS" ? "COVENANT" : "PLÅNBOK")
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.29";
+                            text: (root.walletToolsOpen ? "▾ " : "▸ ") + (root.asset === "KAS" ? "PAPPERSLABB" : "PLÅNBOK")
                             color: root.ledgerGold; font.family: "monospace"
                             enabled: !root.operationBusy
                             onClicked: root.walletToolsOpen = !root.walletToolsOpen
@@ -2772,9 +2895,9 @@ Item {
                     Flow {
                         width: parent.width
                         spacing: 14
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.30";
                             text: root.trader.armed ? "TRADER OFF" : (root.traderAvailable ? "STARTA VALD BOT" : "OBSERVE")
-                            color: root.trader.armed ? "#c8a97e" : "#8db89a"
+                            color: root.trader.armed ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.positive
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: true
@@ -2786,9 +2909,9 @@ Item {
                                     root.refresh()
                                 }
                         }
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.31";
                             text: root.paperTickRunning ? "TICK…" : (root.traderAvailable ? "UPPDATERA ALLA" : "OBSERVE")
-                            color: "#c8a97e"
+                            color: RuntimeTheme.GGTheme.accent
                             font.family: "monospace"
                             font.pixelSize: 12
                             enabled: !root.operationBusy
@@ -2798,9 +2921,9 @@ Item {
                                     root.refresh()
                                 }
                         }
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.32";
                             text: root.backtestRunning ? "BACKTEST…" : "BACKTEST"
-                            color: root.backtestRunning ? "#c8a97e" : "#8db89a"
+                            color: root.backtestRunning ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.positive
                             font.family: "monospace"
                             font.pixelSize: 12
                             enabled: !root.operationBusy
@@ -2814,9 +2937,9 @@ Item {
                                     root.statusJson = root.surfaceHost.cryptoBacktestTrader()
                                 }
                         }
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.33";
                             text: "RESET"
-                            color: "#c8cdd4"
+                            color: RuntimeTheme.GGTheme.text
                             font.family: "monospace"
                             font.pixelSize: 12
                             enabled: !root.operationBusy
@@ -2828,7 +2951,7 @@ Item {
                                 }
                         }
                     }
-                    CryptoPaperAccounts {
+                    CryptoPaperAccounts { property string uiColorScope: "ui.widget.CryptoSurface.CryptoPaperAccounts.50";
                         width: parent.width
                         engine: root.status.paper_engine || ({})
                         canStart: root.traderAvailable
@@ -2836,27 +2959,27 @@ Item {
                         surfaceHost: root.surfaceHost
                         onStatusChanged: function(json) { root.statusJson = json; root.refresh() }
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.29";
                         textFormat: Text.PlainText
                         width: parent.width
                         text: "Välj bot i menyn ovan. RESET återställer endast vald bots papperskonto; resultatet sparas som en tidigare körning."
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.30";
                         textFormat: Text.PlainText
                         width: parent.width
                         text: "KEEP / WATCH / PARK are editorial labels. Compare measured results in Backtest. All six books support persistent paper execution. Live venue execution still requires its own integration."
-                        color: "#8b949e"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
                     Repeater {
                         model: root.trader.books || []
-                        delegate: Text {
+                        delegate: GGText { colorKey: "ui.CryptoSurface.31";
                     textFormat: Text.PlainText
                             required property var modelData
                             width: traderCol.width
@@ -2866,10 +2989,10 @@ Item {
                             color: {
                                 var verdict = String(modelData.verdict || "")
                                 if (verdict === "KEEP")
-                                    return "#8db89a"
+                                    return RuntimeTheme.GGTheme.positive
                                 if (verdict === "PARK")
-                                    return "#c98989"
-                                return "#c8a97e"
+                                    return RuntimeTheme.GGTheme.negative
+                                return RuntimeTheme.GGTheme.accent
                             }
                             font.family: "monospace"
                             font.pixelSize: 12
@@ -2886,20 +3009,20 @@ Item {
                 contentWidth: width
                 contentHeight: signalContent.height
                 boundsBehavior: Flickable.StopAtBounds
-                ScrollBar.vertical: GgScrollBar {}
+                ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.CryptoSurface.GgScrollBar.51";}
                 Column {
                     id: signalContent
                     width: parent.width
                     spacing: 8
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.32";
                         textFormat: Text.PlainText
                         width: parent.width
                         text: String(root.bot.symbol || "SOLUSDT") + "  5m  ·  size " + String(root.bot.size_sol || "0.01") + " SOL"
-                        color: "#d8dee9"
+                        color: RuntimeTheme.GGTheme.text
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.33";
                         textFormat: Text.PlainText
                         width: parent.width
                         text: {
@@ -2914,18 +3037,18 @@ Item {
                             return line
                         }
                         color: String((root.bot.last || {}).super || "") === "buy"
-                            ? "#8db89a"
-                            : (String((root.bot.last || {}).super || "") === "sell" ? "#c98989" : "#8b949e")
+                            ? RuntimeTheme.GGTheme.positive
+                            : (String((root.bot.last || {}).super || "") === "sell" ? RuntimeTheme.GGTheme.negative : RuntimeTheme.GGTheme.muted)
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.34";
                         textFormat: Text.PlainText
                         width: parent.width
                         visible: ((root.bot.last || {}).notes || []).length > 0
                         text: ((root.bot.last || {}).notes || []).join(" · ")
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
@@ -2933,9 +3056,9 @@ Item {
                     Flow {
                         width: parent.width
                         spacing: 6
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.34";
                             text: "EVAL SIGNALS"
-                            color: "#c8a97e"
+                            color: RuntimeTheme.GGTheme.accent
                             font.family: "monospace"
                             font.pixelSize: 12
                             enabled: !root.operationBusy
@@ -2946,9 +3069,9 @@ Item {
                                     root.refresh()
                                 }
                         }
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.35";
                             text: root.bot.armed ? "DISARM" : "ARM BOT"
-                            color: root.bot.armed ? "#c8a97e" : "#8db89a"
+                            color: root.bot.armed ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.positive
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: true
@@ -2960,23 +3083,23 @@ Item {
                                     root.refresh()
                                 }
                         }
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.36";
                             text: "TEST BUY 0.01 SOL"
-                            color: "#8db89a"
+                            color: RuntimeTheme.GGTheme.positive
                             font.family: "monospace"
                             font.pixelSize: 12
                             enabled: !root.operationBusy
                             onClicked: root.paperSignal()
                         }
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.35";
                         textFormat: Text.PlainText
                         text: root.bot.armed
                             ? "Ticks every 30s. Lab fill on super buy/sell."
                             : (root.connected
                                 ? "Strategy004 on SOLUSDT. EVAL then ARM for lab fills."
                                 : "CREATE TEST WALLET, then AIRDROP 100 SOL.")
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
@@ -2990,21 +3113,21 @@ Item {
                 contentWidth: width
                 contentHeight: arbContent.height
                 boundsBehavior: Flickable.StopAtBounds
-                ScrollBar.vertical: GgScrollBar {}
+                ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.CryptoSurface.GgScrollBar.55";}
                 Column {
                     id: arbContent
                     width: parent.width
                     spacing: 8
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.36";
                         textFormat: Text.PlainText
                         width: parent.width
                         text: "A " + String(root.arb.price_a || "—") + "    B " + String(root.arb.price_b || "—") + "    USDC/SOL"
-                        color: "#d8dee9"
+                        color: RuntimeTheme.GGTheme.text
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.37";
                         textFormat: Text.PlainText
                         width: parent.width
                         text: {
@@ -3022,12 +3145,12 @@ Item {
                                 line += "  buy " + buy + " sell " + sell
                             return line
                         }
-                        color: root.arb.optimal_ok ? "#8db89a" : "#c98989"
+                        color: root.arb.optimal_ok ? RuntimeTheme.GGTheme.positive : RuntimeTheme.GGTheme.negative
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.38";
                         textFormat: Text.PlainText
                         width: parent.width
                         visible: String((root.status.arb_last || {}).txid || "").length > 0
@@ -3041,7 +3164,7 @@ Item {
                                 line += "   " + String(last.error)
                             return line
                         }
-                        color: (root.status.arb_last || {}).error ? "#c98989" : "#8db89a"
+                        color: (root.status.arb_last || {}).error ? RuntimeTheme.GGTheme.negative : RuntimeTheme.GGTheme.positive
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WrapAnywhere
@@ -3049,9 +3172,9 @@ Item {
                     Flow {
                         width: parent.width
                         spacing: 6
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.37";
                             text: "FLASH ARB"
-                            color: "#8db89a"
+                            color: RuntimeTheme.GGTheme.positive
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: true
@@ -3062,9 +3185,9 @@ Item {
                                     root.refresh()
                                 }
                         }
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.38";
                             text: "RESET POOLS"
-                            color: "#c8a97e"
+                            color: RuntimeTheme.GGTheme.accent
                             font.family: "monospace"
                             font.pixelSize: 12
                             enabled: !root.operationBusy
@@ -3076,11 +3199,11 @@ Item {
                                 }
                         }
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.39";
                         textFormat: Text.PlainText
                         width: parent.width
                         text: "Paper CPMM. Tip is half the gross, where a Jito auction starts. The bundle drops when the tip eats the edge. Not a live searcher. Mainnet stays observe-only."
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
@@ -3096,7 +3219,7 @@ Item {
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
                 contentHeight: factoryCol.height
-                ScrollBar.vertical: GgScrollBar {}
+                ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.CryptoSurface.GgScrollBar.58";}
 
                 Column {
                     id: factoryCol
@@ -3104,7 +3227,7 @@ Item {
                     height: childrenRect.height
                     spacing: 8
 
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.40";
 
                         textFormat: Text.PlainText
                         text: "STRATEGY FACTORY"
@@ -3112,19 +3235,19 @@ Item {
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.41";
                         textFormat: Text.PlainText
                         text: "ECC LOOP  ·  BOUNDED WORKERS  ·  PAPER ONLY"
                         color: root.ledgerGold
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.42";
                         textFormat: Text.PlainText
                         width: factoryCol.width
                         text: "Hypothesis → backtest → validation → paper review. "
                             + "This surface never places orders and never arms a wallet."
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
@@ -3132,9 +3255,9 @@ Item {
                     Flow {
                         width: parent.width
                         spacing: 6
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.39";
                             text: root.strategyFactoryRunning ? "RUNNING…" : "RUN FACTORY"
-                            color: root.strategyFactoryRunning ? "#c8a97e" : "#8db89a"
+                            color: root.strategyFactoryRunning ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.positive
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: true
@@ -3148,9 +3271,9 @@ Item {
                                     root.statusJson = root.surfaceHost.cryptoStrategyFactory()
                                 }
                         }
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.40";
                             text: "RESET"
-                            color: "#c8a97e"
+                            color: RuntimeTheme.GGTheme.accent
                             font.family: "monospace"
                             font.pixelSize: 12
                             enabled: !root.operationBusy
@@ -3163,18 +3286,18 @@ Item {
                                 }
                         }
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.43";
                         textFormat: Text.PlainText
                         width: factoryCol.width
                         text: "STATE · "
                             + String(root.strategyFactoryJob.state || "idle").toUpperCase()
                             + "  ·  " + String(root.strategyFactoryJob.note || root.strategyFactoryResult.note || "")
-                        color: root.strategyFactoryRunning ? "#c8a97e" : "#c8cdd4"
+                        color: root.strategyFactoryRunning ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.text
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.44";
                         textFormat: Text.PlainText
                         width: factoryCol.width
                         visible: root.strategyFactoryResult.source !== undefined
@@ -3191,17 +3314,17 @@ Item {
                                 + "%  test " + String(split.test_pct || 20) + "%"
                                 + "\n" + String(source.from || "") + " → " + String(source.to || "")
                         }
-                        color: "#8fa8a0"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.45";
                         textFormat: Text.PlainText
                         width: factoryCol.width
                         text: "ROLES · " + root.factoryRolesText()
                             + "\nGATES · " + (((root.strategyFactoryResult.orchestration || {}).gates || []).join("  ·  "))
-                        color: "#7f8994"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
@@ -3212,10 +3335,10 @@ Item {
                             required property int index
                             width: factoryCol.width
                             height: candidateBody.implicitHeight + 32
-                            GgFrame {
+                            GgFrame { property string uiColorScope: "ui.widget.CryptoSurface.GgFrame.61";
                                 anchors.fill: parent
                                 leftLegend: "CANDIDATE " + (index + 1)
-                                backgroundColor: "#161616"
+                                backgroundColor: RuntimeTheme.GGTheme.panel
                                 borderColor: root.frameBorder
                                 radius: root.frameRadius
                             }
@@ -3225,44 +3348,44 @@ Item {
                                 spacing: 4
                                 readonly property var row:
                                     (root.strategyFactoryResult.candidates || [])[index] || {}
-                                Text {
+                                GGText { colorKey: "ui.CryptoSurface.46";
                                     textFormat: Text.PlainText
                                     width: candidateBody.width
                                     text: String(candidateBody.row.label || candidateBody.row.id || "CANDIDATE")
                                         + "  [" + String(candidateBody.row.verdict || "—") + "]"
                                     color: String(candidateBody.row.verdict || "") === "PASS"
-                                        ? "#8db89a"
+                                        ? RuntimeTheme.GGTheme.positive
                                         : (String(candidateBody.row.verdict || "") === "REJECT"
-                                            ? "#c98989" : "#c8a97e")
+                                            ? RuntimeTheme.GGTheme.negative : RuntimeTheme.GGTheme.accent)
                                     font.family: "monospace"
                                     font.pixelSize: 12
                                     font.bold: true
                                 }
-                                Text {
+                                GGText { colorKey: "ui.CryptoSurface.47";
                                     textFormat: Text.PlainText
                                     width: candidateBody.width
                                     text: String(candidateBody.row.hypothesis || "")
-                                    color: "#a8b0b8"
+                                    color: RuntimeTheme.GGTheme.muted
                                     font.family: "monospace"
                                     font.pixelSize: 12
                                     wrapMode: Text.WordWrap
                                 }
-                                Text {
+                                GGText { colorKey: "ui.CryptoSurface.48";
                                     textFormat: Text.PlainText
                                     width: candidateBody.width
                                     text: "TRAIN  " + root.factoryMetric(candidateBody.row.train)
                                         + "\nVALID  " + root.factoryMetric(candidateBody.row.validation)
                                         + "\nTEST   " + root.factoryMetric(candidateBody.row.test)
-                                    color: "#c8cdd4"
+                                    color: RuntimeTheme.GGTheme.text
                                     font.family: "monospace"
                                     font.pixelSize: 12
                                     wrapMode: Text.WordWrap
                                 }
-                                Text {
+                                GGText { colorKey: "ui.CryptoSurface.49";
                                     textFormat: Text.PlainText
                                     width: candidateBody.width
                                     text: String(candidateBody.row.gate_reason || "")
-                                    color: "#7f8994"
+                                    color: RuntimeTheme.GGTheme.muted
                                     font.family: "monospace"
                                     font.pixelSize: 12
                                     wrapMode: Text.WordWrap
@@ -3270,29 +3393,29 @@ Item {
                             }
                         }
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.50";
                         textFormat: Text.PlainText
                         width: factoryCol.width
                         visible: (root.strategyFactoryResult.candidates || []).length === 0
                         text: "No factory result yet. Run the bounded local research loop."
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.51";
                         textFormat: Text.PlainText
                         width: factoryCol.width
                         visible: ((root.strategyFactoryResult.graveyard || []).length > 0)
                         text: "GRAVEYARD · negative results kept · "
                             + String((root.strategyFactoryResult.graveyard || []).length)
                             + "  ·  " + root.factoryGraveyardText()
-                        color: "#c98989"
+                        color: RuntimeTheme.GGTheme.negative
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.52";
                         textFormat: Text.PlainText
                         width: factoryCol.width
                         visible: (root.strategyFactoryResult.autoresearch || {}).steps !== undefined
@@ -3303,7 +3426,7 @@ Item {
                             + "\nTwo expanding validation folds · " + String((root.strategyFactoryResult.autoresearch || {}).trial_count || 0)
                             + " trials · frozen final test: " + root.factoryMetric((root.strategyFactoryResult.autoresearch || {}).final_test)
                             + "\n" + root.factoryAutoresearchText()
-                        color: "#8fa8a0"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
@@ -3314,10 +3437,10 @@ Item {
                         width: factoryCol.width
                         height: qualityBody.implicitHeight + 32
                         visible: root.strategyFactoryResult.research_quality !== undefined
-                        GgFrame {
+                        GgFrame { property string uiColorScope: "ui.widget.CryptoSurface.GgFrame.62";
                             anchors.fill: parent
                             leftLegend: "RESEARCH QUALITY"
-                            backgroundColor: "#161616"
+                            backgroundColor: RuntimeTheme.GGTheme.panel
                             borderColor: root.frameBorder
                             radius: root.frameRadius
                         }
@@ -3343,18 +3466,18 @@ Item {
                             y: 20
                             width: parent.width - 16
                             spacing: 5
-                            Text {
+                            GGText { colorKey: "ui.CryptoSurface.53";
                                 textFormat: Text.PlainText
                                 width: parent.width
                                 text: "RESEARCH RELIABILITY"
 
-                                color: "#e6edf3"
+                                color: RuntimeTheme.GGTheme.bright
                                 font.family: "monospace"
                                 font.pixelSize: 12
                                 font.bold: true
                                 wrapMode: Text.Wrap
                             }
-                            Text {
+                            GGText { colorKey: "ui.CryptoSurface.54";
                                 textFormat: Text.PlainText
                                 objectName: "cryptoFactoryPrefixAudit"
                                 width: parent.width
@@ -3362,12 +3485,12 @@ Item {
                                     : factoryQualityCard.causality.passed === false ? "FAILED" : "UNKNOWN")
                                     + " · " + String((factoryQualityCard.causality.checks || []).length) + " checks"
 
-                                color: factoryQualityCard.causality.passed === false ? "#ffb3b3" : "#c8cdd4"
+                                color: factoryQualityCard.causality.passed === false ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.text
                                 font.family: "monospace"
                                 font.pixelSize: 12
                                 wrapMode: Text.Wrap
                             }
-                            Text {
+                            GGText { colorKey: "ui.CryptoSurface.55";
                                 textFormat: Text.PlainText
                                 objectName: "cryptoFactoryBootstrapRanges"
                                 width: parent.width
@@ -3382,12 +3505,12 @@ Item {
                                         + " · drawdown: " + factoryQualityCard.percent((bootstrap.observed || {}).max_drawdown)
                                 }
 
-                                color: "#c8cdd4"
+                                color: RuntimeTheme.GGTheme.text
                                 font.family: "monospace"
                                 font.pixelSize: 12
                                 wrapMode: Text.Wrap
                             }
-                            Text {
+                            GGText { colorKey: "ui.CryptoSurface.56";
                                 textFormat: Text.PlainText
                                 objectName: "cryptoFactoryBootstrapSamples"
                                 width: parent.width
@@ -3395,19 +3518,19 @@ Item {
                                     + " · Block: " + String(factoryQualityCard.bootstrap.block_size === undefined || factoryQualityCard.bootstrap.block_size === null ? "—" : factoryQualityCard.bootstrap.block_size)
                                     + " · Replicas: " + String(factoryQualityCard.bootstrap.replicas === undefined ? "—" : factoryQualityCard.bootstrap.replicas)
 
-                                color: "#b8c1ca"
+                                color: RuntimeTheme.GGTheme.text
                                 font.family: "monospace"
                                 font.pixelSize: 12
                                 wrapMode: Text.Wrap
                             }
-                            Text {
+                            GGText { colorKey: "ui.CryptoSurface.57";
                                 textFormat: Text.PlainText
                                 width: parent.width
                                 text: "Historical resampling uncertainty; these ranges are not forecasts. The prefix audit covers only its tested input changes."
                                     + (((factoryQualityCard.bootstrap.limits || []).concat(factoryQualityCard.causality.limits || [])).length > 0
                                        ? "\n" + (factoryQualityCard.bootstrap.limits || []).concat(factoryQualityCard.causality.limits || []).slice(0, 6).join("\n") : "")
 
-                                color: "#b8c1ca"
+                                color: RuntimeTheme.GGTheme.text
                                 font.family: "monospace"
                                 font.pixelSize: 12
                                 wrapMode: Text.Wrap
@@ -3424,7 +3547,7 @@ Item {
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
                 contentHeight: deskCol.height
-                ScrollBar.vertical: GgScrollBar {}
+                ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.CryptoSurface.GgScrollBar.63";}
 
                 Column {
                     id: deskCol
@@ -3432,7 +3555,7 @@ Item {
                     height: childrenRect.height
                     spacing: 8
 
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.58";
 
                         textFormat: Text.PlainText
                         text: "PAPER DESK"
@@ -3440,19 +3563,19 @@ Item {
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.59";
                         textFormat: Text.PlainText
                         text: "SIX SEATS  ·  FRONT MAN IN CODE  ·  OBSERVE ONLY"
                         color: root.ledgerGold
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.60";
                         textFormat: Text.PlainText
                         width: deskCol.width
                         text: "456 volume-leads-price. 067 crowd spike. 218 vol size. "
                             + "240 invalidation. 001 reports only. Front Man is a hard veto, not a prompt."
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
@@ -3460,9 +3583,9 @@ Item {
                     Flow {
                         width: parent.width
                         spacing: 6
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.41";
                             text: root.deskRunning ? "RUNNING…" : "SIT THE DESK"
-                            color: root.deskRunning ? "#c8a97e" : "#8db89a"
+                            color: root.deskRunning ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.positive
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: true
@@ -3476,9 +3599,9 @@ Item {
                                     root.statusJson = root.surfaceHost.cryptoDesk()
                                 }
                         }
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.42";
                             text: "RESET"
-                            color: "#c8a97e"
+                            color: RuntimeTheme.GGTheme.accent
                             font.family: "monospace"
                             font.pixelSize: 12
                             enabled: !root.operationBusy
@@ -3490,7 +3613,7 @@ Item {
                                 }
                         }
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.61";
                         textFormat: Text.PlainText
                         width: deskCol.width
                         text: "STATE · " + String(root.deskJob.state || "idle").toUpperCase()
@@ -3500,12 +3623,12 @@ Item {
                             + "  ·  equity " + String(root.desk.equity_pct || 0) + "%"
                             + "  ·  red lights " + String(root.desk.red_lights || 0)
                         color: String((root.desk.front_man || {}).light || "") === "GREEN"
-                            ? "#8db89a" : "#c98989"
+                            ? RuntimeTheme.GGTheme.positive : RuntimeTheme.GGTheme.negative
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.62";
                         textFormat: Text.PlainText
                         width: deskCol.width
                         text: "VOL · HMM "
@@ -3513,7 +3636,7 @@ Item {
                             + "  GARCH σ "
                             + String(((root.desk.vol || {}).garch || {}).last_sigma || "—")
                             + "  size " + String((root.desk.vol || {}).size_scale || "—")
-                        color: "#8fa8a0"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
@@ -3524,10 +3647,10 @@ Item {
                             required property int index
                             width: deskCol.width
                             height: seatBody.implicitHeight + 32
-                            GgFrame {
+                            GgFrame { property string uiColorScope: "ui.widget.CryptoSurface.GgFrame.66";
                                 anchors.fill: parent
                                 leftLegend: "SEAT " + (index + 1)
-                                backgroundColor: "#161616"
+                                backgroundColor: RuntimeTheme.GGTheme.panel
                                 borderColor: root.frameBorder
                                 radius: root.frameRadius
                             }
@@ -3537,18 +3660,18 @@ Item {
                                 spacing: 2
                                 readonly property var row:
                                     (root.desk.seats || [])[index] || {}
-                                Text {
+                                GGText { colorKey: "ui.CryptoSurface.63";
                                     textFormat: Text.PlainText
                                     width: seatBody.width
                                     text: String(seatBody.row.id || "SEAT")
                                         + "  " + String(seatBody.row.job || "")
                                         + "  [" + String(seatBody.row.vote || "—") + "]"
-                                    color: "#c8cdd4"
+                                    color: RuntimeTheme.GGTheme.text
                                     font.family: "monospace"
                                     font.pixelSize: 12
                                     font.bold: true
                                 }
-                                Text {
+                                GGText { colorKey: "ui.CryptoSurface.64";
                                     textFormat: Text.PlainText
                                     width: seatBody.width
                                     text: {
@@ -3561,7 +3684,7 @@ Item {
                                         if (r.light !== undefined) parts.push("board " + String(r.light) + " · reports only")
                                         return parts.join("  ·  ")
                                     }
-                                    color: "#7f8994"
+                                    color: RuntimeTheme.GGTheme.muted
                                     font.family: "monospace"
                                     font.pixelSize: 12
                                     wrapMode: Text.WordWrap
@@ -3571,23 +3694,23 @@ Item {
                             }
                         }
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.65";
                         textFormat: Text.PlainText
                         width: deskCol.width
                         visible: ((root.desk.front_man || {}).reasons || []).length > 0
                         text: "FRONT MAN · "
                             + ((root.desk.front_man || {}).reasons || []).join("  ·  ")
-                        color: "#c98989"
+                        color: RuntimeTheme.GGTheme.negative
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.66";
                         textFormat: Text.PlainText
                         width: deskCol.width
                         visible: (root.desk.seats || []).length === 0
                         text: "No sitting yet. Paper only. Kill switch is in code."
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
@@ -3602,7 +3725,7 @@ Item {
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
                 contentHeight: polyCol.height
-                ScrollBar.vertical: GgScrollBar {}
+                ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.CryptoSurface.GgScrollBar.67";}
 
                 Column {
                     id: polyCol
@@ -3610,7 +3733,7 @@ Item {
                     height: childrenRect.height
                     spacing: 8
 
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.67";
 
                         textFormat: Text.PlainText
                         text: "POLYMARKET RESEARCH"
@@ -3618,18 +3741,18 @@ Item {
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.68";
                         textFormat: Text.PlainText
                         text: "PENDULUMFLOW V3  ·  REMOTE PARQUET  ·  READ ONLY"
                         color: root.ledgerGold
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.69";
                         textFormat: Text.PlainText
                         width: polyCol.width
                         text: "One UTC hour per query. No wallet, order placement or automatic archive sync is connected."
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
@@ -3638,22 +3761,22 @@ Item {
                     Row {
                         width: polyCol.width
                         spacing: 8
-                        Text {
+                        GGText { colorKey: "ui.CryptoSurface.70";
                             textFormat: Text.PlainText
                             text: "UTC"
-                            color: "#a8b0b8"
+                            color: RuntimeTheme.GGTheme.muted
                             font.family: "monospace"
                             font.pixelSize: 12
                             anchors.verticalCenter: parent.verticalCenter
                         }
-                        CryptoField {
+                        CryptoField { property string uiColorScope: "ui.widget.CryptoSurface.CryptoField.68";
                             id: polyDateField
                             width: 112
                             height: 26
                             placeholderText: "YYYY-MM-DD"
                             text: root.polyDate
                         }
-                        CryptoField {
+                        CryptoField { property string uiColorScope: "ui.widget.CryptoSurface.CryptoField.69";
                             id: polyHourField
                             width: 54
                             height: 26
@@ -3665,36 +3788,36 @@ Item {
                     Flow {
                         width: polyCol.width
                         spacing: 6
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.43";
                             text: "SUMMARY"
-                            color: root.polyPreset === "SUMMARY" ? "#d8dee9" : "#a8b0b8"
+                            color: root.polyPreset === "SUMMARY" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: root.polyPreset === "SUMMARY"
                             enabled: !root.operationBusy
                             onClicked: root.polyPreset = "SUMMARY"
                         }
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.44";
                             text: "TRADES"
-                            color: root.polyPreset === "TRADES" ? "#d8dee9" : "#a8b0b8"
+                            color: root.polyPreset === "TRADES" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: root.polyPreset === "TRADES"
                             enabled: !root.operationBusy
                             onClicked: root.polyPreset = "TRADES"
                         }
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.45";
                             text: "TOUCH"
-                            color: root.polyPreset === "TOUCH" ? "#d8dee9" : "#a8b0b8"
+                            color: root.polyPreset === "TOUCH" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: root.polyPreset === "TOUCH"
                             enabled: !root.operationBusy
                             onClicked: root.polyPreset = "TOUCH"
                         }
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.46";
                             text: "SCAN"
-                            color: root.polyPreset === "SCAN" ? "#d8dee9" : "#a8b0b8"
+                            color: root.polyPreset === "SCAN" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: root.polyPreset === "SCAN"
@@ -3706,15 +3829,15 @@ Item {
                     Row {
                         width: polyCol.width
                         spacing: 8
-                        Text {
+                        GGText { colorKey: "ui.CryptoSurface.71";
                             textFormat: Text.PlainText
                             text: "SLUG"
-                            color: root.polyPreset === "TOUCH" ? "#c8cdd4" : "#5d6670"
+                            color: root.polyPreset === "TOUCH" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.dim
                             font.family: "monospace"
                             font.pixelSize: 12
                             anchors.verticalCenter: parent.verticalCenter
                         }
-                        CryptoField {
+                        CryptoField { property string uiColorScope: "ui.widget.CryptoSurface.CryptoField.74";
                             id: polySlugField
                             width: Math.max(120, polyCol.width - 58)
                             height: 26
@@ -3727,9 +3850,9 @@ Item {
                     Flow {
                         width: parent.width
                         spacing: 6
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.47";
                             text: root.polyRunning ? "READING…" : "RUN QUERY"
-                            color: root.polyRunning ? "#c8a97e" : "#8db89a"
+                            color: root.polyRunning ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.positive
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: true
@@ -3737,9 +3860,9 @@ Item {
                             primary: true
                             onClicked: root.runPolymarketQuery()
                         }
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.48";
                             text: root.polyRunning ? "CANCEL QUERY" : "RESET"
-                            color: "#c8a97e"
+                            color: RuntimeTheme.GGTheme.accent
                             font.family: "monospace"
                             font.pixelSize: 12
                             enabled: !root.operationBusy || root.polyRunning
@@ -3748,7 +3871,7 @@ Item {
                         }
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.72";
 
                         textFormat: Text.PlainText
                         width: polyCol.width
@@ -3757,21 +3880,21 @@ Item {
                             var mode = String(root.polymarket.preset || root.polyPreset || "SUMMARY")
                             return "STATE · " + state + "  ·  " + mode
                         }
-                        color: root.polyRunning ? "#c8a97e" : "#c8cdd4"
+                        color: root.polyRunning ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.text
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.73";
                         textFormat: Text.PlainText
                         width: polyCol.width
                         text: String(root.polymarket.note || "")
                         visible: text.length > 0
-                        color: String(root.polymarket.state || "") === "error" ? "#c98989" : "#a8b0b8"
+                        color: String(root.polymarket.state || "") === "error" ? RuntimeTheme.GGTheme.negative : RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.74";
                         textFormat: Text.PlainText
                         width: polyCol.width
                         text: "BUDGET · 512 MiB · 2 threads · 30s SQL timeout · 2 GiB source limit · 240 result rows"
@@ -3783,54 +3906,54 @@ Item {
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.75";
                         textFormat: Text.PlainText
                         width: polyCol.width
                         text: "ARCHIVE · " + String(root.polymarket.url || "")
                         visible: String(root.polymarket.url || "").length > 0
-                        color: "#8fa8a0"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WrapAnywhere
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.76";
                         textFormat: Text.PlainText
                         width: polyCol.width
                         text: "SQL PREVIEW\n" + String(root.polymarket.sql || "")
                         visible: String(root.polymarket.sql || "").length > 0
-                        color: "#7f8994"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WrapAnywhere
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.77";
                         textFormat: Text.PlainText
                         width: polyCol.width
                         text: ((root.polyResult || {}).lines || []).join("\n")
                         visible: ((root.polyResult || {}).lines || []).length > 0
-                        color: "#c8cdd4"
+                        color: RuntimeTheme.GGTheme.text
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WrapAnywhere
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.78";
                         textFormat: Text.PlainText
                         width: polyCol.width
                         visible: !root.polyRunning
                             && ((root.polyResult || {}).lines || []).length === 0
                             && String(root.polymarket.state || "") !== "error"
                         text: "No result yet. SUMMARY and TRADES need only a UTC hour; TOUCH also needs a market slug."
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.79";
                         textFormat: Text.PlainText
                         width: polyCol.width
                         text: "POLY_DATA · " + String((root.polymarket.poly_data || {}).state || "OPTIONAL")
                             + "\n" + String((root.polymarket.poly_data || {}).note || "")
-                        color: "#7f8994"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
@@ -3846,25 +3969,25 @@ Item {
                 contentWidth: width
                 contentHeight: ledCol.height
                 boundsBehavior: Flickable.StopAtBounds
-                ScrollBar.vertical: GgScrollBar {}
+                ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.CryptoSurface.GgScrollBar.77";}
                 Column {
                     id: ledCol
                     width: parent.width
                     spacing: 8
                     Flow {
                         width: parent.width; spacing: 6
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.49";
                             text: "Alla händelser · " + root.ledger.length
                             checked: !root.activityErrorsOnly
                             onClicked: root.activityErrorsOnly = false
                         }
-                        CryptoButton {
+                        CryptoButton { property string uiColorScope: "ui.control.CryptoSurface.50";
                             text: "Fel och avvikelser"
                             checked: root.activityErrorsOnly
                             onClicked: root.activityErrorsOnly = true
                         }
                     }
-                    Text {
+                    GGText { colorKey: "ui.CryptoSurface.80";
                         textFormat: Text.PlainText
                         width: parent.width; topPadding: 20
                         visible: root.activityRows.length === 0
@@ -3880,28 +4003,28 @@ Item {
                             readonly property var row: modelData || ({})
                             width: ledCol.width
                             height: eventBody.implicitHeight + 32
-                            GgFrame {
+                            GgFrame { property string uiColorScope: "ui.widget.CryptoSurface.GgFrame.80";
                                 anchors.fill: parent
                                 leftLegend: "EVENT"
                                 radius: root.frameRadius
-                                backgroundColor: "#161616"; borderColor: root.frameBorder
+                                backgroundColor: RuntimeTheme.GGTheme.panel; borderColor: root.frameBorder
                             }
-                            Rectangle {
+                            Rectangle { GGColorTarget { colorKey: "ui.fill.CryptoSurface.1"; }
                                 width: 2; height: parent.height - 16; y: 8
-                                color: activityCard.row.error ? "#c98989" : "#8a8a8a"
+                                color: activityCard.row.error ? RuntimeTheme.GGTheme.negative : RuntimeTheme.GGTheme.muted
                             }
                             Column {
                                 id: eventBody
                                 x: 12; y: 20; width: parent.width - 24; spacing: 6
-                                Text {
+                                GGText { colorKey: "ui.CryptoSurface.81";
                                     textFormat: Text.PlainText
                                     width: parent.width
                                     text: String(activityCard.row.side || "HÄNDELSE").toUpperCase() + " · " + String(activityCard.row.status || "Resultat saknas")
-                                    color: activityCard.row.error ? "#c98989" : root.ink
+                                    color: activityCard.row.error ? RuntimeTheme.GGTheme.negative : root.ink
                                     font.family: "monospace"; font.pixelSize: 12; font.bold: true
                                     wrapMode: Text.WordWrap
                                 }
-                                Text {
+                                GGText { colorKey: "ui.CryptoSurface.82";
                                     textFormat: Text.PlainText
                                     width: parent.width
                                     text: {
@@ -3914,7 +4037,7 @@ Item {
                                     color: root.ledgerGold; font.family: "monospace"; font.pixelSize: 10
                                     wrapMode: Text.WordWrap
                                 }
-                                Text {
+                                GGText { colorKey: "ui.CryptoSurface.83";
                                     textFormat: Text.PlainText
                                     width: parent.width
                                     text: String(activityCard.row.hint || activityCard.row.error || "Ingen ytterligare information")
@@ -3926,7 +4049,7 @@ Item {
                                     visible: String(activityCard.row.txid || "").length > 0
                                     text: String(activityCard.row.txid || "")
                                     readOnly: true; selectByMouse: true; textFormat: TextEdit.PlainText
-                                    color: root.muted; selectionColor: "#3a3a3a"
+                                    color: root.muted; selectionColor: RuntimeTheme.GGTheme.line
                                     font.family: "monospace"; font.pixelSize: 10
                                     wrapMode: TextEdit.WrapAnywhere
                                     Accessible.name: "Transaktionsreferens"

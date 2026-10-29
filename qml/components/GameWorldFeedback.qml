@@ -35,7 +35,7 @@ Item {
             opacity:modelData.alpha
             z:bubble ? 2 : quest ? 3 : 1
             Rectangle {anchors.fill:parent;visible:mark.bubble;radius:8;color:'#ef172720';border.color:'#b9aa78';border.width:1}
-            Text {
+            GGText { colorKey: "ui.GameWorldFeedback.1";
                 id:label
                 anchors.centerIn:parent
                 width:mark.bubble ? Math.min(256,implicitWidth) : implicitWidth

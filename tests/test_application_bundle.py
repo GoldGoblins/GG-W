@@ -148,7 +148,7 @@ print("RELOCATED_APP_IMPORT=PASS")
 from PySide6.QtCore import QTimer, QUrl
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtWidgets import QApplication
-from startup import FirstFrameBootstrap
+from startup import FirstFrameBootstrap, run_event_loop
 app = QApplication(['GG exported application test'])
 engine = QQmlApplicationEngine()
 engine.load(QUrl.fromLocalFile(str(PROJECT_ROOT / 'qml/Main.qml')))
@@ -168,7 +168,7 @@ timer.timeout.connect(check_startup)
 timer.start()
 QTimer.singleShot(30000, lambda: app.exit(3))
 bootstrap.start()
-assert app.exec() == 0, 'RELOCATED_QML_STARTUP_FAILED'
+assert run_event_loop(app, engine) == 0, 'RELOCATED_QML_STARTUP_FAILED'
 '''
             result = subprocess.run([sys.executable, "-B", "-c", code], cwd=exported, env=env, text=True, capture_output=True, timeout=45)
             self.assertEqual(result.returncode, 0, result.stderr[-1800:])

@@ -1,4 +1,6 @@
 pragma ComponentBehavior: Bound
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
@@ -28,9 +30,9 @@ Item {
         visible: root.expanded
         color: "#f019232b"
         radius: 4
-        border.color: "#806d47"
+        border.color: RuntimeTheme.GGTheme.edge
     }
-    GgButton {
+    GgButton { property string uiColorScope: "ui.control.GameAddonsPanel.1";
         objectName: "gameAddonsToggle"
         anchors.right: parent.right
         width: 76; height: 28
@@ -42,14 +44,14 @@ Item {
         x: 12; y: 10
         width: parent.width - 100
         spacing: 3
-        Text {
+        GGText { colorKey: "ui.GameAddonsPanel.1";
             text: "KARAKTÄRENS TILLÄGG"
-            color: "#e9d6af"; font.pixelSize: 11; font.bold: true
+            color: RuntimeTheme.GGTheme.text; font.pixelSize: 11; font.bold: true
         }
-        Text {
+        GGText { colorKey: "ui.GameAddonsPanel.2";
             width: parent.width
             text: root.state.can_edit ? "Valet sparas på datorn." : "Välj en karaktär först."
-            color: "#acada4"; font.pixelSize: 10; wrapMode: Text.WordWrap
+            color: RuntimeTheme.GGTheme.muted; font.pixelSize: 10; wrapMode: Text.WordWrap
         }
     }
     ListView {
@@ -64,7 +66,7 @@ Item {
             id: addon
             required property var modelData
             width: list.width; height: 62
-            GgButton {
+            GgButton { property string uiColorScope: "ui.control.GameAddonsPanel.2";
                 objectName: "gameAddonToggle_" + addon.modelData.id
                 width: 44; height: 25
                 enabled: Boolean(root.state.can_edit)
@@ -77,12 +79,12 @@ Item {
             }
             Column {
                 x: 52; width: parent.width - 52; spacing: 2
-                Text {
+                GGText { colorKey: "ui.GameAddonsPanel.3";
                     width: parent.width
                     text: addon.modelData.title || addon.modelData.id
-                    elide: Text.ElideRight; color: "#e9d6af"; font.pixelSize: 11
+                    elide: Text.ElideRight; color: RuntimeTheme.GGTheme.text; font.pixelSize: 11
                 }
-                Text {
+                GGText { colorKey: "ui.GameAddonsPanel.4";
                     width: parent.width; wrapMode: Text.WordWrap
                     text: addon.modelData.mixed ? "Olika val för karaktärerna"
                         : root.state.editing ? (addon.modelData.enabled ? "Aktiveras vid nästa omladdning" : "Avstängt vid nästa omladdning")
@@ -94,18 +96,18 @@ Item {
                         : addon.modelData.reason ? "Kan inte laddas: " + addon.modelData.reason
                         : addon.modelData.load_on_demand ? "Laddas när det behövs"
                         : "Aktiveras vid omladdning"
-                    color: "#acada4"; font.pixelSize: 10
+                    color: RuntimeTheme.GGTheme.muted; font.pixelSize: 10
                 }
             }
         }
-        Text {
+        GGText { colorKey: "ui.GameAddonsPanel.5";
             anchors.centerIn: parent
             visible: root.rows.length === 0
             text: "Inga tillägg hittades."
-            color: "#acada4"; font.pixelSize: 11
+            color: RuntimeTheme.GGTheme.muted; font.pixelSize: 11
         }
     }
-    ComboBox {
+    ComboBox { property string uiColorScope: "ui.control.GameAddonsPanel.3";
         objectName:"gameAddonCharacter"
         visible:root.expanded && Boolean(root.state.editing)
         x:12;y:52;width:parent.width-24;height:30
@@ -113,27 +115,29 @@ Item {
         textRole:"name";valueRole:"id"
         currentIndex:{var rows=root.state.characters || [];for(var i=0;i<rows.length;i++)if(rows[i].id===root.state.selected)return i;return 0}
         onActivated:if(root.runtime)root.runtime.selectAddonCharacter(currentValue,root.state.generation)
-    }
-    Text {
+    
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignLeft }
+}
+    GGText { colorKey: "ui.GameAddonsPanel.6";
         visible: root.expanded
         x: 12; y: parent.height - (root.state.editing ? 118 : 86); width: parent.width - 24; height: 44
         text: root.state.error || (root.state.editing ? "Spara valet för den valda karaktären eller alla. Avbryt återgår till sparade val." : "Ladda om gränssnittet för att börja eller sluta köra tilläggen.")
-        color: root.state.error ? "#f3ad88" : "#acada4"
+        color: root.state.error ? "#f3ad88" : RuntimeTheme.GGTheme.muted
         font.pixelSize: 10; wrapMode: Text.WordWrap; elide: Text.ElideRight
     }
     Row {
         visible:root.expanded && Boolean(root.state.editing)
         x:12;y:parent.height-68;width:parent.width-24;spacing:8
-        GgButton {
+        GgButton { property string uiColorScope: "ui.control.GameAddonsPanel.4";
             objectName:"gameAddonsSave";width:(parent.width-8)/2;height:25;text:"SPARA";enabled:Boolean(root.state.can_edit)
             onClicked:if(root.runtime && root.runtime.finishAddonChoices(true,root.state.generation))root.expanded=false
         }
-        GgButton {
+        GgButton { property string uiColorScope: "ui.control.GameAddonsPanel.5";
             objectName:"gameAddonsCancel";width:(parent.width-8)/2;height:25;text:"AVBRYT"
             onClicked:root.expanded=false
         }
     }
-    GgButton {
+    GgButton { property string uiColorScope: "ui.control.GameAddonsPanel.6";
         objectName: "gameAddonsReload"
         visible: root.expanded
         x: 12; y: parent.height - 36; width: parent.width - 24; height: 25

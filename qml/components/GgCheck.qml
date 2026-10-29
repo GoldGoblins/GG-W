@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 
 Item {
@@ -15,9 +17,9 @@ Item {
         width: 12
         height: 12
         anchors.verticalCenter: parent.verticalCenter
-        color: root.checked ? "#1a1a1a" : "#121212"
+        color: root.checked ? RuntimeTheme.GGTheme.raised : RuntimeTheme.GGTheme.canvas
         border.width: 1
-        border.color: root.checked ? "#c8cdd4" : "#6a6a6a"
+        border.color: root.checked ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.edge
         radius: 1
         antialiasing: false
 
@@ -26,18 +28,18 @@ Item {
             anchors.centerIn: parent
             width: 6
             height: 6
-            color: "#e6e6e6"
+            color: RuntimeTheme.GGTheme.bright
             antialiasing: false
         }
     }
 
-    Text {
+    GGText { colorKey: "ui.GgCheck.1";
         id: label
         anchors.left: box.right
         anchors.leftMargin: 8
         anchors.verticalCenter: parent.verticalCenter
         text: root.text
-        color: "#e6e6e6"
+        color: RuntimeTheme.GGTheme.bright
         font.family: "monospace"
         font.pixelSize: 12
         wrapMode: Text.NoWrap

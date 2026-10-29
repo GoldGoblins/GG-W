@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 import "CryptoPortfolioFormat.js" as Format
@@ -38,11 +40,11 @@ Item {
         return output.map(function(entry) { return entry.row })
     }
 
-    Text {
+    GGText { colorKey: "ui.CryptoHoldings.1";
         x: 1; y: 7; width: Math.max(80, table.width - search.width - 18)
         text: "TILLGÅNGAR  " + table.visibleAssets.length
             + (table.filterText.length ? " / " + table.assets.length : "")
-        color: "#e6edf3"; font.family: "monospace"; font.pixelSize: 11; font.bold: true
+        color: RuntimeTheme.GGTheme.bright; font.family: "monospace"; font.pixelSize: 11; font.bold: true
         elide: Text.ElideRight; textFormat: Text.PlainText
     }
     TextField {
@@ -54,28 +56,28 @@ Item {
         text: table.filterText
         onTextEdited: table.filterText = text
         placeholderText: "Sök tillgång eller mint"
-        color: "#e6edf3"; placeholderTextColor: "#8b949e"; selectionColor: "#3a3a3a"
+        color: RuntimeTheme.GGTheme.bright; placeholderTextColor: RuntimeTheme.GGTheme.dim; selectionColor: RuntimeTheme.GGTheme.selected
         font.family: "monospace"; font.pixelSize: 11
         leftPadding: 9; rightPadding: 24; selectByMouse: true
         Accessible.name: "Filtrera tillgångar efter namn, symbol eller mint"
-        background: Rectangle { color: "#121212"; radius: 2; border.color: search.activeFocus ? "#8a8a8a" : "#6a6a6a" }
+        background: Rectangle { color: RuntimeTheme.GGTheme.canvas; radius: 2; border.color: search.activeFocus ? RuntimeTheme.GGTheme.dim : RuntimeTheme.GGTheme.edge }
         Keys.onEscapePressed: table.filterText = ""
-        ToolButton {
+        ToolButton { property string uiColorScope: "ui.control.CryptoHoldings.1";
             anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
             width: 24; height: 26; visible: search.text.length > 0
             text: "×"; font.pixelSize: 15
             Accessible.name: "Rensa tillgångsfilter"
-            contentItem: Text { text: parent.text; color: "#c8cdd4"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
-            background: Rectangle { color: parent.hovered || parent.activeFocus ? "#303030" : "transparent"; radius: 2 }
+            contentItem: GGText { colorKey: "ui.CryptoHoldings.2"; text: parent.text; color: RuntimeTheme.GGTheme.text; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+            background: Rectangle { color: parent.hovered || parent.activeFocus ? RuntimeTheme.GGTheme.selected : "transparent"; radius: 2 }
             onClicked: { table.filterText = ""; search.forceActiveFocus() }
         }
     }
     Item {
         y: 35; width: parent.width; height: 19
-        Text {
+        GGText { colorKey: "ui.CryptoHoldings.3";
             x: 8; width: table.priceX - 20
             text: "TILLGÅNG" + (table.sortMode === "name" ? " ↑" : "")
-            color: nameSort.activeFocus ? "#e6edf3" : "#8b949e"
+            color: nameSort.activeFocus ? RuntimeTheme.GGTheme.bright : RuntimeTheme.GGTheme.dim
             font.family: "monospace"; font.pixelSize: 9; font.letterSpacing: 0.3
             elide: Text.ElideRight
         }
@@ -87,15 +89,15 @@ Item {
             Keys.onReturnPressed: clicked(null)
             Keys.onSpacePressed: clicked(null)
         }
-        Text {
+        GGText { colorKey: "ui.CryptoHoldings.4";
             x: table.priceX; width: table.valueX - x - 16
-            text: "PRIS / 24H"; color: "#8b949e"; font.family: "monospace"; font.pixelSize: 9
+            text: "PRIS / 24H"; color: RuntimeTheme.GGTheme.dim; font.family: "monospace"; font.pixelSize: 9
             horizontalAlignment: Text.AlignRight
         }
-        Text {
+        GGText { colorKey: "ui.CryptoHoldings.5";
             x: table.valueX; width: table.width - x - 12
             text: "VÄRDE" + (table.sortMode === "value" ? " ↓" : "") + " / ANTAL"
-            color: valueSort.activeFocus ? "#e6edf3" : "#8b949e"
+            color: valueSort.activeFocus ? RuntimeTheme.GGTheme.bright : RuntimeTheme.GGTheme.dim
             font.family: "monospace"; font.pixelSize: 9; horizontalAlignment: Text.AlignRight
             elide: Text.ElideRight
         }
@@ -108,7 +110,7 @@ Item {
             Keys.onSpacePressed: clicked(null)
         }
     }
-    Rectangle { y: 53; width: parent.width; height: 1; color: "#6a6a6a" }
+    Rectangle { y: 53; width: parent.width; height: 1; color: RuntimeTheme.GGTheme.edge }
     ListView {
         id: rows
         objectName: "cryptoHoldingsList"
@@ -128,62 +130,62 @@ Item {
                 && isFinite(Number(modelData.price_usd))
             readonly property bool changeKnown: modelData.change_24h_pct !== null && modelData.change_24h_pct !== undefined
                 && isFinite(Number(modelData.change_24h_pct))
-            color: rowMouse.containsMouse || rowMouse.activeFocus ? "#292c30" : selected ? "#34383d" : index % 2 === 0 ? "#1b1b1b" : "#181818"
+            color: rowMouse.containsMouse || rowMouse.activeFocus ? "#292c30" : selected ? RuntimeTheme.GGTheme.line : index % 2 === 0 ? RuntimeTheme.GGTheme.raised : RuntimeTheme.GGTheme.panel
             Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: "#2b2b2b" }
-            Rectangle { width: 1; height: parent.height - 1; visible: assetRow.selected || rowMouse.activeFocus; color: "#8a8a8a" }
+            Rectangle { width: 1; height: parent.height - 1; visible: assetRow.selected || rowMouse.activeFocus; color: RuntimeTheme.GGTheme.dim }
             Rectangle {
                 x: 10; y: 17; width: 28; height: 28; radius: 5
-                color: "#202020"
-                border.color: "#6a6a6a"
-                Text {
+                color: RuntimeTheme.GGTheme.raised
+                border.color: RuntimeTheme.GGTheme.edge
+                GGText { colorKey: "ui.CryptoHoldings.6";
                     anchors.centerIn: parent
                     text: String(assetRow.modelData.symbol || "?").slice(0, 1)
-                    font.family: "monospace"; font.pixelSize: 13; font.bold: true; color: "#e6edf3"; textFormat: Text.PlainText
+                    font.family: "monospace"; font.pixelSize: 13; font.bold: true; color: RuntimeTheme.GGTheme.bright; textFormat: Text.PlainText
                 }
             }
             Column {
                 x: 48; y: 13; width: table.priceX - x - 12; spacing: 5
-                Text {
+                GGText { colorKey: "ui.CryptoHoldings.7";
                     width: parent.width; text: String(assetRow.modelData.name || assetRow.modelData.symbol || "Okänd tillgång")
                     elide: Text.ElideRight; textFormat: Text.PlainText
-                    color: "#e6edf3"; font.family: "monospace"; font.pixelSize: table.compact ? 11 : 12
+                    color: RuntimeTheme.GGTheme.bright; font.family: "monospace"; font.pixelSize: table.compact ? 11 : 12
                 }
-                Text {
+                GGText { colorKey: "ui.CryptoHoldings.8";
                     width: parent.width; text: String(assetRow.modelData.symbol || "") + (assetRow.selected ? " · VALD" : "")
                     elide: Text.ElideRight; textFormat: Text.PlainText
-                    color: assetRow.selected ? "#e6edf3" : "#8b949e"; font.family: "monospace"; font.pixelSize: 10
+                    color: assetRow.selected ? RuntimeTheme.GGTheme.bright : RuntimeTheme.GGTheme.dim; font.family: "monospace"; font.pixelSize: 10
                 }
             }
             Column {
                 x: table.priceX; y: 13; width: table.valueX - x - 16; spacing: 5
-                Text {
+                GGText { colorKey: "ui.CryptoHoldings.9";
                     width: parent.width; horizontalAlignment: Text.AlignRight
                     text: Format.money(assetRow.modelData.price_usd, "USD", true)
-                    color: "#e6edf3"; font.family: "monospace"; font.pixelSize: table.compact ? 11 : 12
+                    color: RuntimeTheme.GGTheme.bright; font.family: "monospace"; font.pixelSize: table.compact ? 11 : 12
                     elide: Text.ElideRight; textFormat: Text.PlainText
                 }
-                Text {
+                GGText { colorKey: "ui.CryptoHoldings.10";
                     width: parent.width; horizontalAlignment: Text.AlignRight
                     text: !assetRow.priceKnown ? "Pris saknas" : assetRow.modelData.stale ? "Äldre pris"
                         : Format.percent(assetRow.modelData.change_24h_pct)
-                    color: !assetRow.priceKnown || assetRow.modelData.stale ? "#c8a97e"
-                        : !assetRow.changeKnown ? "#8b949e" : Number(assetRow.modelData.change_24h_pct) >= 0 ? "#8db89a" : "#c98989"
+                    color: !assetRow.priceKnown || assetRow.modelData.stale ? RuntimeTheme.GGTheme.warning
+                        : !assetRow.changeKnown ? RuntimeTheme.GGTheme.dim : Number(assetRow.modelData.change_24h_pct) >= 0 ? RuntimeTheme.GGTheme.positive : RuntimeTheme.GGTheme.negative
                     font.family: "monospace"; font.pixelSize: 10; elide: Text.ElideRight; textFormat: Text.PlainText
                 }
             }
             Column {
                 x: table.valueX; y: 13; width: table.width - x - 12; spacing: 5
-                Text {
+                GGText { colorKey: "ui.CryptoHoldings.11";
                     width: parent.width; horizontalAlignment: Text.AlignRight
                     text: Format.money(assetRow.modelData.value_usd, "USD", false)
-                    color: "#e6edf3"; font.family: "monospace"; font.pixelSize: table.compact ? 11 : 12
+                    color: RuntimeTheme.GGTheme.bright; font.family: "monospace"; font.pixelSize: table.compact ? 11 : 12
                     elide: Text.ElideRight; textFormat: Text.PlainText
                 }
-                Text {
+                GGText { colorKey: "ui.CryptoHoldings.12";
                     width: parent.width; horizontalAlignment: Text.AlignRight
                     text: (assetRow.modelData.quantity_text === undefined || assetRow.modelData.quantity_text === null
                         ? "—" : Format.quantity(assetRow.modelData.quantity_text)) + " " + String(assetRow.modelData.symbol || "")
-                    color: "#8b949e"; font.family: "monospace"; font.pixelSize: 10
+                    color: RuntimeTheme.GGTheme.dim; font.family: "monospace"; font.pixelSize: 10
                     elide: Text.ElideRight; textFormat: Text.PlainText
                 }
             }
@@ -212,28 +214,28 @@ Item {
                     + (assetRow.modelData.price_source ? "\nPris: " + assetRow.modelData.price_source
                         + (assetRow.modelData.stale ? " · äldre data" : "") : "\nIngen verifierad prisdata")
                     + (assetRow.selectable ? "\n" + (assetRow.nativeAsset ? "Öppna prisgraf" : "Inspektera token i Pump") : "")
-                contentItem: Text {
+                contentItem: GGText { colorKey: "ui.CryptoHoldings.13";
                     text: rowTip.text; textFormat: Text.PlainText
-                    color: "#e6edf3"; font.family: "monospace"; font.pixelSize: 11
+                    color: RuntimeTheme.GGTheme.bright; font.family: "monospace"; font.pixelSize: 11
                     wrapMode: Text.WrapAnywhere
                 }
-                background: Rectangle { color: "#161616"; border.color: "#6a6a6a"; radius: 2 }
+                background: Rectangle { color: RuntimeTheme.GGTheme.panel; border.color: RuntimeTheme.GGTheme.edge; radius: 2 }
             }
         }
     }
     Column {
         anchors.centerIn: rows; width: rows.width - 24; spacing: 8
         visible: table.visibleAssets.length === 0
-        Text {
+        GGText { colorKey: "ui.CryptoHoldings.14";
             width: parent.width; horizontalAlignment: Text.AlignHCenter
             text: table.assets.length ? "INGEN TRÄFF" : "INGA TILLGÅNGAR ÄNNU"
-            color: "#c8cdd4"; font.family: "monospace"; font.pixelSize: 11
+            color: RuntimeTheme.GGTheme.text; font.family: "monospace"; font.pixelSize: 11
         }
-        Text {
+        GGText { colorKey: "ui.CryptoHoldings.15";
             width: parent.width; wrapMode: Text.WordWrap; horizontalAlignment: Text.AlignHCenter
             text: table.assets.length ? "Sök efter namn, symbol eller mint. Rensa sökningen för att visa allt."
                 : "Anslut en plånbok för att se dina tillgångar."
-            color: "#8b949e"; font.family: "monospace"; font.pixelSize: 11
+            color: RuntimeTheme.GGTheme.dim; font.family: "monospace"; font.pixelSize: 11
         }
     }
 }

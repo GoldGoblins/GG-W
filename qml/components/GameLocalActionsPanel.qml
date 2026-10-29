@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
@@ -29,15 +31,15 @@ Item {
             Row {
                 width: parent.width
                 spacing: 8
-                Text {
+                GGText { colorKey: "ui.GameLocalActionsPanel.1";
                     width: parent.width - 90
                     text: "◆  TILLVERKNING"
-                    color: "#f4d99e"
+                    color: RuntimeTheme.GGTheme.orange
                     font.family: "serif"
                     font.pixelSize: 18
                     font.bold: true
                 }
-                GameInventoryAction {
+                GameInventoryAction { property string uiColorScope: "ui.widget.GameLocalActionsPanel.GameInventoryAction.1";
                     objectName: "ggCraftingClose"
                     text: "STÄNG ×"
                     onClicked: panel.game.closeCrafting()
@@ -45,22 +47,22 @@ Item {
             }
             Row {
                 spacing: 8
-                GameInventoryAction {
+                GameInventoryAction { property string uiColorScope: "ui.widget.GameLocalActionsPanel.GameInventoryAction.2";
                     objectName: "ggCraftingField"
                     text: "FÄLTRECEPT"
                     onClicked: panel.game.openCrafting("")
                 }
-                GameInventoryAction {
+                GameInventoryAction { property string uiColorScope: "ui.widget.GameLocalActionsPanel.GameInventoryAction.3";
                     objectName: "ggCraftingStation"
                     text: "NÄRMASTE ARBETSSTATION"
                     onClicked: panel.game.openCrafting("NEAREST")
                 }
             }
-            Text {
+            GGText { colorKey: "ui.GameLocalActionsPanel.2";
                 width: parent.width
                 text: Number(panel.book.repeat_count) > 0 ? (panel.game.status.state === "RUNNING" ? "Tillverkar" : "Tillverkningen är pausad") + " · " + panel.book.repeat_count + " återstår"
                       : panel.book.station_id ? "Recept vid den valda arbetsstationen" : "Recept som kan tillverkas direkt i fält"
-                color: "#d1bd8f"
+                color: RuntimeTheme.GGTheme.text
                 font.pixelSize: 12
                 wrapMode: Text.WordWrap
             }
@@ -86,8 +88,8 @@ Item {
                         anchors.top: parent.top
                         anchors.margins: 9
                         spacing: 5
-                        Text { text: modelData.name; color: "#f4d99e"; font.pixelSize: 14; font.bold: true }
-                        Text {
+                        GGText { colorKey: "ui.GameLocalActionsPanel.3"; text: modelData.name; color: RuntimeTheme.GGTheme.orange; font.pixelSize: 14; font.bold: true }
+                        GGText { colorKey: "ui.GameLocalActionsPanel.4";
                             width: parent.width
                             text: (modelData.reagents || []).map(function(r) {
                                 return r.name + " " + r.have + "/" + r.need
@@ -99,31 +101,31 @@ Item {
                         Row {
                             width: parent.width
                             spacing: 8
-                            GameInventoryAction {
+                            GameInventoryAction { property string uiColorScope: "ui.widget.GameLocalActionsPanel.GameInventoryAction.4";
                                 objectName: "ggCraftRecipe_" + String(modelData.ref)
                                 text: "SKAPA"
                                 enabled: Number(modelData.available) > 0 && !Number(panel.book.repeat_count)
                                 onClicked: panel.game.craftBookRecipe(String(modelData.ref), 1)
                             }
-                            GameInventoryAction {
+                            GameInventoryAction { property string uiColorScope: "ui.widget.GameLocalActionsPanel.GameInventoryAction.5";
                                 text: "SKAPA ALLA (" + String(Number(modelData.available || 0)) + ")"
                                 visible: Number(modelData.available) > 1
                                 enabled: Number(modelData.available) > 1 && !Number(panel.book.repeat_count)
                                 onClicked: panel.game.craftBookRecipe(String(modelData.ref), Number(modelData.available))
                             }
-                            Text { width: Math.max(50, parent.width - 180); text: modelData.description; color: "#d1bd8f"; font.pixelSize: 11; elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter }
+                            GGText { colorKey: "ui.GameLocalActionsPanel.5"; width: Math.max(50, parent.width - 180); text: modelData.description; color: RuntimeTheme.GGTheme.text; font.pixelSize: 11; elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter }
                         }
                     }
                 }
             }
-            Text {
+            GGText { colorKey: "ui.GameLocalActionsPanel.6";
                 width: parent.width
                 text: panel.game ? panel.game.itemNotice : ""
                 color: "#f0c67a"
                 font.pixelSize: 12
                 wrapMode: Text.WordWrap
             }
-            GameInventoryAction {
+            GameInventoryAction { property string uiColorScope: "ui.widget.GameLocalActionsPanel.GameInventoryAction.6";
                 objectName: "ggCraftingStop"
                 visible: Number(panel.book.repeat_count) > 0
                 text: "AVBRYT TILLVERKNING"
@@ -151,8 +153,8 @@ Item {
             spacing: 10
             Row {
                 width: parent.width
-                Text { width: parent.width - 80; text: "◆  INNEHÅLL"; color: "#f4d99e"; font.pixelSize: 16; font.bold: true }
-                GameInventoryAction { objectName: "ggLootClose"; text: "STÄNG ×"; onClicked: panel.game.closeLoot() }
+                GGText { colorKey: "ui.GameLocalActionsPanel.7"; width: parent.width - 80; text: "◆  INNEHÅLL"; color: RuntimeTheme.GGTheme.orange; font.pixelSize: 16; font.bold: true }
+                GameInventoryAction { property string uiColorScope: "ui.widget.GameLocalActionsPanel.GameInventoryAction.7"; objectName: "ggLootClose"; text: "STÄNG ×"; onClicked: panel.game.closeLoot() }
             }
             ListView {
                 objectName: "ggLootItems"
@@ -162,7 +164,7 @@ Item {
                 clip: true
                 spacing: 6
                 ScrollBar.vertical: ScrollBar { }
-                delegate: GameInventoryAction {
+                delegate: GameInventoryAction { property string uiColorScope: "ui.widget.GameLocalActionsPanel.GameInventoryAction.8";
                     required property var modelData
                     width: ListView.view.width
                     height: modelData ? 38 : 0
@@ -173,7 +175,7 @@ Item {
                     onClicked: if (modelData) panel.game.lootItem(String(modelData.instance_id))
                 }
             }
-            Text { width: parent.width; text: panel.game ? panel.game.itemNotice : ""; color: "#f0c67a"; font.pixelSize: 11; wrapMode: Text.WordWrap }
+            GGText { colorKey: "ui.GameLocalActionsPanel.8"; width: parent.width; text: panel.game ? panel.game.itemNotice : ""; color: "#f0c67a"; font.pixelSize: 11; wrapMode: Text.WordWrap }
         }
     }
 }

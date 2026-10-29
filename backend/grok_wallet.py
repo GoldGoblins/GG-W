@@ -5,7 +5,9 @@ from backend.application_paths import STATE_ROOT
 import json
 import os
 import re
+import threading
 import time
+from collections import OrderedDict
 from pathlib import Path
 from typing import Any
 
@@ -31,29 +33,40 @@ _WEEK_RE3 = re.compile(
     re.IGNORECASE,
 )
 _LOG_PERCENT = re.compile(r'"creditUsagePercent"\s*:\s*(\d+(?:\.\d+)?)')
-_TAIL_CACHE: dict[str, tuple[int, int, Any]] = {}
+_TAIL_CACHE_LIMIT = 32
+_TAIL_CACHE: OrderedDict[tuple[str, int], tuple[int, int, str]] = OrderedDict()
+_TAIL_CACHE_LOCK = threading.Lock()
 _DISCOVER_CACHE: tuple[float, tuple[Any, ...], Any] | None = None
 
 
 def _tail_cached(path: Path, max_bytes: int) -> str:
-    key = str(path)
+    if type(max_bytes) is not int or max_bytes <= 0:
+        raise ValueError("Tail byte limit must be a positive integer")
+    key = (str(path), max_bytes)
     try:
         st = path.stat()
     except OSError:
-        _TAIL_CACHE.pop(key, None)
+        with _TAIL_CACHE_LOCK:
+            _TAIL_CACHE.pop(key, None)
         return ""
     stamp = (st.st_mtime_ns, st.st_size)
-    hit = _TAIL_CACHE.get(key)
-    if hit is not None and hit[0] == stamp[0] and hit[1] == stamp[1]:
-        return hit[2]
+    with _TAIL_CACHE_LOCK:
+        hit = _TAIL_CACHE.get(key)
+        if hit is not None and hit[0] == stamp[0] and hit[1] == stamp[1]:
+            _TAIL_CACHE.move_to_end(key)
+            return hit[2]
     try:
-        data = path.read_bytes()
+        with path.open("rb") as stream:
+            stream.seek(max(0, st.st_size - max_bytes))
+            data = stream.read(max_bytes)
     except OSError:
         return ""
-    if len(data) > max_bytes:
-        data = data[-max_bytes:]
     text = data.decode("utf-8", errors="replace")
-    _TAIL_CACHE[key] = (stamp[0], stamp[1], text)
+    with _TAIL_CACHE_LOCK:
+        _TAIL_CACHE[key] = (stamp[0], stamp[1], text)
+        _TAIL_CACHE.move_to_end(key)
+        while len(_TAIL_CACHE) > _TAIL_CACHE_LIMIT:
+            _TAIL_CACHE.popitem(last=False)
     return text
 
 

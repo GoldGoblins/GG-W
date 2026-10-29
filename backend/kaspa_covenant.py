@@ -16,6 +16,10 @@ from pathlib import Path
 from typing import Any
 
 from backend import kaspa_contract as C
+from backend.application_paths import STATE_ROOT
+import os
+
+SILVERC_BIN = Path(os.environ.get('GG_SILVERC_BIN', str(STATE_ROOT.parent/'crypto-tools/silverscript/v1.0.0'/('silverc.exe' if os.name == 'nt' else 'silverc'))))
 
 
 SCHEMA = "gg.kaspa-covenant.v1"
@@ -47,6 +51,7 @@ def _empty() -> dict[str, Any]:
         "compiled": False,
         "bytecode_bytes": 0,
         "compile_note": "",
+        "compiled_source_hash": "",
     }
 
 
@@ -69,13 +74,14 @@ def _write(state: dict[str, Any]) -> dict[str, Any]:
 
 
 def lab_status() -> dict[str, Any]:
-    silverc = shutil.which("silverc") or ""
-    kaspad = shutil.which("kaspad") or shutil.which("kaspa") or ""
+    from backend import kaspa_node
+    silverc = shutil.which("silverc") or (str(SILVERC_BIN) if SILVERC_BIN.is_file() else "")
+    kaspad = shutil.which("kaspad") or (str(kaspa_node.BINARY) if kaspa_node.BINARY.is_file() else "")
     sdk = False
     try:
         import kaspa  # noqa: F401
 
-        sdk = True
+        sdk = callable(getattr(kaspa, 'RpcClient', None))
     except Exception:
         sdk = False
     return {
@@ -89,8 +95,11 @@ def lab_status() -> dict[str, Any]:
 
 
 def snapshot() -> dict[str, Any]:
+    from backend import crypto_connections, kaspa_node
     chain = C.load_network()
     state = load_state()
+    current_source_hash = _blake2b(COUNTER_SIL.read_bytes()) if COUNTER_SIL.is_file() else ''
+    compiled = bool(state.get('compiled')) and state.get('compiled_source_hash') == current_source_hash and bool(current_source_hash)
     legend = "OBSERVE" if chain == "mainnet" else ("PAPER" if chain == "paper" else "TESTNET")
     return {
         "schema": SCHEMA,
@@ -108,10 +117,13 @@ def snapshot() -> dict[str, Any]:
         "value_sompi": int(state.get("value_sompi") or 0),
         "value_kas": state.get("value_kas") or C.format_kas(0),
         "history": list(state.get("history") or [])[-8:],
-        "compiled": bool(state.get("compiled")),
+        "compiled": compiled,
         "bytecode_bytes": int(state.get("bytecode_bytes") or 0),
-        "compile_note": str(state.get("compile_note") or ""),
+        "compile_note": 'Source changed; compile again' if state.get('compiled') and not compiled else str(state.get("compile_note") or ""),
         "lab": lab_status(),
+        "node": kaspa_node.status(),
+        "connection": crypto_connections.snapshot('KAS', chain),
+        "execution_mode": "PAPER_COVENANT",
         "hint": "UTXO successor, not an account. Covenant id stays; address changes with count.",
     }
 
@@ -122,11 +134,13 @@ def set_network(network: str) -> dict[str, Any]:
 
 
 def genesis(*, value_sompi: int = PAPER_FUND_SOMPI) -> dict[str, Any]:
+    if isinstance(value_sompi, bool) or not isinstance(value_sompi, (int,str)) or not str(value_sompi).isdigit():
+        raise ValueError('KASPA_AMOUNT')
     try:
         amount = int(value_sompi)
     except (TypeError, ValueError) as exc:
         raise ValueError("KASPA_AMOUNT") from exc
-    if amount <= 0:
+    if amount <= 0 or amount >= 2**64:
         raise ValueError("KASPA_AMOUNT")
     covenant_id = _blake2b(f"genesis|{_now()}|{amount}".encode("utf-8"))
     state = {
@@ -138,6 +152,7 @@ def genesis(*, value_sompi: int = PAPER_FUND_SOMPI) -> dict[str, Any]:
         "compiled": load_state().get("compiled") or False,
         "bytecode_bytes": load_state().get("bytecode_bytes") or 0,
         "compile_note": load_state().get("compile_note") or "",
+        "compiled_source_hash": load_state().get('compiled_source_hash') or '',
         "history": [
             {
                 "ts": _now(),
@@ -152,11 +167,13 @@ def genesis(*, value_sompi: int = PAPER_FUND_SOMPI) -> dict[str, Any]:
 
 def transition(function: str, amount: int) -> dict[str, Any]:
     fn = str(function or "").strip().lower()
+    if isinstance(amount, bool) or not isinstance(amount,(int,str)) or not str(amount).isdigit():
+        raise ValueError('KASPA_AMOUNT')
     try:
         delta = int(amount)
     except (TypeError, ValueError) as exc:
         raise ValueError("KASPA_AMOUNT") from exc
-    if delta <= 0:
+    if delta <= 0 or delta > 2**63-1:
         raise ValueError("KASPA_AMOUNT")
     state = load_state()
     if not state.get("covenant_id"):
@@ -165,6 +182,8 @@ def transition(function: str, amount: int) -> dict[str, Any]:
     count = int(state.get("count") or 0)
     if fn == "add":
         count = count + delta
+        if count > 2**63-1:
+            raise ValueError('KASPA_COUNT')
     elif fn == "subtract":
         if count - delta < 0:
             raise ValueError("KASPA_COUNT")
@@ -206,7 +225,8 @@ def compile_counter() -> dict[str, Any]:
         src = work / "counter.sil"
         ctor = work / "args.json"
         out = work / "counter.json"
-        src.write_text(COUNTER_SIL.read_text(encoding="utf-8"), encoding="utf-8")
+        src.write_bytes(COUNTER_SIL.read_bytes())
+        source_hash = _blake2b(src.read_bytes())
         ctor.write_text(json.dumps(args), encoding="utf-8")
         proc = subprocess.run(
             [
@@ -235,13 +255,25 @@ def compile_counter() -> dict[str, Any]:
     script = ""
     contracts = artifact.get("contracts") if isinstance(artifact, dict) else None
     if isinstance(contracts, dict):
-        first = next(iter(contracts.values()), {})
+        first = contracts.get('Counter', {})
         compiled = first.get("compiled") if isinstance(first, dict) else {}
         if isinstance(compiled, dict):
-            script = str(compiled.get("bytecode") or compiled.get("script") or "")
+            raw_script = compiled.get("bytecode") or compiled.get("script") or ""
+            if isinstance(raw_script, list) and len(raw_script) <= 1024*1024 and all(type(v) is int and 0 <= v <= 255 for v in raw_script):
+                script = bytes(raw_script).hex()
+            elif isinstance(raw_script, str):
+                script = raw_script
     state = load_state()
+    if not script or len(script) % 2 or any(c not in '0123456789abcdefABCDEF' for c in script):
+        state['compiled'] = False
+        state['bytecode_bytes'] = 0
+        state['compile_note'] = 'Compiler returned no valid bytecode'
+        _write(state)
+        return dict(snapshot(), error='KASPA_COMPILE_ARTIFACT')
     state["compiled"] = True
+    state['compiled_source_hash'] = source_hash
     state["bytecode_bytes"] = max(0, len(script) // 2)
     state["compile_note"] = "silverc ok, " + str(state["bytecode_bytes"]) + " bytes"
+    C.save_json('counter-compiled.json', {'source_hash':source_hash, 'artifact':artifact})
     _write(state)
     return snapshot()

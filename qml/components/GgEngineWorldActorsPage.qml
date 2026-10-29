@@ -28,7 +28,7 @@ Node {
             pickable: s.kind !== "particle" && s.kind !== "ribbon"
             visible: s.visible !== false && !(actors.hidePlayer && s.world_actor_kind === "PLAYER")
             castsShadows: !s.no_depth_write && s.kind !== "particle" && s.kind !== "ribbon"
-            materials: GgEngineModelMaterial {
+            materials: GgEngineModelMaterial { property string uiColorScope: "ui.widget.GgEngineWorldActorsPage.GgEngineModelMaterial.1";
                 uModelKind: 1
                 authoredMips: part.s.mip_levels || []
                 uTrilinear: actors.textureTrilinear

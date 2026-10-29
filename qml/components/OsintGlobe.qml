@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Window
 import QtWebEngine
@@ -8,9 +10,9 @@ Item {
     clip: true
     property var points: []
     property var catalogCounts: ({})
-    property color muted: "#7f8993"
-    property color signalBlue: "#7fa9c4"
-    property color ledgerGold: "#c8a97e"
+    property color muted: RuntimeTheme.GGTheme.dim
+    property color signalBlue: RuntimeTheme.GGTheme.blue
+    property color ledgerGold: RuntimeTheme.GGTheme.accent
     property color panel: "#111315"
     readonly property int pointCount: (points || []).length
     property var savedView: null
@@ -133,7 +135,7 @@ Item {
             browser.item.runJavaScript("window.resetOsintView && window.resetOsintView()")
     }
     onPointsChanged: Qt.callLater(root.push)
-    Rectangle { anchors.fill: parent; color: "#05070c" }
+    Rectangle { anchors.fill: parent; color: RuntimeTheme.GGTheme.canvas }
     Loader {
         id: browser
         anchors.fill: parent
@@ -156,7 +158,7 @@ Item {
                             root.applySavedState()
                     })
                 }
-                backgroundColor: "#05070c"
+                backgroundColor: RuntimeTheme.GGTheme.canvas
                 url: Qt.resolvedUrl("../osint-map/index.html")
                 settings.javascriptEnabled: true
                 settings.javascriptCanOpenWindows: false

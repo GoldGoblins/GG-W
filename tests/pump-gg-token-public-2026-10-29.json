@@ -1,0 +1,49 @@
+{
+  "chain_id": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+  "mint": "6TY5cDkAD3BN5L8MEXAcd2LysxWRAiji8TJSHUBapump",
+  "curve_pda": "5e8HVzRD2DYABJMnPedPVEyRbFxKHtBTCKfKPnm8po2u",
+  "source": "https://api.mainnet-beta.solana.com",
+  "slot": 462790122,
+  "batch": {
+    "context": {
+      "apiVersion": "4.3.2",
+      "slot": 462790122
+    },
+    "value": [
+      {
+        "data": [
+          "AAAAAAbFwc5jjSVn0mRosF65UdGijcxuEjSCtcZ1FJdw5ivyn564aLaMAwAGAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+          "base64"
+        ],
+        "executable": false,
+        "lamports": 1461600,
+        "owner": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+        "rentEpoch": 18446744073709551615,
+        "space": 82
+      },
+      {
+        "data": [
+          "F7f4N2DYrGBuJJPL3qIDAIBvnVIHAAAAboyAf02kAgCAw3lWAAAAAACAxqR+jQMAAJH/PqCAHRDNNGjzZkEogRbv1mbHe4M0F8vUrS/rf0wgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+          "base64"
+        ],
+        "executable": false,
+        "lamports": 1452762320,
+        "owner": "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P",
+        "rentEpoch": 18446744073709551615,
+        "space": 151
+      },
+      {
+        "data": [
+          "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+          "base64"
+        ],
+        "executable": false,
+        "lamports": 1860854767908,
+        "owner": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+        "rentEpoch": 18446744073709551615,
+        "space": 82
+      }
+    ]
+  },
+  "captured_at": 1793257489.0012665
+}

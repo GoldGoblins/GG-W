@@ -137,7 +137,7 @@ with tempfile.TemporaryDirectory() as d:
     with patch.object(chat_sessions, 'CATALOG_PATH', catalog), \
          patch('backend.chat_surface_host.save_codex_session_id', return_value=adopted_id), \
          patch('backend.chat_surface_host.grok_wallet_snapshot', return_value={}), \
-         patch('backend.chat_surface_host.codex_wallet_snapshot', return_value={}):
+         patch.object(list_host, '_request_gpt_wallet'):
         list_host._adopt_gpt_session(adopted_id, sessions_root=Path(d) / 'sessions')
     assert listed
     rows = json.loads(listed[-1])

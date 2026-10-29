@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
@@ -27,7 +29,7 @@ Item {
     property string activeTaskId: ""
     property bool assignmentExpanded: false
     property string engineTarget: "GROK_TUI"
-    property color frameBorder: "#6a6a6a"
+    property color frameBorder: RuntimeTheme.GGTheme.edge
     property int frameRadius: 4
     property bool showOpenTab: false
     property var surfaceHost: null
@@ -87,7 +89,7 @@ Item {
                     : "LOCAL QWEN"
             )
 
-    GgFrame {
+    GgFrame { property string uiColorScope: "ui.widget.ContextComposer.GgFrame.1";
         id: inputFrame
         visible: !root.nativeTuiTarget
         anchors.left: parent.left
@@ -104,7 +106,17 @@ Item {
             : root.engineLabel + " · BRIDGE " + root.bridgeState
         bottomLeftLegend: ""
         bottomRightLegend: ""
-        backgroundColor: "#161616"
+        bottomGaps: {
+            var gaps = []
+            if (peopleRow.visible && peopleRow.width > 0)
+                gaps.push({start: peopleRow.x - inputFrame.x - 6,
+                           end: peopleRow.x - inputFrame.x + peopleRow.width + 6})
+            if (sendRow.visible && sendRow.width > 0)
+                gaps.push({start: sendRow.x - inputFrame.x - 6,
+                           end: sendRow.x - inputFrame.x + sendRow.width + 6})
+            return gaps
+        }
+        backgroundColor: RuntimeTheme.GGTheme.panel
         borderColor: root.frameBorder
         radius: root.frameRadius
 
@@ -118,7 +130,7 @@ Item {
                 spacing: 8
                 visible: root.assignmentExpanded
 
-                ComboBox {
+                ComboBox { property string uiColorScope: "ui.control.ContextComposer.1";
                     id: participantSelector
                     objectName: "orchestratorParticipantSelector"
                     width: 240
@@ -141,46 +153,46 @@ Item {
                     background: Rectangle {
                         implicitWidth: 240
                         implicitHeight: 28
-                        color: "#121212"
+                        color: RuntimeTheme.GGTheme.canvas
                         border.width: 1
                         border.color: participantSelector.activeFocus
-                            ? "#8a8a8a"
-                            : "#6a6a6a"
+                            ? RuntimeTheme.GGTheme.dim
+                            : RuntimeTheme.GGTheme.edge
                         radius: 2
                         antialiasing: false
                     }
-                    contentItem: Text {
+                    contentItem: GGText { colorKey: "ui.ContextComposer.1";
                         leftPadding: 8
                         rightPadding: 18
                         text: participantSelector.displayText
                         color: participantSelector.currentIndex >= 0
-                            ? "#e6e6e6"
-                            : "#8a8a8a"
+                            ? RuntimeTheme.GGTheme.bright
+                            : RuntimeTheme.GGTheme.dim
                         font.family: "monospace"
                         font.pixelSize: 12
                         verticalAlignment: Text.AlignVCenter
                         elide: Text.ElideRight
                     }
-                    indicator: Text {
+                    indicator: GGText { colorKey: "ui.ContextComposer.2";
                         x: participantSelector.width - 16
                         y: (participantSelector.height - implicitHeight) / 2
                         text: "v"
-                        color: "#8a8a8a"
+                        color: RuntimeTheme.GGTheme.dim
                         font.family: "monospace"
                         font.pixelSize: 10
                     }
-                    delegate: ItemDelegate {
+                    delegate: ItemDelegate { property string uiColorScope: "ui.control.ContextComposer.2";
                         id: optionDelegate
                         required property int index
                         required property var modelData
                         width: participantSelector.width
                         height: 26
                         highlighted: participantSelector.highlightedIndex === index
-                        contentItem: Text {
+                        contentItem: GGText { colorKey: "ui.ContextComposer.3";
                             text: String(optionDelegate.modelData)
                             color: optionDelegate.highlighted
-                                ? "#e6e6e6"
-                                : "#c8cdd4"
+                                ? RuntimeTheme.GGTheme.bright
+                                : RuntimeTheme.GGTheme.text
                             font.family: "monospace"
                             font.pixelSize: 12
                             verticalAlignment: Text.AlignVCenter
@@ -188,8 +200,8 @@ Item {
                         }
                         background: Rectangle {
                             color: optionDelegate.highlighted
-                                ? "#2a2a2a"
-                                : "#161616"
+                                ? RuntimeTheme.GGTheme.hover
+                                : RuntimeTheme.GGTheme.panel
                         }
                     }
                     popup: Popup {
@@ -197,8 +209,8 @@ Item {
                         width: participantSelector.width
                         padding: 1
                         background: Rectangle {
-                            color: "#161616"
-                            border.color: "#6a6a6a"
+                            color: RuntimeTheme.GGTheme.panel
+                            border.color: RuntimeTheme.GGTheme.edge
                             border.width: 1
                         }
                         contentItem: ListView {
@@ -208,7 +220,7 @@ Item {
                                 ? participantSelector.delegateModel
                                 : null
                             currentIndex: participantSelector.highlightedIndex
-                            ScrollBar.vertical: GgScrollBar {}
+                            ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.ContextComposer.GgScrollBar.2";}
                         }
                     }
                 }
@@ -223,25 +235,25 @@ Item {
                         - 24
                     height: 28
                     placeholderText: "Explicit creator actor"
-                    placeholderTextColor: "#5d6670"
-                    color: "#e6e6e6"
+                    placeholderTextColor: RuntimeTheme.GGTheme.dim
+                    color: RuntimeTheme.GGTheme.bright
                     font.family: "monospace"
                     font.pixelSize: 12
                     selectByMouse: true
                     leftPadding: 8
                     rightPadding: 8
                     background: Rectangle {
-                        color: "#121212"
+                        color: RuntimeTheme.GGTheme.canvas
                         border.width: 1
                         border.color: creatorActorInput.activeFocus
-                            ? "#8a8a8a"
-                            : "#6a6a6a"
+                            ? RuntimeTheme.GGTheme.dim
+                            : RuntimeTheme.GGTheme.edge
                         radius: 2
                         antialiasing: false
                     }
                 }
 
-                Text {
+                GGText { colorKey: "ui.ContextComposer.4";
                     id: assignmentButton
                     objectName: "orchestratorAssignmentSetButton"
                     text: "Assign"
@@ -249,8 +261,8 @@ Item {
                     verticalAlignment: Text.AlignVCenter
                     color: participantSelector.currentIndex >= 0
                         && creatorActorInput.text.trim().length > 0
-                        ? "#d8dee9"
-                        : "#5d6670"
+                        ? RuntimeTheme.GGTheme.text
+                        : RuntimeTheme.GGTheme.dim
                     font.family: "monospace"
                     font.pixelSize: 12
                     font.bold: participantSelector.currentIndex >= 0
@@ -268,13 +280,13 @@ Item {
                     }
                 }
 
-                Text {
+                GGText { colorKey: "ui.ContextComposer.5";
                     id: clearAssignmentButton
                     objectName: "orchestratorAssignmentClearButton"
                     text: "Clear"
                     height: 28
                     verticalAlignment: Text.AlignVCenter
-                    color: "#d8dee9"
+                    color: RuntimeTheme.GGTheme.text
                     font.family: "monospace"
                     font.pixelSize: 12
                     font.bold: true
@@ -295,9 +307,9 @@ Item {
                 width: parent.width
                 spacing: 8
 
-                Text {
+                GGText { colorKey: "ui.ContextComposer.6";
                     text: ">"
-                    color: "#c8cdd4"
+                    color: RuntimeTheme.GGTheme.text
                     font.family: "monospace"
                     font.pixelSize: 13
                     verticalAlignment: Text.AlignVCenter
@@ -314,7 +326,7 @@ Item {
                     enabled: !root.nativeTuiTarget
                     focus: !root.nativeTuiTarget
                     placeholderText: ""
-                    color: "#e6edf3"
+                    color: RuntimeTheme.GGTheme.bright
                     wrapMode: TextEdit.NoWrap
                     selectByMouse: true
                     font.family: "monospace"
@@ -346,17 +358,6 @@ Item {
         }
     }
 
-    Rectangle {
-        z: 5
-        anchors.left: peopleRow.left
-        anchors.leftMargin: -6
-        anchors.bottom: peopleRow.bottom
-        width: peopleRow.width + 12
-        height: 20
-        color: "#161616"
-        visible: peopleRow.width > 0 && !root.nativeTuiTarget
-    }
-
     Row {
         id: peopleRow
         z: 6
@@ -367,13 +368,13 @@ Item {
         height: 20
         spacing: 0
         visible: !root.nativeTuiTarget
-        Text {
+        GGText { colorKey: "ui.ContextComposer.7";
             id: assignmentOptionsButton
             objectName: "orchestratorAssignmentOptionsButton"
             text: root.assignmentExpanded
                 ? "People · close"
                 : "People"
-            color: "#d8dee9"
+            color: RuntimeTheme.GGTheme.text
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: true
@@ -387,17 +388,6 @@ Item {
         }
     }
 
-    Rectangle {
-        z: 5
-        anchors.left: sendRow.left
-        anchors.leftMargin: -6
-        anchors.bottom: sendRow.bottom
-        width: sendRow.width + 12
-        height: 20
-        color: "#161616"
-        visible: sendRow.width > 0 && !root.nativeTuiTarget
-    }
-
     Row {
         id: sendRow
         z: 6
@@ -408,11 +398,11 @@ Item {
         height: 20
         spacing: 0
         visible: !root.nativeTuiTarget
-        Text {
+        GGText { colorKey: "ui.ContextComposer.8";
             id: sendButton
             text: "Send"
             visible: !root.busy
-            color: root.canSend ? "#d8dee9" : "#a8b0b8"
+            color: root.canSend ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: root.canSend
@@ -427,19 +417,19 @@ Item {
             }
         }
 
-        BufferMark {
+        BufferMark { property string uiColorScope: "ui.widget.ContextComposer.BufferMark.3";
             objectName: "composerBuffer"
             anchors.verticalCenter: parent.verticalCenter
             active: root.busy
             cell: 5
         }
 
-        Text {
+        GGText { colorKey: "ui.ContextComposer.9";
             id: stopButton
             text: "Stop"
             visible: root.busy
             enabled: root.busy
-            color: root.busy ? "#d8dee9" : "#a8b0b8"
+            color: root.busy ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: root.busy
@@ -463,12 +453,12 @@ Item {
         height: 18
         spacing: 0
 
-        Text {
+        GGText { colorKey: "ui.ContextComposer.10";
             id: grokTuiEngineTarget
             text: "GROK TUI"
             color: root.engineTarget === "GROK_TUI"
-                ? "#d8dee9"
-                : "#5d6670"
+                ? RuntimeTheme.GGTheme.text
+                : RuntimeTheme.GGTheme.dim
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: root.engineTarget === "GROK_TUI"
@@ -479,18 +469,18 @@ Item {
                 onClicked: root.engineTargetRequested("GROK_TUI")
             }
         }
-        Text {
+        GGText { colorKey: "ui.ContextComposer.11";
             text: " | "
-            color: "#a8b0b8"
+            color: RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
         }
-        Text {
+        GGText { colorKey: "ui.ContextComposer.12";
             id: gptTuiEngineTarget
             text: "GPTUI"
             color: root.engineTarget === "GPT_TUI"
-                ? "#d8dee9"
-                : "#5d6670"
+                ? RuntimeTheme.GGTheme.text
+                : RuntimeTheme.GGTheme.dim
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: root.engineTarget === "GPT_TUI"
@@ -501,18 +491,18 @@ Item {
                 onClicked: root.engineTargetRequested("GPT_TUI")
             }
         }
-        Text {
+        GGText { colorKey: "ui.ContextComposer.13";
             text: " | "
-            color: "#a8b0b8"
+            color: RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
         }
-        Text {
+        GGText { colorKey: "ui.ContextComposer.14";
             id: flowTuiEngineTarget
             text: "FLOW TUI"
             color: root.engineTarget === "FLOW_TUI"
-                ? "#d8dee9"
-                : "#5d6670"
+                ? RuntimeTheme.GGTheme.text
+                : RuntimeTheme.GGTheme.dim
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: root.engineTarget === "FLOW_TUI"
@@ -534,11 +524,12 @@ Item {
         anchors.bottomMargin: 10
         spacing: 6
 
-        Rectangle {
+        Rectangle { GGColorTarget { colorKey: "ui.fill.ContextComposer.1"; colorActive:root.cpuLampOn;fallbackColor:RuntimeTheme.GGTheme.positive }
+            objectName: "chatCpuLamp"
             width: 8
             height: 8
             radius: 4
-            color: root.cpuLampOn ? "#8db89a" : "#2a1515"
+            color: root.cpuLampOn ? RuntimeTheme.GGTheme.positive : "#2a1515"
             MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
@@ -547,12 +538,13 @@ Item {
                 ToolTip.text: "CPU"
             }
         }
-        Rectangle {
+        Rectangle { GGColorTarget { colorKey: "ui.fill.ContextComposer.2"; colorActive:root.gpuLampOn;fallbackColor:RuntimeTheme.GGTheme.purple }
+            objectName: "chatGpuLamp"
             visible: root.gpuLampPresent
             width: 8
             height: 8
             radius: 4
-            color: root.gpuLampOn ? "#b6a6c8" : "#2a1515"
+            color: root.gpuLampOn ? RuntimeTheme.GGTheme.purple : "#2a1515"
             MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
@@ -561,11 +553,12 @@ Item {
                 ToolTip.text: "GPU"
             }
         }
-        Rectangle {
+        Rectangle { GGColorTarget { colorKey: "ui.fill.ContextComposer.3"; colorActive:root.netLampOn;fallbackColor:RuntimeTheme.GGTheme.accent }
+            objectName: "chatNetworkLamp"
             width: 8
             height: 8
             radius: 4
-            color: root.netLampOn ? "#c8a97e" : "#2a1515"
+            color: root.netLampOn ? RuntimeTheme.GGTheme.accent : "#2a1515"
             MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
@@ -574,12 +567,12 @@ Item {
                 ToolTip.text: "NET"
             }
         }
-        Rectangle {
+        Rectangle { GGColorTarget { colorKey: "ui.fill.ContextComposer.4"; colorActive:root.diskLampOn;fallbackColor:RuntimeTheme.GGTheme.negative }
             objectName: "chatDiskLamp"
             width: 8
             height: 8
             radius: 4
-            color: root.diskLampOn ? "#e05050" : "#2a1515"
+            color: root.diskLampOn ? RuntimeTheme.GGTheme.negative : "#2a1515"
             MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
@@ -589,10 +582,12 @@ Item {
             }
         }
         Rectangle {
+            GGColorTarget {colorKey:"ui.activity.stream";colorActive:root.chatLampOn;fallbackColor:RuntimeTheme.GGTheme.text}
+            objectName: "chatActivityLamp"
             width: 8
             height: 8
             radius: 4
-            color: root.chatLampOn ? "#d8dee9" : "#2a1515"
+            color: root.chatLampOn ? RuntimeTheme.GGTheme.text : "#2a1515"
             MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true

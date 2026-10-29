@@ -95,10 +95,8 @@ def confirm_signature(rpc_call, sig: str, timeout_s: float = 8.0) -> bool:
 
 
 def _pad32(raw: bytes) -> bytes:
-    if len(raw) < 32:
-        return (b"\x00" * (32 - len(raw))) + raw
-    if len(raw) > 32:
-        return raw[-32:]
+    if len(raw) != 32:
+        raise ValueError('CRYPTO_KEYS')
     return raw
 
 
@@ -160,6 +158,8 @@ def send_self_transfer(rpc_call, lamports: int, *, expected_pubkey: str | None =
         sig = str(sent.get("result") or "")
         if not sig:
             raise ConfirmationError(b58encode(tx[1:65]), "unconfirmed")
+        if sig != b58encode(tx[1:65]):
+            raise ConfirmationError(b58encode(tx[1:65]), 'signature_mismatch')
         if not confirm_signature(rpc_call, sig):
             checked = rpc_call("getSignatureStatuses", [[sig], {"searchTransactionHistory": True}])
             values = ((checked or {}).get("result") or {}).get("value") or []

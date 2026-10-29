@@ -79,7 +79,7 @@ class CryptoLabOwnershipTests(unittest.TestCase):
 
     def test_unavailable_binary_is_reported_explicitly(self):
         lab.VALIDATOR_BIN.unlink()
-        with patch.object(lab, 'rpc_healthy', return_value=False):
+        with patch.object(lab, 'rpc_healthy', return_value=False), patch.object(lab.crypto_svm,'available',return_value=False):
             status = lab.lab_status()
         self.assertFalse(status['available'])
         self.assertEqual(status['label'], 'LAB UNAVAILABLE')

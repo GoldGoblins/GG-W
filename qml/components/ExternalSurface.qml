@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Window
 
@@ -9,7 +11,7 @@ Item {
 
     property var surfaceHost: null
     property string statusJson: "{}"
-    property color frameBorder: "#6a6a6a"
+    property color frameBorder: RuntimeTheme.GGTheme.edge
     property int frameRadius: 4
 
     readonly property var status: {
@@ -86,9 +88,9 @@ Item {
             width: parent.width
             spacing: 14
 
-            Text {
+            GGText { colorKey: "ui.ExternalSurface.1";
                 text: "BLENDER"
-                color: "#d8dee9"
+                color: RuntimeTheme.GGTheme.text
                 font.family: "monospace"
                 font.pixelSize: 12
                 font.bold: true
@@ -99,9 +101,9 @@ Item {
                 }
             }
 
-            Text {
+            GGText { colorKey: "ui.ExternalSurface.2";
                 text: root.blenderPresent ? "OPEN" : "NOT ON PATH"
-                color: root.blenderPresent ? "#c8a97e" : "#c98989"
+                color: root.blenderPresent ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.negative
                 font.family: "monospace"
                 font.pixelSize: 12
                 font.bold: true
@@ -113,27 +115,27 @@ Item {
                 }
             }
 
-            Text {
+            GGText { colorKey: "ui.ExternalSurface.3";
                 text: root.attached ? "IN BOX" : (root.blenderPresent ? "EMBED…" : "")
-                color: root.attached ? "#8db89a" : "#8a8a8a"
+                color: root.attached ? RuntimeTheme.GGTheme.positive : RuntimeTheme.GGTheme.dim
                 font.family: "monospace"
                 font.pixelSize: 12
             }
 
-            Text {
+            GGText { colorKey: "ui.ExternalSurface.4";
                 text: root.sidecarUp ? "MCP LIVE" : "MCP WAIT"
-                color: root.sidecarUp ? "#8db89a" : "#8a8a8a"
+                color: root.sidecarUp ? RuntimeTheme.GGTheme.positive : RuntimeTheme.GGTheme.dim
                 font.family: "monospace"
                 font.pixelSize: 12
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.ExternalSurface.5";
             width: parent.width
             text: root.blenderPresent
                 ? "Clay asset desk. Blender is a child of this window, only in EXT."
                 : "Install or point GG_BLENDER at the local Blender binary."
-            color: "#c8cdd4"
+            color: RuntimeTheme.GGTheme.text
             wrapMode: Text.WordWrap
             font.pixelSize: 12
         }
@@ -156,7 +158,7 @@ Item {
                 radius: root.frameRadius
             }
 
-            Text {
+            GGText { colorKey: "ui.ExternalSurface.6";
                 anchors.centerIn: parent
                 width: parent.width - 40
                 horizontalAlignment: Text.AlignHCenter
@@ -169,7 +171,7 @@ Item {
                         return "Starting Blender in this pane…"
                     return "Blender is not installed on this machine."
                 }
-                color: "#6a6a6a"
+                color: RuntimeTheme.GGTheme.edge
                 wrapMode: Text.WordWrap
                 font.family: "monospace"
                 font.pixelSize: 14

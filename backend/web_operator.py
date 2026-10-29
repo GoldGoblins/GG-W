@@ -1,4 +1,13 @@
 from __future__ import annotations
+# Fixed compatibility maintenance for an older already-running desktop. This
+# adds no web command or effect; cold starts already use the shared ABI types.
+from backend.runtime_memory_maintenance import repair_legacy_windows_file_types
+repair_legacy_windows_file_types()
+from backend import runtime_heap_reclaim
+if getattr(runtime_heap_reclaim,'MAINTENANCE_VERSION',0)<2:
+    import importlib
+    runtime_heap_reclaim=importlib.reload(runtime_heap_reclaim)
+runtime_heap_reclaim.finish_repaired_heap()
 from backend.platform_support import runtime_root
 from backend.platform_files import secure_open, NOFOLLOW
 

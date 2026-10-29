@@ -3,6 +3,7 @@ from __future__ import annotations
 from backend.application_paths import STATE_ROOT
 
 import json
+import math
 import time
 from pathlib import Path
 from typing import Any
@@ -13,6 +14,7 @@ from backend.crypto_contract import (
     load_wallet,
     short_pubkey,
     validate_pubkey,
+    write_state_json,
 )
 from backend.domain_merkle import (
     MerkleChild,
@@ -45,11 +47,13 @@ CATEGORIES = (
     "DOCUMENT",
     "TOOL",
     "COMPONENT",
+    "SERVICE",
 )
 KINDS = (
     "ELEMENT",
     "SUBSTANCE",
     "OBJECT",
+    "SERVICE",
 )
 ELEMENTS = (
     ("H", "Hydrogen"),
@@ -117,6 +121,8 @@ def merkle_path() -> Path:
 
 
 def parse_sol_price(raw: str | int | float | None) -> int:
+    if isinstance(raw, bool) or isinstance(raw, float) and not math.isfinite(raw):
+        raise ValueError("MARKETPLACE_PRICE")
     if isinstance(raw, int):
         if raw < 0 or raw > MAX_PRICE_SOL * SOL_LAMPORTS:
             raise ValueError("MARKETPLACE_PRICE")
@@ -134,6 +140,8 @@ def parse_sol_price(raw: str | int | float | None) -> int:
         whole, frac = text.split(".", 1)
         if not whole:
             whole = "0"
+        if len(frac) > 9:
+            raise ValueError("MARKETPLACE_PRICE_PRECISION")
         frac = (frac + "000000000")[:9]
         if not whole.isdigit() or not frac.isdigit():
             raise ValueError("MARKETPLACE_PRICE")
@@ -171,7 +179,7 @@ def _norm_composition(raw: Any) -> list[dict[str, Any]]:
             mass = float(item.get("mass_g") or 0)
         except (TypeError, ValueError):
             mass = 0.0
-        if mass < 0 or mass > MAX_MASS:
+        if not math.isfinite(mass) or mass < 0 or mass > MAX_MASS:
             mass = 0.0
         rows.append(
             {
@@ -209,7 +217,7 @@ def infer_kind(category: str, material: str) -> str:
 
 
 def identity_payload(row: dict[str, Any]) -> dict[str, Any]:
-    return {
+    result = {
         "schema": LISTING_SCHEMA,
         "title": str(row.get("title") or ""),
         "kind": str(row.get("kind") or ""),
@@ -225,6 +233,16 @@ def identity_payload(row: dict[str, Any]) -> dict[str, Any]:
         "price_lamports": int(row.get("price_lamports") or 0),
         "listed_at": int(row.get("listed_at") or 0),
     }
+    if row.get('settlement'):
+        result['settlement'] = row['settlement']
+    for key in ('image_id','collection_name','nft_binding'):
+        if row.get(key):result[key]=row[key]
+    if row.get('identity_version')==3:
+        result['identity_version']=3
+        # Generated paper references must not change the object's identity
+        # after minting. Legacy rows retain their original hash interpretation.
+        if str(result['mint']).startswith('paper:'):result['mint']=''
+    return result
 
 
 def state_payload(row: dict[str, Any]) -> dict[str, Any]:
@@ -236,6 +254,7 @@ def state_payload(row: dict[str, Any]) -> dict[str, Any]:
     payload["mode"] = str(row.get("mode") or "TESTNET")
     payload["identity_sha256"] = str(row.get("identity_sha256") or "")
     payload["lifecycle"] = list(row.get("lifecycle") or [])[-40:]
+    if row.get('transaction_receipt'):payload['transaction_receipt']=row['transaction_receipt']
     return payload
 
 
@@ -294,8 +313,7 @@ def catalog_merkle(
     }
     if persist:
         path = merkle_path()
-        path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-        path.chmod(0o600)
+        write_state_json(path, payload)
     return payload
 
 
@@ -329,12 +347,31 @@ def load_catalog() -> list[dict[str, Any]]:
     if not path.is_file():
         return []
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
+        with path.open('rb') as stream: raw=stream.read(16*1024*1024+1)
+        if len(raw)>16*1024*1024:raise ValueError('MARKETPLACE_CATALOG_TOO_LARGE')
+        def invalid_constant(value):raise ValueError('MARKETPLACE_CATALOG_CORRUPT')
+        payload = json.loads(raw,parse_constant=invalid_constant)
     except (OSError, json.JSONDecodeError, UnicodeError):
-        return []
+        raise ValueError('MARKETPLACE_CATALOG_CORRUPT') from None
     rows = payload.get("listings") if isinstance(payload, dict) else payload
     if not isinstance(rows, list):
-        return []
+        raise ValueError('MARKETPLACE_CATALOG_CORRUPT')
+    if len(rows)>MAX_LISTINGS or any(not isinstance(row,dict) or not row.get('id') for row in rows) or len({row['id'] for row in rows})!=len(rows):
+        raise ValueError('MARKETPLACE_CATALOG_CORRUPT')
+    for row in rows:
+        version=row.get('identity_version')
+        if version is not None and (type(version) is not int or version not in {2,3}):
+            raise ValueError('MARKETPLACE_RECEIPT_INTEGRITY')
+        identity_matches=row.get('identity_sha256')==hash_identity(row)
+        if version in {None,2} and not identity_matches:
+            # Legacy paper rows hashed their seed before assigning the generated
+            # mint. Verify that exact construction as well as the final state;
+            # a missing version never exempts a row from integrity checks.
+            identity=str(row.get('identity_sha256') or '')
+            if identity and row.get('mint')=='paper:'+identity[:32]:
+                identity_matches=identity==hash_identity(dict(row,mint=''))
+        if not identity_matches or row.get('state_sha256')!=hash_state(row):
+            raise ValueError('MARKETPLACE_RECEIPT_INTEGRITY')
     out: list[dict[str, Any]] = []
     for item in rows[:MAX_LISTINGS]:
         if isinstance(item, dict) and item.get("id"):
@@ -351,11 +388,7 @@ def save_catalog(listings: list[dict[str, Any]]) -> list[dict[str, Any]]:
         "merkle_root": merkle.get("root_sha256") or "",
     }
     path = catalog_path()
-    path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    path.chmod(0o600)
+    write_state_json(path, payload)
     return rows
 
 
@@ -386,8 +419,7 @@ def save_prefs(filter_name: str = "", selected: str = "") -> dict[str, Any]:
     selected_id = str(selected if selected != "" else current.get("selected") or "")[:80]
     payload = {"filter": filt, "selected": selected_id}
     path = prefs_path()
-    path.write_text(json.dumps(payload) + "\n", encoding="utf-8")
-    path.chmod(0o600)
+    write_state_json(path, payload)
     return payload
 
 
@@ -455,13 +487,14 @@ def parse_listing(raw: str | dict[str, Any]) -> dict[str, Any]:
         mass_g = float(payload.get("mass_g") or 0)
     except (TypeError, ValueError) as exc:
         raise ValueError("MARKETPLACE_MASS") from exc
-    if mass_g < 0 or mass_g > MAX_MASS:
+    if not math.isfinite(mass_g) or mass_g < 0 or mass_g > MAX_MASS:
         raise ValueError("MARKETPLACE_MASS")
     kind = str(payload.get("kind") or "").strip().upper()
     if not kind:
         kind = infer_kind(category, material)
     if kind not in KINDS:
         raise ValueError("MARKETPLACE_KIND")
+    if kind=='SERVICE' and mass_g!=0:raise ValueError('MARKETPLACE_SERVICE_HAS_NO_MASS')
     if kind == "ELEMENT" and material not in ELEMENT_SYMBOLS:
         if material in {"GOLD"}:
             material = "Au"
@@ -475,10 +508,19 @@ def parse_listing(raw: str | dict[str, Any]) -> dict[str, Any]:
     previous_lives = _norm_lives(payload.get("previous_lives"))
     mint_raw = str(payload.get("mint") or "").strip()
     mint = validate_pubkey(mint_raw) if mint_raw else ""
-    price = parse_sol_price(
+    settlement = None
+    if payload.get('settlement_asset_id'):
+        from backend import omni_assets
+        omni_assets.bootstrap()
+        asset = omni_assets.asset(str(payload['settlement_asset_id']))
+        if asset['metadata'] == 'DECIMALS_UNKNOWN':
+            raise ValueError('MARKETPLACE_ASSET_DECIMALS_UNKNOWN')
+        settlement = {'asset_id': asset['id'], 'symbol': asset['symbol'], 'decimals': asset['decimals'],
+                      'price_atomic': str(omni_assets.amount_atomic(payload.get('price', '0'), asset['decimals']))}
+    price = 0 if settlement else parse_sol_price(
         payload.get("price_lamports", payload.get("price_sol"))
     )
-    return {
+    result = {
         "title": title,
         "kind": kind,
         "category": category,
@@ -492,6 +534,20 @@ def parse_listing(raw: str | dict[str, Any]) -> dict[str, Any]:
         "mint": mint,
         "price_lamports": price,
     }
+    if settlement:
+        result['settlement'] = settlement
+    if payload.get('image_id'):
+        from backend.marketplace_media import image_url
+        if not image_url(payload['image_id'],STATE_DIR):raise ValueError('MARKETPLACE_IMAGE_NOT_IMPORTED')
+        result['image_id']=payload['image_id']
+    if payload.get('collection_name'):result['collection_name']=_clip(str(payload['collection_name']),80)
+    if payload.get('nft_binding'):
+        from backend import marketplace_protocols
+        binding=payload['nft_binding']
+        if mint or not isinstance(binding,dict) or set(binding)!={'chain_id','standard','collection','token_id'}:raise ValueError('MARKETPLACE_NFT_BINDING')
+        reference=marketplace_protocols.identity(binding['chain_id'],binding['standard'],binding['collection'],binding['token_id'])
+        result['nft_binding']=dict(reference,verification='DECLARED_REFERENCE_NOT_OWNERSHIP_PROOF')
+    return result
 
 
 def decorate_listing(row: dict[str, Any]) -> dict[str, Any]:
@@ -503,6 +559,19 @@ def decorate_listing(row: dict[str, Any]) -> dict[str, Any]:
     out["composition"] = _norm_composition(out.get("composition"))
     out["previous_lives"] = _norm_lives(out.get("previous_lives"))
     out["price_sol"] = format_sol(int(out.get("price_lamports") or 0))
+    from backend.marketplace_media import image_url
+    out['image_url']=image_url(out.get('image_id',''),STATE_DIR)
+    out['visual_reference']='USER_SELECTED_IMAGE' if out['image_url'] else 'NO_IMAGE'
+    out['provenance_state']='USER_DECLARED_NOT_INDEPENDENTLY_VERIFIED'
+    out['receipt_protocol']='GG-721_LOCAL_PAPER'
+    if out.get('settlement'):
+        from backend.omni_assets import format_atomic
+        settlement = out['settlement']
+        out['price_label'] = format_atomic(int(settlement['price_atomic']), settlement['decimals'])+' '+settlement['symbol']
+        out['settlement_asset_id'] = settlement['asset_id']
+    else:
+        out['price_label'] = out['price_sol']+' SOL'
+        out['settlement_asset_id'] = ''
     out["owner_short"] = short_pubkey(str(out.get("owner") or ""))
     mint = str(out.get("mint") or "")
     out["mint_short"] = short_pubkey(mint) or (mint[:12] if mint else "UNBOUND")
@@ -541,9 +610,13 @@ def list_item(raw: str | dict[str, Any]) -> dict[str, Any]:
     wallet = load_wallet()
     owner = str(wallet.get("pubkey") or "")
     chain = load_network()
+    if parsed.get('settlement'):
+        owner = 'paper:seller'
+        chain = parsed['settlement']['asset_id'].split('/')[0]
     listed_at = int(time.time())
     seed = {
         **parsed,
+        "identity_version": 3,
         "listed_at": listed_at,
     }
     identity = hash_identity(seed)
@@ -592,7 +665,7 @@ def list_item(raw: str | dict[str, Any]) -> dict[str, Any]:
     return decorate_listing(row)
 
 
-def _mutate(listing_id: str, status: str, owner: str | None = None) -> dict[str, Any]:
+def _mutate(listing_id: str, status: str, owner: str | None = None, transaction_receipt=None) -> dict[str, Any]:
     wanted = str(listing_id or "").strip()
     catalog = load_catalog()
     found: dict[str, Any] | None = None
@@ -605,6 +678,7 @@ def _mutate(listing_id: str, status: str, owner: str | None = None) -> dict[str,
     if owner is not None:
         found["owner"] = owner
     found["status"] = status
+    if transaction_receipt is not None:found['transaction_receipt']=transaction_receipt
     events = list(found.get("lifecycle") or [])
     events.append({"kind": status, "ts": int(time.time())})
     found["lifecycle"] = events[-40:]
@@ -641,20 +715,27 @@ def delist_item(listing_id: str) -> dict[str, Any]:
 def paper_buy(listing_id: str) -> dict[str, Any]:
     wallet = load_wallet()
     buyer = str(wallet.get("pubkey") or "")
-    if not buyer:
-        raise ValueError("MARKETPLACE_WALLET")
     catalog = load_catalog()
     wanted = str(listing_id or "").strip()
     row = next((item for item in catalog if item.get("id") == wanted), None)
     if row is None:
         raise ValueError("MARKETPLACE_MISSING")
+    if row.get('settlement'):
+        buyer = 'paper:buyer'
+    if not buyer:
+        raise ValueError("MARKETPLACE_WALLET")
     if str(row.get("status") or "") != "LISTED":
         raise ValueError("MARKETPLACE_STATUS")
     seller = str(row.get("owner") or "")
     if seller and seller == buyer:
         raise ValueError("MARKETPLACE_SELF")
     identity = str(row.get("identity_sha256") or "")
-    updated = _mutate(wanted, "SOLD", owner=buyer)
+    transaction={'schema':'gg.transaction-receipt.v1','object_id':wanted,'object_identity':identity,'previous_state':row.get('state_sha256',''),
+                 'seller':seller,'buyer':buyer,'kind':row.get('kind','OBJECT'),'title':row.get('title',''),'recorded_at':int(time.time()),
+                 'consideration':row.get('settlement') or {'asset_id':'legacy-solana-SOL','price_atomic':str(row.get('price_lamports',0)),'decimals':9,'symbol':'SOL'},
+                 'settlement_state':'SIMULATED_NO_FUNDS_MOVED','delivery_state':'NOT_VERIFIED','mode':'LOCAL_PAPER'}
+    receipt={'body':transaction,'digest':digest_json(transaction)}
+    updated = _mutate(wanted, "SOLD", owner=buyer, transaction_receipt=receipt)
     append_ledger(
         {
             "kind": "BUY",
@@ -804,10 +885,14 @@ def element_rows(listings: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def select_listing(listing_id: str) -> dict[str, Any]:
+    if not any(row.get('id')==listing_id for row in load_catalog()):raise ValueError('MARKETPLACE_REFERENCE_NOT_FOUND')
     return save_prefs(selected=listing_id)
 
 
 def status_payload() -> dict[str, Any]:
+    from backend import omni_assets
+    omni_assets.bootstrap()
+    omni_state=omni_assets.snapshot()
     wallet = load_wallet()
     chain = load_network()
     listings = load_catalog()
@@ -840,6 +925,11 @@ def status_payload() -> dict[str, Any]:
         "network": chain,
         "mode": "TESTNET",
         "chain": "solana",
+        "settlement_assets": omni_state['assets'],
+        "settlement_networks": omni_state['networks'],
+        "default_settlement_asset": omni_state['selected_asset'],
+        "collections": sorted({str(row.get('collection_name')) for row in listings if row.get('collection_name')}),
+        "settlement_mode": "LOCAL_PAPER_RECEIPTS",
         "filter": filt,
         "filters": list(FILTERS),
         "kinds": list(KINDS),
@@ -860,6 +950,7 @@ def status_payload() -> dict[str, Any]:
             "scope": SCOPE,
         },
         "wallet": {
+            "account_count": len(omni_state['accounts']),
             "pubkey": pubkey,
             "label": wallet.get("label") or "WALLET · DISCONNECTED",
             "short": short_pubkey(pubkey),

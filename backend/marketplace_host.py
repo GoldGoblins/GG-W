@@ -3,11 +3,15 @@ from __future__ import annotations
 from typing import Any
 
 from backend import marketplace_contract
+_draft_media = None
 
 
 def _ok() -> dict[str, Any]:
     payload = marketplace_contract.status_payload()
     payload["error"] = ""
+    payload['draft_media'] = _draft_media
+    from backend import marketplace_discovery
+    payload['public_catalog'] = marketplace_discovery.snapshot()
     return payload
 
 
@@ -18,6 +22,19 @@ def _fail(exc: Exception) -> dict[str, Any]:
 
 
 def status_payload() -> dict[str, Any]:
+    return _ok()
+
+
+def discover(raw: str) -> dict[str, Any]:
+    from backend import marketplace_discovery
+    try:marketplace_discovery.action(raw);return _ok()
+    except ValueError as exc:return _fail(exc)
+
+
+def import_image(source: str) -> dict[str, Any]:
+    global _draft_media
+    from backend import marketplace_media
+    _draft_media = marketplace_media.import_image(source, marketplace_contract.ensure_state_dir())
     return _ok()
 
 

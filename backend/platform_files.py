@@ -10,6 +10,24 @@ NOFOLLOW = getattr(os, "O_NOFOLLOW", 0)
 CLOEXEC = getattr(os, "O_CLOEXEC", 0)
 NONBLOCK = getattr(os, "O_NONBLOCK", 0)
 
+if os.name == "nt":
+    import ctypes
+    from ctypes import wintypes
+
+    # ctypes retains POINTER(T) globally. Creating T inside secure_open leaked
+    # a new structure and pointer class on every file operation for the entire
+    # application lifetime. Reuse the ABI types, not security/handle state.
+    class _FileInformation(ctypes.Structure):
+        _fields_ = [("attributes", wintypes.DWORD),
+                    ("created", wintypes.FILETIME), ("accessed", wintypes.FILETIME),
+                    ("written", wintypes.FILETIME), ("volume", wintypes.DWORD),
+                    ("size_high", wintypes.DWORD), ("size_low", wintypes.DWORD),
+                    ("links", wintypes.DWORD), ("index_high", wintypes.DWORD),
+                    ("index_low", wintypes.DWORD)]
+
+    class _SecurityAttributes(ctypes.Structure):
+        _fields_ = [("length", wintypes.DWORD), ("descriptor", ctypes.c_void_p), ("inherit", wintypes.BOOL)]
+
 
 def atomic_replace(source, destination):
     """Allow brief Windows reader/antivirus sharing locks to clear."""
@@ -206,14 +224,6 @@ def secure_open(path, flags, mode=0o600):
     from ctypes import wintypes
     import msvcrt
 
-    class FileInformation(ctypes.Structure):
-        _fields_ = [("attributes", wintypes.DWORD),
-                    ("created", wintypes.FILETIME), ("accessed", wintypes.FILETIME),
-                    ("written", wintypes.FILETIME), ("volume", wintypes.DWORD),
-                    ("size_high", wintypes.DWORD), ("size_low", wintypes.DWORD),
-                    ("links", wintypes.DWORD), ("index_high", wintypes.DWORD),
-                    ("index_low", wintypes.DWORD)]
-
     kernel = ctypes.WinDLL("kernel32", use_last_error=True)
     create = kernel.CreateFileW
     create.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
@@ -223,7 +233,7 @@ def secure_open(path, flags, mode=0o600):
     close.argtypes = [wintypes.HANDLE]
     close.restype = wintypes.BOOL
     information = kernel.GetFileInformationByHandle
-    information.argtypes = [wintypes.HANDLE, ctypes.POINTER(FileInformation)]
+    information.argtypes = [wintypes.HANDLE, ctypes.POINTER(_FileInformation)]
     information.restype = wintypes.BOOL
     access_mode = flags & (os.O_WRONLY | os.O_RDWR)
     access = 0x80000000 if access_mode != os.O_WRONLY else 0
@@ -235,9 +245,7 @@ def secure_open(path, flags, mode=0o600):
     # Apply private permissions at creation, before another process can read
     # a newly written approval record. Existing files retain their ACL.
     descriptor = _private_security_descriptor() if flags & os.O_CREAT and mode & 0o077 == 0 else None
-    class SecurityAttributes(ctypes.Structure):
-        _fields_ = [("length", wintypes.DWORD), ("descriptor", ctypes.c_void_p), ("inherit", wintypes.BOOL)]
-    attributes = SecurityAttributes(ctypes.sizeof(SecurityAttributes), descriptor, False) if descriptor else None
+    attributes = _SecurityAttributes(ctypes.sizeof(_SecurityAttributes), descriptor, False) if descriptor else None
     try:
         handle = create(os.fspath(path), access, 7, ctypes.byref(attributes) if attributes else None, disposition, 0x00200000, None)
         creation_error = ctypes.get_last_error()
@@ -253,7 +261,7 @@ def secure_open(path, flags, mode=0o600):
             raise FileExistsError(17, "File already exists", os.fspath(path))
         raise ctypes.WinError(error)
     try:
-        info = FileInformation()
+        info = _FileInformation()
         if not information(handle, ctypes.byref(info)):
             raise ctypes.WinError(ctypes.get_last_error())
         if info.attributes & (0x400 | 0x10):

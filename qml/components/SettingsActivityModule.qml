@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 
 Item {
@@ -7,15 +9,15 @@ Item {
 
     implicitHeight: 106
 
-    GgFrame {
+    GgFrame { property string uiColorScope: "ui.widget.SettingsActivityModule.GgFrame.1";
         anchors.fill: parent
         leftLegend: "ACTIVITY"
         rightLegend: "TRUTHFUL"
-        backgroundColor: "#161616"
-        borderColor: "#6a6a6a"
+        backgroundColor: RuntimeTheme.GGTheme.panel
+        borderColor: RuntimeTheme.GGTheme.edge
     }
 
-    Text {
+    GGText { colorKey: "ui.SettingsActivityModule.1";
         anchors.fill: parent
         anchors.leftMargin: 14
         anchors.rightMargin: 14
@@ -24,7 +26,7 @@ Item {
         text: "Activity may show real state, elapsed time and verified "
             + "evidence. Fabricated percentages remain forbidden when "
             + "there is no real denominator."
-        color: "#c8cdd4"
+        color: RuntimeTheme.GGTheme.text
         wrapMode: Text.WordWrap
         font.pixelSize: 12
     }

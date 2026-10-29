@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import math
 import os
 import tempfile
@@ -26,6 +27,21 @@ MAX_HISTORY_PAGES = 40
 _RECENT_LOCKS = {(pair, interval): threading.Lock() for pair in PAIRS for interval in crypto_data.BAR_SECONDS}
 _recent_memory: OrderedDict[str, tuple[tuple[int, int, int], int, dict[str, Any]]] = OrderedDict()
 _recent_memory_lock = threading.Lock()
+_pair_registry_lock = threading.Lock()
+
+
+def register_public_pair(pair: str) -> None:
+    """Caller has checked the public Binance symbol; finite registry, no orders."""
+    if not isinstance(pair, str) or not re.fullmatch(r'[A-Z0-9]{1,20}USDT', pair):
+        raise ValueError('CRYPTO_MARKET_SYMBOL')
+    with _pair_registry_lock:
+        if pair in PAIRS:
+            return
+        if len(PAIRS) >= 128:
+            raise ValueError('CRYPTO_MARKET_PAIR_LIMIT')
+        for interval in crypto_data.BAR_SECONDS:
+            _RECENT_LOCKS[(pair, interval)] = threading.Lock()
+        PAIRS[pair] = ('binance', 'api.binance.com')
 
 
 def _identity(pair: str, interval: str) -> None:

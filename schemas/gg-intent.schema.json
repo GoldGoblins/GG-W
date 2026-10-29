@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:gg:intent:v1",
+  "title": "GG semantic operation intent",
+  "type": "object",
+  "required": ["schema", "operation", "asset_kind", "chain_id"],
+  "properties": {
+    "schema": {"const": "gg.intent.v1"},
+    "operation": {"enum": ["balance.read", "owner.read", "asset.transfer", "asset.bridge", "order.create", "order.cancel", "order.fulfill", "proof.verify"]},
+    "asset_kind": {"enum": ["FUNGIBLE", "UNIQUE", "EDITION"]},
+    "chain_id": {"type": "string", "pattern": "^[-a-z0-9]{3,8}:[-_a-zA-Z0-9]{1,32}$"},
+    "destination_chain_id": {"type": "string", "pattern": "^[-a-z0-9]{3,8}:[-_a-zA-Z0-9]{1,32}$"},
+    "asset_id": {"type": "string", "maxLength": 240},
+    "amount_atomic": {"type": "string", "pattern": "^[0-9]{1,78}$"},
+    "recipient": {"type": "string", "maxLength": 240}
+  },
+  "additionalProperties": false,
+  "$comment": "An intent is a description, not authority or a guarantee of a supported route. Canonical amounts are decimal strings, independent of implementation language."
+}

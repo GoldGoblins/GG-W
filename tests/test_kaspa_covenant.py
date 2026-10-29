@@ -98,12 +98,12 @@ def main() -> int:
         raise AssertionError("crypto nav missing accordion children")
     if '"SCAN"' not in qml or "Strategy004" not in qml:
         raise AssertionError("crypto submenu entries missing")
-    if "Kaspa TN" not in qml:
+    if "Local simnet" not in qml or "cryptoKaspaSetNetwork" not in qml:
         raise AssertionError("kaspa submenu must not reuse SOL testnet")
     popup = (PROJECT / "qml" / "components" / "WalletPopup.qml").read_text(
         encoding="utf-8"
     )
-    if "RECEIVE" not in popup or "cryptoSetNetwork" not in popup:
+    if "walletCopyAddress" not in popup or "cryptoSetNetwork" not in popup:
         raise AssertionError("wallet popup missing phantom-style account actions")
     main = (PROJECT / "qml" / "Main.qml").read_text(encoding="utf-8")
     if "walletOpen" not in main or "WalletPopup" not in main:

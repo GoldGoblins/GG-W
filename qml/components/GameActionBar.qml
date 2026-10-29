@@ -1,3 +1,4 @@
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
@@ -58,14 +59,14 @@ Rectangle {
                     height:parent.height*Math.min(1,Number(slot.entry.cooldown_s || 0)/Math.max(.1,Number(slot.entry.cooldown_duration_s || 2)))
                     color:"#9906080a";visible:Number(slot.entry.cooldown_s || 0)>0
                 }
-                Text {
+                GGText { colorKey: "ui.GameActionBar.1";
                     x:4;y:2;text:String(slot.entry.key || "");color:"#e5dbc1";font.pixelSize:10
                 }
-                Text {
+                GGText { colorKey: "ui.GameActionBar.2";
                     anchors.centerIn:parent;visible:Number(slot.entry.cooldown_s || 0)>0
                     text:Number(slot.entry.cooldown_s || 0).toFixed(1);color:"white";font.pixelSize:16
                 }
-                Text {
+                GGText { colorKey: "ui.GameActionBar.3";
                     anchors.right:parent.right;anchors.bottom:parent.bottom;anchors.margins:3
                     text:slot.entry.kind==='ITEM' ? String(slot.entry.count || 0) : ""
                     color:"#f1d594";font.pixelSize:11
@@ -98,23 +99,29 @@ Rectangle {
     }
     Column {
         anchors.right:parent.right;anchors.rightMargin:4;y:5;spacing:2
-        Button { width:46;height:21;padding:0;font.pixelSize:10;text:String(bar.page+1)+" / "+String(bar.surface.actionState.pages || 10);onClicked:bar.surface.editActionBar({verb:"PAGE",page:(bar.page+1)%Number(bar.surface.actionState.pages || 10)}) }
-        Button { width:46;height:21;padding:0;font.pixelSize:10;text:bar.surface.actionState.locked ? "LOCK" : "EDIT";onClicked:bar.surface.editActionBar({verb:"LOCK",locked:!bar.surface.actionState.locked}) }
-        Button { width:46;height:21;padding:0;font.pixelSize:10;text:"BOOK";onClicked:bar.paletteOpen=!bar.paletteOpen }
+        Button { property string uiColorScope: "ui.control.GameActionBar.1"; width:46;height:21;padding:0;font.pixelSize:10;text:String(bar.page+1)+" / "+String(bar.surface.actionState.pages || 10);onClicked:bar.surface.editActionBar({verb:"PAGE",page:(bar.page+1)%Number(bar.surface.actionState.pages || 10)}) 
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignHCenter }
+}
+        Button { property string uiColorScope: "ui.control.GameActionBar.2"; width:46;height:21;padding:0;font.pixelSize:10;text:bar.surface.actionState.locked ? "LOCK" : "EDIT";onClicked:bar.surface.editActionBar({verb:"LOCK",locked:!bar.surface.actionState.locked}) 
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignHCenter }
+}
+        Button { property string uiColorScope: "ui.control.GameActionBar.3"; width:46;height:21;padding:0;font.pixelSize:10;text:"BOOK";onClicked:bar.paletteOpen=!bar.paletteOpen 
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignHCenter }
+}
     }
     Rectangle {
         visible:bar.paletteOpen;anchors.bottom:parent.top;anchors.bottomMargin:6;anchors.left:parent.left
         width:360;height:bookColumn.implicitHeight+20;color:"#ed172427";border.color:"#928664";radius:3
         Column {
             id:bookColumn;anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.margins:10;spacing:5
-            Text {text:"Abilities · drag onto the bar";color:"#e8c57b"}
+            GGText { colorKey: "ui.GameActionBar.4";text:"Abilities · drag onto the bar";color:"#e8c57b"}
             Repeater {
                 model:bar.paletteOpen ? bar.surface.abilityCatalog : []
                 delegate:Rectangle {
                     id:bookEntry;required property var modelData
                     width:bookColumn.width;height:38;color:"#2d3d40";radius:2
                     Image {x:5;y:4;width:30;height:30;source:bar.iconFor(bookEntry.modelData)}
-                    Text {x:44;anchors.verticalCenter:parent.verticalCenter;text:String(bookEntry.modelData.name);color:"#e0e7cf"}
+                    GGText { colorKey: "ui.GameActionBar.5";x:44;anchors.verticalCenter:parent.verticalCenter;text:String(bookEntry.modelData.name);color:"#e0e7cf"}
                     MouseArea {
                         anchors.fill:parent;preventStealing:true;cursorShape:Qt.OpenHandCursor
                         property real startX:0;property real startY:0;property bool draggingAction:false
@@ -129,7 +136,7 @@ Rectangle {
                     }
                 }
             }
-            Text {text:"Items: drag from your bag to a slot.\nThe item stays in your bag.";color:"#c9d5c7";font.pixelSize:11}
+            GGText { colorKey: "ui.GameActionBar.6";text:"Items: drag from your bag to a slot.\nThe item stays in your bag.";color:"#c9d5c7";font.pixelSize:11}
         }
     }
 }

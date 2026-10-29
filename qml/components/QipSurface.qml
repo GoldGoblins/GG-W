@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
@@ -157,10 +159,10 @@ Item {
     function stateColor(state) {
         var value = String(state || "")
         if (value === "READY" || value === "DONE")
-            return "#8db89a"
+            return RuntimeTheme.GGTheme.positive
         if (value === "BLOCKED" || value === "ERROR" || value === "TIMEOUT")
-            return "#c98989"
-        return "#c8a97e"
+            return RuntimeTheme.GGTheme.negative
+        return RuntimeTheme.GGTheme.accent
     }
 
     FileDialog {
@@ -171,12 +173,12 @@ Item {
         onAccepted: root.inspectFile(String(wasmDialog.selectedFile))
     }
 
-    GgFrame {
+    GgFrame { property string uiColorScope: "ui.widget.QipSurface.GgFrame.1";
         anchors.fill: parent
         leftLegend: "QIP / WASM LAB"
         rightLegend: "LOCAL · NO HOST IMPORTS"
-        backgroundColor: "#161616"
-        borderColor: "#6a6a6a"
+        backgroundColor: RuntimeTheme.GGTheme.panel
+        borderColor: RuntimeTheme.GGTheme.edge
     }
 
     Item {
@@ -192,30 +194,30 @@ Item {
             height: 30
             spacing: 8
 
-            GgButton {
+            GgButton { property string uiColorScope: "ui.control.QipSurface.1";
                 text: "OPEN .WASM"
                 enabled: !root.running
                 onClicked: wasmDialog.open()
             }
-            GgButton {
+            GgButton { property string uiColorScope: "ui.control.QipSurface.2";
                 text: "RUN RENDER"
                 objectName: "qipRunRender"
                 enabled: root.ready && !root.running
                 onClicked: root.runModule()
             }
-            GgButton {
+            GgButton { property string uiColorScope: "ui.control.QipSurface.3";
                 objectName: "qipCancelRender"
                 text: "CANCEL"
                 visible: !!root.surfaceHost && !!root.surfaceHost.qipCancel
                 enabled: root.running && root.jobState !== "CANCELLING"
                 onClicked: root.cancelModule()
             }
-            GgButton {
+            GgButton { property string uiColorScope: "ui.control.QipSurface.4";
                 text: "RESET"
                 enabled: !root.running
                 onClicked: root.clearModule()
             }
-            Text {
+            GGText { colorKey: "ui.QipSurface.1";
                 anchors.verticalCenter: parent.verticalCenter
                 text: String(root.jobState || root.report.state || root.inspection.state || "IDLE")
                     .toUpperCase()
@@ -235,7 +237,7 @@ Item {
             clip: true
             boundsBehavior: Flickable.StopAtBounds
             contentHeight: labColumn.height
-            ScrollBar.vertical: GgScrollBar {}
+            ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.QipSurface.GgScrollBar.6";}
 
             Column {
                 id: labColumn
@@ -243,13 +245,13 @@ Item {
                 height: childrenRect.height
                 spacing: 8
 
-                Text {
+                GGText { colorKey: "ui.QipSurface.2";
                     text: "QIP COMPONENT · LOCAL WASM"
-                    color: "#d8dee9"
+                    color: RuntimeTheme.GGTheme.text
                     font.family: "monospace"
                     font.pixelSize: 16
                 }
-                Text {
+                GGText { colorKey: "ui.QipSurface.3";
                     width: labColumn.width
                     visible: root.notice.length > 0
                     text: root.notice
@@ -259,28 +261,28 @@ Item {
                     font.pixelSize: 12
                     wrapMode: Text.WordWrap
                 }
-                Text {
+                GGText { colorKey: "ui.QipSurface.4";
                     width: labColumn.width
                     text: "Explicit UTF-8 input → deterministic WASM render → output. "
                         + "The selected module stays local; imports, network and host I/O are blocked."
-                    color: "#a8b0b8"
+                    color: RuntimeTheme.GGTheme.muted
                     font.family: "monospace"
                     font.pixelSize: 12
                     wrapMode: Text.WordWrap
                 }
-                Text {
+                GGText { colorKey: "ui.QipSurface.5";
                     width: labColumn.width
                     text: root.loaded
                         ? "MODULE · " + String(root.inspection.name || "")
                             + "  ·  " + String(root.inspection.bytes || 0) + " bytes"
                             + "\nPATH · " + root.modulePath
                         : "MODULE · none selected"
-                    color: "#8fa8a0"
+                    color: RuntimeTheme.GGTheme.cyan
                     font.family: "monospace"
                     font.pixelSize: 12
                     wrapMode: Text.WrapAnywhere
                 }
-                Text {
+                GGText { colorKey: "ui.QipSurface.6";
                     width: labColumn.width
                     visible: root.loaded
                     text: "SECTIONS " + String(root.inspection.sections || 0)
@@ -288,12 +290,12 @@ Item {
                         + "  ·  IMPORTS " + String((root.inspection.imports || []).length)
                         + "\nMEMORY " + root.memoryText()
                         + "  ·  TABLE " + root.tableText()
-                    color: "#c8cdd4"
+                    color: RuntimeTheme.GGTheme.text
                     font.family: "monospace"
                     font.pixelSize: 12
                     wrapMode: Text.WordWrap
                 }
-                Text {
+                GGText { colorKey: "ui.QipSurface.7";
                     width: labColumn.width
                     visible: root.loaded
                     text: "EXPORTS · " + root.exportText()
@@ -303,12 +305,12 @@ Item {
                         + String((root.inspection.qip_abi || {}).memory_export || false)
                         + "  input_ptr="
                         + String((root.inspection.qip_abi || {}).input_pointer_export || false)
-                    color: "#7f8994"
+                    color: RuntimeTheme.GGTheme.dim
                     font.family: "monospace"
                     font.pixelSize: 11
                     wrapMode: Text.WordWrap
                 }
-                Text {
+                GGText { colorKey: "ui.QipSurface.8";
                     width: labColumn.width
                     visible: String(root.inspection.reason || root.report.reason || "").length > 0
                     text: "BOUNDARY · " + String(root.inspection.reason || root.report.reason || "")
@@ -318,9 +320,9 @@ Item {
                     wrapMode: Text.WordWrap
                 }
 
-                Text {
+                GGText { colorKey: "ui.QipSurface.9";
                     text: "INPUT · UTF-8"
-                    color: "#a8b0b8"
+                    color: RuntimeTheme.GGTheme.muted
                     font.family: "monospace"
                     font.pixelSize: 12
                 }
@@ -330,10 +332,10 @@ Item {
                     width: labColumn.width
                     height: 84
                     placeholderText: "text sent to the QIP render export"
-                    color: "#e6e6e6"
-                    placeholderTextColor: "#5d6670"
-                    selectionColor: "#3a3a3a"
-                    selectedTextColor: "#f2f2f2"
+                    color: RuntimeTheme.GGTheme.bright
+                    placeholderTextColor: RuntimeTheme.GGTheme.dim
+                    selectionColor: RuntimeTheme.GGTheme.selected
+                    selectedTextColor: RuntimeTheme.GGTheme.bright
                     font.family: "monospace"
                     font.pixelSize: 12
                     wrapMode: TextArea.Wrap
@@ -341,46 +343,46 @@ Item {
                     readOnly: root.running
                     padding: 8
                     background: Rectangle {
-                        color: "#121212"
+                        color: RuntimeTheme.GGTheme.canvas
                         border.width: 1
-                        border.color: inputArea.activeFocus ? "#8a8a8a" : "#6a6a6a"
+                        border.color: inputArea.activeFocus ? RuntimeTheme.GGTheme.dim : RuntimeTheme.GGTheme.edge
                         radius: 2
                     }
                 }
-                Text {
+                GGText { colorKey: "ui.QipSurface.10";
                     width: labColumn.width
                     visible: String(root.report.state || "") === "DONE"
                     text: "OUTPUT · " + String(root.report.output_bytes || 0) + " bytes"
                         + "  ·  deterministic=" + String(root.report.deterministic || false)
                         + "  ·  " + String(root.report.duration_ms || 0) + " ms"
-                    color: "#8db89a"
+                    color: RuntimeTheme.GGTheme.positive
                     font.family: "monospace"
                     font.pixelSize: 12
                 }
-                Text {
+                GGText { colorKey: "ui.QipSurface.11";
                     width: labColumn.width
                     visible: String(root.report.state || "") === "DONE"
                     text: String(root.report.output_text || "")
-                    color: "#d8dee9"
+                    color: RuntimeTheme.GGTheme.text
                     font.family: "monospace"
                     font.pixelSize: 12
                     wrapMode: Text.WrapAnywhere
                     textFormat: Text.PlainText
                 }
-                Text {
+                GGText { colorKey: "ui.QipSurface.12";
                     width: labColumn.width
                     visible: !root.loaded
                     text: "No module loaded. OPEN .WASM selects a local component."
-                    color: "#a8b0b8"
+                    color: RuntimeTheme.GGTheme.muted
                     font.family: "monospace"
                     font.pixelSize: 12
                     wrapMode: Text.WordWrap
                 }
-                Text {
+                GGText { colorKey: "ui.QipSurface.13";
                     width: labColumn.width
                     text: "Render uses the local QIP ABI. The inspection above shows"
                         + " the module exports, memory limits and supported inputs."
-                    color: "#7f8994"
+                    color: RuntimeTheme.GGTheme.dim
                     font.family: "monospace"
                     font.pixelSize: 11
                     wrapMode: Text.WordWrap

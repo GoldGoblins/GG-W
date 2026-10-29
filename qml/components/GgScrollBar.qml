@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
@@ -15,7 +17,7 @@ ScrollBar {
         implicitWidth: 4
         implicitHeight: 4
         radius: 1
-        color: root.pressed ? "#c8cdd4" : "#8a8a8a"
+        color: root.pressed ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.dim
         visible: root.size < 0.999
             && (root.keepVisible || root.active || root.hovered)
         opacity: root.pressed || root.hovered ? 1 : 0.8

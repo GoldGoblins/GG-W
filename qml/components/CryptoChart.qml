@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtWebEngine
 
@@ -98,7 +100,7 @@ Item {
     Component {
         id: tapeEngine
         WebEngineView {
-            backgroundColor: "#161616"
+            backgroundColor: RuntimeTheme.GGTheme.panel
             lifecycleState: WebEngineView.LifecycleState.Active
             url: Qt.resolvedUrl("../crypto-hole/index.html")
             settings.javascriptEnabled: true

@@ -1,8 +1,10 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 
-Rectangle {
+Item {
     id: root
 
     objectName: "settingsPopup"
@@ -12,13 +14,10 @@ Rectangle {
         : (root.parent
             ? Math.min(root.maxHeight, Math.max(360, root.parent.height - 56))
             : root.maxHeight)
-    color: "#161616"
-    border.color: root.frameBorder
-    border.width: 1
-    radius: root.frameRadius
+    property color color: RuntimeTheme.GGTheme.panel
     focus: visible
 
-    property color frameBorder: "#4a4a4a"
+    property color frameBorder: RuntimeTheme.GGTheme.edge
     property int frameRadius: 4
     property int maxHeight: 760
     property real visualWidth: -1
@@ -39,7 +38,8 @@ Rectangle {
     ]
     property real chatWidthRatio: 0.31
     property int telemetryWidth: 168
-    property color accentColor: "#8a8a8a"
+    property color accentColor: RuntimeTheme.GGTheme.accent
+    property var paletteRoles: ({})
     property bool showDemoFixtures: false
     property bool showProductSourceTabs: false
     property bool showOpenTabInInput: false
@@ -63,10 +63,15 @@ Rectangle {
     property string visualSourcePath: ""
     property string visualSourceStatus: ""
     property string searchText: ""
+    property bool _panelsCreated: false
+    property bool _resetStandardPending: false
+    onVisibleChanged: if (visible) root._panelsCreated = true
+    Component.onCompleted: if (visible) root._panelsCreated = true
 
     signal chatWidthRatioChangedByUser(real value)
     signal telemetryWidthChangedByUser(int value)
     signal accentColorChangedByUser(color value)
+    signal paletteRolesChangedByUser(var value)
     signal frameBorderChangedByUser(color value)
     signal frameRadiusChangedByUser(int value)
     signal demoVisibilityChangedByUser(bool value)
@@ -168,8 +173,30 @@ Rectangle {
     }
 
     function resetStandard() {
-        settingsContent.resetStandard()
+        if (settingsContent.item)
+            settingsContent.item.resetStandard()
+        else {
+            root._resetStandardPending = true
+            root._panelsCreated = true
+        }
         root.resetVisualRequested()
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: 1
+        color: root.color
+        radius: Math.max(0, root.frameRadius - 1)
+    }
+
+    LedgerBorder { property string uiColorScope: "ui.widget.SettingsPopup.LedgerBorder.1";
+        anchors.fill: parent
+        color: root.frameBorder
+        radius: root.frameRadius
+        topGaps: [
+            {start: settingsTitle.x, end: settingsTitle.x + settingsTitle.width},
+            {start: settingsControls.x, end: settingsControls.x + settingsControls.width}
+        ]
     }
 
     MouseArea {
@@ -188,8 +215,8 @@ Rectangle {
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 12
         width: root.sidebarCollapsed ? 48 : 174
-        color: "#181818"
-        border.color: "#4a4a4a"
+        color: RuntimeTheme.GGTheme.panel
+        border.color: RuntimeTheme.GGTheme.edge
         border.width: 1
         radius: 4
 
@@ -223,23 +250,23 @@ Rectangle {
                     width: parent.width
                     height: 30
 
-                    Text {
+                    GGText { colorKey: "ui.SettingsPopup.1";
                         text: "☰"
                         x: root.sidebarCollapsed
                             ? (parent.width - implicitWidth) / 2
                             : 4
                         anchors.verticalCenter: parent.verticalCenter
-                        color: "#e6edf3"
+                        color: RuntimeTheme.GGTheme.bright
                         font.family: "monospace"
                         font.pixelSize: 15
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.SettingsPopup.2";
                         visible: !root.sidebarCollapsed
                         text: "SETTINGS MENU"
                         x: 32
                         anchors.verticalCenter: parent.verticalCenter
-                        color: "#8b949e"
+                        color: RuntimeTheme.GGTheme.dim
                         font.family: "monospace"
                         font.pixelSize: 11
                         font.bold: true
@@ -257,7 +284,7 @@ Rectangle {
                 Rectangle {
                     width: parent.width
                     height: 1
-                    color: "#343a40"
+                    color: RuntimeTheme.GGTheme.line
                 }
 
                 Item {
@@ -265,7 +292,7 @@ Rectangle {
                     height: root.sidebarCollapsed ? 0 : 34
                     visible: !root.sidebarCollapsed
 
-                    GgField {
+                    GgField { property string uiColorScope: "ui.widget.SettingsPopup.GgField.2";
                         id: settingsSearchField
                         objectName: "settingsSearchField"
                         anchors.fill: parent
@@ -288,13 +315,13 @@ Rectangle {
                             anchors.fill: parent
                             radius: 3
                             color: root.page === modelData
-                                ? "#34383d"
+                                ? RuntimeTheme.GGTheme.line
                                 : navHit.containsMouse
-                                    ? "#24292e"
+                                    ? RuntimeTheme.GGTheme.raised
                                     : "transparent"
                         }
 
-                        Text {
+                        GGText { colorKey: "ui.SettingsPopup.3";
                             id: navIconText
                             text: root.navIcon(modelData)
                             x: root.sidebarCollapsed
@@ -302,21 +329,21 @@ Rectangle {
                                 : 9
                             anchors.verticalCenter: parent.verticalCenter
                             color: root.page === modelData
-                                ? "#c7a873"
-                                : "#8b949e"
+                                ? RuntimeTheme.GGTheme.accent
+                                : RuntimeTheme.GGTheme.dim
                             font.family: "monospace"
                             font.pixelSize: 13
                             font.bold: root.page === modelData
                         }
 
-                        Text {
+                        GGText { colorKey: "ui.SettingsPopup.4";
                             visible: !root.sidebarCollapsed
                             text: root.navLabel(modelData)
                             x: 34
                             anchors.verticalCenter: parent.verticalCenter
                             color: root.page === modelData
-                                ? "#e6edf3"
-                                : "#a8b0b8"
+                                ? RuntimeTheme.GGTheme.bright
+                                : RuntimeTheme.GGTheme.muted
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: root.page === modelData
@@ -341,12 +368,12 @@ Rectangle {
             anchors.bottom: parent.bottom
             anchors.margins: 8
             height: root.sidebarCollapsed ? 40 : 58
-            color: "#1c1c1c"
-            border.color: "#343a40"
+            color: RuntimeTheme.GGTheme.raised
+            border.color: RuntimeTheme.GGTheme.line
             border.width: 1
             radius: 3
 
-            Text {
+            GGText { colorKey: "ui.SettingsPopup.5";
                 objectName: "settingsResetButton"
                 text: root.sidebarCollapsed ? "↺" : "RESET STANDARD"
                 x: root.sidebarCollapsed
@@ -354,7 +381,7 @@ Rectangle {
                     : 8
                 anchors.top: parent.top
                 anchors.topMargin: 7
-                color: resetHit.containsMouse ? "#e6edf3" : "#c7a873"
+                color: resetHit.containsMouse ? RuntimeTheme.GGTheme.bright : RuntimeTheme.GGTheme.accent
                 font.family: "monospace"
                 font.pixelSize: root.sidebarCollapsed ? 16 : 11
                 font.bold: true
@@ -369,7 +396,7 @@ Rectangle {
                 }
             }
 
-            Text {
+            GGText { colorKey: "ui.SettingsPopup.6";
                 visible: !root.sidebarCollapsed
                 text: "LIVE · " + root.navLabel(root.page)
                 x: 8
@@ -382,9 +409,9 @@ Rectangle {
         }
     }
 
-    SettingsSurface {
+    DeferredSurface { property string uiColorScope: "ui.widget.SettingsPopup.DeferredSurface.3";
         id: settingsContent
-        objectName: "settingsPopupSurface"
+        objectName: "settingsPopupSurfaceLoader"
         z: 1
         anchors.left: sidebar.right
         anchors.leftMargin: 12
@@ -394,101 +421,116 @@ Rectangle {
         anchors.bottom: parent.bottom
         anchors.topMargin: 16
         anchors.bottomMargin: 12
-        embedded: true
-        section: root.page
-        visible: !root.visualPage
-            && !root.searchActive
-        chatWidthRatio: root.chatWidthRatio
-        telemetryWidth: root.telemetryWidth
-        accentColor: root.accentColor
-        frameBorder: root.frameBorder
-        frameRadius: root.frameRadius
-        showDemoFixtures: root.showDemoFixtures
-        showProductSourceTabs: root.showProductSourceTabs
-        showOpenTabInInput: root.showOpenTabInInput
-        showInnerEditorChrome: root.showInnerEditorChrome
-        hostKind: root.hostKind
-        engineTarget: root.engineTarget
-        utilityHeight: root.utilityHeight
-        desktopShell: root.desktopShell
-        extensionsJson: root.extensionsJson
-        workspaceFoldersJson: root.workspaceFoldersJson
-        workspaceTrusted: root.workspaceTrusted
-
-        onChatWidthRatioChangedByUser: function(value) {
-            root.chatWidthRatioChangedByUser(value)
+        active: root._panelsCreated || root.visible
+        surfaceUrl: Qt.resolvedUrl("SettingsSurface.qml")
+        surfaceProperties: ({
+            objectName: "settingsPopupSurface",
+            embedded: true,
+            section: Qt.binding(function() { return root.page }),
+            chatWidthRatio: Qt.binding(function() { return root.chatWidthRatio }),
+            telemetryWidth: Qt.binding(function() { return root.telemetryWidth }),
+            accentColor: Qt.binding(function() { return root.accentColor }),
+            paletteRoles: Qt.binding(function() { return root.paletteRoles }),
+            frameBorder: Qt.binding(function() { return root.frameBorder }),
+            frameRadius: Qt.binding(function() { return root.frameRadius }),
+            showDemoFixtures: Qt.binding(function() { return root.showDemoFixtures }),
+            showProductSourceTabs: Qt.binding(function() { return root.showProductSourceTabs }),
+            showOpenTabInInput: Qt.binding(function() { return root.showOpenTabInInput }),
+            showInnerEditorChrome: Qt.binding(function() { return root.showInnerEditorChrome }),
+            hostKind: Qt.binding(function() { return root.hostKind }),
+            engineTarget: Qt.binding(function() { return root.engineTarget }),
+            utilityHeight: Qt.binding(function() { return root.utilityHeight }),
+            desktopShell: Qt.binding(function() { return root.desktopShell }),
+            extensionsJson: Qt.binding(function() { return root.extensionsJson }),
+            workspaceFoldersJson: Qt.binding(function() { return root.workspaceFoldersJson }),
+            workspaceTrusted: Qt.binding(function() { return root.workspaceTrusted })
+        })
+        onLoaded: {
+            if (root._resetStandardPending) {
+                root._resetStandardPending = false
+                item.resetStandard()
+            }
         }
+        Connections {
+            target: settingsContent.item
+            function onChatWidthRatioChangedByUser(value) {
+                root.chatWidthRatioChangedByUser(value)
+            }
 
-        onTelemetryWidthChangedByUser: function(value) {
-            root.telemetryWidthChangedByUser(value)
+            function onTelemetryWidthChangedByUser(value) {
+                root.telemetryWidthChangedByUser(value)
+            }
+
+            function onAccentColorChangedByUser(value) {
+                root.accentColorChangedByUser(value)
+            }
+            function onPaletteRolesChangedByUser(value) {
+                root.paletteRolesChangedByUser(value)
+            }
+
+            function onFrameBorderChangedByUser(value) {
+                root.frameBorderChangedByUser(value)
+            }
+
+            function onFrameRadiusChangedByUser(value) {
+                root.frameRadiusChangedByUser(value)
+            }
+
+            function onDemoVisibilityChangedByUser(value) {
+                root.demoVisibilityChangedByUser(value)
+            }
+
+            function onProductSourceTabsChangedByUser(value) {
+                root.productSourceTabsChangedByUser(value)
+            }
+
+            function onShowOpenTabInInputChangedByUser(value) {
+                root.showOpenTabInInputChangedByUser(value)
+            }
+
+            function onShowInnerEditorChromeChangedByUser(value) {
+                root.showInnerEditorChromeChangedByUser(value)
+            }
+
+            function onHostKindChangedByUser(value) {
+                root.hostKindChangedByUser(value)
+            }
+
+            function onSpawnInstanceRequested() { root.spawnInstanceRequested() }
+
+            function onEngineTargetChangedByUser(value) {
+                root.engineTargetChangedByUser(value)
+            }
+
+            function onUtilityHeightChangedByUser(value) {
+                root.utilityHeightChangedByUser(value)
+            }
+
+            function onDesktopShellChangedByUser(value) {
+                root.desktopShellChangedByUser(value)
+            }
+
+            function onExtensionEnabledChangedByUser(extensionId, enabled) {
+                root.extensionEnabledChangedByUser(extensionId, enabled)
+            }
+
+            function onResetExtensionsRequested() { root.resetExtensionsRequested() }
+
+            function onWorkspaceFoldersChangedByUser(foldersJson) {
+                root.workspaceFoldersChangedByUser(foldersJson)
+            }
+
+            function onWorkspaceTrustedChangedByUser(value) {
+                root.workspaceTrustedChangedByUser(value)
+            }
+
+            function onCloseRequested() { root.closeRequested() }
         }
-
-        onAccentColorChangedByUser: function(value) {
-            root.accentColorChangedByUser(value)
-        }
-
-        onFrameBorderChangedByUser: function(value) {
-            root.frameBorderChangedByUser(value)
-        }
-
-        onFrameRadiusChangedByUser: function(value) {
-            root.frameRadiusChangedByUser(value)
-        }
-
-        onDemoVisibilityChangedByUser: function(value) {
-            root.demoVisibilityChangedByUser(value)
-        }
-
-        onProductSourceTabsChangedByUser: function(value) {
-            root.productSourceTabsChangedByUser(value)
-        }
-
-        onShowOpenTabInInputChangedByUser: function(value) {
-            root.showOpenTabInInputChangedByUser(value)
-        }
-
-        onShowInnerEditorChromeChangedByUser: function(value) {
-            root.showInnerEditorChromeChangedByUser(value)
-        }
-
-        onHostKindChangedByUser: function(value) {
-            root.hostKindChangedByUser(value)
-        }
-
-        onSpawnInstanceRequested: root.spawnInstanceRequested()
-
-        onEngineTargetChangedByUser: function(value) {
-            root.engineTargetChangedByUser(value)
-        }
-
-        onUtilityHeightChangedByUser: function(value) {
-            root.utilityHeightChangedByUser(value)
-        }
-
-        onDesktopShellChangedByUser: function(value) {
-            root.desktopShellChangedByUser(value)
-        }
-
-        onExtensionEnabledChangedByUser: function(extensionId, enabled) {
-            root.extensionEnabledChangedByUser(extensionId, enabled)
-        }
-
-        onResetExtensionsRequested: root.resetExtensionsRequested()
-
-        onWorkspaceFoldersChangedByUser: function(foldersJson) {
-            root.workspaceFoldersChangedByUser(foldersJson)
-        }
-
-        onWorkspaceTrustedChangedByUser: function(value) {
-            root.workspaceTrustedChangedByUser(value)
-        }
-
-        onCloseRequested: root.closeRequested()
     }
 
-    VisualProfilesModule {
+    DeferredSurface { property string uiColorScope: "ui.widget.SettingsPopup.DeferredSurface.4";
         id: profilesContent
-        objectName: "settingsProfilesModule"
+        objectName: "settingsProfilesLoader"
         z: 2
         visible: root.page === "PROFILES" && !root.searchActive
         anchors.left: sidebar.right
@@ -499,29 +541,36 @@ Rectangle {
         anchors.bottom: parent.bottom
         anchors.topMargin: 22
         anchors.bottomMargin: 18
-        themeId: root.visualThemeId
-        profileId: root.visualProfileId
-        themesJson: root.visualThemesJson
-        profilesJson: root.visualProfilesJson
-
-        onThemeRequested: function(value) {
-            root.visualThemeRequested(value)
+        active: root._panelsCreated || root.visible
+        surfaceUrl: Qt.resolvedUrl("VisualProfilesModule.qml")
+        surfaceProperties: ({
+            objectName: "settingsProfilesModule",
+            themeId: Qt.binding(function() { return root.visualThemeId }),
+            profileId: Qt.binding(function() { return root.visualProfileId }),
+            themesJson: Qt.binding(function() { return root.visualThemesJson }),
+            profilesJson: Qt.binding(function() { return root.visualProfilesJson })
+        })
+        Connections {
+            target: profilesContent.item
+            function onThemeRequested(value) {
+                root.visualThemeRequested(value)
+            }
+            function onSaveThemeRequested(value) {
+                root.visualSaveThemeRequested(value)
+            }
+            function onProfileRequested(value) {
+                root.visualProfileRequested(value)
+            }
+            function onSaveProfileRequested(value) {
+                root.visualSaveProfileRequested(value)
+            }
+            function onResetProfileRequested() { root.visualResetProfileRequested() }
         }
-        onSaveThemeRequested: function(value) {
-            root.visualSaveThemeRequested(value)
-        }
-        onProfileRequested: function(value) {
-            root.visualProfileRequested(value)
-        }
-        onSaveProfileRequested: function(value) {
-            root.visualSaveProfileRequested(value)
-        }
-        onResetProfileRequested: root.visualResetProfileRequested()
     }
 
-    VisualSurfacesModule {
+    DeferredSurface { property string uiColorScope: "ui.widget.SettingsPopup.DeferredSurface.5";
         id: surfacesContent
-        objectName: "settingsSurfacesModule"
+        objectName: "settingsSurfacesLoader"
         z: 2
         visible: root.page === "SURFACES" && !root.searchActive
         anchors.left: sidebar.right
@@ -532,21 +581,28 @@ Rectangle {
         anchors.bottom: parent.bottom
         anchors.topMargin: 22
         anchors.bottomMargin: 18
-        surfaceRegistryJson: root.visualSurfaceRegistryJson
-        selectedSurface: root.visualSelectedSurface
-        layoutLocked: root.layoutLocked
-
-        onSurfaceSelected: function(value) {
-            root.visualSurfaceRequested(value)
-        }
-        onSourceRequested: function(value) {
-            root.visualSourceRequested(value)
+        active: root._panelsCreated || root.visible
+        surfaceUrl: Qt.resolvedUrl("VisualSurfacesModule.qml")
+        surfaceProperties: ({
+            objectName: "settingsSurfacesModule",
+            surfaceRegistryJson: Qt.binding(function() { return root.visualSurfaceRegistryJson }),
+            selectedSurface: Qt.binding(function() { return root.visualSelectedSurface }),
+            layoutLocked: Qt.binding(function() { return root.layoutLocked })
+        })
+        Connections {
+            target: surfacesContent.item
+            function onSurfaceSelected(value) {
+                root.visualSurfaceRequested(value)
+            }
+            function onSourceRequested(value) {
+                root.visualSourceRequested(value)
+            }
         }
     }
 
-    VisualEditorModule {
+    DeferredSurface { property string uiColorScope: "ui.widget.SettingsPopup.DeferredSurface.6";
         id: editorContent
-        objectName: "settingsVisualEditorModule"
+        objectName: "settingsVisualEditorLoader"
         z: 2
         visible: root.page === "EDITOR" && !root.searchActive
         anchors.left: sidebar.right
@@ -557,32 +613,39 @@ Rectangle {
         anchors.bottom: parent.bottom
         anchors.topMargin: 22
         anchors.bottomMargin: 18
-        layoutLocked: root.layoutLocked
-        editorMode: root.visualEditorMode
-        selectedSurface: root.visualSelectedSurface
-        surfaceRegistryJson: root.visualSurfaceRegistryJson
-        sourceText: root.visualSourceText
-        sourcePath: root.visualSourcePath
-        sourceStatus: root.visualSourceStatus
-
-        onLockRequested: function(value) {
-            root.visualLockRequested(value)
+        active: root._panelsCreated || root.visible
+        surfaceUrl: Qt.resolvedUrl("VisualEditorModule.qml")
+        surfaceProperties: ({
+            objectName: "settingsVisualEditorModule",
+            layoutLocked: Qt.binding(function() { return root.layoutLocked }),
+            editorMode: Qt.binding(function() { return root.visualEditorMode }),
+            selectedSurface: Qt.binding(function() { return root.visualSelectedSurface }),
+            surfaceRegistryJson: Qt.binding(function() { return root.visualSurfaceRegistryJson }),
+            sourceText: Qt.binding(function() { return root.visualSourceText }),
+            sourcePath: Qt.binding(function() { return root.visualSourcePath }),
+            sourceStatus: Qt.binding(function() { return root.visualSourceStatus })
+        })
+        Connections {
+            target: editorContent.item
+            function onLockRequested(value) {
+                root.visualLockRequested(value)
+            }
+            function onModeRequested(value) {
+                root.visualModeRequested(value)
+            }
+            function onSurfaceRequested(value) {
+                root.visualSurfaceRequested(value)
+            }
+            function onSourceSaveRequested(value) {
+                root.visualSourceSaveRequested(value)
+            }
+            function onSourceCloseRequested() { root.visualSourceCloseRequested() }
         }
-        onModeRequested: function(value) {
-            root.visualModeRequested(value)
-        }
-        onSurfaceRequested: function(value) {
-            root.visualSurfaceRequested(value)
-        }
-        onSourceSaveRequested: function(value) {
-            root.visualSourceSaveRequested(value)
-        }
-        onSourceCloseRequested: root.visualSourceCloseRequested()
     }
 
-    SettingsSearchModule {
+    DeferredSurface { property string uiColorScope: "ui.widget.SettingsPopup.DeferredSurface.7";
         id: searchContent
-        objectName: "settingsSearchModule"
+        objectName: "settingsSearchLoader"
         z: 3
         visible: root.searchActive
         anchors.left: sidebar.right
@@ -593,15 +656,23 @@ Rectangle {
         anchors.bottom: parent.bottom
         anchors.topMargin: 22
         anchors.bottomMargin: 18
-        searchText: root.searchText
-
-        onPageRequested: function(value) {
-            root.page = value
-            root.searchText = ""
+        active: root._panelsCreated || root.visible
+        surfaceUrl: Qt.resolvedUrl("SettingsSearchModule.qml")
+        surfaceProperties: ({
+            objectName: "settingsSearchModule",
+            searchText: Qt.binding(function() { return root.searchText })
+        })
+        Connections {
+            target: searchContent.item
+            function onPageRequested(value) {
+                root.page = value
+                root.searchText = ""
+            }
         }
     }
 
-    Rectangle {
+    Item {
+        id: settingsTitle
         z: 3
         visible: true
         anchors.left: parent.left
@@ -610,21 +681,20 @@ Rectangle {
         anchors.topMargin: -8
         height: 18
         width: settingsLegendText.implicitWidth + 12
-        color: root.color
-        radius: 3
 
-        Text {
+        GGText { colorKey: "ui.SettingsPopup.7";
             id: settingsLegendText
             anchors.centerIn: parent
             text: "SETTINGS"
-            color: "#e6edf3"
+            color: RuntimeTheme.GGTheme.bright
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: true
         }
     }
 
-    Rectangle {
+    Item {
+        id: settingsControls
         z: 3
         anchors.right: parent.right
         anchors.rightMargin: 12
@@ -632,19 +702,17 @@ Rectangle {
         anchors.topMargin: -8
         height: 18
         width: settingsLegendRow.implicitWidth + 12
-        color: root.color
-        radius: 3
 
         Row {
             id: settingsLegendRow
             anchors.centerIn: parent
             spacing: 8
 
-            Text {
+            GGText { colorKey: "ui.SettingsPopup.8";
                 id: gripDots
                 objectName: "settingsDragBar"
                 text: "⋮⋮"
-                color: "#8b949e"
+                color: RuntimeTheme.GGTheme.dim
                 font.family: "monospace"
                 font.pixelSize: 11
                 anchors.verticalCenter: parent.verticalCenter
@@ -675,10 +743,10 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
             }
 
-            Text {
+            GGText { colorKey: "ui.SettingsPopup.9";
                 objectName: "settingsPopupCloseButton"
                 text: "✕"
-                color: "#8b949e"
+                color: RuntimeTheme.GGTheme.dim
                 font.family: "monospace"
                 font.pixelSize: 12
                 anchors.verticalCenter: parent.verticalCenter

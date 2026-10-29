@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -199,30 +201,32 @@ Item {
         Flow {
             Layout.fillWidth: true
             spacing: 6
-            GgButton { text: "OPEN FILE"; enabled: !root.busy; onClicked: artifactDialog.open() }
-            GgButton { text: "OPEN PROJECT"; enabled: !root.busy; onClicked: projectDialog.open() }
-            GgButton { text: "GHIDRA REPORT"; enabled: !root.busy; onClicked: { root.reportProducer = "Ghidra"; reportDialog.open() } }
-            GgButton { text: "REA REPORT"; enabled: !root.busy; onClicked: { root.reportProducer = "REA"; reportDialog.open() } }
-            GgButton { text: "REFRESH TOOLS"; onClicked: root.refresh() }
-            GgButton { objectName: "reverseLastAnalysis"; text: "LAST ANALYSIS"; enabled: !root.busy; onClicked: root.restoreLastReport() }
+            GgButton { property string uiColorScope: "ui.control.ResearchReverseSurface.1"; text: "OPEN FILE"; enabled: !root.busy; onClicked: artifactDialog.open() }
+            GgButton { property string uiColorScope: "ui.control.ResearchReverseSurface.2"; text: "OPEN PROJECT"; enabled: !root.busy; onClicked: projectDialog.open() }
+            GgButton { property string uiColorScope: "ui.control.ResearchReverseSurface.3"; text: "GHIDRA REPORT"; enabled: !root.busy; onClicked: { root.reportProducer = "Ghidra"; reportDialog.open() } }
+            GgButton { property string uiColorScope: "ui.control.ResearchReverseSurface.4"; text: "REA REPORT"; enabled: !root.busy; onClicked: { root.reportProducer = "REA"; reportDialog.open() } }
+            GgButton { property string uiColorScope: "ui.control.ResearchReverseSurface.5"; text: "REFRESH TOOLS"; onClicked: root.refresh() }
+            GgButton { property string uiColorScope: "ui.control.ResearchReverseSurface.6"; objectName: "reverseLastAnalysis"; text: "LAST ANALYSIS"; enabled: !root.busy; onClicked: root.restoreLastReport() }
         }
-        GgField { objectName: "reverseTargetPath"; Layout.fillWidth: true; Layout.minimumWidth: 0; Layout.preferredWidth: 300; text: root.targetPath; readOnly: root.busy;
+        GgField { property string uiColorScope: "ui.widget.ResearchReverseSurface.GgField.7"; objectName: "reverseTargetPath"; Layout.fillWidth: true; Layout.minimumWidth: 0; Layout.preferredWidth: 300; text: root.targetPath; readOnly: root.busy;
             placeholderText: "Selected local file or source project";
             onTextEdited: root.targetPath = text }
         RowLayout {
             Layout.fillWidth: true
             Layout.minimumWidth: 0
             Layout.maximumWidth: root.width
-            ComboBox { id: operationPicker; objectName: "reverseOperation";
+            ComboBox { property string uiColorScope: "ui.control.ResearchReverseSurface.7"; id: operationPicker; objectName: "reverseOperation";
                 model: ["analyze", "search", "function", "decompile", "xrefs", "php_analyze"];
-                Layout.preferredWidth: 130; enabled: !root.busy }
-            GgField { id: queryField; objectName: "reverseQuery"; Layout.fillWidth: true; Layout.minimumWidth: 0; Layout.preferredWidth: 200;
+                Layout.preferredWidth: 130; enabled: !root.busy 
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignLeft }
+}
+            GgField { property string uiColorScope: "ui.widget.ResearchReverseSurface.GgField.8"; id: queryField; objectName: "reverseQuery"; Layout.fillWidth: true; Layout.minimumWidth: 0; Layout.preferredWidth: 200;
                 enabled: !root.busy && operationPicker.currentText !== "analyze" && operationPicker.currentText !== "php_analyze";
                 placeholderText: "Function name, address or search text" }
-            GgButton { text: "ANALYZE"; objectName: "reverseAnalyze";
+            GgButton { property string uiColorScope: "ui.control.ResearchReverseSurface.8"; text: "ANALYZE"; objectName: "reverseAnalyze";
                 enabled: !root.busy && root.targetPath.trim().length > 0 && (operationPicker.currentText === "analyze" || operationPicker.currentText === "php_analyze" || queryField.text.trim().length > 0);
                 onClicked: root.startAnalysis() }
-            GgButton { objectName: "reverseCancelAnalysis"; text: "CANCEL"; enabled: root.busy && root.jobState !== "CANCELLING";
+            GgButton { property string uiColorScope: "ui.control.ResearchReverseSurface.9"; objectName: "reverseCancelAnalysis"; text: "CANCEL"; enabled: root.busy && root.jobState !== "CANCELLING";
                 onClicked: root.cancelAnalysis() }
         }
         RowLayout {
@@ -234,31 +238,31 @@ Item {
                     required property var modelData
                     Layout.fillWidth: true
                     Layout.preferredHeight: 82
-                    color: "#1d1d1d"
-                    border.color: "#42484e"
+                    color: RuntimeTheme.GGTheme.raised
+                    border.color: RuntimeTheme.GGTheme.edge
                     Column {
                         anchors.fill: parent; anchors.margins: 8; spacing: 5
-                        Text { width: parent.width; text: modelData.name + " · " + modelData.state;
-                            color: modelData.state === "READY" ? "#8db89a" : "#c8a97e";
+                        GGText { colorKey: "ui.ResearchReverseSurface.1"; width: parent.width; text: modelData.name + " · " + modelData.state;
+                            color: modelData.state === "READY" ? RuntimeTheme.GGTheme.positive : RuntimeTheme.GGTheme.accent;
                             font.family: "monospace"; font.pixelSize: 12; elide: Text.ElideRight }
-                        Text { width: parent.width; text: modelData.detail; color: "#a8b0b8";
+                        GGText { colorKey: "ui.ResearchReverseSurface.2"; width: parent.width; text: modelData.detail; color: RuntimeTheme.GGTheme.muted;
                             font.family: "monospace"; font.pixelSize: 10; wrapMode: Text.WordWrap }
                     }
                 }
             }
         }
-        Text { Layout.fillWidth: true; text: root.notice; textFormat: Text.PlainText;
-            color: root.report.status === "ERROR" ? "#c98989" : "#a8b0b8";
+        GGText { colorKey: "ui.ResearchReverseSurface.3"; Layout.fillWidth: true; text: root.notice; textFormat: Text.PlainText;
+            color: root.report.status === "ERROR" ? RuntimeTheme.GGTheme.negative : RuntimeTheme.GGTheme.muted;
             font.family: "monospace"; font.pixelSize: 11; wrapMode: Text.WordWrap }
-        Text { Layout.fillWidth: true; text: root.phpReview || operationPicker.currentText === "php_analyze" || root.targetPath.toLowerCase().endsWith(".php")
+        GGText { colorKey: "ui.ResearchReverseSurface.4"; Layout.fillWidth: true; text: root.phpReview || operationPicker.currentText === "php_analyze" || root.targetPath.toLowerCase().endsWith(".php")
                 ? "PHP lexical review · files ≤2 MiB · projects ≤8 MiB · parsing ≤15 sec · target code is never executed"
                 : "Local static analysis · files ≤32 MiB · projects ≤64 MiB · 5 min per job · temporary work is removed";
-            color: "#7f8993"; font.family: "monospace"; font.pixelSize: 10; wrapMode: Text.WordWrap }
+            color: RuntimeTheme.GGTheme.dim; font.family: "monospace"; font.pixelSize: 10; wrapMode: Text.WordWrap }
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: 10
-            ResearchFrame {
+            ResearchFrame { property string uiColorScope: "ui.widget.ResearchReverseSurface.ResearchFrame.11";
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 leftLegend: "OBSERVATIONS / SOURCE LOCATIONS"
@@ -270,58 +274,58 @@ Item {
                     Column {
                         width: observations.availableWidth
                         spacing: 10
-                        Text { width: parent.width; text: root.selected
+                        GGText { colorKey: "ui.ResearchReverseSurface.5"; width: parent.width; text: root.selected
                                 ? String(root.report.name) + " · " + String(root.report.format) + " · " + String(root.report.bytes) + " bytes\n" + String(root.report.path)
                                 : "Inspect a program, source file or WASM component. Strings show their byte offsets. Import Ghidra or REA JSON to bring deeper analysis into the same evidence workflow.";
-                            color: "#d8dee9"; font.family: "monospace"; font.pixelSize: 12;
+                            color: RuntimeTheme.GGTheme.text; font.family: "monospace"; font.pixelSize: 12;
                             textFormat: Text.PlainText; wrapMode: Text.WrapAnywhere }
-                        Text { width: parent.width; text: (root.report.facts || []).join("\n");
-                            color: "#8db89a"; font.family: "monospace"; font.pixelSize: 12;
+                        GGText { colorKey: "ui.ResearchReverseSurface.6"; width: parent.width; text: (root.report.facts || []).join("\n");
+                            color: RuntimeTheme.GGTheme.positive; font.family: "monospace"; font.pixelSize: 12;
                             textFormat: Text.PlainText; wrapMode: Text.WordWrap }
-                        Text { visible: root.selected; width: parent.width;
+                        GGText { colorKey: "ui.ResearchReverseSurface.7"; visible: root.selected; width: parent.width;
                             text: "Static observations · verify behavioral conclusions";
-                            color: "#c8a97e"; font.family: "monospace"; font.pixelSize: 11; wrapMode: Text.WordWrap }
-                        GgButton { visible: root.selected; text: root.showLimits ? "HIDE ANALYSIS COVERAGE" : "ANALYSIS COVERAGE";
+                            color: RuntimeTheme.GGTheme.accent; font.family: "monospace"; font.pixelSize: 11; wrapMode: Text.WordWrap }
+                        GgButton { property string uiColorScope: "ui.control.ResearchReverseSurface.10"; visible: root.selected; text: root.showLimits ? "HIDE ANALYSIS COVERAGE" : "ANALYSIS COVERAGE";
                             onClicked: root.showLimits = !root.showLimits }
-                        Text { visible: root.showLimits; width: parent.width; text: (root.report.limits || []).join("\n");
-                            color: "#c8a97e"; font.family: "monospace"; font.pixelSize: 11;
+                        GGText { colorKey: "ui.ResearchReverseSurface.8"; visible: root.showLimits; width: parent.width; text: (root.report.limits || []).join("\n");
+                            color: RuntimeTheme.GGTheme.accent; font.family: "monospace"; font.pixelSize: 11;
                             textFormat: Text.PlainText; wrapMode: Text.WordWrap }
                         TextArea {
                             objectName: "phpReviewSummary"
                             visible: root.phpReview
                             width: parent.width; text: root.phpSummary
                             readOnly: true; selectByMouse: true; textFormat: TextEdit.PlainText
-                            color: "#c8cdd4"; font.family: "monospace"; font.pixelSize: 11
-                            wrapMode: TextArea.Wrap; background: Rectangle { color: "#121212" }
+                            color: RuntimeTheme.GGTheme.text; font.family: "monospace"; font.pixelSize: 11
+                            wrapMode: TextArea.Wrap; background: Rectangle { color: RuntimeTheme.GGTheme.canvas }
                         }
                         TextArea {
                             visible: root.functionSummary.length > 0
                             width: parent.width; text: root.functionSummary
                             readOnly: true; selectByMouse: true
-                            color: "#8db89a"; font.family: "monospace"; font.pixelSize: 12
-                            wrapMode: TextArea.Wrap; background: Rectangle { color: "#121212" }
+                            color: RuntimeTheme.GGTheme.positive; font.family: "monospace"; font.pixelSize: 12
+                            wrapMode: TextArea.Wrap; background: Rectangle { color: RuntimeTheme.GGTheme.canvas }
                         }
                         TextArea {
                             visible: root.pseudocode.length > 0
                             width: parent.width; text: root.pseudocode
                             readOnly: true; selectByMouse: true
-                            color: "#d8dee9"; font.family: "monospace"; font.pixelSize: 12
-                            wrapMode: TextArea.Wrap; background: Rectangle { color: "#121212" }
+                            color: RuntimeTheme.GGTheme.text; font.family: "monospace"; font.pixelSize: 12
+                            wrapMode: TextArea.Wrap; background: Rectangle { color: RuntimeTheme.GGTheme.canvas }
                         }
                         Repeater {
                             model: root.graphEdges
-                            delegate: Text {
+                            delegate: GGText { colorKey: "ui.ResearchReverseSurface.9";
                                 required property var modelData
                                 width: parent.width
                                 text: String(modelData.relation || "") + " · "
                                     + String((modelData.properties || {}).imported_name || (modelData.properties || {}).exported_name || "")
                                     + " · " + String((modelData.properties || {}).specifier || (modelData.properties || {}).resolved_path
                                         || (modelData.properties || {}).logical_module_key || (modelData.properties || {}).declared_path || "")
-                                color: "#a8b0b8"; font.family: "monospace"; font.pixelSize: 11
+                                color: RuntimeTheme.GGTheme.muted; font.family: "monospace"; font.pixelSize: 11
                                 textFormat: Text.PlainText; wrapMode: Text.WordWrap
                             }
                         }
-                        GgButton { visible: root.report.content !== undefined
+                        GgButton { property string uiColorScope: "ui.control.ResearchReverseSurface.11"; visible: root.report.content !== undefined
                             text: root.showRawReport ? "HIDE REPORT DETAILS" : "SHOW REPORT DETAILS"
                             onClicked: root.showRawReport = !root.showRawReport }
                         TextArea {
@@ -329,48 +333,48 @@ Item {
                             width: parent.width
                             text: JSON.stringify(root.report.content || {}, null, 2)
                             readOnly: true; selectByMouse: true
-                            color: "#c8cdd4"; font.family: "monospace"; font.pixelSize: 11
+                            color: RuntimeTheme.GGTheme.text; font.family: "monospace"; font.pixelSize: 11
                             wrapMode: TextArea.Wrap
-                            background: Rectangle { color: "#121212" }
+                            background: Rectangle { color: RuntimeTheme.GGTheme.canvas }
                         }
                         Repeater {
                             model: root.report.strings || []
-                            delegate: Text {
+                            delegate: GGText { colorKey: "ui.ResearchReverseSurface.10";
                                 required property var modelData
                                 width: parent.width
                                 text: "0x" + Number(modelData.offset).toString(16) + "  " + String(modelData.text)
-                                color: "#c8cdd4"; font.family: "monospace"; font.pixelSize: 11
+                                color: RuntimeTheme.GGTheme.text; font.family: "monospace"; font.pixelSize: 11
                                 textFormat: Text.PlainText; wrapMode: Text.WrapAnywhere
                             }
                         }
                     }
                 }
             }
-            ResearchFrame {
+            ResearchFrame { property string uiColorScope: "ui.widget.ResearchReverseSurface.ResearchFrame.14";
                 Layout.preferredWidth: Math.min(320, root.width * 0.38)
                 Layout.fillHeight: true
                 leftLegend: "FINDING / REUSABLE LESSON"
                 ColumnLayout {
                     anchors.fill: parent; anchors.margins: 10; spacing: 8
-                    GgField { id: findingTitle; objectName: "reverseFindingTitle";
+                    GgField { property string uiColorScope: "ui.widget.ResearchReverseSurface.GgField.15"; id: findingTitle; objectName: "reverseFindingTitle";
                         Layout.fillWidth: true; placeholderText: "Finding title" }
                     TextArea { id: findingText; objectName: "reverseFindingText";
                         Layout.fillWidth: true; Layout.fillHeight: true; Layout.minimumHeight: 70
                         placeholderText: "Your conclusion and the observations supporting it"
-                        color: "#e6e6e6"; placeholderTextColor: "#5d6670"; font.family: "monospace"; font.pixelSize: 11
+                        color: RuntimeTheme.GGTheme.bright; placeholderTextColor: RuntimeTheme.GGTheme.dim; font.family: "monospace"; font.pixelSize: 11
                         wrapMode: TextArea.Wrap; selectByMouse: true
-                        background: Rectangle { color: "#121212"; border.color: "#6a6a6a" }
+                        background: Rectangle { color: RuntimeTheme.GGTheme.canvas; border.color: RuntimeTheme.GGTheme.edge }
                     }
                     TextArea { id: lessonText; objectName: "reverseLessonText";
                         Layout.fillWidth: true; Layout.fillHeight: true; Layout.minimumHeight: 70
                     placeholderText: "Optional reusable method: one step per line"
-                        color: "#e6e6e6"; placeholderTextColor: "#5d6670"; font.family: "monospace"; font.pixelSize: 11
+                        color: RuntimeTheme.GGTheme.bright; placeholderTextColor: RuntimeTheme.GGTheme.dim; font.family: "monospace"; font.pixelSize: 11
                         wrapMode: TextArea.Wrap; selectByMouse: true
-                        background: Rectangle { color: "#121212"; border.color: "#6a6a6a" }
+                        background: Rectangle { color: RuntimeTheme.GGTheme.canvas; border.color: RuntimeTheme.GGTheme.edge }
                     }
-                    Text { Layout.fillWidth: true; text: "Findings retain their source. Lessons remain proposed until independently tested.";
-                        color: "#7f8993"; font.family: "monospace"; font.pixelSize: 10; wrapMode: Text.WordWrap }
-                    GgButton { text: "SAVE FINDING + LESSON"; Layout.fillWidth: true;
+                    GGText { colorKey: "ui.ResearchReverseSurface.11"; Layout.fillWidth: true; text: "Findings retain their source. Lessons remain proposed until independently tested.";
+                        color: RuntimeTheme.GGTheme.dim; font.family: "monospace"; font.pixelSize: 10; wrapMode: Text.WordWrap }
+                    GgButton { property string uiColorScope: "ui.control.ResearchReverseSurface.12"; text: "SAVE FINDING + LESSON"; Layout.fillWidth: true;
                         enabled: root.selected && findingTitle.text.trim().length > 0 && findingText.text.trim().length > 0
                         onClicked: root.saveFinding() }
                 }
@@ -380,11 +384,11 @@ Item {
             Layout.fillWidth: true
             Repeater {
                 model: root.tools.references || []
-                delegate: GgButton { required property var modelData;
+                delegate: GgButton { property string uiColorScope: "ui.control.ResearchReverseSurface.13"; required property var modelData;
                     text: modelData.name + " DOCS"; onClicked: root.documentationRequested(modelData.url) }
             }
             Item { Layout.fillWidth: true }
-            GgButton { text: "SAVE WORKFLOW REFERENCES";
+            GgButton { property string uiColorScope: "ui.control.ResearchReverseSurface.14"; text: "SAVE WORKFLOW REFERENCES";
                 onClicked: { var raw = root.request("lab_references", {}); try { root.notice = JSON.parse(raw).status } catch (e) { } } }
         }
     }

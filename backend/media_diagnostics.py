@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 import time
+from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
-from backend import media_library as library, media_quick_availability as quick
+from backend import media_contract as contract, media_library as library, media_quick_availability as quick
+from backend import media_existing_checks as existing
 
 _REASONS = {
     "http_not_found": "Länken har tagits bort eller flyttats (404/410).",
@@ -19,7 +22,23 @@ _REASONS = {
     "invalid_source": "Den sparade länken är ogiltig.",
     "source_changed": "Källan ändrades under kontrollen. Kör felsökningen igen för den aktuella länken.",
     "unsupported_media_file": "Filformatet stöds inte av mediaspelaren.",
+    "unsupported_game_file": "Spelfilens format stöds inte för det angivna systemet.",
 }
+
+
+def _check_source(row, *, cancel, deadline):
+    if row.get("kind") == "GAME":
+        source = str(row.get("source") or "")
+        parsed = urlsplit(source)
+        path = quick._local_path(source) if parsed.scheme == "file" or "://" not in source else Path(unquote(parsed.path))
+        system = str(row.get("system") or contract.system_for(path))
+        if path.suffix.lower() not in contract.SYSTEMS.get(system, {}).get("ext", ()):
+            return dict(status="failed", error="unsupported_game_file")
+        # Identity/confinement is checked by the caller before any resource read.
+        # ROMs need the same resource check as bulk source control, not an
+        # audio/video signature or decoder.
+        return existing._game_check(row, cancel)
+    return quick.quick_check(row, cancel=cancel, max_seconds=max(.4, min(4, deadline - time.monotonic())))
 
 
 def _diagnose_series(index, original, *, cancel, deadline):
@@ -87,7 +106,7 @@ def diagnose(index, identifier, *, cancel=None, max_seconds=32):
             if identity.get("status") != "consistent":
                 report = dict(status="unknown", error="identity_unconfirmed")
             else:
-                report = quick.quick_check(row, cancel=cancel, max_seconds=max(.4, min(4, deadline - time.monotonic())))
+                report = _check_source(row, cancel=cancel, deadline=deadline)
                 index.record(row["id"], report, source=row["source"], identity=index.identity_key(row))
                 current = index.get(row["id"])
                 if not current or current.get("source") != row.get("source") or index.identity_key(current) != index.identity_key(row):
@@ -96,7 +115,8 @@ def diagnose(index, identifier, *, cancel=None, max_seconds=32):
             report = dict(status="unknown", error="network_error")
         if position == 0:
             result["status"] = report.get("status", "unknown")
-            result["message"] = ("Källan svarar och mediedata är tillgängliga. Om uppspelningen ändå stannar kan felet finnas i formatet eller spelaren."
+            result["message"] = (("Spelfilen är tillgänglig. Kontrollen verifierar inte att spelet kan startas i emulatorn."
+                if row.get("kind") == "GAME" else "Källan svarar och mediedata är tillgängliga. Om uppspelningen ändå stannar kan felet finnas i formatet eller spelaren.")
                 if report.get("status") == "verified" else _REASONS.get(report.get("error"), "Kontrollen kunde inte bekräfta att källan fungerar just nu."))
         else:
             result["alternatives_checked"] += 1

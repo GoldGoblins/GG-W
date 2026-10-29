@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 
 Item {
@@ -5,8 +7,10 @@ Item {
 
     property var values: []
     property var overlayValues: []
-    property color stroke: "#8db89a"
-    property color overlayStroke: "#c8a97e"
+    property color stroke: RuntimeTheme.GGTheme.positive
+    property color overlayStroke: RuntimeTheme.GGTheme.accent
+    property string seriesColorKey: ""
+    property string overlayColorKey: ""
     property color fill: "#1c2a22"
     property real yMax: 100
     property bool selectable: false
@@ -27,20 +31,22 @@ Item {
         root.rangeEnd = point
     }
 
-    TmogSpark {
+    TmogSpark { property string uiColorScope: "ui.widget.TmogHistoryGraph.TmogSpark.1";
         anchors.fill: parent
         values: root.values
         yMax: root.yMax
         stroke: root.stroke
+        seriesColorKey: root.seriesColorKey
         fill: root.fill
     }
 
-    TmogSpark {
+    TmogSpark { property string uiColorScope: "ui.widget.TmogHistoryGraph.TmogSpark.2";
         anchors.fill: parent
         visible: root.overlayValues && root.overlayValues.length > 0
         values: root.overlayValues
         yMax: root.yMax
         stroke: root.overlayStroke
+        seriesColorKey: root.overlayColorKey
         fill: "#00000000"
     }
 
@@ -51,7 +57,7 @@ Item {
         y: 0
         height: root.height
         color: "#6f9d9a33"
-        border.color: "#8db89a"
+        border.color: RuntimeTheme.GGTheme.positive
         border.width: 1
     }
 

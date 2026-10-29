@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
@@ -71,12 +73,12 @@ Item {
         return true
     }
 
-    GgFrame {
+    GgFrame { property string uiColorScope: "ui.widget.SettingsWorkspaceModule.GgFrame.1";
         anchors.fill: parent
         leftLegend: "WORKSPACE"
         rightLegend: "NAMED SURFACES"
-        backgroundColor: "#161616"
-        borderColor: "#6a6a6a"
+        backgroundColor: RuntimeTheme.GGTheme.panel
+        borderColor: RuntimeTheme.GGTheme.edge
     }
 
     Column {
@@ -87,9 +89,9 @@ Item {
         anchors.bottomMargin: 12
         spacing: 8
 
-        Text {
+        GGText { colorKey: "ui.SettingsWorkspaceModule.1";
             text: "Host"
-            color: "#d8dee9"
+            color: RuntimeTheme.GGTheme.text
             font.family: "monospace"
             font.pixelSize: 12
         }
@@ -99,17 +101,17 @@ Item {
             height: 18
 
             Repeater {
-                model: ["CODE", "TERMINAL", "WEB", "EXTERNAL", "SITE", "CRYPTO", "MARKETPLACE", "TMOG", "OSINT", "KNOWLEDGE", "RESEARCH", "MEDIA", "DRAW", "GAME_ENGINE", "NODES", "FLOW"]
+                model: ["CODE", "TERMINAL", "WEB", "EXTERNAL", "SITE", "CRYPTO", "TMOG", "OSINT", "KNOWLEDGE", "RESEARCH", "MEDIA", "DRAW", "GAME_ENGINE", "NODES", "FLOW"]
 
-                delegate: Text {
+                delegate: GGText { colorKey: "ui.SettingsWorkspaceModule.2";
                     required property string modelData
                     required property int index
                     text: (index === 0 ? "" : " | ")
                         + (modelData === "GAME_ENGINE" ? "GAME ENGINE" : modelData)
                     color: root.hostKind === modelData
-                        ? "#d8dee9"
+                        ? RuntimeTheme.GGTheme.text
                         : root.hostEnabled(modelData)
-                            ? "#5d6670"
+                            ? RuntimeTheme.GGTheme.dim
                             : "#3f464d"
                     opacity: root.hostEnabled(modelData) ? 1.0 : 0.7
                     font.family: "monospace"
@@ -131,7 +133,7 @@ Item {
         Row {
             spacing: 10
 
-            GgCheck {
+            GgCheck { property string uiColorScope: "ui.widget.SettingsWorkspaceModule.GgCheck.2";
                 id: innerChromeBox
                 text: "Show inner CODE frame"
                 checked: root.showInnerEditorChrome
@@ -141,15 +143,15 @@ Item {
                     )
             }
 
-            GgButton {
+            GgButton { property string uiColorScope: "ui.control.SettingsWorkspaceModule.1";
                 text: "New tab +"
                 onClicked: root.spawnInstanceRequested()
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.SettingsWorkspaceModule.3";
             text: "Workspace folders · MULTI-ROOT"
-            color: "#c7a873"
+            color: RuntimeTheme.GGTheme.accent
             font.family: "monospace"
             font.pixelSize: 11
             font.bold: true
@@ -168,17 +170,17 @@ Item {
                     height: 26
                     spacing: 6
 
-                    Text {
+                    GGText { colorKey: "ui.SettingsWorkspaceModule.4";
                         width: parent.width - removeFolderButton.width - 6
                         anchors.verticalCenter: parent.verticalCenter
                         text: "ROOT " + (index + 1) + " · " + modelData
-                        color: "#c8cdd4"
+                        color: RuntimeTheme.GGTheme.text
                         font.family: "monospace"
                         font.pixelSize: 10
                         elide: Text.ElideMiddle
                     }
 
-                    GgButton {
+                    GgButton { property string uiColorScope: "ui.control.SettingsWorkspaceModule.2";
                         id: removeFolderButton
                         width: 70
                         height: 24
@@ -192,12 +194,12 @@ Item {
         Row {
             spacing: 8
 
-            GgButton {
+            GgButton { property string uiColorScope: "ui.control.SettingsWorkspaceModule.3";
                 text: "ADD FOLDER"
                 onClicked: folderDialog.open()
             }
 
-            GgCheck {
+            GgCheck { property string uiColorScope: "ui.widget.SettingsWorkspaceModule.GgCheck.6";
                 id: trustWorkspaceBox
                 text: "Trust workspace"
                 checked: root.workspaceTrusted
@@ -207,16 +209,16 @@ Item {
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.SettingsWorkspaceModule.5";
             width: parent.width
             text: "Folders are stored as workspace context, like a VS Code multi-root workspace. Trust is an explicit UI flag; it does not bypass GG task approval, safe-tool or network policy."
-            color: "#77818b"
+            color: RuntimeTheme.GGTheme.dim
             wrapMode: Text.WordWrap
             font.family: "monospace"
             font.pixelSize: 10
         }
 
-        Text {
+        GGText { colorKey: "ui.SettingsWorkspaceModule.6";
             width: parent.width
             text: "Same as the workspace footer and top tabs. "
                 + "WEB is your browser in this box. SITE is the local "
@@ -236,7 +238,7 @@ Item {
                 + "simulation, bounded pools and deterministic replay. NODES is "
                 + "the Geometry Nodes-style editor for agent and information "
                 + "streams: blocks, edge ports, and wires on the machine graph."
-            color: "#8a8a8a"
+            color: RuntimeTheme.GGTheme.dim
             wrapMode: Text.WordWrap
             font.pixelSize: 12
         }

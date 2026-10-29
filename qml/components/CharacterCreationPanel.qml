@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -148,16 +150,16 @@ Rectangle {
                 }
                 onWheel: function(wheel) { creator.distance = Math.max(1.6,Math.min(5,creator.distance-wheel.angleDelta.y*.002)) }
             }
-            Text {
+            GGText { colorKey: "ui.CharacterCreationPanel.1";
                 anchors.left: parent.left
                 anchors.top: parent.top
                 anchors.margins: 16
                 text: "RÄVEKORRE"
-                color: "#e9cf91"
+                color: RuntimeTheme.GGTheme.orange
                 font.pixelSize: 18
                 font.family: "monospace"
             }
-            Text {
+            GGText { colorKey: "ui.CharacterCreationPanel.2";
                 anchors.bottom: parent.bottom
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.bottomMargin: 16
@@ -177,7 +179,7 @@ Rectangle {
             ColumnLayout {
                 width: parent.width
                 spacing: 12
-                Text { text: "SKAPA KARAKTÄR"; color: "#e9cf91"; font.pixelSize: 19; font.family: "monospace" }
+                GGText { colorKey: "ui.CharacterCreationPanel.3"; text: "SKAPA KARAKTÄR"; color: RuntimeTheme.GGTheme.orange; font.pixelSize: 19; font.family: "monospace" }
                 TextField {
                     id: localName
                     objectName: "ggLocalCharacterName"
@@ -186,13 +188,13 @@ Rectangle {
                     placeholderText: "Karaktärens namn"
                     maximumLength: 24
                 }
-                Text { text: "RAS"; color: "#a1b3be"; font.pixelSize: 12 }
+                GGText { colorKey: "ui.CharacterCreationPanel.4"; text: "RAS"; color: RuntimeTheme.GGTheme.muted; font.pixelSize: 12 }
                 Flow {
                     Layout.fillWidth: true
                     spacing: 6
                     Repeater {
                         model: creator.catalog.races || []
-                        delegate: Button {
+                        delegate: Button { property string uiColorScope: "ui.control.CharacterCreationPanel.1";
                             required property var modelData
                             text: modelData.name
                             enabled: modelData.ready
@@ -201,30 +203,34 @@ Rectangle {
                             onClicked: creator.choose("race_id",modelData.id)
                             ToolTip.visible: hovered && !modelData.ready
                             ToolTip.text: "Sparad för att färdigställas senare"
-                        }
+                        
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignHCenter }
+}
                     }
                 }
-                Text {
+                GGText { colorKey: "ui.CharacterCreationPanel.5";
                     Layout.fillWidth: true
                     text: "De nio tidigare figurerna är sparade. Rävekorren är först ut med klassutrustning och färgval."
                     wrapMode: Text.WordWrap; color: "#8a9aa3"; font.pixelSize: 11
                 }
-                Text { text: "KLASS"; color: "#a1b3be"; font.pixelSize: 12 }
+                GGText { colorKey: "ui.CharacterCreationPanel.6"; text: "KLASS"; color: RuntimeTheme.GGTheme.muted; font.pixelSize: 12 }
                 Flow {
                     Layout.fillWidth: true
                     spacing: 6
                     Repeater {
                         model: creator.catalog.classes || []
-                        delegate: Button {
+                        delegate: Button { property string uiColorScope: "ui.control.CharacterCreationPanel.2";
                             required property var modelData
                             text: modelData.name
                             checkable: true
                             checked: creator.selection.class_id === modelData.id
                             onClicked: creator.choose("class_id",modelData.id)
-                        }
+                        
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignHCenter }
+}
                     }
                 }
-                Text {
+                GGText { colorKey: "ui.CharacterCreationPanel.7";
                     Layout.fillWidth: true
                     text: {
                         var rows=creator.catalog.classes || []
@@ -233,7 +239,7 @@ Rectangle {
                     }
                     color: "#b6c5ca"; wrapMode: Text.WordWrap; font.pixelSize: 12
                 }
-                Text { text: "PÄLS"; color: "#a1b3be"; font.pixelSize: 12 }
+                GGText { colorKey: "ui.CharacterCreationPanel.8"; text: "PÄLS"; color: RuntimeTheme.GGTheme.muted; font.pixelSize: 12 }
                 Flow {
                     Layout.fillWidth: true
                     spacing: 8
@@ -252,7 +258,7 @@ Rectangle {
                         }
                     }
                 }
-                Text { text: "ÖGON"; color: "#a1b3be"; font.pixelSize: 12 }
+                GGText { colorKey: "ui.CharacterCreationPanel.9"; text: "ÖGON"; color: RuntimeTheme.GGTheme.muted; font.pixelSize: 12 }
                 Flow {
                     Layout.fillWidth: true
                     spacing: 8
@@ -272,22 +278,26 @@ Rectangle {
                         }
                     }
                 }
-                Text {
+                GGText { colorKey: "ui.CharacterCreationPanel.10";
                     Layout.fillWidth: true
                     text: creator.notice
                     visible: text!==""
-                    color: "#e9cf91"; wrapMode: Text.WordWrap; font.pixelSize: 12
+                    color: RuntimeTheme.GGTheme.orange; wrapMode: Text.WordWrap; font.pixelSize: 12
                 }
             }
         }
-            Button {
+            Button { property string uiColorScope: "ui.control.CharacterCreationPanel.3";
                 Layout.fillWidth: true
                 objectName: "ggCharacterSave"
                 text: creator.localSession ? "Skapa karaktären" : "Spara och använd karaktären"
                 enabled: !creator.busy && creator.modelReady && (!creator.localSession || localName.text.trim().length > 0)
                 onClicked: creator.send("APPLY")
-            }
-            Button { Layout.fillWidth: true; text: creator.localSession ? "Tillbaka till karaktärsval" : "Tillbaka till spelet"; onClicked: creator.closed() }
+            
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignHCenter }
+}
+            Button { property string uiColorScope: "ui.control.CharacterCreationPanel.4"; Layout.fillWidth: true; text: creator.localSession ? "Tillbaka till karaktärsval" : "Tillbaka till spelet"; onClicked: creator.closed() 
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignHCenter }
+}
         }
     }
 }

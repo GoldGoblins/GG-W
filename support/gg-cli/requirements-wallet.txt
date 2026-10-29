@@ -1,0 +1,4 @@
+# Optional Solana SDK. All transitive runtime dependencies are explicit.
+solders==0.29.0
+jsonalias==0.1.1
+typing_extensions==4.16.0

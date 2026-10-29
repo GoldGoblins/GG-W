@@ -52,6 +52,6 @@ Rectangle {
         onPositionChanged:function(mouse){if(pressed){preview.yaw+=(mouse.x-lastX)*.5;preview.pitch=Math.max(-85,Math.min(85,preview.pitch+(mouse.y-lastY)*.4));lastX=mouse.x;lastY=mouse.y}}
         onWheel:function(wheel){preview.zoom=Math.max(.35,Math.min(5,preview.zoom-wheel.angleDelta.y/120*.1))}
     }
-    Text {anchors.left:parent.left;anchors.bottom:parent.bottom;anchors.margins:7;color:preview.controller.muted;font.pixelSize:10
+    GGText { colorKey: "ui.GameAssetPreview.1";anchors.left:parent.left;anchors.bottom:parent.bottom;anchors.margins:7;color:preview.controller.muted;font.pixelSize:10
         text:model.status===RuntimeLoader.Error ? model.errorString : "Dra för att rotera · scrolla för zoom"}
 }

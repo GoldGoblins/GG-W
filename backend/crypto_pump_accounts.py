@@ -3,8 +3,8 @@
 Pump field order/discriminators/seeds are protocol facts from official
 pump-fun/pump-public-docs, pinned at PROTOCOL_COMMIT. The implementation is
 original Python, not a bundled SDK. Missing *whole* appended fields default to
-zero as the official docs specify; partial fields and unknown trailing data
-are rejected. A decoded account alone is not a verified market: callers must
+zero; the SDK-documented151-byte allocation is zero-padded to166. Other partial
+fields and unknown trailing data are rejected. A decoded account alone is not a verified market: callers must
 also bind its requested address, mint, vault, owner, slot and token program.
 """
 from __future__ import annotations
@@ -36,6 +36,12 @@ POOL_EXTENDED_BYTES = 300
 FEE_CONFIG_PRE_STABLE_BYTES = 2512
 FEE_CONFIG_POST_STABLE_BYTES = 4073
 FEE_CONFIG_CURRENT_BYTES = 4097
+# Pump SDK 4.1.0/src/sdk.ts explicitly lists the historical extended151-byte
+# allocation. Its decodeBondingCurve zero-pads this prefix to the current166
+# bytes, including the one-byte start of post_complete_base_out. This is an
+# allocation version, not an arbitrary truncated field we may guess through.
+CURVE_LEGACY_EXTENDED_BYTES = 151
+CURVE_SERIALIZED_BYTES = 166
 _ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 _DISCRIMINATORS = {
     "BondingCurve": bytes([23, 183, 248, 55, 96, 216, 172, 96]),
@@ -242,10 +248,14 @@ _POOL_FIELDS = [
 
 def decode_curve(account: dict[str, Any]) -> dict[str, Any]:
     reader = _anchor(account, PUMP_PROGRAM, "BondingCurve")
+    allocation_bytes = len(reader.data)
     if len(reader.data) < 49:
         raise AccountDecodeError("truncated bonding curve")
+    if allocation_bytes == CURVE_LEGACY_EXTENDED_BYTES:
+        reader.data += bytes(CURVE_SERIALIZED_BYTES - allocation_bytes)
     result = _read_fields(reader, _CURVE_FIELDS, appended=True)
-    result.update(kind="bonding_curve", layout_bytes=len(reader.data), warnings=[])
+    result.update(kind="bonding_curve", layout_bytes=allocation_bytes,
+                  serialized_bytes=len(reader.data), warnings=[])
     result["quote_mint_raw"] = result["quote_mint"]
     if result["quote_mint"] == ZERO_KEY:
         result["quote_mint"] = WSOL_MINT

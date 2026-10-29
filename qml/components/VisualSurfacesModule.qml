@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 
 Item {
@@ -28,18 +30,18 @@ Item {
         width: parent.width
         spacing: 8
 
-        Text {
+        GGText { colorKey: "ui.VisualSurfacesModule.1";
             text: "SURFACES · MODULE REGISTRY"
-            color: "#e6edf3"
+            color: RuntimeTheme.GGTheme.bright
             font.family: "monospace"
             font.pixelSize: 13
             font.bold: true
         }
 
-        Text {
+        GGText { colorKey: "ui.VisualSurfacesModule.2";
             width: parent.width
             text: "Every visual box is addressed by a stable surface id. The registry connects layout handles, Settings and both native chat motors to the same presentation object."
-            color: "#a8b0b8"
+            color: RuntimeTheme.GGTheme.muted
             wrapMode: Text.WordWrap
             font.family: "monospace"
             font.pixelSize: 11
@@ -48,7 +50,7 @@ Item {
         Rectangle {
             width: parent.width
             height: 1
-            color: "#343a40"
+            color: RuntimeTheme.GGTheme.line
         }
 
         Repeater {
@@ -58,11 +60,11 @@ Item {
                 width: body.width
                 height: 48
                 color: root.selectedSurface === String(modelData.id || "")
-                    ? "#24292e"
-                    : "#181818"
+                    ? RuntimeTheme.GGTheme.raised
+                    : RuntimeTheme.GGTheme.panel
                 border.color: root.selectedSurface === String(modelData.id || "")
-                    ? "#8a8a8a"
-                    : "#343a40"
+                    ? RuntimeTheme.GGTheme.dim
+                    : RuntimeTheme.GGTheme.line
                 border.width: 1
                 radius: 2
 
@@ -72,18 +74,18 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 2
 
-                    Text {
+                    GGText { colorKey: "ui.VisualSurfacesModule.3";
                         text: String(modelData.title || modelData.id || "SURFACE")
-                        color: "#e6edf3"
+                        color: RuntimeTheme.GGTheme.bright
                         font.family: "monospace"
                         font.pixelSize: 11
                         font.bold: true
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.VisualSurfacesModule.4";
                         text: String(modelData.id || "") + "  ·  "
                             + String(modelData.sourcePath || "")
-                        color: "#8b949e"
+                        color: RuntimeTheme.GGTheme.dim
                         font.family: "monospace"
                         font.pixelSize: 9
                         elide: Text.ElideRight
@@ -97,14 +99,14 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 5
 
-                    GgButton {
+                    GgButton { property string uiColorScope: "ui.control.VisualSurfacesModule.1";
                         text: "SELECT"
                         width: 58
                         height: 24
                         onClicked: root.surfaceSelected(String(modelData.id || ""))
                     }
 
-                    GgButton {
+                    GgButton { property string uiColorScope: "ui.control.VisualSurfacesModule.2";
                         text: "</>"
                         width: 38
                         height: 24
@@ -120,11 +122,11 @@ Item {
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.VisualSurfacesModule.5";
             text: root.layoutLocked
                 ? "LAYOUT LOCKED · unlock in EDITOR to move or resize surfaces"
                 : "LAYOUT UNLOCKED · drag the six-dot bars or corner handles"
-            color: root.layoutLocked ? "#8b949e" : "#8db89a"
+            color: root.layoutLocked ? RuntimeTheme.GGTheme.dim : RuntimeTheme.GGTheme.positive
             font.family: "monospace"
             font.pixelSize: 10
         }

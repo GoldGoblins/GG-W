@@ -380,6 +380,29 @@
       "windows_installation": "https://solana.com/docs/intro/installation",
       "scope": "Optional WSL/Linux local validator; not installed by CRYPTO optimization"
     },
+    "solana_local_vm": {
+      "package": "solders==0.29.0",
+      "license": "Apache-2.0",
+      "source": "https://github.com/kevinheavey/solders",
+      "windows_status": "VERIFIED_REAL_SVM_EXECUTION",
+      "scope": "Local SVM execution and persisted public accounts; no consensus or mainnet sends"
+    },
+    "kaspa_node": {
+      "provider": "kaspanet/rusty-kaspa",
+      "version": "v2.1.0",
+      "license": "ISC",
+      "source": "https://github.com/kaspanet/rusty-kaspa/releases/tag/v2.1.0",
+      "installation": "tools/install_crypto_runtime.py",
+      "scope": "User-owned loopback simnet; read-only wRPC JSON adapter",
+      "transport": "websocket-client==1.9.0"
+    },
+    "kaspa_compiler": {
+      "provider": "kaspanet/silverscript",
+      "version": "v1.0.0",
+      "source": "https://github.com/kaspanet/silverscript/releases/tag/v1.0.0",
+      "installation": "tools/install_crypto_runtime.py --compiler",
+      "scope": "Local compilation; covenant transitions remain paper simulations"
+    },
     "public_spot_data": {
       "SOLUSDT": "https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints",
       "KASUSDT": "https://www.gate.com/en-us/docs/developers/apiv4/#market-candlesticks",
@@ -398,5 +421,62 @@
       "research_review": "docs/CRYPTO-PUMP-AND-RESEARCH-2026-10-25.txt",
       "new_runtime_dependencies": []
     }
+  },
+  "gg_testnet": {
+    "purpose": "Optional owned loopback EVM development chain; never a production or P2P node",
+    "node": "Supported even-numbered Node.js releases, minimum 22.13",
+    "hardhat": "3.21.1",
+    "solc": "0.8.38",
+    "openzeppelin_contracts": "5.6.1",
+    "package_lock": "support/gg-testnet/package-lock.json",
+    "installation": "support/gg-testnet/install_toolchain.py",
+    "installation_scope": "Current user's GG tools directory; npm ci --ignore-scripts; no global packages or PATH changes",
+    "artifact": "support/gg-testnet/GGTestToken.json",
+    "source": "https://hardhat.org/docs/guides/development-node",
+    "windows_limits": "Verified child-only Job Object: 512 MiB, 300 process CPU seconds, one process, kill on close and parent death",
+    "audit": "tmp overridden to patched 0.2.7; upstream Hardhat Zod 3 DoS advisory remains; see support/gg-testnet/README.md"
+  },
+  "omni_runtime": {
+    "crypto_hash": "pycryptodome==3.23.0",
+    "address_encoding": "bech32==1.2.0",
+    "signatures": "solders==0.29.0",
+    "scope": "Public reads, exact asset identities, session-local Ed25519 lab and offline WebCrypto verification; reviewed Solana execution uses the separate wallet adapter; no verified cross-chain bridge"
+  },
+  "gg_consensus": {
+    "engine": "CometBFT v0.40.0",
+    "source": "https://github.com/cometbft/cometbft/tree/v0.40.0",
+    "license": "Apache-2.0; linked dependency notices copied by explicit installer",
+    "go_minimum": "1.25",
+    "windows_go": "go1.27.3 pinned archive with SHA256",
+    "installation": "support/gg-consensus/install_toolchain.py",
+    "scope": "Four owned fixed-validator loopback processes; one physical host/operator; ephemeral account and validator keys",
+    "light_client": "Same SDK via Go WASM; fixed GG-session genesis/validator anchor; 256 KiB packet/3 s worker limit",
+    "portability": "Windows and Linux native execution verified; Android arm64 cross compile experimental, Android-only -checklinkname=0 recorded in receipt; physical phone not tested"
+  },
+  "gg_terminal": {
+    "entry": "gg-cli.py",
+    "installation": "support/gg-cli/bootstrap.py",
+    "release_builder": "support/gg-cli/build_release.py",
+    "runtime": {
+      "prompt_toolkit": "3.0.53",
+      "wcwidth": "0.2.14",
+      "psutil": "7.2.2",
+      "pycryptodome": "3.23.0",
+      "bech32": "1.2.0",
+      "mnemonic": "0.21"
+    },
+    "optional_solana_sdk": "solders 0.29.0, jsonalias 0.1.1, typing_extensions 4.16.0",
+    "scope": "Native text terminal and JSON; wallet watch, reviewed signing adapter, catalogue/passport and owned GG network; isolated terminal state; no Qt/browser dependency",
+    "wallet_storage": "Windows DPAPI; explicit password-unlocked POSIX scrypt-131072-8-1/AES-256-GCM; same encrypted backup and exact one-shot human operation guard"
+  },
+  "wallet_mnemonic": {
+    "library": "Trezor python-mnemonic 0.21, MIT, lazy English BIP39",
+    "dependency_source": "https://github.com/trezor/python-mnemonic",
+    "derivation": "SLIP-0010 Ed25519 m/44'/501'/0'/0'; current key creation adapter Solana",
+    "paper": "Only public address and metadata persisted; no private key or phrase retained after Next",
+    "ai_assisted": "Existing exact user approval per operation; local encrypted signing key and separately password-encrypted portable phrase",
+    "recovery": "scrypt-131072-8-1/AES-256-GCM; authenticated public chain/address/path; no machine or GG account binding",
+    "secret_ui": "Private local Qt/TTY only; GG image/text capture interlock; no public status, JSON, history or model output",
+    "hardware": "Ledger/Tangem/external public watch addresses supported; native device signing not implemented or tested"
   }
 }

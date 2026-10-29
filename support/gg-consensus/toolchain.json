@@ -1,0 +1,13 @@
+{
+  "schema": "gg.consensus.toolchain.v1",
+  "cometbft": "v0.40.0",
+  "go": {
+    "version": "go1.27.3",
+    "windows_amd64": {
+      "url": "https://go.dev/dl/go1.27.3.windows-amd64.zip",
+      "bytes": 79010309,
+      "sha256": "f26081f438319757f8a1b46d7d0b2c5ec7583d4038e485e0aa725cfde7885fff"
+    }
+  },
+  "scope": "Optional local four-process test network; no public deployment or real funds"
+}

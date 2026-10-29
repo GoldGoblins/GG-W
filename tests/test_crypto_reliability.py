@@ -58,7 +58,7 @@ class Reliability(unittest.TestCase):
         def rpc(method, params):
             calls.append((method, params))
             if method == "getLatestBlockhash": return {"result":{"value":{"blockhash":"1"*32,"lastValidBlockHeight":10}}}
-            if method == "sendTransaction": return None if state["ambiguous"] else {"result":"fixture-signature"}
+            if method == "sendTransaction": return None if state["ambiguous"] else {"result":tx.b58encode(b'x'*64)}
             if method == "getBlockHeight": return {"result":11 if state["expired"] else 9}
             return {"result":{"value":[{"err":"failed" if state["failed"] else None, "confirmationStatus":"confirmed" if state["confirmed"] else "processed"}]}}
         with patch.object(tx, "load_test_pubkey", return_value="1"*32), patch.object(tx, "signed_transfer_bytes", return_value=b"\x01" + b"x"*64):
@@ -71,7 +71,7 @@ class Reliability(unittest.TestCase):
                 with patch.object(tx, "confirm_signature", return_value=False), self.assertRaises(tx.ConfirmationError) as raised:
                     tx.send_self_transfer(rpc, 1)
                 self.assertEqual(raised.exception.status, target)
-                self.assertEqual(raised.exception.txid, "fixture-signature")
+                self.assertEqual(raised.exception.txid, tx.b58encode(b'x'*64))
             state["ambiguous"] = True
             calls.clear()
             with self.assertRaises(tx.ConfirmationError): tx.send_self_transfer(rpc, 1)

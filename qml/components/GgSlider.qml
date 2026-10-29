@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
@@ -20,13 +22,13 @@ Slider {
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width
             height: 4
-            color: "#2a2a2a"
+            color: RuntimeTheme.GGTheme.hover
             antialiasing: false
 
             Rectangle {
                 width: root.visualPosition * parent.width
                 height: parent.height
-                color: "#8a8a8a"
+                color: RuntimeTheme.GGTheme.dim
                 antialiasing: false
             }
         }
@@ -38,9 +40,9 @@ Slider {
         y: root.topPadding + (root.availableHeight - height) / 2
         width: 10
         height: 10
-        color: root.pressed ? "#e6e6e6" : "#c8cdd4"
+        color: root.pressed ? RuntimeTheme.GGTheme.bright : RuntimeTheme.GGTheme.text
         border.width: 1
-        border.color: "#6a6a6a"
+        border.color: RuntimeTheme.GGTheme.edge
         antialiasing: false
     }
 }

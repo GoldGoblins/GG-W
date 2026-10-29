@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Window
 import QtWebEngine
@@ -1135,7 +1137,7 @@ Item {
         WebEngineView {
             anchors.fill: parent
             profile: sessionProfile
-            backgroundColor: "#161616"
+            backgroundColor: RuntimeTheme.GGTheme.panel
             settings.javascriptEnabled: true
             settings.localContentCanAccessFileUrls: true
         }
@@ -1147,7 +1149,7 @@ Item {
         id: view
         anchors.fill: parent
         profile: sessionProfile
-        backgroundColor: "#161616"
+        backgroundColor: RuntimeTheme.GGTheme.panel
         settings.javascriptEnabled: true
         settings.localContentCanAccessFileUrls: true
 
@@ -1206,7 +1208,7 @@ Item {
         visible: false
         color: "#22c8a97e"
         border.width: 1
-        border.color: "#c8a97e"
+        border.color: RuntimeTheme.GGTheme.accent
         radius: 2
         z: 20
     }
@@ -1239,7 +1241,7 @@ Item {
         visible: false
         color: "#00c8a97e"
         border.width: 2
-        border.color: "#c8a97e"
+        border.color: RuntimeTheme.GGTheme.accent
         x: root.agentX - width / 2
         y: root.agentY - height / 2
 
@@ -1292,7 +1294,7 @@ Item {
         }
     }
 
-    WebAgentCursor {
+    WebAgentCursor { property string uiColorScope: "ui.widget.WebPane.WebAgentCursor.1";
         id: agentCursor
         objectName: "webAgentCursor"
         z: 30
@@ -1311,17 +1313,17 @@ Item {
         anchors.margins: 8
         height: 18
         width: hudLabel.implicitWidth + 12
-        color: "#161616"
+        color: RuntimeTheme.GGTheme.panel
         border.width: 1
-        border.color: "#6a6a6a"
+        border.color: RuntimeTheme.GGTheme.edge
         visible: root.operatorLabel.length > 0
         opacity: hudLabel.opacity
 
-        Text {
+        GGText { colorKey: "ui.WebPane.1";
             id: hudLabel
             anchors.centerIn: parent
             text: root.operatorLabel
-            color: "#c8a97e"
+            color: RuntimeTheme.GGTheme.accent
             font.family: "monospace"
             font.pixelSize: 11
         }
@@ -1432,7 +1434,7 @@ Item {
         }
     }
 
-    BufferMark {
+    BufferMark { property string uiColorScope: "ui.widget.WebPane.BufferMark.2";
         objectName: "webPaneBuffer"
         anchors.right: parent.right
         anchors.top: parent.top
@@ -1441,7 +1443,7 @@ Item {
         cell: 6
     }
 
-    Text {
+    GGText { colorKey: "ui.WebPane.2";
         visible: root.loadState === "FAIL" || root.loadState === "BLOCKED"
         anchors.centerIn: parent
         width: parent.width - 40
@@ -1457,7 +1459,7 @@ Item {
                     ? "Sidan laddade inte inom 60 sekunder. Laddningen avbröts."
                     : "WebEngine could not load this page."
             )
-        color: "#c8a97e"
+        color: RuntimeTheme.GGTheme.accent
         wrapMode: Text.WordWrap
         font.family: "monospace"
         font.pixelSize: 12

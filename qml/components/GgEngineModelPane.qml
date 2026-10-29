@@ -99,7 +99,7 @@ Item {
                     geometry: modelData.geometry
                     instancing: modelData.instancing
                     visible: modelData.state.alpha > 0 && modelData.state.visible !== false
-                    materials: GgEngineModelMaterial {
+                    materials: GgEngineModelMaterial { property string uiColorScope: "ui.widget.GgEngineModelPane.GgEngineModelMaterial.1";
                         authoredMips: modelData.state.mip_levels || []
                         uTrilinear: pane.textureTrilinear
                         uWrapU: !!modelData.state.wrap_u

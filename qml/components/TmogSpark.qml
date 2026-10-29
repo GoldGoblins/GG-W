@@ -1,10 +1,18 @@
+
+import "." as RuntimeTheme
 import QtQuick
 
 Item {
     id: root
     property var values: []
     property var marks: []
-    property color stroke: "#8db89a"
+    property color stroke: RuntimeTheme.GGTheme.positive
+    property string seriesColorKey: ""
+    readonly property string resolvedSeriesKey: seriesColorKey || RuntimeTheme.GGColorContext.keyFor(root)
+    readonly property bool percentageCapable: yMax === 100
+    readonly property real fraction: percentageCapable && values && values.length && typeof values[values.length-1] === "number" && isFinite(values[values.length-1]) ? Math.max(0,Math.min(1,values[values.length-1]/100)) : NaN
+    readonly property color seriesStroke: RuntimeTheme.GGColorContext.colorForValue(resolvedSeriesKey, stroke, fraction)
+    readonly property color seriesFill: RuntimeTheme.GGColorContext.hasColor(resolvedSeriesKey) ? Qt.hsla(Math.max(0,seriesStroke.hslHue),seriesStroke.hslSaturation,fill.hslLightness,fill.a) : fill
     property color fill: "#1c2a22"
     property color grid: "#242424"
     property real yMax: 0
@@ -129,11 +137,11 @@ Item {
             }
             ctx.beginPath()
             traceHills(true)
-            ctx.fillStyle = root.fill
+            ctx.fillStyle = root.seriesFill
             ctx.fill()
             ctx.beginPath()
             traceHills(false)
-            ctx.strokeStyle = root.stroke
+            ctx.strokeStyle = root.seriesStroke
             ctx.lineWidth = 1.6
             ctx.lineJoin = "round"
             ctx.lineCap = "round"
@@ -174,17 +182,28 @@ Item {
                     ctx.lineTo(mx + 4.5, my - 3)
                 }
                 ctx.closePath()
-                ctx.fillStyle = buy ? "#8db89a" : "#c98989"
+                ctx.fillStyle = buy ? RuntimeTheme.GGTheme.positive : RuntimeTheme.GGTheme.negative
                 ctx.fill()
             }
         }
     }
 
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.RightButton
+        onPressed: function(mouse) {
+            var p=RuntimeTheme.GGColorContext.hostOverlay ? root.mapToItem(RuntimeTheme.GGColorContext.hostOverlay,mouse.x,mouse.y) : root.mapToItem(null,mouse.x,mouse.y)
+            RuntimeTheme.GGColorContext.openWhole(root,root.resolvedSeriesKey,root.seriesStroke,p.x,p.y)
+            mouse.accepted=true
+        }
+    }
     onValuesChanged: root.redraw()
     onMarksChanged: root.redraw()
     onYMaxChanged: root.redraw()
     onFromZeroChanged: root.redraw()
     onLinearChanged: root.redraw()
+    onSeriesStrokeChanged: root.redraw()
+    onSeriesFillChanged: root.redraw()
     onWidthChanged: root.redraw()
     onHeightChanged: root.redraw()
     onVisibleChanged: {

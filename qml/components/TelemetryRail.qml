@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import "LiveEyesStatus.js" as EyesStatus
 import QtQuick.Controls
@@ -38,7 +40,7 @@ Item {
         + "Lösenord stannar utanför chat, loggar och filer. Backup, verifiering "
         + "och rollback hanteras inom den aktuella uppgiften."
 
-    property color frameBorder: "#4a4a4a"
+    property color frameBorder: RuntimeTheme.GGTheme.edge
     property int frameRadius: 4
 
     readonly property var wallet: {
@@ -82,6 +84,19 @@ Item {
         return []
     }
 
+    readonly property real limitPercent: {
+        var value = root.wallet.limit_percent
+        if (value === undefined && root.engineTarget === "GROK_TUI")
+            value = root.wallet.weekly_percent
+        // Older backend payloads may carry the Codex percentage only as a
+        // label. Grok's live_tokens is a token count, never a percentage.
+        if (value === undefined && root.engineTarget === "GPT_TUI"
+                && /^\d+(?:\.\d+)?%$/.test(String(root.wallet.live_label || "")))
+            value = Number(String(root.wallet.live_label).slice(0, -1))
+        return typeof value === "number" && isFinite(value) && value >= 0 && value <= 100 ? value : NaN
+    }
+    readonly property bool limitKnown: isFinite(root.limitPercent)
+
     readonly property var crypto: {
         var empty = {
             "legend": "",
@@ -114,12 +129,13 @@ Item {
         anchors.top: parent.top
         spacing: 10
 
-        GgFrame {
+        GgFrame { property string uiColorScope: "ui.widget.TelemetryRail.GgFrame.1";
+            objectName: "modelUsageFrame"
             width: parent.width
             leftLegend: "MODEL"
             rightLegend: root.modelState
             busy: root.modelState === "BUSY"
-            backgroundColor: "#161616"
+            backgroundColor: RuntimeTheme.GGTheme.panel
             borderColor: root.frameBorder
             radius: root.frameRadius
             compact: true
@@ -128,7 +144,7 @@ Item {
                 width: parent.width
                 spacing: 4
 
-                Text {
+                GGText { colorKey: "ui.TelemetryRail.1";
                     width: parent.width
                     text: (
                         root.engineTarget === "GPT_TUI" ? "GPTUI" :
@@ -142,7 +158,7 @@ Item {
                     )
                         + " · "
                         + root.modelState
-                    color: "#c8cdd4"
+                    color: RuntimeTheme.GGTheme.text
                     wrapMode: Text.WordWrap
                     font.pixelSize: 12
                 }
@@ -153,7 +169,7 @@ Item {
                     visible: root.engineTarget === "GROK_TUI" || root.engineTarget === "GPT_TUI"
                     objectName: "grokWallet"
 
-                    Text {
+                    GGText { colorKey: "ui.TelemetryRail.2";
                         objectName: "liveEyesTelemetry"
                         width: parent.width
                         visible: root.eyes.state !== "off"
@@ -164,116 +180,84 @@ Item {
                         text: EyesStatus.details(root.eyes)
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.TelemetryRail.3";
                         width: parent.width
                         text: "WALLET"
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
-                    Text {
+                    GGText { colorKey: "ui.TelemetryRail.4";
                         width: parent.width
                         text: "CTX  " + root.wallet.context_label
-                        color: "#d8dee9"
+                        color: RuntimeTheme.GGTheme.text
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
-                    Text {
+                    GGText { colorKey: "ui.TelemetryRail.5";
                         width: parent.width
                         text: "ALL  " + root.wallet.session_total_label
-                        color: "#d8dee9"
+                        color: RuntimeTheme.GGTheme.text
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
-                    Text {
+                    GGText { colorKey: "ui.TelemetryRail.6";
                         width: parent.width
                         text: "TURN " + root.wallet.turn_label
-                        color: "#c8cdd4"
+                        color: RuntimeTheme.GGTheme.text
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
-                    Text {
+                    GGText { colorKey: "ui.TelemetryRail.7";
+                        objectName: "modelLimitLabel"
                         width: parent.width
-                        text: "LIVE " + root.wallet.live_label
-                        color: root.wallet.live_tokens > 0 ? "#c8a97e" : "#c8cdd4"
+                        text: "LIMIT " + (root.limitKnown ? Math.round(root.limitPercent) + "%" : "—")
+                        color: root.limitKnown && root.limitPercent > 0 ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.text
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
                     Rectangle {
+                        objectName: "modelLimitTrack"
                         width: parent.width
                         height: 6
-                        color: "#2a2a2a"
+                        color: RuntimeTheme.GGTheme.hover
                         radius: 1
 
-                        Rectangle {
+                        Rectangle { GGColorTarget { colorKey: "ui.fill.TelemetryRail.1"; percentageCapable: true; fraction: root.limitKnown ? root.limitPercent / 100 : NaN }
+                            objectName: "modelLimitFill"
                             height: parent.height
-                            width: parent.width * Math.max(
-                                0,
-                                Math.min(1, Number(root.wallet.live_tokens || 0) / 100)
-                            )
-                            color: "#c8a97e"
+                            width: parent.width * (root.limitKnown ? root.limitPercent / 100 : 0)
+                            color: RuntimeTheme.GGTheme.accent
                             radius: 1
                         }
                     }
-                    Text {
+                    GGText { colorKey: "ui.TelemetryRail.8";
+                        objectName: "modelLimitReset"
                         width: parent.width
-                        text: "LIVE RESET  " + (root.wallet.live_reset_label || "—")
-                        color: "#8b949e"
+                        text: "RESET " + (root.wallet.limit_reset_label || root.wallet.live_reset_label || "—")
+                        wrapMode: Text.WordWrap
+                        color: RuntimeTheme.GGTheme.dim
                         font.family: "monospace"
                         font.pixelSize: 11
-                    }
-                    Text {
-                        width: parent.width
-                        text: "WEEK "
-                            + (
-                                root.wallet.weekly_percent === null
-                                || root.wallet.weekly_percent === undefined
-                                    ? "—"
-                                    : (Number(root.wallet.weekly_percent) + "%")
-                            )
-                        color: "#c8cdd4"
-                        font.family: "monospace"
-                        font.pixelSize: 12
-                    }
-                    Rectangle {
-                        width: parent.width
-                        height: 6
-                        color: "#2a2a2a"
-                        radius: 1
-
-                        Rectangle {
-                            height: parent.height
-                            width: parent.width * Math.max(
-                                0,
-                                Math.min(
-                                    1,
-                                    (root.wallet.weekly_percent === null
-                                        ? 0
-                                        : root.wallet.weekly_percent) / 100
-                                )
-                            )
-                            color: "#8db89a"
-                            radius: 1
-                        }
                     }
                 }
             }
         }
 
-        GgFrame {
+        GgFrame { property string uiColorScope: "ui.widget.TelemetryRail.GgFrame.2";
             width: parent.width
             leftLegend: "BRIDGE"
             rightLegend: root.bridgeState
             busy: root.bridgeState === "BUSY"
-            backgroundColor: "#161616"
+            backgroundColor: RuntimeTheme.GGTheme.panel
             borderColor: root.frameBorder
             radius: root.frameRadius
             compact: true
 
-            Text {
+            GGText { colorKey: "ui.TelemetryRail.10";
                 width: parent.width
                 text: "CHAT → MODEL\nCONNECTED\nLOGIN / 2FA VIA WEB"
-                color: "#c8cdd4"
+                color: RuntimeTheme.GGTheme.text
                 wrapMode: Text.WordWrap
                 font.family: "monospace"
                 font.pixelSize: 12
@@ -281,7 +265,7 @@ Item {
         }
     }
 
-    GgFrame {
+    GgFrame { property string uiColorScope: "ui.widget.TelemetryRail.GgFrame.3";
         id: snippetFrame
         objectName: "telemetrySnippetList"
         anchors.left: parent.left
@@ -296,7 +280,7 @@ Item {
         )
         leftLegend: "SNIPPETS"
         rightLegend: "SITE"
-        backgroundColor: "#161616"
+        backgroundColor: RuntimeTheme.GGTheme.panel
         borderColor: root.frameBorder
         radius: root.frameRadius
         compact: true
@@ -320,13 +304,13 @@ Item {
                 Repeater {
                     model: root.snippetModel
 
-                    delegate: Text {
+                    delegate: GGText { colorKey: "ui.TelemetryRail.11";
                         required property string path
                         width: snippetColumn.width
                         text: path
                         color: path === root.activeSnippet
-                            ? "#d8dee9"
-                            : "#8b949e"
+                            ? RuntimeTheme.GGTheme.text
+                            : RuntimeTheme.GGTheme.dim
                         font.family: "monospace"
                         font.pixelSize: 12
                         font.bold: path === root.activeSnippet
@@ -342,11 +326,11 @@ Item {
                 }
             }
 
-            ScrollBar.vertical: GgScrollBar {}
+            ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.TelemetryRail.GgScrollBar.4";}
         }
     }
 
-    GgFrame {
+    GgFrame { property string uiColorScope: "ui.widget.TelemetryRail.GgFrame.5";
         id: chatFrame
         objectName: "telemetryChatList"
         anchors.left: parent.left
@@ -361,7 +345,7 @@ Item {
         )
         leftLegend: "CHATS"
         rightLegend: "MEMORY"
-        backgroundColor: "#161616"
+        backgroundColor: RuntimeTheme.GGTheme.panel
         borderColor: root.frameBorder
         radius: root.frameRadius
         compact: true
@@ -382,11 +366,11 @@ Item {
                 width: chatFlick.width
                 spacing: 6
 
-                Text {
+                GGText { colorKey: "ui.TelemetryRail.12";
                     width: chatColumn.width
                     visible: root.chatSessions.length === 0
                     text: "NO DESKTOP CHATS"
-                    color: "#a8b0b8"
+                    color: RuntimeTheme.GGTheme.muted
                     font.family: "monospace"
                     font.pixelSize: 12
                 }
@@ -400,12 +384,12 @@ Item {
                         height: 18
                         color: chatMouse.containsMouse ? "#242424" : "transparent"
 
-                        Text {
+                        GGText { colorKey: "ui.TelemetryRail.13";
                             anchors.fill: parent
                             text: String(modelData.label || "")
                             color: String(modelData.session_id) === root.activeChatSession
-                                ? "#d8dee9"
-                                : "#8b949e"
+                                ? RuntimeTheme.GGTheme.text
+                                : RuntimeTheme.GGTheme.dim
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: String(modelData.session_id) === root.activeChatSession
@@ -427,11 +411,11 @@ Item {
                 }
             }
 
-            ScrollBar.vertical: GgScrollBar {}
+            ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.TelemetryRail.GgScrollBar.6";}
         }
     }
 
-    GgFrame {
+    GgFrame { property string uiColorScope: "ui.widget.TelemetryRail.GgFrame.7";
         id: cryptoFrame
         objectName: "telemetryCryptoWallet"
         anchors.left: parent.left
@@ -441,7 +425,7 @@ Item {
         anchors.bottom: parent.bottom
         leftLegend: "CRYPTO"
         rightLegend: String(root.crypto.legend || "—")
-        backgroundColor: "#161616"
+        backgroundColor: RuntimeTheme.GGTheme.panel
         borderColor: root.frameBorder
         radius: root.frameRadius
         compact: true
@@ -466,36 +450,36 @@ Item {
                 readonly property bool observe: ["MAINNET", "OBSERVE"].indexOf(String(root.crypto.legend || "")) >= 0
                     || String(wallet.network || "").toLowerCase() === "mainnet"
 
-                Text {
+                GGText { colorKey: "ui.TelemetryRail.14";
                     width: parent.width
                     text: cryptoColumn.observe ? "MAINNET · READ ONLY"
                         : ["LOCALNET", "TESTNET"].indexOf(String(root.crypto.legend || "")) >= 0 ? "PAPER / LAB"
                         : "NÄTVERK OKÄNT"
-                    color: "#e6edf3"
+                    color: RuntimeTheme.GGTheme.bright
                     font.family: "monospace"; font.pixelSize: 10
                     elide: Text.ElideRight
                 }
                 Rectangle {
                     width: parent.width; height: railBalance.height + 18
-                    color: "#161616"; radius: 3; border.color: "#6a6a6a"
+                    color: RuntimeTheme.GGTheme.panel; radius: 3; border.color: RuntimeTheme.GGTheme.edge
                     Column {
                         id: railBalance
                         x: 8; y: 9; width: parent.width - 16; spacing: 4
-                        Text {
+                        GGText { colorKey: "ui.TelemetryRail.15";
                             width: parent.width
                             text: cryptoColumn.connected
                                 ? String(cryptoColumn.wallet.pubkey).slice(0, 4) + "…" + String(cryptoColumn.wallet.pubkey).slice(-4)
                                 : "INGET KONTO"
-                            color: cryptoColumn.connected ? "#e6edf3" : "#9aa3ad"
+                            color: cryptoColumn.connected ? RuntimeTheme.GGTheme.bright : RuntimeTheme.GGTheme.muted
                             font.family: "monospace"; font.pixelSize: 11; font.bold: true
                             elide: Text.ElideMiddle; textFormat: Text.PlainText
                         }
-                        Text {
+                        GGText { colorKey: "ui.TelemetryRail.16";
                             objectName: "cryptoRailBalance"
                             width: parent.width; visible: cryptoColumn.connected
                             text: String(cryptoColumn.wallet.balance_sol === undefined || cryptoColumn.wallet.balance_sol === null
                                 ? "—" : cryptoColumn.wallet.balance_sol) + " SOL"
-                            color: "#c8cdd4"
+                            color: RuntimeTheme.GGTheme.text
                             font.family: "monospace"; font.pixelSize: 11
                             elide: Text.ElideRight; textFormat: Text.PlainText
                         }
@@ -504,7 +488,7 @@ Item {
 
                 Repeater {
                     model: root.crypto.accounts || []
-                    delegate: CryptoButton {
+                    delegate: CryptoButton { property string uiColorScope: "ui.control.TelemetryRail.1";
                         id: accountButton
                         required property var modelData
                         width: cryptoColumn.width; height: 26
@@ -513,7 +497,7 @@ Item {
                         Accessible.name: "Välj kryptokonto " + String(modelData.short || "")
                         tip: String(modelData.pubkey || "")
                         text: (modelData.active ? "● " : "  ") + String(modelData.short || "Konto")
-                        color: modelData.active ? "#e6edf3" : "#9aa3ad"
+                        color: modelData.active ? RuntimeTheme.GGTheme.bright : RuntimeTheme.GGTheme.muted
                         checked: Boolean(modelData.active)
                         font.family: "monospace"; font.pixelSize: 10
                         font.bold: Boolean(modelData.active)
@@ -525,47 +509,47 @@ Item {
                     }
                 }
 
-                Text {
+                GGText { colorKey: "ui.TelemetryRail.17";
                     width: parent.width
                     text: String((root.crypto.lab && root.crypto.lab.label) || "LAB · OKÄND")
-                    color: (root.crypto.lab && root.crypto.lab.healthy) ? "#8db89a" : "#9aa3ad"
+                    color: (root.crypto.lab && root.crypto.lab.healthy) ? RuntimeTheme.GGTheme.positive : RuntimeTheme.GGTheme.muted
                     font.family: "monospace"; font.pixelSize: 10
                     elide: Text.ElideRight; textFormat: Text.PlainText
                 }
-                Text {
+                GGText { colorKey: "ui.TelemetryRail.18";
                     objectName: "cryptoRailPumpState"
                     width: parent.width
                     readonly property var pump: root.crypto.pump || ({})
                     visible: String(pump.mint || "").length > 0
                     text: "PUMP · " + String(pump.state || "idle").toUpperCase()
                         + (pump.stale === true ? " · STALE" : "") + "\nMAINNET · READ ONLY"
-                    color: pump.error ? "#c98989" : "#c8cdd4"
+                    color: pump.error ? RuntimeTheme.GGTheme.negative : RuntimeTheme.GGTheme.text
                     font.family: "monospace"; font.pixelSize: 10
                     wrapMode: Text.WrapAnywhere; textFormat: Text.PlainText
                 }
-                Text {
+                GGText { colorKey: "ui.TelemetryRail.19";
                     objectName: "cryptoRailRpcStatus"
                     width: parent.width
                     visible: cryptoColumn.connected && (cryptoColumn.wallet.rpc_loading === true
                         || cryptoColumn.wallet.rpc_stale === true || String(cryptoColumn.wallet.rpc_error || "").length > 0)
                     text: cryptoColumn.wallet.rpc_loading ? "HÄMTAR SALDO…"
                         : cryptoColumn.wallet.rpc_error ? "HÄMTNING MISSLYCKADES" : "SENAST HÄMTADE SALDO"
-                    color: "#c8a97e"
+                    color: RuntimeTheme.GGTheme.accent
                     font.family: "monospace"; font.pixelSize: 10; wrapMode: Text.WordWrap
                 }
-                Rectangle { width: parent.width; height: 1; color: "#6a6a6a" }
-                Text {
+                Rectangle { width: parent.width; height: 1; color: RuntimeTheme.GGTheme.edge }
+                GGText { colorKey: "ui.TelemetryRail.20";
                     width: parent.width
                     text: "TILLGÅNGAR · " + root.crypto.holdings.length
-                    color: "#9aa3ad"
+                    color: RuntimeTheme.GGTheme.muted
                     font.family: "monospace"; font.pixelSize: 10
                 }
-                Text {
+                GGText { colorKey: "ui.TelemetryRail.21";
                     width: parent.width; visible: root.crypto.holdings.length === 0
                     text: !cryptoColumn.connected ? "Anslut en plånbok"
                         : root.crypto.refreshing || cryptoColumn.wallet.rpc_loading ? "Hämtar tillgångar…"
                         : cryptoColumn.wallet.rpc_error ? "Tillgångar ej tillgängliga" : "Inga tillgångar"
-                    color: "#9aa3ad"
+                    color: RuntimeTheme.GGTheme.muted
                     font.family: "monospace"; font.pixelSize: 11; wrapMode: Text.WordWrap
                 }
                 Repeater {
@@ -573,24 +557,24 @@ Item {
                     delegate: Item {
                         required property var modelData
                         width: cryptoColumn.width; height: 34
-                        Text {
+                        GGText { colorKey: "ui.TelemetryRail.22";
                             width: parent.width
                             text: String(modelData.symbol || "TOKEN")
-                            color: "#c8cdd4"
+                            color: RuntimeTheme.GGTheme.text
                             font.family: "monospace"; font.pixelSize: 10; font.bold: true
                             elide: Text.ElideRight; textFormat: Text.PlainText
                         }
-                        Text {
+                        GGText { colorKey: "ui.TelemetryRail.23";
                             y: 16; width: parent.width
                             text: String(modelData.display === undefined || modelData.display === null ? "—" : modelData.display)
-                            color: "#e6edf3"
+                            color: RuntimeTheme.GGTheme.bright
                             font.family: "monospace"; font.pixelSize: 11
                             elide: Text.ElideRight; textFormat: Text.PlainText
                         }
                     }
                 }
             }
-            ScrollBar.vertical: GgScrollBar {}
+            ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.TelemetryRail.GgScrollBar.9";}
         }
     }
 }

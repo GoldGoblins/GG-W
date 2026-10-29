@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 
 FocusScope {
@@ -179,16 +181,16 @@ FocusScope {
         z: 1200
         visible: root.noticeText.length > 0
         color: "#24292f"
-        border.color: "#6a6a6a"
+        border.color: RuntimeTheme.GGTheme.edge
         border.width: 1
         radius: 3
 
-        Text {
+        GGText { colorKey: "ui.GrokTuiHole.1";
             id: noticeLabel
             anchors.fill: parent
             anchors.margins: 6
             text: root.noticeText
-            color: "#e6edf3"
+            color: RuntimeTheme.GGTheme.bright
             font.family: "monospace"
             font.pixelSize: 12
             verticalAlignment: Text.AlignVCenter
@@ -208,11 +210,11 @@ FocusScope {
         z: 1200
         visible: root.clipboardNoticeText.length > 0
         color: "#30251b"
-        border.color: "#c8a97e"
+        border.color: RuntimeTheme.GGTheme.accent
         border.width: 1
         radius: 3
 
-        Text {
+        GGText { colorKey: "ui.GrokTuiHole.2";
             id: clipboardNoticeLabel
             anchors.left: parent.left
             anchors.right: parent.right
@@ -231,7 +233,7 @@ FocusScope {
         anchors.fill: parent
         z: 1300
         visible: root.restoringChat
-        color: "#161616"
+        color: RuntimeTheme.GGTheme.panel
 
         MouseArea {
             anchors.fill: parent
@@ -244,28 +246,28 @@ FocusScope {
             width: Math.max(180, parent.width - 40)
             spacing: 12
 
-            BufferMark {
+            BufferMark { property string uiColorScope: "ui.widget.GrokTuiHole.BufferMark.1";
                 anchors.horizontalCenter: parent.horizontalCenter
                 active: root.restoringChat
                 cell: 5
             }
-            Text {
+            GGText { colorKey: "ui.GrokTuiHole.3";
                 width: parent.width
                 text: "Restoring your latest chat"
-                color: "#c8a97e"
+                color: RuntimeTheme.GGTheme.accent
                 font.family: "monospace"
                 font.pixelSize: 13
                 horizontalAlignment: Text.AlignHCenter
             }
-            Text {
+            GGText { colorKey: "ui.GrokTuiHole.4";
                 width: parent.width
                 text: "Opening at the newest messages"
-                color: "#8a8a8a"
+                color: RuntimeTheme.GGTheme.dim
                 font.family: "monospace"
                 font.pixelSize: 11
                 horizontalAlignment: Text.AlignHCenter
             }
-            GgButton {
+            GgButton { property string uiColorScope: "ui.control.GrokTuiHole.1";
                 objectName: "showStartupChatButton"
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible: root.surfaceHost && !root.surfaceHost.startupChatBlocking
@@ -308,8 +310,8 @@ FocusScope {
             radius: 2
             visible: root.scrollMaximum > 0
             color: terminalScrollMouse.pressed
-                ? "#c8cdd4"
-                : (terminalScrollMouse.containsMouse ? "#a8b0b8" : "#707780")
+                ? RuntimeTheme.GGTheme.text
+                : (terminalScrollMouse.containsMouse ? RuntimeTheme.GGTheme.muted : "#707780")
             opacity: terminalScrollMouse.pressed || terminalScrollMouse.containsMouse
                 ? 1.0 : 0.82
         }

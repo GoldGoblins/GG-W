@@ -1,0 +1,17 @@
+{
+  "schema": "gg.omni-networks.v1",
+  "networks": [
+    {"id":"bip122:000000000019d6689c085ae165831e93","name":"Bitcoin","family":"bitcoin","symbol":"BTC","decimals":8,"endpoint":"https://mempool.space/api","adapter":"bitcoin","namespace_status":"CAIP_DRAFT"},
+    {"id":"eip155:8453","name":"Base","family":"evm","symbol":"ETH","decimals":18,"endpoint":"https://base-rpc.publicnode.com","adapter":"evm","namespace_status":"CAIP"},
+    {"id":"eip155:10","name":"Optimism","family":"evm","symbol":"ETH","decimals":18,"endpoint":"https://optimism-rpc.publicnode.com","adapter":"evm","namespace_status":"CAIP"},
+    {"id":"eip155:43114","name":"Avalanche C-Chain","family":"evm","symbol":"AVAX","decimals":18,"endpoint":"https://avalanche-c-chain-rpc.publicnode.com","adapter":"evm","namespace_status":"CAIP"},
+    {"id":"eip155:1","name":"Ethereum","family":"evm","symbol":"ETH","decimals":18,"endpoint":"https://ethereum-rpc.publicnode.com","adapter":"evm","namespace_status":"CAIP"},
+    {"id":"eip155:56","name":"BNB Smart Chain","family":"evm","symbol":"BNB","decimals":18,"endpoint":"https://bsc-rpc.publicnode.com","adapter":"evm","namespace_status":"CAIP"},
+    {"id":"eip155:137","name":"Polygon","family":"evm","symbol":"POL","decimals":18,"endpoint":"https://polygon-bor-rpc.publicnode.com","adapter":"evm","namespace_status":"CAIP"},
+    {"id":"eip155:42161","name":"Arbitrum One","family":"evm","symbol":"ETH","decimals":18,"endpoint":"https://arbitrum-one-rpc.publicnode.com","adapter":"evm","namespace_status":"CAIP"},
+    {"id":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp","name":"Solana","family":"solana","symbol":"SOL","decimals":9,"endpoint":"https://api.mainnet-beta.solana.com","adapter":"solana","namespace_status":"CAIP"},
+    {"id":"kaspa:mainnet","name":"Kaspa","family":"kaspa","symbol":"KAS","decimals":8,"endpoint":"https://api.kaspa.org","adapter":"kaspa","namespace_status":"GG_PRIVATE_EXTENSION"},
+    {"id":"tron:mainnet","name":"TRON","family":"tron","symbol":"TRX","decimals":6,"endpoint":"https://api.trongrid.io","adapter":"tron","namespace_status":"GG_PRIVATE_EXTENSION"},
+    {"id":"cardano:mainnet","name":"Cardano","family":"cardano","symbol":"ADA","decimals":6,"endpoint":"https://api.koios.rest/api/v1","adapter":"cardano","namespace_status":"GG_PRIVATE_EXTENSION"}
+  ]
+}

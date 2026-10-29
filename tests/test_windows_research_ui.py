@@ -32,7 +32,7 @@ from PySide6.QtQuick import QQuickItem, QQuickWindow
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 from shiboken6 import delete
-from backend import research_desk, research_lab, qip_lab
+from backend import research_desk, research_lab, qip_lab, research_workbench
 from backend.chat_surface_host import ChatSurfaceHost
 sys.path.insert(0, str(Path('tests').resolve()))
 from test_qip_lab import minimal_qip_module
@@ -201,12 +201,75 @@ window.setWidth(480); QTest.qWait(30)
 viewport = window.findChild(QQuickItem,'researchViewport')
 assert viewport.property('contentWidth') >= 760 > viewport.width()
 viewport.setProperty('contentX', 100); assert viewport.property('contentX') == 100
+viewport.setProperty('contentX', 0)
+click('researchTab_WORKBENCH')
+workbench = window.findChild(QQuickItem, 'researchWorkbench')
+assert workbench and workbench.isVisible()
+
+def settle_workbench():
+    deadline = time.monotonic() + 5
+    while workbench.property('busy') and time.monotonic() < deadline:
+        QTest.qWait(20)
+        time.sleep(0.005)  # QTest's C++ wait alone can hold the Python GIL.
+    if workbench.property('busy'):
+        import faulthandler
+        faulthandler.dump_traceback()
+    assert not workbench.property('busy'), 'Research worker did not return: ' + str((workbench.property('pendingOperation'), workbench.property('notice'), bridge.calls[-15:], warnings[-6:]))
+    QTest.qWait(20)
+
+settle_workbench()
+assert viewport.property('contentWidth') == viewport.width(), 'Workbench requires horizontal scrolling'
+workbench.setProperty('titleDraft', 'UI research job')
+workbench.setProperty('linksDraft', 'https://example.org/a https://example.org/a https://example.org/b')
+click('workbenchCreate'); settle_workbench()
+assert not workbench.property('linksDraft') and '2 unika' in workbench.property('notice')
+batch = workbench.property('batchId'); assert batch
+assert len(research_workbench.snapshot(batch)['items']) == 2
+pause = next(item for item in visual_items(window.contentItem()) if item.objectName() == 'workbenchPause')
+QTest.mouseMove(window, QPointF(window.width()-2, window.height()-2).toPoint()); QTest.qWait(160)
+assert pause.opacity() < 0.5
+center = pause.mapToScene(QPointF(pause.width()/2, pause.height()/2))
+QTest.mouseMove(window, center.toPoint()); QTest.qWait(160)
+assert pause.opacity() > 0.95, 'Quiet action did not brighten on hover'
+click('workbenchPause'); settle_workbench()
+assert research_workbench.snapshot(batch)['batches'][0]['state'] == 'RUNNING'
+source = research_workbench.claim_source(batch)
+research_workbench.complete_source(source['item_id'], source['lease'], 'READ', 'Public document only', 'first line\nsecond line\n')
+click('workbenchPause'); settle_workbench()
+assert research_workbench.snapshot(batch)['batches'][0]['state'] == 'PAUSED'
+observation_id = research_workbench.snapshot(batch)['items'][0]['observation_id']
+workbench.setProperty('section', 'Original')
+invoke(workbench, 'openObservation', batch, observation_id, 1); settle_workbench()
+assert 'first line' in window.findChild(QQuickItem, 'workbenchOriginal').property('text')
+long_original = research_workbench.observe(batch, 'UI long-line fixture', 'a' * 16000 + 'b' * 16000 + 'c' * 38000, 'Long line')
+invoke(workbench, 'openObservation', batch, long_original['observation_id'], 1); settle_workbench()
+invoke(workbench, 'openFragment', 0); settle_workbench()
+assert len(window.findChild(QQuickItem, 'workbenchOriginal').property('text')) == 16000
+invoke(workbench, 'openFragment', 16000); settle_workbench()
+assert window.findChild(QQuickItem, 'workbenchOriginal').property('text') == 'b' * 16000
+for section in ('Tester', 'Källstatus', 'Källkö'):
+    workbench.setProperty('section', section); QTest.qWait(25)
+    assert workbench.property('visible')
+workbench.setProperty('linksDraft', 'https://example.org/retained')
+bridge.fail_op = 'workbench_submit'; click('workbenchCreate')
+assert workbench.property('linksDraft') == 'https://example.org/retained'
+bridge.fail_op = ''
+for width in (360, 480, 1100):
+    window.setWidth(width); QTest.qWait(35)
+    assert viewport.property('contentWidth') == viewport.width()
+    assert workbench.width() <= window.width()
+click('researchTab_BACKLOG'); QTest.qWait(20)
+assert workbench.property('linksDraft') == 'https://example.org/retained'
+click('researchTab_WORKBENCH'); settle_workbench()
 preview = os.environ.get('GG_RESEARCH_UI_PREVIEW')
 if preview:
     folder = Path(preview); folder.mkdir(parents=True, exist_ok=True)
-    for width, page in ((1100,'MEMORY'),(1100,'EVALS'),(480,'WASM LAB')):
+    for width, page in ((1100,'MEMORY'),(1100,'EVALS'),(480,'WASM LAB'),(480,'WORKBENCH'),(1100,'WORKBENCH')):
         window.setWidth(width); pane.setProperty('page',page); viewport.setProperty('contentX',0); QTest.qWait(50)
-        assert window.grabWindow().save(str(folder / (page.replace(' ','_') + '.png')))
+        if page == 'WORKBENCH':
+            settle_workbench()
+            workbench.setProperty('notice', 'Källkön är pausad. Sparat underlag och framsteg finns kvar.')
+        assert window.grabWindow().save(str(folder / (page.replace(' ','_') + '_' + str(width) + '.png')))
 
 faults = [message for message in warnings if any(token in message for token in
           ('ReferenceError:', 'TypeError:', 'Cannot assign', 'Unable to assign', 'is not a type', 'Binding loop'))]

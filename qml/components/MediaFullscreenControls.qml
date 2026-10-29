@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 
 Item {
@@ -79,7 +81,7 @@ Item {
         anchors.fill: parent
         radius: 4
         color: "#dd151515"
-        border.color: "#6a6a6a"
+        border.color: RuntimeTheme.GGTheme.edge
         border.width: 1
 
         MouseArea {
@@ -142,11 +144,11 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 x: Math.max(0, Math.min(parent.width - width, root.progress * parent.width - width / 2))
                 visible: root.seekEnabled
-                color: timelineMouse.pressed ? "#ffffff" : "#d6dce2"
+                color: timelineMouse.pressed ? RuntimeTheme.GGTheme.bright : "#d6dce2"
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.MediaFullscreenControls.1";
             id: timeLabel
             objectName: "mediaFullscreenTimeLabel"
             anchors.left: parent.left
@@ -155,7 +157,7 @@ Item {
             width: panel.width < 600 ? 100 : 140
             text: root.durationSeconds > 0 ? root.clock(root.shownPosition) + " / " + root.clock(root.durationSeconds)
                 : root.liveStream ? "LIVE" : "00:00 / --:--"
-            color: "#c9cfd7"
+            color: RuntimeTheme.GGTheme.text
             font.family: "monospace"
             font.pixelSize: 11
             elide: Text.ElideRight
@@ -168,23 +170,23 @@ Item {
             anchors.rightMargin: 10
             width: Math.min(220, Math.max(144, panel.width * .22))
             height: parent.height
-            Text {
+            GGText { colorKey: "ui.MediaFullscreenControls.2";
                 id: volumeLabel
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 text: "VOL"
-                color: "#c9cfd7"
+                color: RuntimeTheme.GGTheme.text
                 font.family: "monospace"
                 font.pixelSize: 11
             }
-            Text {
+            GGText { colorKey: "ui.MediaFullscreenControls.3";
                 id: volumePercent
                 objectName: "mediaFullscreenVolumeLabel"
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 width: 36
                 text: root.shownVolume + "%"
-                color: "#c9cfd7"
+                color: RuntimeTheme.GGTheme.text
                 font.family: "monospace"
                 font.pixelSize: 11
                 horizontalAlignment: Text.AlignRight
@@ -248,7 +250,7 @@ Item {
                     radius: 2
                     anchors.verticalCenter: parent.verticalCenter
                     x: Math.max(0, Math.min(parent.width - width, parent.width * root.shownVolume / 100 - width / 2))
-                    color: volumeMouse.pressed ? "#ffffff" : "#d6dce2"
+                    color: volumeMouse.pressed ? RuntimeTheme.GGTheme.bright : "#d6dce2"
                 }
             }
         }

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import codecs
+from collections import OrderedDict
 
 from PySide6.QtCore import (
     QObject,
@@ -39,14 +40,19 @@ from backend.mini_vt import (
 )
 from backend.chat_restore import normalized_display_text
 from backend.chat_clipboard import read_paste
-_COLOR_CACHE: dict[tuple[int, int, int], QColor] = {}
+MAX_COLOR_CACHE_ENTRIES = 1024
+_COLOR_CACHE: OrderedDict[tuple[int, int, int], QColor] = OrderedDict()
 
 
 def _color(rgb: tuple[int, int, int]) -> QColor:
     cached = _COLOR_CACHE.get(rgb)
     if cached is None:
         cached = QColor(rgb[0], rgb[1], rgb[2])
+        if len(_COLOR_CACHE) >= MAX_COLOR_CACHE_ENTRIES:
+            _COLOR_CACHE.popitem(last=False)
         _COLOR_CACHE[rgb] = cached
+    else:
+        _COLOR_CACHE.move_to_end(rgb)
     return cached
 
 

@@ -23,8 +23,9 @@ class WindowChromeTests(unittest.TestCase):
             )
             code = r'''
 from pathlib import Path
+import os
 from PySide6.QtCore import QPoint, QPointF, QUrl, Qt
-from PySide6.QtGui import QWindow
+from PySide6.QtGui import QWindow, QFont, QFontDatabase
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuick import QQuickItem
 from PySide6.QtTest import QSignalSpy, QTest
@@ -34,6 +35,11 @@ from backend.desktop_shell import apply_desktop_shell_window
 
 app = QApplication([])
 app.setQuitOnLastWindowClosed(False)
+if os.name == 'nt':
+    for face in ('consola.ttf','consolab.ttf','seguisym.ttf'):
+        QFontDatabase.addApplicationFont(str(Path(os.environ['SystemRoot']) / 'Fonts' / face))
+QFont.insertSubstitution('monospace','Consolas' if os.name == 'nt' else 'DejaVu Sans Mono')
+app.setFont(QFont('Consolas' if os.name == 'nt' else 'DejaVu Sans Mono'))
 engine = QQmlApplicationEngine()
 warnings = []
 engine.warnings.connect(lambda errors: warnings.extend(e.toString() for e in errors))
@@ -115,8 +121,23 @@ assert window.visibility() == QWindow.Maximized
 
 window.showNormal()
 window.resize(820, 620)
-app.processEvents()
+QTest.qWait(40)
 assert plate.x() > drag.x() and plate.x() + plate.width() < window.width()
+actions=item('topBarActionsRow');panes=item('topBarPaneRow');status=item('topBarStatusRow')
+assert actions.y()+actions.height() <= panes.y()+.1, ('Narrow header actions overlap pane buttons',actions.y(),actions.height(),panes.y(),panes.height())
+assert panes.x()+panes.width() <= status.x()+.1, 'Narrow pane buttons overlap wallet/status'
+if os.environ.get('GG_LEDGER_UI_EVIDENCE'):
+    evidence = Path(os.environ['GG_LEDGER_UI_EVIDENCE'])
+    evidence.mkdir(parents=True, exist_ok=True)
+    for width in (820, 1586):
+        window.resize(width, 850)
+        QTest.qWait(80)
+        window.grabWindow().save(str(evidence / ('ledger-main-' + str(width) + '.png')))
+window.setProperty('visualLayoutLocked', False)
+QTest.qWait(30)
+resize_glyphs = [child for child in visual_items(window.contentItem())
+                 if child.objectName().startswith('visualResizeGlyph_')]
+assert resize_glyphs and all(child.property('glyphPath').startswith('M') for child in resize_glyphs)
 click('windowCloseButton')
 assert not window.isVisible(), 'Close click was intercepted'
 faults = [message for message in warnings if 'GgWindowChrome.qml' in message

@@ -1,0 +1,2 @@
+singleton GGTheme 1.0 GGTheme.qml
+singleton GGColorContext 1.0 GGColorContext.qml

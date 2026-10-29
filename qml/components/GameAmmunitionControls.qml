@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
@@ -17,20 +19,22 @@ Column {
         for (var i=0;i<recipes.length;++i)
             if (recipes[i].ammo_id===targetItem.firearm.ammo_id) { ammoPicker.currentIndex=i;return }
     }
-    Text {
+    GGText { colorKey: "ui.GameAmmunitionControls.1";
         text: "AMMUNITION · ARBETSBÄNK"
-        color: "#e5c785"; font.family: "monospace"; font.bold: true
+        color: RuntimeTheme.GGTheme.orange; font.family: "monospace"; font.bold: true
     }
-    ComboBox {
+    ComboBox { property string uiColorScope: "ui.control.GameAmmunitionControls.1";
         id: ammoPicker
         objectName: "gameAmmoRecipePicker"
         width: parent.width; implicitHeight: 30
         model: panel.recipes; textRole: "name"
-        palette.text: "#ead4a0"; palette.buttonText: "#ead4a0"
+        palette.text: RuntimeTheme.GGTheme.text; palette.buttonText: RuntimeTheme.GGTheme.text
         palette.base: "#172126"; palette.button: "#28383b"
         palette.highlight: "#75613b"; palette.highlightedText: "#fff1c7"
-    }
-    Text {
+    
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignLeft }
+}
+    GGText { colorKey: "ui.GameAmmunitionControls.2";
         width: parent.width
         text: "Tillverkar " + String(panel.recipe.quantity || 0) + " ammunition. Kostnad: "
             +Object.keys(panel.recipe.inputs || {}).map(function(k) {
@@ -39,7 +43,7 @@ Column {
             +(panel.nearby ? " · Arbetsbänken är inom räckhåll." : " · Gå till arbetsbänken i startlägret.")
         color: "#b5c9a1"; font.pixelSize: 11; wrapMode: Text.WordWrap
     }
-    GgButton {
+    GgButton { property string uiColorScope: "ui.control.GameAmmunitionControls.2";
         objectName: "gameCraftAmmunition"
         width: parent.width
         text: "TILLVERKA "+String(panel.recipe.name || "AMMUNITION").toUpperCase()

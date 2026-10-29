@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
@@ -15,9 +17,9 @@ Dialog {
     width:Math.min(440,game.width-24)
     height:Math.min(220,game.height-24)
     x:(game.width-width)/2;y:(game.height-height)/2
-    palette.windowText:"#e9e3d6";palette.text:"#e9e3d6"
-    palette.button:"#303137";palette.buttonText:"#e9e3d6"
-    background:Rectangle { color:"#202126";border.color:"#92794b";radius:5 }
+    palette.windowText:RuntimeTheme.GGTheme.bright;palette.text:RuntimeTheme.GGTheme.bright
+    palette.button:RuntimeTheme.GGTheme.selected;palette.buttonText:RuntimeTheme.GGTheme.bright
+    background:Rectangle { color:RuntimeTheme.GGTheme.raised;border.color:RuntimeTheme.GGTheme.edge;radius:5 }
     onVisibleChanged:if(visible)Qt.callLater(function(){if(dialog.visible)game.clearMovementInput()})
     onQuestionChanged:error=""
     function answer(accept) {
@@ -30,13 +32,17 @@ Dialog {
         if(result.error)error="Åtgärden kunde inte sparas eller föremålet har ändrats. Försök igen eller avbryt."
         game.refresh()
     }
-    contentItem:Label {
+    contentItem:GGLabel { colorKey: "ui.GameItemBindingDialog.1";
         text:(dialog.question ? dialog.question.name : "")+" blir bundet när du använder eller utrustar det. Föremålet kan sedan inte skickas eller handlas till en annan karaktär."
             +(dialog.error ? "\n\n"+dialog.error : "")
         wrapMode:Text.WordWrap
     }
     footer:DialogButtonBox {
-        Button { objectName:"gameItemBindingAccept";text:"Bind och fortsätt";onClicked:dialog.answer(true) }
-        Button { objectName:"gameItemBindingCancel";text:"Avbryt";onClicked:dialog.answer(false) }
+        Button { property string uiColorScope: "ui.control.GameItemBindingDialog.1"; objectName:"gameItemBindingAccept";text:"Bind och fortsätt";onClicked:dialog.answer(true) 
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignHCenter }
+}
+        Button { property string uiColorScope: "ui.control.GameItemBindingDialog.2"; objectName:"gameItemBindingCancel";text:"Avbryt";onClicked:dialog.answer(false) 
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignHCenter }
+}
     }
 }

@@ -18,6 +18,7 @@ import urllib.request
 from backend.crypto_contract import STATE_DIR, ensure_state_dir
 from backend.crypto_contract import write_state_json
 from backend.platform_files import is_link
+from backend import crypto_svm
 
 VALIDATOR_BIN = Path(os.environ.get('GG_SOLANA_VALIDATOR', str(HOME / '.local/opt/solana-cli/bin/solana-test-validator')))
 LEDGER_DIR = STATE_DIR / "local-ledger"
@@ -34,7 +35,7 @@ def _cpu_count() -> int:
 
 
 def _worker_threads() -> int:
-    return max(4, _cpu_count())
+    return min(8, max(2, _cpu_count() // 2))
 
 
 def _canonical(path: Path | str) -> str:
@@ -116,6 +117,8 @@ _health_cache: tuple[float, bool] = (0.0, False)
 
 def rpc_healthy(timeout: float = 2.0, *, force: bool = False) -> bool:
     global _health_cache
+    if crypto_svm.active():
+        return True
     now = time.monotonic()
     if not force and now - _health_cache[0] < _HEALTH_TTL:
         return _health_cache[1]
@@ -141,12 +144,15 @@ def rpc_healthy(timeout: float = 2.0, *, force: bool = False) -> bool:
 
 
 def lab_status(*, refresh: bool = False) -> dict[str, Any]:
+    if crypto_svm.active():
+        return crypto_svm.status()
     pid = running_pid()
     rpc_ok = rpc_healthy(force=refresh)
     owned = pid is not None
     healthy = owned and rpc_ok
     running = owned
     available = VALIDATOR_BIN.is_file() and (os.name != 'nt' or VALIDATOR_BIN.suffix.lower() == '.exe')
+    portable_available = crypto_svm.available()
     diagnostic = ''
     if healthy:
         label = "LAB ON"
@@ -156,14 +162,17 @@ def lab_status(*, refresh: bool = False) -> dict[str, Any]:
         label = "EXTERNAL RPC"
         diagnostic = 'CRYPTO_LAB_FOREIGN_RPC'
     elif not available:
-        label = "LAB UNAVAILABLE"
-        diagnostic = 'CRYPTO_VALIDATOR_MISSING'
+        label = "LOCAL VM READY" if portable_available else "LAB UNAVAILABLE"
+        diagnostic = '' if portable_available else 'CRYPTO_VALIDATOR_MISSING'
     else:
         label = "LAB OFF"
     return {
         "running": running,
         "healthy": healthy,
-        "available": available,
+        "available": available or portable_available,
+        "native_available": available,
+        "portable_available": portable_available,
+        "backend": "validator",
         "owned": owned,
         "rpc_healthy": rpc_ok,
         "diagnostic": diagnostic,
@@ -218,6 +227,8 @@ def is_frozen() -> bool:
 
 
 def _rpc(method: str, params: list[Any] | None = None, timeout: float = 2.0) -> dict[str, Any] | None:
+    if crypto_svm.active():
+        return crypto_svm.rpc(method, params or [])
     try:
         body = json.dumps(
             {
@@ -430,6 +441,8 @@ def _spawn_validator() -> dict[str, Any]:
 
 
 def start_lab(reset_if_frozen: bool = True) -> dict[str, Any]:
+    if crypto_svm.active():
+        return crypto_svm.status()
     current = running_pid()
     if current is not None:
         status = wait_ready(12)
@@ -441,6 +454,8 @@ def start_lab(reset_if_frozen: bool = True) -> dict[str, Any]:
         return {**status, 'diagnostic': diagnostic}
     if rpc_healthy(force=True):
         return {**lab_status(), 'diagnostic': 'CRYPTO_LAB_FOREIGN_RPC'}
+    if (not VALIDATOR_BIN.is_file() or os.name == 'nt' and VALIDATOR_BIN.suffix.lower() != '.exe') and crypto_svm.available():
+        return crypto_svm.start()
     status = _spawn_validator()
     if status.get("healthy") and reset_if_frozen and is_frozen():
         return {**status, 'diagnostic': 'CRYPTO_LAB_FROZEN_REQUIRES_REVIEW'}
@@ -449,6 +464,8 @@ def start_lab(reset_if_frozen: bool = True) -> dict[str, Any]:
 
 def stop_lab() -> dict[str, Any]:
     global _health_cache
+    if crypto_svm.active():
+        return crypto_svm.stop()
     env = _user_env()
     pid = running_pid()
     if pid is None:

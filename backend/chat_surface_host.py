@@ -37,7 +37,8 @@ from PySide6.QtCore import (
 from backend.chat_sessions import forget_session, list_for_ui, sync_owned
 from backend.chat_restore import codex_tail_marker
 from backend import crypto_host
-from backend import game_engine_host
+from backend.deferred_backend import DeferredBackend
+game_engine_host=DeferredBackend('backend.game_engine_host')
 from backend import agent_flow
 from backend import flow_tui
 from backend import node_flow
@@ -64,7 +65,6 @@ from backend.codex_wallet import (
     save_session_id as save_codex_session_id,
     session_path as codex_session_path,
     session_id_from_file,
-    snapshot as codex_wallet_snapshot,
 )
 from backend.codex_image_storage import (
     prepare_resume as prepare_codex_resume,
@@ -245,6 +245,14 @@ class ChatSurfaceHost(QObject):
     flowTuiChanged = Signal(str)
     startupChatChanged = Signal()
     cryptoStatusUpdated = Signal(str)
+    explorerStatusUpdated = Signal(str)
+    omniStatusUpdated = Signal(str)
+    networkTelemetryUpdated = Signal(str)
+    networkStopFinished = Signal(str, str)
+    walletTokenColorsUpdated = Signal(str)
+    walletAccountRolesUpdated = Signal(str)
+    walletMnemonicSecretReady = Signal(str)
+    spaceActivityUpdated = Signal(str)
 
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -291,6 +299,7 @@ class ChatSurfaceHost(QObject):
         self._wallet_last_turn: int | None = None
         self._wallet_json = ""
         self._gpt_wallet_json = ""
+        self._model_usage = None
         self._crypto_ui = None
         # The old state file was written by a host-wide mtime scan and can
         # point at the parent Codex conversation.  GPTUI keeps its active
@@ -327,6 +336,7 @@ class ChatSurfaceHost(QObject):
         # task-scoped mandate path as the QML composer.  The callback is
         # intentionally optional: shell-like terminal surfaces remain raw.
         self._tui_chat_line_handler: Callable[[str, str], bool] | None = None
+        self._wallet_action_approval_handler: Callable[[str], None] | None = None
         self._tui_input_lines: dict[str, str] = {}
         self._sessions_json = ""
         self._pending_resume = ""
@@ -334,6 +344,10 @@ class ChatSurfaceHost(QObject):
         self._wallet_timer.setInterval(15000)
         self._wallet_timer.timeout.connect(self._emit_wallet)
         self._wallet_timer.start()
+        self._gpt_wallet_timer = QTimer(self)
+        self._gpt_wallet_timer.setInterval(1000)
+        self._gpt_wallet_timer.timeout.connect(self._request_gpt_wallet)
+        self._gpt_wallet_timer.start()
         self._live_vision_json = live_vision.ui_status()
         self._live_vision_timer = QTimer(self)
         self._live_vision_timer.setInterval(250 if os.name == "nt" else 1000)
@@ -445,11 +459,14 @@ class ChatSurfaceHost(QObject):
     def _defer_initial_tui(self) -> bool:
         # Settings select the last motor after the host is attached. Do not
         # launch the default motor first or restore a hidden second chat.
-        return bool(
-            self._qml_root is not None
-            and self._qml_root.property("shellLoading")
-            and not self._startup_chat_started
-        )
+        if getattr(self,'_shutdown_in_progress',False):return True
+        if self._qml_root is None:return False
+        try:
+            return bool(self._qml_root.property("shellLoading") and not self._startup_chat_started)
+        except RuntimeError:
+            # A queued startup callback may run after Qt deleted the window.
+            # Do not allocate a new terminal or access its deleted wrapper.
+            return True
 
     @Slot()
     def prepareStartupChat(self) -> None:
@@ -1365,6 +1382,10 @@ class ChatSurfaceHost(QObject):
         """Install the Workbench ingress for submitted native TUI lines."""
         self._tui_chat_line_handler = handler
 
+    def set_wallet_action_approval_handler(self, handler) -> None:
+        """Install the chat gate; only a public in-memory ticket crosses it."""
+        self._wallet_action_approval_handler = handler
+
     @Slot(str, result=str)
     def dispatchVisualCommand(self, text: str) -> str:
         """Route one finite visual command to the shared QML state layer."""
@@ -1562,7 +1583,14 @@ class ChatSurfaceHost(QObject):
         op = str(request.get("op") or "snapshot").strip().lower()
         payload = request.get("payload") if isinstance(request.get("payload"), dict) else {}
         try:
-            if op == "snapshot":
+            if op in {"workbench_submit", "workbench_result"}:
+                from backend import research_workbench_service
+                if op == "workbench_submit":
+                    result = research_workbench_service.submit(str(payload.get('operation') or ''),
+                        payload.get('arguments') if isinstance(payload.get('arguments'), dict) else {})
+                else:
+                    result = research_workbench_service.result(str(payload.get('ticket') or ''))
+            elif op == "snapshot":
                 result = research_desk.snapshot()
             elif op == "lab_tools":
                 result = research_lab.tool_inventory()
@@ -2362,6 +2390,278 @@ class ChatSurfaceHost(QObject):
             self._crypto_ui.updated.connect(self.cryptoStatusUpdated)
         return self._crypto_ui
 
+    def _omni_runtime(self):
+        runtime = getattr(self, '_omni_ui', None)
+        if runtime is None:
+            from backend.crypto_ui_runtime import CryptoUiRuntime
+            from backend.omni_service import snapshot
+            runtime = self._omni_ui = CryptoUiRuntime(self, snapshot=snapshot, ttl=1.5)
+            runtime.updated.connect(self.omniStatusUpdated)
+        return runtime
+
+    def _explorer_runtime(self):
+        runtime = getattr(self, '_explorer_ui', None)
+        if runtime is None:
+            from backend.crypto_ui_runtime import CryptoUiRuntime
+            from backend.crypto_explorer import snapshot
+            runtime = self._explorer_ui = CryptoUiRuntime(self, snapshot=snapshot, ttl=1)
+            runtime.updated.connect(self.explorerStatusUpdated)
+        return runtime
+
+    @Slot(result=str)
+    def spaceActivityStatus(self) -> str:
+        runtime=getattr(self,'_space_activity_ui',None)
+        if runtime is None:
+            from backend.crypto_ui_runtime import CryptoUiRuntime
+            from backend.crypto_activity import snapshot
+            runtime=self._space_activity_ui=CryptoUiRuntime(self,snapshot=snapshot,ttl=.5)
+            runtime.updated.connect(self.spaceActivityUpdated)
+        return runtime.snapshot()
+
+    @Slot(result=str)
+    def explorerStatus(self) -> str:
+        return self._explorer_runtime().snapshot()
+
+    @Slot(str, str, result=str)
+    def explorerAction(self, name: str, raw: str) -> str:
+        from backend.crypto_explorer import action
+        return self._explorer_runtime().submit(name, lambda: action(name, raw))
+
+    @Slot(result=str)
+    def omniStatus(self) -> str:
+        return self._omni_runtime().snapshot()
+
+    @Slot(str)
+    def setNetworkTelemetryView(self, page: str) -> None:
+        runtime = getattr(self, '_network_telemetry', None)
+        if runtime is None and page in {'TESTNET', 'DAG'}:
+            from backend.network_telemetry import NetworkTelemetryRuntime
+            runtime = self._network_telemetry = NetworkTelemetryRuntime(self)
+            runtime.updated.connect(self.networkTelemetryUpdated)
+        if runtime is not None:
+            runtime.set_view(page)
+
+    @Slot(QObject, str)
+    def setNetworkTelemetryOwner(self, owner: QObject, page: str) -> None:
+        runtime = getattr(self, '_network_telemetry', None)
+        if runtime is None and page in {'TESTNET', 'DAG'}:
+            from backend.network_telemetry import NetworkTelemetryRuntime
+            runtime = self._network_telemetry = NetworkTelemetryRuntime(self)
+            runtime.updated.connect(self.networkTelemetryUpdated)
+        if runtime is not None:
+            runtime.set_owner(owner, page)
+
+    @Slot(str, result=bool)
+    def requestNetworkStop(self, page: str) -> bool:
+        if page not in {'TESTNET', 'DAG'} or getattr(self, '_shutdown_in_progress', False):
+            return False
+        runtime = getattr(self, '_network_stop', None)
+        if runtime is None:
+            from backend.network_stop import NetworkStopRuntime
+            runtime = self._network_stop = NetworkStopRuntime(self)
+            runtime.finished.connect(self.networkStopFinished)
+        return runtime.request(page)
+
+    @Slot(result=str)
+    def walletTokenColors(self) -> str:
+        from backend import wallet_token_colors
+        try:
+            return json.dumps(wallet_token_colors.snapshot())
+        except Exception:
+            # Cosmetic preferences must not expose DB paths or interrupt the
+            # wallet when the preference store is unavailable.
+            return json.dumps({'schema': wallet_token_colors.SCHEMA, 'colors': {},
+                               'error': 'WALLET_TOKEN_COLOR_READ_FAILED'})
+
+    @Slot(str, str, result=str)
+    def walletSetTokenColor(self, asset_id: str, color: str) -> str:
+        from backend import wallet_token_colors
+        try:
+            raw = json.dumps(wallet_token_colors.set_color(asset_id, color))
+        except Exception:
+            return json.dumps({'error': 'WALLET_TOKEN_COLOR_SAVE_FAILED'})
+        self.walletTokenColorsUpdated.emit(raw)
+        return raw
+
+    @Slot(result=str)
+    def walletAccountRoles(self) -> str:
+        from backend import wallet_account_roles
+        try:
+            return json.dumps(wallet_account_roles.snapshot())
+        except Exception:
+            return json.dumps({'schema': wallet_account_roles.SCHEMA, 'roles': {},
+                               'accounts': [], 'error': 'WALLET_ACCOUNT_ROLE_READ_FAILED'})
+
+    @Slot(str, str, result=str)
+    def walletSetAccountRole(self, account_id: str, role: str) -> str:
+        from backend import wallet_account_roles
+        try:
+            raw = json.dumps(wallet_account_roles.set_role(account_id, role))
+        except Exception:
+            return json.dumps({'error': 'WALLET_ACCOUNT_ROLE_SAVE_FAILED'})
+        self.walletAccountRolesUpdated.emit(raw)
+        return raw
+
+    def _wallet_mnemonic_local(self, method: str, *args) -> str:
+        """Local secret UI route; never publish its return in public status."""
+        from backend import wallet_mnemonic
+        from backend import sensitive_ui_guard
+        pending = 'wallet-mnemonic-pending:' + str(id(self))
+        if method == 'begin': sensitive_ui_guard.enter(pending)
+        try:
+            value = getattr(wallet_mnemonic, method)(*args)
+            if method in {'begin', 'begin_restore'} and isinstance(value, dict) and value.get('session_id'):
+                sessions = getattr(self, '_wallet_mnemonic_sessions', None)
+                if sessions is None: sessions = self._wallet_mnemonic_sessions = set()
+                sessions.add(value['session_id'])
+                if value.get('words'):
+                    sensitive_ui_guard.enter('wallet-mnemonic:' + value['session_id'])
+            if method in {'challenge', 'cancel'} and args:
+                sensitive_ui_guard.leave('wallet-mnemonic:' + str(args[0]))
+                if method == 'cancel': getattr(self, '_wallet_mnemonic_sessions', set()).discard(args[0])
+            return json.dumps(value)
+        except Exception:
+            return json.dumps({'error': 'WALLET_MNEMONIC_OPERATION_FAILED'})
+        finally:
+            if method == 'begin': sensitive_ui_guard.leave(pending)
+
+    @Slot(str, str, int, str, result=str)
+    def walletMnemonicBegin(self, label: str, purpose: str, count: int, method: str) -> str:
+        return self._wallet_mnemonic_local('begin', label, purpose, count, method)
+
+    @Slot(str, result=str)
+    def walletMnemonicChallenge(self, session: str) -> str:
+        return self._wallet_mnemonic_local('challenge', session)
+
+    @Slot(str, str, result=str)
+    def walletMnemonicVerify(self, session: str, raw: str) -> str:
+        try:
+            if len(raw) > 2048: raise ValueError()
+            answers = json.loads(raw)
+            if not isinstance(answers, dict): raise ValueError()
+        except Exception:
+            return json.dumps({'error': 'WALLET_MNEMONIC_OPERATION_FAILED'})
+        return self._wallet_mnemonic_local('verify', session, answers)
+
+    @Slot(str, str, result=str)
+    def walletMnemonicSetPassword(self, session: str, password: str) -> str:
+        return self._wallet_mnemonic_local('set_password', session, password)
+
+    @Slot(str, str, str, str, result=str)
+    def walletMnemonicRestore(self, phrase: str, label: str, purpose: str, method: str) -> str:
+        return self._wallet_mnemonic_local('begin_restore', phrase, label, purpose, method)
+
+    @Slot(str, result=str)
+    def walletMnemonicCancel(self, session: str) -> str:
+        return self._wallet_mnemonic_local('cancel', session)
+
+    @Slot(str, str, result=str)
+    def walletMnemonicReveal(self, pubkey: str, password: str) -> str:
+        from backend import wallet_recovery_ui
+        return wallet_recovery_ui.request(self, pubkey, password)
+
+    @Slot(str, result=str)
+    def walletMnemonicCancelReveal(self, request_id: str) -> str:
+        from backend import wallet_recovery_ui
+        return wallet_recovery_ui.cancel(self, request_id)
+
+    @Slot(str, str, result=str)
+    def walletMnemonicExport(self, pubkey: str, path: str) -> str:
+        from backend import wallet_approval, wallet_mnemonic
+        identifier = ''
+        try:
+            runtime = self._omni_runtime()
+            with runtime._lock:
+                if runtime._closed or runtime._pending is not None or runtime._active:
+                    raise ValueError()
+            handler = getattr(self, '_wallet_action_approval_handler', None)
+            if not callable(handler): raise ValueError()
+            args = {'pubkey': pubkey, 'path': path}
+            identifier = wallet_approval.stage('export_mnemonic', args, lambda: wallet_mnemonic.export(pubkey, path))
+            request = wallet_approval.request(identifier)
+            handler(identifier)
+            QTimer.singleShot(max(1, int((request['expires_at']-time.time())*1000)+1),
+                lambda: self._expire_wallet_operation(identifier, 'export_mnemonic'))
+            return self._wallet_operation_notice('export_mnemonic', 'approval_required', 'WALLET_APPROVAL_REQUIRED')
+        except Exception:
+            if identifier: wallet_approval.cancel(identifier)
+            return json.dumps({'error': 'WALLET_RECOVERY_EXPORT_FAILED'})
+
+    @Slot(result=int)
+    def walletCaptureToken(self) -> int:
+        from backend import sensitive_ui_guard
+        try: return sensitive_ui_guard.capture_token()
+        except Exception: return -1
+
+    @Slot(int, result=bool)
+    def walletCaptureAllowed(self, token: int) -> bool:
+        from backend import sensitive_ui_guard
+        try:
+            if token < 0: return False
+            sensitive_ui_guard.require_capture_allowed(token)
+            return True
+        except Exception: return False
+
+    @Slot(str, str, result=str)
+    def omniAction(self, name: str, raw: str) -> str:
+        from backend.omni_service import action
+        from backend import wallet_approval
+        if name in {'reveal_mnemonic', 'export_mnemonic'}:
+            return json.dumps({'error': 'WALLET_PRIVATE_INTERFACE_REQUIRED'})
+        if name in wallet_approval.OPERATIONS:
+            identifier = ''
+            try:
+                runtime = self._omni_runtime()
+                with runtime._lock:
+                    if runtime._closed or runtime._pending is not None or runtime._active:
+                        raise ValueError('WALLET_OPERATION_BUSY')
+                handler = getattr(self, '_wallet_action_approval_handler', None)
+                if not callable(handler):
+                    raise ValueError('WALLET_APPROVAL_REQUIRED')
+                if len(raw) > 16384:
+                    raise ValueError('OMNI_REQUEST_SIZE')
+                args = json.loads(raw or '{}')
+                identifier = wallet_approval.stage(name, args, lambda: action(name, raw))
+                request = wallet_approval.request(identifier)
+                handler(identifier)
+                QTimer.singleShot(max(1, int((request['expires_at'] - time.time()) * 1000) + 1),
+                    lambda: self._expire_wallet_operation(identifier, name))
+                return self._wallet_operation_notice(name, 'approval_required', 'WALLET_APPROVAL_REQUIRED')
+            except Exception as exc:
+                if identifier:
+                    wallet_approval.cancel(identifier)
+                code = str(exc)
+                if not re.fullmatch(r'[A-Z][A-Z0-9_]{1,79}', code):
+                    code = type(exc).__name__
+                return self._wallet_operation_notice(name, 'approval_required' if code == 'WALLET_APPROVAL_REQUIRED' else 'error', code)
+        return self._omni_runtime().submit(name, lambda: action(name, raw))
+
+    def _wallet_operation_notice(self, name: str, state: str, error: str) -> str:
+        """Publish a non-running approval state without queuing a fake job."""
+        runtime = self._omni_runtime()
+        with runtime._lock:
+            runtime._operation = {'name': name, 'state': state, 'error': error}
+            runtime._full = runtime._attach(runtime._body, runtime._operation)
+            runtime._rail = runtime._attach(runtime._rail_body, runtime._operation)
+            runtime._revision += 1
+            revision, raw = runtime._revision, runtime._full
+        runtime._prepared.emit(revision, raw)
+        return raw
+
+    def resume_wallet_operation(self, identifier: str) -> None:
+        from backend import wallet_approval
+        request = wallet_approval.request(identifier)
+        runtime = self._omni_runtime()
+        with runtime._lock:
+            if runtime._closed or runtime._pending is not None or runtime._active:
+                raise ValueError('WALLET_OPERATION_BUSY')
+        runtime.submit(request['name'], lambda: wallet_approval.execute(identifier))
+
+    def _expire_wallet_operation(self, identifier: str, name: str) -> None:
+        from backend import wallet_approval
+        if wallet_approval.expire(identifier):
+            self._wallet_operation_notice(name, 'expired', 'WALLET_DRAFT_EXPIRED')
+
     def _crypto_async(self, name: str, callback, *args) -> str:
         return self._crypto_runtime().submit(name, lambda: callback(*args))
 
@@ -2462,6 +2762,22 @@ class ChatSurfaceHost(QObject):
     @Slot(result=str)
     def cryptoLabOff(self) -> str:
         return self._crypto_async("lab_off", crypto_host.lab_off)
+
+    @Slot(result=str)
+    def cryptoKaspaLabOn(self) -> str:
+        return self._crypto_async('kas_lab_on', crypto_host.kaspa_lab_on)
+
+    @Slot(result=str)
+    def cryptoKaspaLabOff(self) -> str:
+        return self._crypto_async('kas_lab_off', crypto_host.kaspa_lab_off)
+
+    @Slot(str, result=str)
+    def cryptoConnectionRefresh(self, asset: str) -> str:
+        return self._crypto_async('connection_refresh', crypto_host.connection_refresh, asset)
+
+    @Slot(str, result=str)
+    def cryptoKaspaWatch(self, address: str) -> str:
+        return self._crypto_async('kas_watch', crypto_host.kaspa_watch, address)
 
     @Slot(result=str)
     def cryptoKaspaGenesis(self) -> str:
@@ -4254,71 +4570,53 @@ class ChatSurfaceHost(QObject):
 
     @Slot(result=str)
     def marketplaceStatus(self) -> str:
-        try:
-            return json.dumps(marketplace_host.status_payload(), separators=(",", ":"))
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__})
+        return self._marketplace_runtime().snapshot()
+
+    def _marketplace_runtime(self):
+        runtime = getattr(self, '_marketplace_ui', None)
+        if runtime is None:
+            from backend.crypto_ui_runtime import CryptoUiRuntime
+            runtime = self._marketplace_ui = CryptoUiRuntime(self, snapshot=marketplace_host.status_payload, ttl=1.5)
+        return runtime
+
+    def _marketplace_async(self, name, callback, *args):
+        return self._marketplace_runtime().submit(name, lambda: callback(*args))
 
     @Slot(str, result=str)
     def marketplaceList(self, raw: str) -> str:
-        try:
-            return json.dumps(marketplace_host.list_item(raw), separators=(",", ":"))
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__})
+        return self._marketplace_async('market_list', marketplace_host.list_item, raw)
+
+    @Slot(str, result=str)
+    def marketplaceDiscover(self, raw: str) -> str:
+        return self._marketplace_async('market_discover', marketplace_host.discover, raw)
+
+    @Slot(str, result=str)
+    def marketplaceImportImage(self, source: str) -> str:
+        return self._marketplace_async('market_image', marketplace_host.import_image, source)
 
     @Slot(str, result=str)
     def marketplaceDelist(self, listing_id: str) -> str:
-        try:
-            return json.dumps(
-                marketplace_host.delist_item(listing_id), separators=(",", ":")
-            )
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__})
+        return self._marketplace_async('market_delist', marketplace_host.delist_item, listing_id)
 
     @Slot(str, result=str)
     def marketplacePaperBuy(self, listing_id: str) -> str:
-        try:
-            return json.dumps(
-                marketplace_host.paper_buy(listing_id), separators=(",", ":")
-            )
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__})
+        return self._marketplace_async('market_buy', marketplace_host.paper_buy, listing_id)
 
     @Slot(str, result=str)
     def marketplaceSelect(self, listing_id: str) -> str:
-        try:
-            return json.dumps(
-                marketplace_host.select_listing(listing_id), separators=(",", ":")
-            )
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__})
+        return self._marketplace_async('market_select', marketplace_host.select_listing, listing_id)
 
     @Slot(str, result=str)
     def marketplaceSetFilter(self, category: str) -> str:
-        try:
-            return json.dumps(
-                marketplace_host.set_filter(category), separators=(",", ":")
-            )
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__})
+        return self._marketplace_async('market_filter', marketplace_host.set_filter, category)
 
     @Slot(str, result=str)
     def marketplaceListElement(self, symbol: str) -> str:
-        try:
-            return json.dumps(
-                marketplace_host.list_element(symbol), separators=(",", ":")
-            )
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__})
+        return self._marketplace_async('market_element', marketplace_host.list_element, symbol)
 
     @Slot(str, result=str)
     def marketplaceRebirth(self, raw: str) -> str:
-        try:
-            return json.dumps(
-                marketplace_host.rebirth_item(raw), separators=(",", ":")
-            )
-        except Exception as exc:
-            return json.dumps({"error": type(exc).__name__})
+        return self._marketplace_async('market_rebirth', marketplace_host.rebirth_item, raw)
 
     @Slot(result=str)
     def listSiteFiles(self) -> str:
@@ -5425,6 +5723,8 @@ class ChatSurfaceHost(QObject):
     @Slot(int, int, int, int, result=str)
     def webCapturePane(self, x: int, y: int, width: int, height: int) -> str:
         """Capture the visible native browser, including its child window."""
+        capture_token = self.walletCaptureToken()
+        if capture_token < 0: return ""
         window = self._qml_root
         if window is None or not window.isVisible():
             return ""
@@ -5446,6 +5746,7 @@ class ChatSurfaceHost(QObject):
         ratio = desktop.devicePixelRatio()
         picture = desktop.copy(round(position.x() * ratio), round(position.y() * ratio),
                                round(width * ratio), round(height * ratio))
+        if not self.walletCaptureAllowed(capture_token): return ""
         return str(destination) if not picture.isNull() and picture.save(str(destination)) else ""
 
     @Slot(int, int)
@@ -5931,6 +6232,12 @@ class ChatSurfaceHost(QObject):
         return True
 
     def _desk_item_label(self, item) -> str:
+        current = item
+        while current is not None:
+            if current.property('privateSensitive') is True or current.property('sensitiveInput') is True: return ""
+            echo = current.property('echoMode')
+            if echo is not None and echo != 0: return ""
+            current = current.parentItem() if hasattr(current, 'parentItem') else None
         for key in ("text", "placeholderText", "title"):
             value = item.property(key)
             if isinstance(value, str):
@@ -5940,6 +6247,12 @@ class ChatSurfaceHost(QObject):
         return ""
 
     def _desk_list_names(self, query: str) -> list[str]:
+        capture_token = self.walletCaptureToken()
+        if capture_token < 0: return []
+        result = self._desk_list_names_unchecked(query)
+        return result if self.walletCaptureAllowed(capture_token) else []
+
+    def _desk_list_names_unchecked(self, query: str) -> list[str]:
         needle = query.lower()
         names: list[str] = []
         seen: set[str] = set()
@@ -6070,6 +6383,10 @@ class ChatSurfaceHost(QObject):
 
     def _desk_start(self, cmd: dict[str, Any]) -> None:
         from backend import desktop_operator
+
+        if self.walletCaptureToken() < 0:
+            self._desk_finish(cmd, ok=False, reason_code="SENSITIVE_UI_ACTIVE", names=[], image="", text="")
+            return
 
         action = str(cmd.get("action") or "")
         if action == "FIND":
@@ -6283,6 +6600,8 @@ class ChatSurfaceHost(QObject):
         )
 
     def _desk_grab_screen(self, path: str) -> bool:
+        capture_token = self.walletCaptureToken()
+        if capture_token < 0: return False
         from PySide6.QtGui import QGuiApplication
 
         from backend import desktop_operator
@@ -6301,90 +6620,44 @@ class ChatSurfaceHost(QObject):
             pix = screen.grabWindow(wid)
             if pix is None or pix.isNull() or pix.width() < 2:
                 pix = screen.grabWindow(0)
+            if not self.walletCaptureAllowed(capture_token): return False
             return bool(pix.save(path, "PNG")) and Path(path).stat().st_size > 200
         except Exception:
             return False
 
     def _desk_grab_qml(self, path: str) -> bool:
-        from PySide6.QtCore import Q_ARG, QEventLoop, QMetaObject, QTimer, Qt
-
-        from backend import desktop_operator
-
-        root = self._qml_root
-        if root is None:
-            return False
-        desktop_operator.ensure_root()
-        target = Path(path)
-        if target.exists():
+        from PySide6.QtCore import QEventLoop, QTimer
+        capture_token = self.walletCaptureToken()
+        if capture_token < 0: return False
+        content = self._desk_content_item()
+        if content is None or not hasattr(content, 'grabToImage'): return False
+        result_state = {'done': False, 'saved': False, 'cancelled': False}
+        def captured(result):
             try:
-                target.unlink()
-            except OSError:
-                pass
-        root.setProperty("deskGrabReady", False)
-        invoked = False
-        for arg in (path,):
-            try:
-                invoked = bool(
-                    QMetaObject.invokeMethod(
-                        root,
-                        "grabDesk",
-                        Qt.ConnectionType.DirectConnection,
-                        Q_ARG(str, arg),
-                    )
-                )
+                if not result_state['cancelled'] and self.walletCaptureAllowed(capture_token):
+                    result_state['saved'] = bool(result.saveToFile(path))
             except Exception:
-                invoked = False
-            if invoked:
-                break
-            try:
-                invoked = bool(
-                    QMetaObject.invokeMethod(
-                        root,
-                        "grabDesk",
-                        Qt.ConnectionType.QueuedConnection,
-                        Q_ARG("QString", arg),
-                    )
-                )
-            except Exception:
-                invoked = False
-            if invoked:
-                break
-        if not invoked:
-            content = self._desk_content_item()
-            if content is not None and hasattr(content, "grabToImage"):
-                try:
-                    content.grabToImage(
-                        lambda result: root.setProperty(
-                            "deskGrabReady",
-                            bool(result.saveToFile(path)),
-                        )
-                    )
-                    invoked = True
-                except Exception:
-                    invoked = False
-        if not invoked:
+                result_state['saved'] = False
+            finally:
+                result_state['done'] = True
+        try:
+            if not content.grabToImage(captured): return False
+        except Exception:
             return False
         loop = QEventLoop()
-        ticks = {"n": 0}
-
-        def tick() -> None:
-            ticks["n"] += 1
-            ready = bool(root.property("deskGrabReady"))
-            if ready or ticks["n"] > 25:
+        ticks = [0]
+        def tick():
+            ticks[0] += 1
+            if result_state['done'] or ticks[0] >= 25:
+                if not result_state['done']: result_state['cancelled'] = True
                 loop.quit()
-
-        timer = QTimer(self)
-        timer.setInterval(40)
-        timer.timeout.connect(tick)
-        timer.start()
-        loop.exec()
-        timer.stop()
-        try:
-            return target.is_file() and target.stat().st_size > 200
-        except OSError:
-            return False
+        timer = QTimer(self); timer.setInterval(40); timer.timeout.connect(tick)
+        timer.start(); loop.exec(); timer.stop(); timer.deleteLater()
+        return result_state['saved'] and self.walletCaptureAllowed(capture_token)
 
     def _desk_grab(self, path: str) -> bool:
+        capture_token = self.walletCaptureToken()
+        if capture_token < 0: return False
         from backend import desktop_operator
 
         desktop_operator.ensure_root()
@@ -6395,6 +6668,7 @@ class ChatSurfaceHost(QObject):
                 try:
                     img = grab()
                     if img is not None and not img.isNull():
+                        if not self.walletCaptureAllowed(capture_token): return False
                         ok = bool(img.save(path, "PNG"))
                         if ok and Path(path).is_file() and Path(path).stat().st_size > 200:
                             return True
@@ -6554,6 +6828,25 @@ class ChatSurfaceHost(QObject):
         web_operator = self._reload_web_operator()
         return str(web_operator.ensure_root() / web_operator.VIEW_NAME)
 
+    def _request_gpt_wallet(self) -> None:
+        if getattr(self, '_shutdown_in_progress', False):
+            return
+        runtime = self._model_usage
+        if runtime is None:
+            from backend.model_usage_runtime import ModelUsageRuntime
+            runtime = self._model_usage = ModelUsageRuntime(self)
+            runtime.updated.connect(self._receive_gpt_wallet)
+        root = self._gpt_sessions_root
+        if 'ws.tui.gpt' not in self._sessions and not self._gpt_session_id:
+            root = DESKTOP_CODEX_SESSIONS
+        runtime.refresh(self._gpt_session_id, root)
+
+    @Slot(str)
+    def _receive_gpt_wallet(self, raw: str) -> None:
+        if not getattr(self, '_shutdown_in_progress', False) and raw != self._gpt_wallet_json:
+            self._gpt_wallet_json = raw
+            self.gptWalletChanged.emit(raw)
+
     def _emit_wallet(self) -> None:
         payload = grok_wallet_snapshot(
             pty_overlay=self._wallet_pty,
@@ -6568,25 +6861,7 @@ class ChatSurfaceHost(QObject):
             if turn is not None and turn != self._wallet_last_turn:
                 self._wallet_last_turn = int(turn)
                 self._wallet_live_base = int(used)
-        gpt_root = self._gpt_sessions_root
-        if "ws.tui.gpt" not in self._sessions and not self._gpt_session_id:
-            gpt_root = DESKTOP_CODEX_SESSIONS
-        gpt_path = None
-        if self._gpt_session_id:
-            gpt_path = codex_session_path(
-                self._gpt_session_id,
-                sessions_root=gpt_root,
-            )
-        gpt_text = json.dumps(
-            codex_wallet_snapshot(
-                session=gpt_path,
-                sessions_root=gpt_root,
-            ),
-            separators=(",", ":"),
-        )
-        if gpt_text != self._gpt_wallet_json:
-            self._gpt_wallet_json = gpt_text
-            self.gptWalletChanged.emit(gpt_text)
+        self._request_gpt_wallet()
         text = json.dumps(payload, separators=(",", ":"))
         if text != self._wallet_json:
             self._wallet_json = text
@@ -6635,8 +6910,44 @@ class ChatSurfaceHost(QObject):
             self._startup_chat_restoring = False
             self._startup_chat_blocking = False
             self._tui_focus_terminal = ""
+            from backend import wallet_approval
+            release('wallet_approval', wallet_approval.cancel_all)
+            import sys
+            mnemonic = sys.modules.get('backend.wallet_mnemonic')
+            if mnemonic is not None: release('wallet_mnemonic', mnemonic.cancel_all)
+            guard = sys.modules.get('backend.sensitive_ui_guard')
+            if guard is not None:
+                for session in getattr(self, '_wallet_mnemonic_sessions', set()):
+                    release('wallet_sensitive_ui', lambda current=session: guard.leave('wallet-mnemonic:' + current))
+            recovery = sys.modules.get('backend.wallet_recovery_ui')
+            if recovery is not None: release('wallet_recovery_ui', lambda: recovery.cancel_all(self))
+            if getattr(self, '_network_telemetry', None) is not None:
+                release('network_telemetry', self._network_telemetry.close)
+            if getattr(self, '_model_usage', None) is not None:
+                release('model_usage', self._model_usage.close)
+            if getattr(self, '_network_stop', None) is not None:
+                release('network_stop', self._network_stop.close)
+            lan_dag = sys.modules.get('backend.lan_dag_runtime')
+            if lan_dag is not None: release('lan_dag', lan_dag.stop)
+            parallel_dag = sys.modules.get('backend.gg_parallel_dag')
+            if parallel_dag is not None: release('gg_parallel_dag', parallel_dag.stop)
             if self._crypto_ui is not None:
                 release("crypto", self._crypto_ui.close)
+            if getattr(self, '_omni_ui', None) is not None:
+                release("omni", self._omni_ui.close)
+                from backend import omni_web
+                release("omni_web", omni_web.stop)
+                from backend import gg_testnet
+                release("gg_testnet", gg_testnet.shutdown)
+                from backend import gg_consensus, gg_consensus_web
+                release("gg_consensus", gg_consensus.shutdown)
+                release("gg_consensus_web", gg_consensus_web.stop)
+            if getattr(self, '_marketplace_ui', None) is not None:
+                release("marketplace", self._marketplace_ui.close)
+            if getattr(self, '_explorer_ui', None) is not None:
+                release("explorer", self._explorer_ui.close)
+            if getattr(self, '_space_activity_ui', None) is not None:
+                release("space_activity", self._space_activity_ui.close)
             if self._media_catalog is not None:
                 release("media_catalog", self._media_catalog.close)
             from backend import site_jobs

@@ -13,7 +13,7 @@ STATE_DIR = Path(str(STATE_ROOT / 'kaspa'))
 NETWORK_DEFAULT = "paper"
 RPC_ALLOWLIST = {
     "paper": "",
-    "testnet": "http://127.0.0.1:16210",
+    "testnet": "ws://127.0.0.1:18510",
     "mainnet": "https://api.kaspa.org",
 }
 SOMPI_PER_KAS = 100_000_000

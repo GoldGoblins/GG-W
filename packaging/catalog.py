@@ -50,7 +50,7 @@ def selected_paths(project: Path = PROJECT) -> list[str]:
             dirs[:] = [d for d in dirs if d not in {"target", "build", "dist", "__pycache__", ".git", "node_modules", "game", ".venv"}]
             for name in names:
                 p = Path(parent) / name
-                if p.suffix in SOURCE_SUFFIXES or name in {"Cargo.lock", "Cargo.toml", "CMakeLists.txt", "Containerfile", "LICENSE", "LICENSE-MIT", "LICENSE-APACHE"}:
+                if p.suffix in SOURCE_SUFFIXES or name in {"qmldir", "Cargo.lock", "Cargo.toml", "CMakeLists.txt", "Containerfile", "LICENSE", "LICENSE-MIT", "LICENSE-APACHE"}:
                     selected.add(p.relative_to(project).as_posix())
     for dirname in ("knowledge", "skills", "support"):
         for p in (project / dirname).rglob("*"):

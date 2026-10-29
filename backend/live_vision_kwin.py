@@ -14,6 +14,7 @@ import queue
 import select
 import threading
 import time
+from backend import sensitive_ui_guard
 
 from backend.live_vision import MAX_DETAIL_BYTES, atomic_ram_file, ram_root
 
@@ -54,6 +55,7 @@ class NativeKWin:
         return value
 
     def start(self):
+        sensitive_ui_guard.require_capture_allowed()
         if self.state in {'starting','live'}:
             self.last_use = time.monotonic()
             return False
@@ -70,6 +72,7 @@ class NativeKWin:
         return False
 
     def _raw_frame(self):
+        guard_token=sensitive_ui_guard.capture_token()
         from PIL import Image
         read_fd,write_fd = os.pipe2(os.O_CLOEXEC)
         try:
@@ -109,6 +112,7 @@ class NativeKWin:
                       17:'RGBX',18:'RGBX'}.get(int(props['format']))
             if layout is None:
                 raise RuntimeError('Skärmens pixelformat stöds inte')
+            sensitive_ui_guard.require_capture_allowed(guard_token)
             image = Image.frombytes('RGB',(width,height),bytes(raw),'raw',layout,stride)
             captured = time.monotonic()
             if not self.native_screen:
@@ -126,6 +130,7 @@ class NativeKWin:
             self.source_pixel_size = [width,height]
             if width>4096 or height>2160:
                 image.thumbnail((4096,2160))
+            sensitive_ui_guard.require_capture_allowed(guard_token)
             return image,captured
         finally:
             os.close(read_fd); os.close(write_fd)
@@ -168,6 +173,8 @@ class NativeKWin:
         from PIL import Image
         stopping,frames = self.native_stop,self.preview_queue
         while not stopping.is_set():
+            if sensitive_ui_guard.active():
+                self.ring.clear();return
             try:
                 image,captured = frames.get(timeout=.1)
             except queue.Empty:
@@ -181,6 +188,7 @@ class NativeKWin:
             self.ring.append(stream.getvalue(),preview.width,preview.height,None,captured=captured)
 
     def _detail_observation(self):
+        guard_token=sensitive_ui_guard.capture_token()
         with self.detail_lock:
             detail = self.native_detail
         if detail is None:
@@ -191,6 +199,7 @@ class NativeKWin:
             raise RuntimeError('Detaljbilden är äldre än två sekunder')
         stream = io.BytesIO(); image.save(stream,'JPEG',quality=94,subsampling=0)
         encoded = stream.getvalue()
+        sensitive_ui_guard.require_capture_allowed(guard_token)
         if len(encoded)>MAX_DETAIL_BYTES:
             raise RuntimeError('Detaljbilden överskrider transportgränsen')
         with self.ring.lock:

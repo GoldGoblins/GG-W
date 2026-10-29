@@ -88,6 +88,32 @@ def run_fixture(staging: Path) -> None:
             self.payload["pump"] = {"mint": selected, "state": "ready", "stale": False, "token": {"mint": selected}}
             return self.raw()
 
+        @Slot(str, result=str)
+        def cryptoSetNetwork(self, network):
+            self.calls.append(('sol_network',network)); self.payload['wallet']['network']=network
+            return self.raw()
+
+        @Slot(str, result=str)
+        def cryptoKaspaSetNetwork(self, network):
+            self.calls.append(('kas_network',network)); self.payload['kaspa']={'network':network}
+            return self.raw()
+
+        @Slot(result=str)
+        def cryptoLabOn(self):
+            self.calls.append(('sol_lab_on',)); return self.raw()
+
+        @Slot(result=str)
+        def cryptoLabOff(self):
+            self.calls.append(('sol_lab_off',)); return self.raw()
+
+        @Slot(result=str)
+        def cryptoKaspaLabOn(self):
+            self.calls.append(('kas_lab_on',)); return self.raw()
+
+        @Slot(result=str)
+        def cryptoKaspaLabOff(self):
+            self.calls.append(('kas_lab_off',)); return self.raw()
+
     host = Host()
     engine = QQmlApplicationEngine()
     warnings = []
@@ -378,6 +404,35 @@ Window { id:shell; width:1100; height:780; visible:true
     assert 0 < final_line_bottom <= details.height() + 1, {"reason": "Final comparison line remained clipped after scrolling",
         "final_line_bottom": final_line_bottom, "viewport_height": details.height(), "content_y": details.property("contentY"),
         "content_height": details.property("contentHeight"), "last_text_class": last_text.metaObject().className(), "last_text_height": last_text.height()}
+    # The same visible controls choose the correct chain's lab and network.
+    pane.setProperty('page','PORTFOLIO')
+    evaluate(pane,"pickAsset('SOL')")
+    original_chart_height=find('cryptoPortfolioChart').height()
+    click('cryptoChartExpand'); QTest.qWait(40)
+    assert pane.property('chartExpanded')
+    assert find('cryptoPortfolioChart').height() > original_chart_height*2
+    assert not find('cryptoPortfolioBottom').isVisible()
+    click('cryptoChartRestore'); QTest.qWait(30)
+    assert not pane.property('chartExpanded') and find('cryptoPortfolioBottom').isVisible()
+    click('cryptoLabToggle'); QTest.qWait(30)
+    popup=find('cryptoConnectionPanel')
+    assert popup.property('visible')
+    click('cryptoModeLive'); assert host.calls[-1]==('sol_network','mainnet')
+    click('cryptoModeLocal'); assert host.calls[-1]==('sol_network','testnet')
+    click('cryptoConnectionLabToggle'); assert host.calls[-1]==('sol_lab_on',)
+    QTest.keyClick(window,Qt.Key_Escape); QTest.qWait(25)
+    evaluate(pane,"pickAsset('KAS')")
+    click('cryptoLabToggle'); QTest.qWait(30)
+    click('cryptoModeLocal'); assert host.calls[-1]==('kas_network','testnet')
+    click('cryptoConnectionLabToggle'); assert host.calls[-1]==('kas_lab_on',)
+    for width in (430,1100):
+        window.setWidth(width); QTest.qWait(50)
+        assert popup.property('width') <= pane.width()
+        preview=os.environ.get('GG_CRYPTO_DESIGN_PREVIEW')
+        if preview:
+            Path(preview).mkdir(parents=True,exist_ok=True)
+            assert window.grabWindow().save(str(Path(preview)/('connection-'+str(width)+'.png')))
+    QTest.keyClick(window,Qt.Key_Escape)
     # Hiding the workspace disables the shared timer and avoids extra status reads.
     pane.setVisible(False)
     before = host.status_calls

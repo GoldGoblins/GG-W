@@ -18,7 +18,7 @@ Rectangle {
         anchors.top: parent.top
         anchors.margins: 12
         spacing: 6
-        Text {
+        GGText { colorKey: "ui.GameNaturePrompt.1";
             width: parent.width
             text: String(panel.targetInfo.name || "Nature")
             color: "#e8c57b"
@@ -26,7 +26,7 @@ Rectangle {
             font.pixelSize: 13
             elide: Text.ElideRight
         }
-        Text {
+        GGText { colorKey: "ui.GameNaturePrompt.2";
             text: Number(panel.targetInfo.distance_m || 0).toFixed(1) + " m"
                 + (panel.targetInfo.dead ? " · Remains" : "")
             color: "#cad7bd"
@@ -35,7 +35,7 @@ Rectangle {
         Repeater {
             // Fixed handles: changing cooldown/range does not recreate buttons.
             model: 8
-            delegate: Button {
+            delegate: Button { property string uiColorScope: "ui.control.GameNaturePrompt.1";
                 required property int index
                 readonly property var modelData: (panel.targetInfo.actions || [])[index] || ({})
                 visible: !!modelData.id
@@ -43,7 +43,7 @@ Rectangle {
                 height: 30
                 enabled: Boolean(modelData.ready)
                 text: String(modelData.name || "Interact") + (modelData.reason ? " · " + modelData.reason : "")
-                contentItem: Text {
+                contentItem: GGText { colorKey: "ui.GameNaturePrompt.3";
                     text: parent.text
                     color: parent.enabled ? "#e0e7cf" : "#929e8c"
                     font.pixelSize: 11
@@ -59,7 +59,7 @@ Rectangle {
                 onClicked: panel.surface.interactNature(panel.targetInfo.id, modelData.id)
             }
         }
-        Text {
+        GGText { colorKey: "ui.GameNaturePrompt.4";
             width: parent.width
             wrapMode: Text.WordWrap
             text: {

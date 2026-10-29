@@ -69,7 +69,7 @@ Rectangle {
         width: quantityLabel.implicitWidth + 5
         height: quantityLabel.implicitHeight + 2
         color: "#11191e"
-        Text {
+        GGText { colorKey: "ui.GameInventorySlot.1";
             id: quantityLabel
             anchors.centerIn: parent
             text: slot.occupied ? String(slot.itemData.quantity || 1) : ""

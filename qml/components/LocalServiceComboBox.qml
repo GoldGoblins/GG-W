@@ -1,7 +1,8 @@
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
-ComboBox {
+ComboBox { property string uiColorScope: "ui.control.LocalServiceComboBox.1";
     id: picker
     // A fresh service snapshot replaces these rows, not the retained choice.
     // Keep the native model assignment inside one guarded reconciliation.
@@ -60,4 +61,6 @@ ComboBox {
         _ready = true
         refresh()
     }
+
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignLeft }
 }

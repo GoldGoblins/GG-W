@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
@@ -50,7 +52,7 @@ Item {
     onWidthChanged: viewport.returnToBounds()
     onHeightChanged: viewport.returnToBounds()
 
-    Rectangle { anchors.fill: parent; color: "#090d12" }
+    Rectangle { anchors.fill: parent; color: RuntimeTheme.GGTheme.canvas }
 
     // Keep intrinsic geometry independent of the fitted image's dimensions.
     // Sharing the source and requested size reuses Qt's image cache.
@@ -101,7 +103,7 @@ Item {
                     y: Math.max(0, Math.min(1, Number(modelData.y || 0))) * raster.height
                     z: point.selected || target.hovered ? 4 : 2
 
-                    Button {
+                    Button { property string uiColorScope: "ui.control.KnowledgeRasterView.1";
                         id: target
                         objectName: "knowledgeHotspot" + point.index
                         x: -17
@@ -113,21 +115,21 @@ Item {
                         Accessible.name: String(point.modelData.label || "Detalj")
                         background: Rectangle {
                             radius: 17
-                            color: point.injury ? "#c05a2c2b" : point.selected ? "#a9c8b89a" : "#8a10171c"
-                            border.color: point.injury ? "#f1a494" : point.selected || target.hovered ? "#eed5aa" : "#c8a97e"
+                            color: point.injury ? "#c05a2c2b" : point.selected ? "#a9b9b9b9" : "#8a151515"
+                            border.color: point.injury ? "#f1a494" : point.selected || target.hovered ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.accent
                             border.width: point.selected || point.injury ? 2 : 1
-                            Rectangle {
+                            Rectangle { GGColorTarget { colorKey: "ui.fill.KnowledgeRasterView.1"; }
                                 anchors.centerIn: parent
                                 width: 5; height: 5; radius: 2.5
                                 visible: !point.injury
-                                color: point.selected ? "#e9d9bc" : "#c8a97e"
+                                color: point.selected ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.accent
                             }
-                            Text {
+                            GGText { colorKey: "ui.KnowledgeRasterView.1";
                                 objectName: "knowledgeInjuryMarker" + point.index
                                 anchors.centerIn: parent
                                 visible: point.injury
                                 text: "×"; textFormat: Text.PlainText
-                                color: "#ffd1c6"; font.pixelSize: 25
+                                color: RuntimeTheme.GGTheme.accent; font.pixelSize: 25
                                 Accessible.name: "Markerad skada i övningen"
                             }
                         }
@@ -145,15 +147,15 @@ Item {
                         width: Math.min(210, pointLabel.implicitWidth + 22)
                         height: 30
                         radius: 4
-                        color: "#ee111923"
-                        border.color: "#48505b"
-                        Text {
+                        color: "#ee171717"
+                        border.color: RuntimeTheme.GGTheme.edge
+                        GGText { colorKey: "ui.KnowledgeRasterView.2";
                             id: pointLabel
                             anchors.fill: parent; anchors.leftMargin: 11; anchors.rightMargin: 11
                             verticalAlignment: Text.AlignVCenter
                             text: String(point.modelData.label || "Detalj")
                             textFormat: Text.PlainText
-                            color: "#ecdfca"
+                            color: RuntimeTheme.GGTheme.bright
                             font.pixelSize: 12
                             elide: Text.ElideRight
                         }
@@ -187,17 +189,17 @@ Item {
         width: Math.min(330, parent.width - 48)
         spacing: 12
         visible: !root.imageReady
-        Text {
+        GGText { colorKey: "ui.KnowledgeRasterView.3";
             width: parent.width
             text: raster.status === Image.Error ? "Ingen bild i den här vyn" : "Bilden förbereds"
             horizontalAlignment: Text.AlignHCenter
-            color: "#c8cdd4"; font.pixelSize: 17
+            color: RuntimeTheme.GGTheme.text; font.pixelSize: 17
         }
-        Text {
+        GGText { colorKey: "ui.KnowledgeRasterView.4";
             width: parent.width
             text: "Öppna en bild eller en PDF-sida. Klickbara detaljer ligger ovanpå bilden."
             horizontalAlignment: Text.AlignHCenter
-            color: "#7f8993"; font.pixelSize: 12; wrapMode: Text.WordWrap
+            color: RuntimeTheme.GGTheme.muted; font.pixelSize: 12; wrapMode: Text.WordWrap
         }
     }
 
@@ -205,14 +207,14 @@ Item {
         anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 16
         width: 112; height: 76
         visible: root.imageReady && root.zoom > 1.05
-        radius: 4; color: "#d9121921"; border.color: "#34424d"
+        radius: 4; color: "#d9171717"; border.color: RuntimeTheme.GGTheme.edge
         Image { anchors.fill: parent; anchors.margins: 3; source: root.imageSource; fillMode: Image.PreserveAspectFit; smooth: true }
         Rectangle {
             x: 3 + (viewport.contentX / Math.max(1, viewport.contentWidth)) * (parent.width - 6)
             y: 3 + (viewport.contentY / Math.max(1, viewport.contentHeight)) * (parent.height - 6)
             width: Math.max(6, (parent.width - 6) * viewport.width / Math.max(1, viewport.contentWidth))
             height: Math.max(6, (parent.height - 6) * viewport.height / Math.max(1, viewport.contentHeight))
-            color: "#20c8a97e"; border.color: "#c8a97e"; border.width: 1
+            color: "#20c8a97e"; border.color: RuntimeTheme.GGTheme.accent; border.width: 1
         }
     }
 

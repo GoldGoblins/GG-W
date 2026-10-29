@@ -124,6 +124,10 @@ def tool_inventory() -> dict:
     rea_state = 'READY' if rea == str(bundled) and tested.get('JavaScript dependency inspection') else ('DETECTED' if rea else 'NOT_INSTALLED')
     ghidra_state = 'READY' if ghidra == str(TOOLS_ROOT / 'ghidra') and tested.get('Native function inspection') and tested.get('Native pseudocode inspection') else ('DETECTED' if ghidra else 'NOT_INSTALLED')
     return {"schema": SCHEMA, "status": "READY", "references": REFERENCES,
+            "workbench": {"cli": "gg-research workbench", "guide": "knowledge/research-workbench.md",
+                "capabilities": ["persistent source queues", "session-bound original retrieval",
+                    "version-bound unittest receipts", "attributed usage", "source validity history", "static skill preflight"],
+                "automatic_execution": False, "network": "NONE"},
             "engines": [
                 {"name": "Static inspection", "state": "READY", "detail": "Local file headers, strings with offsets and WASM structure."},
                 {"name": "PHP source review", "state": "READY", "detail": "Bounded lexical PHP inventory and call references; no target execution or PHP runtime required."},

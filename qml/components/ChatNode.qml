@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 
 Item {
@@ -143,7 +145,7 @@ Item {
         text: root.authorLabel + " · " + root.nodeKind
     }
 
-    GgFrame {
+    GgFrame { property string uiColorScope: "ui.widget.ChatNode.GgFrame.1";
         id: frame
         width: root.width
         leftLegend: root.authorLabel + " · " + root.nodeKind
@@ -151,11 +153,11 @@ Item {
             ? root.provenanceLegend
             : root.stateLabel
         backgroundColor: root.nodeKind === "REQUEST"
-            ? "#2a2a2a"
-            : "#1c1c1c"
-        borderColor: root.grokMotor ? "#c8a97e" : (root.gptMotor ? "#8db89a" : "#6a6a6a")
-        leftLegendColor: root.grokMotor ? "#c8a97e" : (root.gptMotor ? "#8db89a" : "#e6edf3")
-        rightLegendColor: root.syntheticFixture ? "#d2b48c" : "#8b949e"
+            ? RuntimeTheme.GGTheme.hover
+            : RuntimeTheme.GGTheme.raised
+        borderColor: root.grokMotor ? RuntimeTheme.GGTheme.accent : (root.gptMotor ? RuntimeTheme.GGTheme.positive : RuntimeTheme.GGTheme.edge)
+        leftLegendColor: root.grokMotor ? RuntimeTheme.GGTheme.accent : (root.gptMotor ? RuntimeTheme.GGTheme.positive : RuntimeTheme.GGTheme.bright)
+        rightLegendColor: root.syntheticFixture ? "#d2b48c" : RuntimeTheme.GGTheme.dim
 
         Column {
             id: attachedWorkLayer
@@ -210,7 +212,7 @@ Item {
             Repeater {
                 model: attachedWorkLayer.stageRows
 
-                delegate: WorkObject {
+                delegate: WorkObject { property string uiColorScope: "ui.widget.ChatNode.WorkObject.2";
                     required property var modelData
 
                     width: modelData.availableWidth
@@ -229,12 +231,12 @@ Item {
             }
         }
 
-        TextEdit {
+        TextEdit { property bool colorCustomizationExcluded:true;
             id: bodyTextView
             objectName: "chatMessageText"
             width: parent.width
             text: root.speechText
-            color: "#e6edf3"
+            color: RuntimeTheme.GGTheme.bright
             readOnly: true
             selectByMouse: true
             selectByKeyboard: true
@@ -243,10 +245,10 @@ Item {
             wrapMode: TextEdit.WordWrap
             height: implicitHeight
             font.pixelSize: 13
-            selectionColor: "#3a3a3a"
-            selectedTextColor: "#f2f2f2"
+            selectionColor: RuntimeTheme.GGTheme.selected
+            selectedTextColor: RuntimeTheme.GGTheme.bright
 
-            SelectionGuard {
+            SelectionGuard { property string uiColorScope: "ui.widget.ChatNode.SelectionGuard.3";
                 editor: bodyTextView
             }
         }
@@ -254,7 +256,7 @@ Item {
         Repeater {
             model: root.codeFences
 
-            delegate: WorkObject {
+            delegate: WorkObject { property string uiColorScope: "ui.widget.ChatNode.WorkObject.4";
                 required property var modelData
 
                 width: parent.width
@@ -268,20 +270,20 @@ Item {
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.ChatNode.1";
             visible: root.contextReference.length > 0
             width: parent.width
             text: "context " + root.contextReference
-            color: "#a8b0b8"
+            color: RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
         }
 
-        Text {
+        GGText { colorKey: "ui.ChatNode.2";
             visible: root.syntheticFixture
             width: parent.width
             text: "SYNTHETIC FIXTURE · NO EXECUTION"
-            color: "#c8a97e"
+            color: RuntimeTheme.GGTheme.accent
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: true

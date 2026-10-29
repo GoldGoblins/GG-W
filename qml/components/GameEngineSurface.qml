@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
@@ -60,7 +62,7 @@ Item {
         currentFolder: Qt.resolvedUrl("../game")
         onAccepted: root.selectGgEngineWorld(selectedFile)
     }
-    property color frameBorder: "#6a6a6a"
+    property color frameBorder: RuntimeTheme.GGTheme.edge
     property int frameRadius: 4
     // WorkspaceSurface keeps this pane loaded while hidden.  paneLive is
     // the Loader's visible flag; local `visible` stays true on the child.
@@ -273,17 +275,17 @@ Item {
     property bool terrainBrushEnabled: false
     property string terrainBrushOperation: "RAISE"
 
-    readonly property color ink: "#e6edf3"
-    readonly property color text: "#c8cdd4"
-    readonly property color muted: "#7f8993"
-    readonly property color panel: "#181818"
-    readonly property color panelRaised: "#202020"
-    readonly property color selectedPanel: "#34383d"
-    readonly property color ledgerGold: "#c8a97e"
-    readonly property color ledgerGreen: "#8db89a"
-    readonly property color signalBlue: "#7fa9c4"
-    readonly property color signalRed: "#c98989"
-    readonly property color signalViolet: "#b6a6c8"
+    readonly property color ink: RuntimeTheme.GGTheme.bright
+    readonly property color text: RuntimeTheme.GGTheme.text
+    readonly property color muted: RuntimeTheme.GGTheme.dim
+    readonly property color panel: RuntimeTheme.GGTheme.panel
+    readonly property color panelRaised: RuntimeTheme.GGTheme.raised
+    readonly property color selectedPanel: RuntimeTheme.GGTheme.line
+    readonly property color ledgerGold: RuntimeTheme.GGTheme.accent
+    readonly property color ledgerGreen: RuntimeTheme.GGTheme.positive
+    readonly property color signalBlue: RuntimeTheme.GGTheme.blue
+    readonly property color signalRed: RuntimeTheme.GGTheme.negative
+    readonly property color signalViolet: RuntimeTheme.GGTheme.purple
     // OSINT density: overlays carry the data while the 3D scene remains
     // visible underneath. Raised cards are still transparent enough to read
     // as instrumentation rather than a second application window.
@@ -428,8 +430,8 @@ Item {
         anchors.topMargin: 64
         width: 330; height: 52; radius: 10; z: 2000
         color: "#e6182928"; border.color: "#b89750"
-        Text { anchors.left: parent.left; anchors.leftMargin: 16; anchors.verticalCenter: parent.verticalCenter; text: "Introduktion"; color: "#eadca8" }
-        GgButton { objectName: "gameCinematicSkip"; anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter; text: "Hoppa över"; onClicked: root.skipOpeningCinematic() }
+        GGText { colorKey: "ui.GameEngineSurface.1"; anchors.left: parent.left; anchors.leftMargin: 16; anchors.verticalCenter: parent.verticalCenter; text: "Introduktion"; color: "#eadca8" }
+        GgButton { property string uiColorScope: "ui.control.GameEngineSurface.1"; objectName: "gameCinematicSkip"; anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter; text: "Hoppa över"; onClicked: root.skipOpeningCinematic() }
     }
     readonly property var content: root.status.content || ({})
     // The stream contract, rather than a renderer-only constant, owns the
@@ -3041,7 +3043,7 @@ Item {
             id: gunAmmoColumn; x:10; y:6; width: parent.width-20; spacing: 3
             Repeater {
                 model: root.firearms.hands || []
-                delegate: Text {
+                delegate: GGText { colorKey: "ui.GameEngineSurface.2";
                     required property var modelData
                     width: gunAmmoColumn.width
                     text: (modelData.slot==="MAIN_HAND" ? "H: " : "V: ")
@@ -3222,7 +3224,7 @@ Item {
     }
 
 
-    GameActionBar {
+    GameActionBar { property string uiColorScope: "ui.widget.GameEngineSurface.GameActionBar.2";
         surface: root
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
@@ -3234,7 +3236,7 @@ Item {
         z:150;visible:!!root.actionDrag.kind
         x:root.actionDragX-20;y:root.actionDragY-20;width:40;height:40
         color:'#b0354840';border.color:'#efcd83'
-        Text {anchors.centerIn:parent;text:root.actionDrag.kind==='ITEM' ? '◆' : '✦';color:'#efcd83';font.pixelSize:28}
+        GGText { colorKey: "ui.GameEngineSurface.3";anchors.centerIn:parent;text:root.actionDrag.kind==='ITEM' ? '◆' : '✦';color:'#efcd83';font.pixelSize:28}
     }
     Image {
         z:160;visible:root.worldMouseInside && !!root.worldHoverInfo.id && !root.mouseLeftHeld && !root.mouseRightHeld && !root.controlsLocked
@@ -3247,13 +3249,13 @@ Item {
         x:Math.min(root.width-width-10,root.worldMouseX+42);y:Math.min(root.height-height-90,root.worldMouseY+18)
         width:hoverLabel.implicitWidth+16;height:hoverLabel.implicitHeight+12
         color:'#e0182427';border.color:root.worldHoverInfo.in_range ? '#d7bf78' : '#9a7060';radius:3
-        Text {id:hoverLabel;anchors.centerIn:parent;color:'#e9dcb8';font.pixelSize:11
+        GGText { colorKey: "ui.GameEngineSurface.4";id:hoverLabel;anchors.centerIn:parent;color:'#e9dcb8';font.pixelSize:11
             text:String(root.worldHoverInfo.name || '')+' · '+Number(root.worldHoverInfo.distance_m || 0).toFixed(1)+' m'
                 +(root.worldHoverInfo.reason ? '\n'+root.worldHoverInfo.reason : '')}
     }
     Rectangle {
         anchors.fill: parent
-        color: "#161616"
+        color: RuntimeTheme.GGTheme.panel
         border.color: root.frameBorder
         border.width: root.standalonePlayerMode ? 0 : 1
         radius: root.standalonePlayerMode ? 0 : root.frameRadius
@@ -3276,10 +3278,10 @@ Item {
             height: 34
             visible: !root.standalonePlayerMode
             color: root.panelOverlayRaised
-            border.color: "#333333"
+            border.color: RuntimeTheme.GGTheme.line
             border.width: 1
 
-            Text {
+            GGText { colorKey: "ui.GameEngineSurface.5";
                 anchors.left: parent.left
                 anchors.leftMargin: 12
                 anchors.verticalCenter: parent.verticalCenter
@@ -3295,7 +3297,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 6
 
-                GgButton {
+                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.2";
                     objectName: "gameEngineWorldLoadButton"
                     text: root.originalWorldActive ? "GG WORLD" : "LOAD WORLD"
                     implicitWidth: 96
@@ -3306,7 +3308,7 @@ Item {
                     onClicked: root.originalWorldActive ? root.selectGgEngineWorld("") : worldManifestDialog.open()
                 }
 
-                GgButton {
+                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.3";
                     objectName: "gameEngineWorldDemoButton"
                     text: "DEMO WORLD"
                     implicitWidth: 96
@@ -3315,7 +3317,7 @@ Item {
                     onClicked: root.selectGgEngineWorld("game/worlds/engine-demo/world.json")
                 }
 
-                GgButton {
+                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.4";
                     objectName: "gameEnginePlayButton"
                     text: root.running ? "PAUSE" : "PLAY"
                     implicitWidth: 66
@@ -3326,14 +3328,14 @@ Item {
                         : root.startRuntime()
                 }
 
-                GgButton {
+                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.5";
                     text: "RESET"
                     implicitWidth: 62
                     implicitHeight: 25
                     onClicked: root.resetRuntime()
                 }
 
-                GgButton {
+                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.6";
                     text: "BURST"
                     implicitWidth: 62
                     implicitHeight: 25
@@ -3355,7 +3357,7 @@ Item {
                 anchors.leftMargin: root.standalonePlayerMode ? 0 : sidebar.width + 8
                 z: 29
                 active: root.page === "CHAR"
-                sourceComponent: CharacterCreationPanel {
+                sourceComponent: CharacterCreationPanel { property string uiColorScope: "ui.widget.GameEngineSurface.CharacterCreationPanel.8";
                     surfaceHost: root.surfaceHost
                     onApplied: root.applyRaw(root.surfaceHost.gameEngineStatus())
                     onClosed: {
@@ -3379,7 +3381,7 @@ Item {
                     : 16 + 25 + 3 + root.nav.length * 29
                         + Math.max(0, root.nav.length - 1) * 3
                 color: root.panelOverlay
-                border.color: "#46504f"
+                border.color: RuntimeTheme.GGTheme.edge
                 border.width: 1
 
                 Column {
@@ -3397,10 +3399,10 @@ Item {
                         color: root.leftMenuCollapsed
                             ? root.selectedPanel : "transparent"
                         border.color: root.leftMenuCollapsed
-                            ? "#5f646a" : "transparent"
+                            ? RuntimeTheme.GGTheme.edge : "transparent"
                         border.width: 1
 
-                        Text {
+                        GGText { colorKey: "ui.GameEngineSurface.6";
                             anchors.fill: parent
                             text: root.leftMenuCollapsed ? "›" : "☰"
                             color: root.ink
@@ -3429,11 +3431,11 @@ Item {
                                 ? root.selectedPanel
                                 : "transparent"
                             border.color: root.page === modelData
-                                ? "#5f646a"
+                                ? RuntimeTheme.GGTheme.edge
                                 : "transparent"
                             border.width: 1
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.7";
                                 anchors.left: parent.left
                                 anchors.leftMargin: 10
                                 anchors.verticalCenter: parent.verticalCenter
@@ -3470,10 +3472,10 @@ Item {
                 width: sidebar.width
                 height: root.leftMenuCollapsed ? 36 : 72
                 color: root.panelOverlay
-                border.color: "#46504f"
+                border.color: RuntimeTheme.GGTheme.edge
                 border.width: 1
 
-                Text {
+                GGText { colorKey: "ui.GameEngineSurface.8";
                     anchors.centerIn: parent
                     visible: root.leftMenuCollapsed
                     text: "E"
@@ -3491,14 +3493,14 @@ Item {
                     spacing: 4
                     visible: !root.leftMenuCollapsed
 
-                    Text {
+                    GGText { colorKey: "ui.GameEngineSurface.9";
                         text: "ENGINE"
                         color: root.ledgerGreen
                         font.family: "monospace"
                         font.pixelSize: 12
                         font.bold: true
                     }
-                    Text {
+                    GGText { colorKey: "ui.GameEngineSurface.10";
                         width: parent.width
                         text: "BOUNDED\nLOCAL\nDETERMINISTIC"
                         color: root.muted
@@ -3514,7 +3516,7 @@ Item {
                 objectName: "gameEngineStage"
                 anchors.fill: parent
 
-                GgButton {
+                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.7";
                     objectName: "gameEnginePresentationToggle"
                     anchors.right: parent.right
                     anchors.top: parent.top
@@ -3655,7 +3657,7 @@ Item {
                             root.cameraClipFarM*.99/50, root.cameraClipFarM*.99/50)
                         castsShadows: false
                         receivesShadows: false
-                        materials: AdventureSkyMaterial {
+                        materials: AdventureSkyMaterial { property string uiColorScope: "ui.widget.GameEngineSurface.AdventureSkyMaterial.10";
                             uTopColor: root.atmosphere.sky
                             uHorizonColor: root.oceanHorizonColor
                             uBottomColor: root.atmosphere.ground
@@ -3804,7 +3806,7 @@ Item {
                         scale: Qt.vector3d(1, 1, 1)
                     }
 
-                    GgEngineWorldPage {
+                    GgEngineWorldPage { property string uiColorScope: "ui.widget.GameEngineSurface.GgEngineWorldPage.11";
                         id: originalWorldPage
                         stream: root.engineWorld
                         textureTrilinear: root.nativeScenePresentation ? root.nativeScenePresentation.textureTrilinear : true
@@ -3814,7 +3816,7 @@ Item {
                         live: root.paneLive
                         animate: root.running || root.replaying
                     }
-                    GgEngineWorldActorsPage {
+                    GgEngineWorldActorsPage { property string uiColorScope: "ui.widget.GameEngineSurface.GgEngineWorldActorsPage.12";
                         provider: root.originalWorldActors
                         textureTrilinear: root.nativeScenePresentation ? root.nativeScenePresentation.textureTrilinear : true
                         stream: root.engineWorld
@@ -3823,7 +3825,7 @@ Item {
                         visible: root.originalWorldActive
                     }
 
-                    GgEngineFfxEffect {
+                    GgEngineFfxEffect { property string uiColorScope: "ui.widget.GameEngineSurface.GgEngineFfxEffect.13";
                         id: originalFfx
                         objectName: "ggGgEngineFfx"
                         property var state: root.engineWorld ? root.engineWorld.ffx : ({})
@@ -3839,16 +3841,16 @@ Item {
                             ? root.surfaceHost.gameEngineImportedWaveTexture() : null
                     }
 
-                    PaintedClayMaterial {
+                    PaintedClayMaterial { property string uiColorScope: "ui.widget.GameEngineSurface.PaintedClayMaterial.14";
                         id: floraMaterial
                         uSurfaceKind: 1
                     }
 
-                    PaintedClayMaterial {
+                    PaintedClayMaterial { property string uiColorScope: "ui.widget.GameEngineSurface.PaintedClayMaterial.15";
                         id: paintedArchitectureMaterial
                     }
 
-                    PaintedClayMaterial {
+                    PaintedClayMaterial { property string uiColorScope: "ui.widget.GameEngineSurface.PaintedClayMaterial.16";
                         id: paintedRoadMaterial
                         uSurfaceKind: 2
                     }
@@ -3925,25 +3927,25 @@ Item {
 
                     // Saved towns, landmarks and road pages share terrain
                     // range. Their scene nodes survive turning away/returning.
-                    GroundCoverMaterial {
+                    GroundCoverMaterial { property string uiColorScope: "ui.widget.GameEngineSurface.GroundCoverMaterial.17";
                         id: grassCardMaterial
                         imageSource: "../assets/authored/world/ground-cover/tuft.png"
                         uCameraRight: root.groundCoverRight
                         uTime: root.number(root.player.time_s,0)
                     }
-                    GroundCoverMaterial {
+                    GroundCoverMaterial { property string uiColorScope: "ui.widget.GameEngineSurface.GroundCoverMaterial.18";
                         id: fernCardMaterial
                         imageSource: "../assets/authored/world/ground-cover/fern-card.png"
                         uCameraRight: root.groundCoverRight
                         uTime: root.number(root.player.time_s,0)
                     }
-                    GroundCoverMaterial {
+                    GroundCoverMaterial { property string uiColorScope: "ui.widget.GameEngineSurface.GroundCoverMaterial.19";
                         id: flowerCardMaterial
                         imageSource: "../assets/authored/world/ground-cover/flowers-card.png"
                         uCameraRight: root.groundCoverRight
                         uTime: root.number(root.player.time_s,0)
                     }
-                    GroundCoverMaterial {
+                    GroundCoverMaterial { property string uiColorScope: "ui.widget.GameEngineSurface.GroundCoverMaterial.20";
                         id: leafCardMaterial
                         imageSource: "../assets/authored/world/ground-cover/leaves-card.png"
                         uCameraRight: root.groundCoverRight
@@ -4238,25 +4240,25 @@ Item {
                     // One material object per look, not one per Model.  Same
                     // sun, same albedo; the Repeater must not allocate a new
                     // PBR material for every palm, hut and terrain cell.
-                    PaintedClayMaterial {
+                    PaintedClayMaterial { property string uiColorScope: "ui.widget.GameEngineSurface.PaintedClayMaterial.21";
                         id: clayPropMaterial
                         objectName: "gameClayPropMaterial"
                     }
-                    PaintedClayMaterial {
+                    PaintedClayMaterial { property string uiColorScope: "ui.widget.GameEngineSurface.PaintedClayMaterial.22";
                         id: paintedLampMaterial
                         uLampEmission: 1
                     }
-                    PaintedClayMaterial {
+                    PaintedClayMaterial { property string uiColorScope: "ui.widget.GameEngineSurface.PaintedClayMaterial.23";
                         id: clayCharacterMaterial
                         objectName: "gameClayCharacterMaterial"
                         uSurfaceKind: 3
                     }
-                    PaintedClayMaterial {
+                    PaintedClayMaterial { property string uiColorScope: "ui.widget.GameEngineSurface.PaintedClayMaterial.24";
                         id: terrainSurfaceMaterial
                         objectName: "gameTerrainVertexColorMaterial"
                         uSurfaceKind: 2
                     }
-                    AdventureFxMaterial {
+                    AdventureFxMaterial { property string uiColorScope: "ui.widget.GameEngineSurface.AdventureFxMaterial.25";
                         id: clayParticleMaterial
                         objectName: "gameParticleVertexColorMaterial"
                         uEnergy: 0.72
@@ -4268,7 +4270,7 @@ Item {
                         uEnchantMatrix1: root.enchantMesh1 ? root.enchantMesh1.sceneTransform : Qt.matrix4x4()
                         uCameraPosition: camera.position
                     }
-                    AdventureFxMaterial {
+                    AdventureFxMaterial { property string uiColorScope: "ui.widget.GameEngineSurface.AdventureFxMaterial.26";
                         id: luminousParticleMaterial
                         objectName: "gameAdditiveParticleMaterial"
                         additive: true
@@ -4533,7 +4535,7 @@ Item {
                         materials: [
                             PrincipledMaterial {
                                 baseColor: root.terrainBrushEnabled
-                                    ? "#e3bd63" : "#d6e1a0"
+                                    ? RuntimeTheme.GGTheme.orange : "#d6e1a0"
                                 roughness: 0.38
                                 metalness: 0.12
                             }
@@ -4567,7 +4569,7 @@ Item {
                                 entityModel.modelData.kind || "PROP"
                             )
                             property color tint: String(
-                                entityModel.modelData.color || "#8fa8a0"
+                                entityModel.modelData.color || RuntimeTheme.GGTheme.cyan
                             )
                             property bool characterLike: entityModel.entityKind === "PLAYER"
                                 || entityModel.entityKind === "NPC"
@@ -5702,7 +5704,7 @@ Item {
                     border.color: root.ledgerGold
                     visible: root.paneLive && Boolean(root.combatTarget.id)
                     z: 18
-                    Text {
+                    GGText { colorKey: "ui.GameEngineSurface.11";
                         anchors.fill: parent
                         anchors.margins: 8
                         color: root.text
@@ -5845,7 +5847,7 @@ Item {
                                 var markerY = screenY(entityZ)
                                 var markerColor = String(entityRow.color || palette.text || "#9fe3a4")
                                 if (String(entityRow.kind || "") === "PLAYER")
-                                    markerColor = String(palette.player || "#e3bd63")
+                                    markerColor = String(palette.player || RuntimeTheme.GGTheme.orange)
                                 ctx.fillStyle = markerColor
                                 ctx.fillText(String(entityRow.glyph || "."), markerX, markerY)
                                 if (String(entityRow.kind || "") === "PLAYER"
@@ -5872,7 +5874,7 @@ Item {
                                 }
                             }
 
-                            ctx.strokeStyle = String(palette.player || "#e3bd63")
+                            ctx.strokeStyle = String(palette.player || RuntimeTheme.GGTheme.orange)
                             ctx.strokeRect(w * 0.5 - 7, h * 0.5 - 7, 14, 14)
                         }
                     }
@@ -5889,7 +5891,7 @@ Item {
                         anchors.margins: 18
                         spacing: 5
 
-                        Text {
+                        GGText { colorKey: "ui.GameEngineSurface.12";
                             text: root.presentationReason === "MANUAL_DOS_MODE"
                                 ? "GG//DOS  ·  SAME WORLD  ·  F8 LOW POLY"
                                 : "GG//DOS  ·  LOW POLY HIDDEN  ·  F8 RETRIES"
@@ -5898,14 +5900,14 @@ Item {
                             font.pixelSize: 14
                             font.bold: true
                         }
-                        Text {
+                        GGText { colorKey: "ui.GameEngineSurface.13";
                             text: String(root.presentationReason || "DOS")
                                 + "  ·  SIMULATION CONTINUES  ·  SHARED ASSETS"
                             color: root.text
                             font.family: "monospace"
                             font.pixelSize: 10
                         }
-                        Text {
+                        GGText { colorKey: "ui.GameEngineSurface.14";
                             text: root.fallbackTerminalText()
                             color: String((root.fallbackView.palette || ({})).text || "#9fe3a4")
                             font.family: "monospace"
@@ -5914,7 +5916,7 @@ Item {
                         }
                         Row {
                             spacing: 5
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.15";
                                 text: ">"
                                 color: root.ledgerGold
                                 font.family: "monospace"
@@ -5944,7 +5946,7 @@ Item {
                                     }
                                 }
                             }
-                            GgButton {
+                            GgButton { property string uiColorScope: "ui.control.GameEngineSurface.8";
                                 text: "RUN"
                                 implicitWidth: 52
                                 implicitHeight: 26
@@ -5962,13 +5964,13 @@ Item {
                         anchors.margins: 18
                         spacing: 6
 
-                        GgButton {
+                        GgButton { property string uiColorScope: "ui.control.GameEngineSurface.9";
                             text: "RETRY 3D"
                             implicitWidth: 82
                             implicitHeight: 25
                             onClicked: root.setPresentationMode("RICH_3D")
                         }
-                        GgButton {
+                        GgButton { property string uiColorScope: "ui.control.GameEngineSurface.10";
                             text: "DOS LOCK"
                             implicitWidth: 82
                             implicitHeight: 25
@@ -6150,7 +6152,7 @@ Item {
                     }
                 }
 
-                GameNaturePrompt {
+                GameNaturePrompt { property string uiColorScope: "ui.widget.GameEngineSurface.GameNaturePrompt.30";
                     surface: root
                     z: 12
                     anchors.right: parent.right
@@ -6178,7 +6180,7 @@ Item {
                         anchors.centerIn: parent
                         spacing: 3
 
-                        Text {
+                        GGText { colorKey: "ui.GameEngineSurface.16";
                             text: "PLAYGROUND · " + String(
                                 root.renderStatus.state || root.status.state || "IDLE"
                             )
@@ -6189,14 +6191,14 @@ Item {
                             font.pixelSize: 11
                             font.bold: true
                         }
-                        Text {
+                        GGText { colorKey: "ui.GameEngineSurface.17";
                             text: "SPEED " + root.fixed(root.player.speed, 1)
                                 + "  DRIFT " + root.fixed(root.player.drift, 1)
                             color: root.ink
                             font.family: "monospace"
                             font.pixelSize: 11
                         }
-                        Text {
+                        GGText { colorKey: "ui.GameEngineSurface.18";
                             text: "ENT " + String(root.simulation.render_entity_count || 0)
                                 + " / " + String(root.simulation.active_entities || 0)
                                 + "  FX " + String(root.particleBatchCount)
@@ -6204,7 +6206,7 @@ Item {
                             font.family: "monospace"
                             font.pixelSize: 10
                         }
-                        Text {
+                        GGText { colorKey: "ui.GameEngineSurface.19";
                             text: root.movementMode + "  CELL "
                                 + String(root.player.cell_key || "0:0")
                             color: root.ledgerGold
@@ -6214,7 +6216,7 @@ Item {
                     }
                 }
 
-                Text {
+                GGText { colorKey: "ui.GameEngineSurface.20";
                     objectName: "gameWorldPlaceName"
                     z: 5
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -6251,7 +6253,7 @@ Item {
                         anchors.top: parent.top
                         anchors.margins: 14
                         spacing: 10
-                        Text {
+                        GGText { colorKey: "ui.GameEngineSurface.21";
                             width: parent.width
                             text: String((root.dialogue.node || {}).speaker || "NPC")
                             color: root.ledgerGold
@@ -6259,7 +6261,7 @@ Item {
                             font.pixelSize: 16
                             font.bold: true
                         }
-                        Text {
+                        GGText { colorKey: "ui.GameEngineSurface.22";
                             width: parent.width
                             text: String((root.dialogue.node || {}).text || "")
                             color: root.ink
@@ -6269,7 +6271,7 @@ Item {
                         }
                         Repeater {
                             model: (root.dialogue.node || {}).choices || []
-                            delegate: GgButton {
+                            delegate: GgButton { property string uiColorScope: "ui.control.GameEngineSurface.11";
                                 required property var modelData
                                 width: worldConversationColumn.width
                                 implicitHeight: 28
@@ -6308,7 +6310,7 @@ Item {
                         anchors.margins: 8
                         spacing: 3
 
-                        Text {
+                        GGText { colorKey: "ui.GameEngineSurface.23";
                             width: parent.width
                             text: "PLAYER  ·  LV "
                                 + String(root.progression.level || 1)
@@ -6321,7 +6323,7 @@ Item {
                             font.bold: true
                             elide: Text.ElideRight
                         }
-                        Text {
+                        GGText { colorKey: "ui.GameEngineSurface.24";
                             width: parent.width
                             text: "HP " + root.fixed(root.combatActor("player").health, 0)
                                 + " / " + root.fixed(root.combatActor("player").max_health, 0)
@@ -6351,7 +6353,7 @@ Item {
                                 color: root.ledgerGreen
                             }
                         }
-                        Text {
+                        GGText { colorKey: "ui.GameEngineSurface.25";
                             width: parent.width
                             text: "CELL " + String(root.player.cell_key || "0:0")
                                 + "  ·  " + String(root.player.medium || "LAND")
@@ -6369,7 +6371,7 @@ Item {
                     }
                 }
 
-                Text {
+                GGText { colorKey: "ui.GameEngineSurface.26";
                     anchors.left: parent.left
                     anchors.bottom: parent.bottom
                     anchors.leftMargin: sidebar.width + 14
@@ -6494,7 +6496,7 @@ Item {
                     : root.assetEditorMode ? Math.min(390,Math.max(320,parent.width*.36))
                       : Math.max(244, Math.min(286, parent.width * 0.24))
                 color: root.panelOverlay
-                border.color: "#46504f"
+                border.color: RuntimeTheme.GGTheme.edge
                 border.width: 1
 
                 Rectangle {
@@ -6509,10 +6511,10 @@ Item {
                     height: 24
                     color: root.inspectorCollapsed
                         ? root.selectedPanel : root.panelOverlayRaised
-                    border.color: "#5f646a"
+                    border.color: RuntimeTheme.GGTheme.edge
                     border.width: 1
 
-                    Text {
+                    GGText { colorKey: "ui.GameEngineSurface.27";
                         anchors.fill: parent
                         text: root.inspectorCollapsed ? "‹" : "›"
                         color: root.ink
@@ -6537,7 +6539,7 @@ Item {
                     active:root.assetEditorMode && !root.inspectorCollapsed
                         && !!((root.assetEditorState.selected || ({})).source)
                         && String(((root.assetEditorState.selected || ({})).detail || ({})).format)!=="GGMESH"
-                    sourceComponent:Component {GameAssetPreview {controller:root}}
+                    sourceComponent:Component {GameAssetPreview { property string uiColorScope: "ui.widget.GameEngineSurface.GameAssetPreview.32";controller:root}}
                 }
 
                 Loader {
@@ -6558,7 +6560,7 @@ Item {
                         width: parent.width
                         spacing: 10
 
-                        GameAssetInspector {
+                        GameAssetInspector { property string uiColorScope: "ui.widget.GameEngineSurface.GameAssetInspector.33";
                             width: parent.width
                             controller: root
                             visible: root.assetEditorMode
@@ -6569,14 +6571,14 @@ Item {
                             spacing: 7
                             visible: root.page === "MAP"
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.28";
                                 text: "PLANET ATLAS"
                                 color: root.ledgerGold
                                 font.family: "monospace"
                                 font.pixelSize: 11
                                 font.bold: true
                             }
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.29";
                                 width: parent.width
                                 text: String(root.planetMap.planet_id || "SANDOVER_PRIME")
                                     + " · REV " + String(root.planetMap.map_revision || 1)
@@ -6591,16 +6593,18 @@ Item {
                             }
                             Repeater {
                                 model: root.planetMap.landmasses || []
-                                delegate: Button {
+                                delegate: Button { property string uiColorScope: "ui.control.GameEngineSurface.12";
                                     required property var modelData
                                     width: parent.width
                                     text: "EXPLORE " + String(modelData.name || modelData.id)
                                     onClicked: root.exploreRegion(modelData.id)
                                     font.family: "monospace"
                                     font.pixelSize: 9
-                                }
+                                
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignHCenter }
+}
                             }
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.30";
                                 width: parent.width
                                 text: "PROCEDURAL: water, weather, fish, birds"
                                     + "\nDETERMINISTIC: coast, terrain, seabed"
@@ -6616,14 +6620,14 @@ Item {
                             width: parent.width
                             spacing: 6
                             visible: root.page === "BAG"
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.31";
                                 text: "INVENTORY / EQUIPMENT"
                                 color: root.ledgerGold
                                 font.family: "monospace"
                             }
                             Repeater {
                                 model: (root.items.equipment || []).concat(root.items.inventory || [])
-                                delegate: GgButton {
+                                delegate: GgButton { property string uiColorScope: "ui.control.GameEngineSurface.13";
                                     required property var modelData
                                     width: parent.width
                                     implicitHeight: 30
@@ -6645,13 +6649,13 @@ Item {
                                 width: parent.width
                                 height: childrenRect.height
                                 spacing: 6
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.14";
                                     text: "EQUIP"
                                     implicitWidth: 62
                                     enabled: root.selectedItemId !== ""
                                     onClicked: root.equipItem(root.selectedItemId)
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.15";
                                     text: "DROP"
                                     implicitWidth: 58
                                     enabled: root.selectedItemId !== ""
@@ -6660,13 +6664,13 @@ Item {
                                         root.selectedItemId = ""
                                     }
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.16";
                                     text: "SOCKET"
                                     implicitWidth: 70
                                     enabled: root.selectedItemId !== ""
                                     onClicked: root.socketItem(root.selectedItemId, "")
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.17";
                                     text: "APPLY SCROLL"
                                     implicitWidth: 122
                                     enabled: root.selectedItemId !== "" && root.selectedEnchantScrollId !== ""
@@ -6674,11 +6678,11 @@ Item {
                                         root.selectedEnchantScrollId)
                                 }
                             }
-                            GameEnchantingControls {
+                            GameEnchantingControls { property string uiColorScope: "ui.widget.GameEngineSurface.GameEnchantingControls.39";
                                 width: parent.width
                                 game: root
                             }
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.32";
                                 width: parent.width
                                 text: "GEAR  " + String(root.gear.runewords || 0)
                                     + " runewords · " + String(root.gear.runes || 0)
@@ -6689,7 +6693,7 @@ Item {
                                 font.pixelSize: 10
                                 wrapMode: Text.WordWrap
                             }
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.33";
                                 width: parent.width
                                 text: WorldFx.scrollError(String(root.status.error || ""))
                                 color: root.signalRed
@@ -6701,7 +6705,7 @@ Item {
                             width: parent.width
                             spacing: 5
                             visible: root.page === "BAG"
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.34";
                                 width: parent.width
                                 text: "WALLET  " + String(
                                     root.economy.wallet
@@ -6720,7 +6724,7 @@ Item {
                                     property var vendorRow: modelData
                                     width: parent.width
                                     spacing: 3
-                                    Text {
+                                    GGText { colorKey: "ui.GameEngineSurface.35";
                                         width: parent.width
                                         text: String(vendorCard.vendorRow.name || "VENDOR")
                                             + " · " + String(
@@ -6737,7 +6741,7 @@ Item {
                                         font.pixelSize: 10
                                         elide: Text.ElideRight
                                     }
-                                    Text {
+                                    GGText { colorKey: "ui.GameEngineSurface.36";
                                         width: parent.width
                                         text: "STOCK " + String(
                                             vendorCard.vendorRow.stock_count || 0
@@ -6755,7 +6759,7 @@ Item {
                                         font.pixelSize: 9
                                         elide: Text.ElideRight
                                     }
-                                    Text {
+                                    GGText { colorKey: "ui.GameEngineSurface.37";
                                         width: parent.width
                                         visible: Boolean(
                                             vendorCard.vendorRow.decision
@@ -6788,7 +6792,7 @@ Item {
                                     Repeater {
                                         model: vendorCard.vendorRow.offers
                                             ? (vendorCard.vendorRow.offers.buy || []) : []
-                                        delegate: GgButton {
+                                        delegate: GgButton { property string uiColorScope: "ui.control.GameEngineSurface.18";
                                             required property var modelData
                                             width: Math.max(0, vendorCard.width - 16)
                                             implicitHeight: 24
@@ -6809,7 +6813,7 @@ Item {
                                     Repeater {
                                         model: vendorCard.vendorRow.offers
                                             ? (vendorCard.vendorRow.offers.sell || []) : []
-                                        delegate: GgButton {
+                                        delegate: GgButton { property string uiColorScope: "ui.control.GameEngineSurface.19";
                                             required property var modelData
                                             width: Math.max(0, vendorCard.width - 16)
                                             implicitHeight: 24
@@ -6828,7 +6832,7 @@ Item {
                                     }
                                 }
                             }
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.38";
                                 width: parent.width
                                 text: "Physical stock only · every offer has a real instance ID"
                                 color: root.muted
@@ -6842,7 +6846,7 @@ Item {
                             width: parent.width
                             spacing: 8
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.39";
                                 text: root.page
                                 color: root.ink
                                 font.family: "monospace"
@@ -6850,7 +6854,7 @@ Item {
                                 font.bold: true
                             }
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.40";
                                 width: parent.width - 80
                                 text: root.legend
                                 color: root.ledgerGold
@@ -6864,7 +6868,7 @@ Item {
                         Rectangle {
                             width: parent.width
                             height: 1
-                            color: "#333333"
+                            color: RuntimeTheme.GGTheme.line
                         }
 
                         Column {
@@ -6872,7 +6876,7 @@ Item {
                             spacing: 6
                             visible: root.page === "PLAY"
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.41";
                                 width: parent.width
                                 text: "LOCAL FIXED-STEP SIMULATION"
                                 color: root.ledgerGreen
@@ -6881,7 +6885,7 @@ Item {
                                 font.bold: true
                             }
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.42";
                                 width: parent.width
                                 text: "A bounded playground for driving, collisions, pooled debris and replay."
                                 color: root.text
@@ -6894,14 +6898,14 @@ Item {
                                 width: parent.width
                                 spacing: 6
 
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.20";
                                     text: "STEP"
                                     implicitWidth: 58
                                     implicitHeight: 26
                                     enabled: !root.running
                                     onClicked: root.stepRuntime()
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.21";
                                     text: root.stress ? "NORMAL" : "STRESS"
                                     implicitWidth: 78
                                     implicitHeight: 26
@@ -6914,7 +6918,7 @@ Item {
                                 width: parent.width
                                 spacing: 4
 
-                                Text {
+                                GGText { colorKey: "ui.GameEngineSurface.43";
                                     text: "MODE"
                                     color: root.muted
                                     font.family: "monospace"
@@ -6924,7 +6928,7 @@ Item {
 
                                 Repeater {
                                     model: ["GROUND", "SWIM", "FLY"]
-                                    delegate: GgButton {
+                                    delegate: GgButton { property string uiColorScope: "ui.control.GameEngineSurface.22";
                                         required property string modelData
                                         text: modelData
                                         implicitWidth: 58
@@ -6938,28 +6942,28 @@ Item {
                             Row {
                                 width: parent.width
                                 spacing: 4
-                                Text {
+                                GGText { colorKey: "ui.GameEngineSurface.44";
                                     text: "STAGE"
                                     color: root.muted
                                     font.family: "monospace"
                                     font.pixelSize: 10
                                     verticalAlignment: Text.AlignVCenter
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.23";
                                     text: "3D"
                                     implicitWidth: 54
                                     implicitHeight: 24
                                     checked: root.presentationMode === "RICH_3D"
                                     onClicked: root.setPresentationMode("RICH_3D")
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.24";
                                     text: "DOS"
                                     implicitWidth: 54
                                     implicitHeight: 24
                                     checked: root.dosFallbackActive
                                     onClicked: root.setPresentationMode("DOS_2D")
                                 }
-                                Text {
+                                GGText { colorKey: "ui.GameEngineSurface.45";
                                     text: root.dosFallbackActive
                                         ? "FAILOVER ACTIVE" : "RICH 3D ACTIVE"
                                     color: root.dosFallbackActive
@@ -6970,7 +6974,7 @@ Item {
                                 }
                             }
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.46";
                                 width: parent.width
                                 text: "BIOME " + String(root.terrainSurface.biome || "-")
                                     + "  MEDIUM " + String(root.terrainSurface.medium || "-")
@@ -6988,19 +6992,19 @@ Item {
                                 spacing: 5
                                 visible: root.addonEnabled("ACTION_BAR")
 
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.25";
                                     text: "SURGE"
                                     implicitWidth: 64
                                     implicitHeight: 25
                                     onClicked: root.useAbility("ability.surge")
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.26";
                                     text: "TIDE"
                                     implicitWidth: 56
                                     implicitHeight: 25
                                     onClicked: root.useAbility("ability.undertow")
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.27";
                                     text: "LEAP"
                                     implicitWidth: 56
                                     implicitHeight: 25
@@ -7011,7 +7015,7 @@ Item {
                             Row {
                                 width: parent.width
                                 spacing: 5
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.28";
                                     text: "FX " + (root.fxPreviewStyle || "OFF")
                                     implicitWidth: 108
                                     implicitHeight: 25
@@ -7022,7 +7026,7 @@ Item {
                                         root.refreshRender()
                                     }
                                 }
-                                Text {
+                                GGText { colorKey: "ui.GameEngineSurface.47";
                                     text: "EFFECT PREVIEW"
                                     color: root.muted
                                     font.family: "monospace"
@@ -7036,7 +7040,7 @@ Item {
                                 spacing: 4
                                 visible: Boolean(root.dialogue.open)
 
-                                Text {
+                                GGText { colorKey: "ui.GameEngineSurface.48";
                                     width: parent.width
                                     text: String((root.dialogue.node || {}).speaker || "NPC")
                                         + " · " + String((root.dialogue.node || {}).text || "")
@@ -7050,7 +7054,7 @@ Item {
                                     spacing: 4
                                     Repeater {
                                         model: (root.dialogue.node || {}).choices || []
-                                        delegate: GgButton {
+                                        delegate: GgButton { property string uiColorScope: "ui.control.GameEngineSurface.29";
                                             required property var modelData
                                             text: String(modelData.label || modelData.id || "CHOICE")
                                             implicitWidth: Math.min(176, Math.max(82,
@@ -7071,37 +7075,37 @@ Item {
                                 spacing: 5
                                 visible: root.addonEnabled("LOOT_LEDGER")
 
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.30";
                                     text: "LOOT"
                                     implicitWidth: 56
                                     implicitHeight: 25
                                     onClicked: root.claimLoot()
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.31";
                                     text: "ENCHANT"
                                     implicitWidth: 78
                                     implicitHeight: 25
                                     onClicked: root.enchantLoot("enchant.wayfinder")
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.32";
                                     text: "CRAFT"
                                     implicitWidth: 64
                                     implicitHeight: 25
                                     onClicked: root.openCrafting("")
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.33";
                                     text: "SOCKET"
                                     implicitWidth: 72
                                     implicitHeight: 25
                                     onClicked: root.socketItem("", "")
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.34";
                                     text: "GEAR CRAFT"
                                     implicitWidth: 86
                                     implicitHeight: 25
                                     onClicked: root.openCrafting("NEAREST")
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.35";
                                     text: "PACK"
                                     implicitWidth: 58
                                     implicitHeight: 25
@@ -7109,7 +7113,7 @@ Item {
                                 }
                             }
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.49";
                                 width: parent.width
                                 text: "WORLD ITEMS " + String(
                                         root.items.ground ? root.items.ground.length : 0
@@ -7129,7 +7133,7 @@ Item {
                                 wrapMode: Text.WordWrap
                             }
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.50";
                                 width: parent.width
                                 text: "LIFE " + String(root.life.population || 0)
                                     + " / " + String(root.life.budget || 0)
@@ -7159,19 +7163,19 @@ Item {
                             Row {
                                 width: parent.width
                                 spacing: 5
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.36";
                                     text: "INTERACT"
                                     implicitWidth: 76
                                     implicitHeight: 25
                                     onClicked: root.interactItem()
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.37";
                                     text: "PICKUP"
                                     implicitWidth: 62
                                     implicitHeight: 25
                                     onClicked: root.pickupItem("")
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.38";
                                     text: "EQUIP"
                                     implicitWidth: 58
                                     implicitHeight: 25
@@ -7182,7 +7186,7 @@ Item {
                             Row {
                                 width: parent.width
                                 spacing: 5
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.39";
                                     text: root.bank.nearby ? "OPEN BANK" : "OPEN CACHE"
                                     implicitWidth: root.bank.nearby ? 102 : 88
                                     implicitHeight: 25
@@ -7191,13 +7195,13 @@ Item {
                                             ? String(root.bank.container_id || "") : ""
                                     )
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.40";
                                     text: "LOOT CACHE"
                                     implicitWidth: 88
                                     implicitHeight: 25
                                     onClicked: root.lootContainer("")
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.41";
                                     text: "DROP"
                                     implicitWidth: 52
                                     implicitHeight: 25
@@ -7205,7 +7209,7 @@ Item {
                                 }
                             }
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.51";
                                 width: parent.width
                                 text: "RESOURCE " + root.fixed(root.combat.resource, 0)
                                     + " / 100  ·  LV " + String(root.progression.level || 1)
@@ -7215,7 +7219,7 @@ Item {
                                 font.pixelSize: 10
                             }
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.52";
                                 width: parent.width
                                 text: "CTRL " + String(
                                     root.controller.model
@@ -7241,7 +7245,7 @@ Item {
                                 wrapMode: Text.WordWrap
                             }
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.53";
                                 width: parent.width
                                 text: "FIELD LEDGER " + String(
                                     root.physics.model || "TSEU_INSPIRED_BOOKKEEPING"
@@ -7258,7 +7262,7 @@ Item {
                                 wrapMode: Text.WordWrap
                             }
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.54";
                                 width: parent.width
                                 visible: root.addonEnabled("NPC_TRACKER")
                                 text: "NPC " + String(root.npc.active || 0)
@@ -7296,7 +7300,7 @@ Item {
                             Repeater {
                                 model: (root.npc.agents || []).slice(0, 4)
                                 visible: root.addonEnabled("NPC_TRACKER")
-                                delegate: Text {
+                                delegate: GGText { colorKey: "ui.GameEngineSurface.55";
                                     required property var modelData
                                     width: parent.width
                                     text: "· " + String(modelData.archetype || "NPC")
@@ -7367,7 +7371,7 @@ Item {
                                 }
                             }
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.56";
                                 width: parent.width
                                 text: "WORLD POP " + String(root.livingWorld.promoted_count || 0)
                                     + "/" + String(root.livingWorld.promotion_budget || 0)
@@ -7390,7 +7394,7 @@ Item {
                                 width: parent.width
                                 spacing: 5
                                 visible: root.addonEnabled("NPC_TRACKER")
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.42";
                                     text: "ATTACK"
                                     implicitWidth: 70
                                     implicitHeight: 24
@@ -7399,14 +7403,14 @@ Item {
                                         root.npcInteraction.target_id || ""
                                     )
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.43";
                                     text: "INTERACT"
                                     implicitWidth: 76
                                     implicitHeight: 24
                                     enabled: Boolean(root.npcInteraction.available)
                                     onClicked: root.interactNpc()
                                 }
-                                Text {
+                                GGText { colorKey: "ui.GameEngineSurface.57";
                                     width: parent.width - 151
                                     text: root.npcInteraction.available
                                         ? String(root.npcInteraction.target_id || "NPC")
@@ -7427,20 +7431,20 @@ Item {
                             Row {
                                 width: parent.width
                                 spacing: 5
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.44";
                                     text: "ACCEPT QUEST"
                                     implicitWidth: 108
                                     implicitHeight: 24
                                     onClicked: root.acceptQuest("quest.shoreline-first")
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.45";
                                     text: "CLAIM QUEST"
                                     implicitWidth: 104
                                     implicitHeight: 24
                                     enabled: (root.quests.ready || 0) > 0
                                     onClicked: root.claimQuest("")
                                 }
-                                Text {
+                                GGText { colorKey: "ui.GameEngineSurface.58";
                                     width: parent.width - 222
                                     text: "ACTIVE " + String(root.quests.active_count || 0)
                                         + " READY " + String(root.quests.ready || 0)
@@ -7455,13 +7459,13 @@ Item {
                             Row {
                                 width: parent.width
                                 spacing: 5
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.46";
                                     text: "+25 XP"
                                     implicitWidth: 68
                                     implicitHeight: 24
                                     onClicked: root.gainXp(25)
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.47";
                                     text: "TALENT +"
                                     implicitWidth: 78
                                     implicitHeight: 24
@@ -7473,7 +7477,7 @@ Item {
                                 width: parent.width
                                 spacing: 6
 
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.48";
                                     text: root.recording ? "STOP REC" : "RECORD"
                                     implicitWidth: 88
                                     implicitHeight: 26
@@ -7482,7 +7486,7 @@ Item {
                                         ? root.stopRecording()
                                         : root.startRecording()
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.49";
                                     text: "REPLAY"
                                     implicitWidth: 74
                                     implicitHeight: 26
@@ -7491,7 +7495,7 @@ Item {
                                 }
                             }
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.59";
                                 width: parent.width
                                 text: "INPUT  F " + root.fixed(root.throttle, 1)
                                     + "  TURN " + root.fixed(root.steer, 1)
@@ -7503,7 +7507,7 @@ Item {
                                 font.pixelSize: 10
                             }
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.60";
                                 width: parent.width
                                 text: "TICK " + String(root.simulation.tick || 0)
                                     + "  TIME " + root.fixed(root.simulation.time_s, 2) + "s"
@@ -7517,10 +7521,10 @@ Item {
                             Rectangle {
                                 width: parent.width
                                 height: 1
-                                color: "#333333"
+                                color: RuntimeTheme.GGTheme.line
                             }
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.61";
                                 text: "EVENT STREAM"
                                 color: root.ledgerGold
                                 font.family: "monospace"
@@ -7530,7 +7534,7 @@ Item {
 
                             Repeater {
                                 model: root.events.slice(0, 6)
-                                delegate: Text {
+                                delegate: GGText { colorKey: "ui.GameEngineSurface.62";
                                     required property var modelData
                                     width: parent.width
                                     text: String(modelData.kind || "") + " · "
@@ -7548,14 +7552,14 @@ Item {
                             spacing: 6
                             visible: root.page === "SCENE"
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.63";
                                 text: "SCENE INSPECTOR"
                                 color: root.ledgerGreen
                                 font.family: "monospace"
                                 font.pixelSize: 11
                                 font.bold: true
                             }
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.64";
                                 width: parent.width
                                 text: "ACTIVE " + String(root.simulation.active_entities || 0)
                                     + " / " + String(root.simulation.entity_capacity || 0)
@@ -7576,7 +7580,7 @@ Item {
                                 font.family: "monospace"
                                 font.pixelSize: 10
                             }
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.65";
                                 width: parent.width
                                 text: "TARGET " + (root.terrainTargetSelected
                                     ? root.terrainTargetKey : "PLAYER CELL")
@@ -7598,7 +7602,7 @@ Item {
                             Row {
                                 width: parent.width
                                 spacing: 4
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.50";
                                     text: root.terrainBrushEnabled
                                         ? "BRUSH ON" : "BRUSH OFF"
                                     implicitWidth: 86
@@ -7607,7 +7611,7 @@ Item {
                                     onClicked: root.terrainBrushEnabled =
                                         !root.terrainBrushEnabled
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.51";
                                     text: "CLEAR TARGET"
                                     implicitWidth: 102
                                     implicitHeight: 24
@@ -7618,13 +7622,13 @@ Item {
                             Row {
                                 width: parent.width
                                 spacing: 4
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.52";
                                     text: "R-"
                                     implicitWidth: 34
                                     implicitHeight: 24
                                     onClicked: root.adjustTerrainBrushRadius(-1)
                                 }
-                                Text {
+                                GGText { colorKey: "ui.GameEngineSurface.66";
                                     width: 54
                                     text: root.fixed(root.terrainBrushRadius, 1) + " m"
                                     color: root.text
@@ -7633,13 +7637,13 @@ Item {
                                     verticalAlignment: Text.AlignVCenter
                                     horizontalAlignment: Text.AlignHCenter
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.53";
                                     text: "R+"
                                     implicitWidth: 34
                                     implicitHeight: 24
                                     onClicked: root.adjustTerrainBrushRadius(1)
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.54";
                                     text: "F " + root.terrainBrushFalloff
                                     implicitWidth: 108
                                     implicitHeight: 24
@@ -7649,13 +7653,13 @@ Item {
                             Row {
                                 width: parent.width
                                 spacing: 5
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.55";
                                     text: "PLACE PROP"
                                     implicitWidth: 92
                                     implicitHeight: 25
                                     onClicked: root.placeEditorObject("PROP")
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.56";
                                     text: "PLACE RAMP"
                                     implicitWidth: 92
                                     implicitHeight: 25
@@ -7665,13 +7669,13 @@ Item {
                             Row {
                                 width: parent.width
                                 spacing: 5
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.57";
                                     text: "PLACE NPC"
                                     implicitWidth: 92
                                     implicitHeight: 25
                                     onClicked: root.placeEditorObject("NPC")
                                 }
-                                Text {
+                                GGText { colorKey: "ui.GameEngineSurface.67";
                                     width: parent.width - 97
                                     text: "WANDERER · bounded local AI"
                                     color: root.ledgerGreen
@@ -7684,25 +7688,25 @@ Item {
                             Row {
                                 width: parent.width
                                 spacing: 4
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.58";
                                     text: "RAISE"
                                     implicitWidth: 54
                                     implicitHeight: 24
                                     onClicked: root.editTerrain("RAISE")
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.59";
                                     text: "LOWER"
                                     implicitWidth: 54
                                     implicitHeight: 24
                                     onClicked: root.editTerrain("LOWER")
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.60";
                                     text: "LAND"
                                     implicitWidth: 50
                                     implicitHeight: 24
                                     onClicked: root.editTerrain("LAND")
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.61";
                                     text: "WATER"
                                     implicitWidth: 58
                                     implicitHeight: 24
@@ -7712,25 +7716,25 @@ Item {
                             Row {
                                 width: parent.width
                                 spacing: 4
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.62";
                                     text: "REEF"
                                     implicitWidth: 50
                                     implicitHeight: 24
                                     onClicked: root.editTerrain("REEF")
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.63";
                                     text: "ISLAND"
                                     implicitWidth: 58
                                     implicitHeight: 24
                                     onClicked: root.editTerrain("ISLAND")
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.64";
                                     text: "CLEAR"
                                     implicitWidth: 54
                                     implicitHeight: 24
                                     onClicked: root.editTerrain("CLEAR")
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.65";
                                     text: "UNDO TERRAIN"
                                     implicitWidth: 92
                                     implicitHeight: 24
@@ -7740,20 +7744,20 @@ Item {
                             Row {
                                 width: parent.width
                                 spacing: 5
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.66";
                                     text: "UNDO"
                                     implicitWidth: 64
                                     implicitHeight: 25
                                     onClicked: root.undoEditorObject()
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.67";
                                     text: "DIORAMA"
                                     implicitWidth: 76
                                     implicitHeight: 25
                                     checked: root.cinematic.preset === "FIRST_ISLAND_DIORAMA"
                                     onClicked: root.setCinematicPreset("FIRST_ISLAND_DIORAMA")
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.68";
                                     text: "ORBIT"
                                     implicitWidth: 58
                                     implicitHeight: 25
@@ -7761,7 +7765,7 @@ Item {
                                     onClicked: root.setCinematicPreset("ORBIT_WORLD_SCALE")
                                 }
                             }
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.68";
                                 width: parent.width
                                 text: "PRESET " + String(root.cinematic.preset || "FIRST_ISLAND_DIORAMA")
                                     + "\nAUTHORING " + String(root.editor.authoring || "LOCAL")
@@ -7786,7 +7790,7 @@ Item {
                                     height: 23
                                     color: index % 2 ? "transparent" : "#1e2020"
 
-                                    Text {
+                                    GGText { colorKey: "ui.GameEngineSurface.69";
                                         anchors.left: parent.left
                                         anchors.leftMargin: 5
                                         anchors.verticalCenter: parent.verticalCenter
@@ -7797,7 +7801,7 @@ Item {
                                         font.family: "monospace"
                                         font.pixelSize: 10
                                     }
-                                    Text {
+                                    GGText { colorKey: "ui.GameEngineSurface.70";
                                         anchors.right: parent.right
                                         anchors.rightMargin: 5
                                         anchors.verticalCenter: parent.verticalCenter
@@ -7816,7 +7820,7 @@ Item {
                             spacing: 7
                             visible: root.page === "PERF"
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.71";
                                 text: "PERFORMANCE CONTRACT"
                                 color: root.ledgerGreen
                                 font.family: "monospace"
@@ -7824,7 +7828,7 @@ Item {
                                 font.bold: true
                             }
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.72";
                                 width: parent.width
                                 text: "FIXED HZ     " + String(root.simulation.fixed_hz || 60)
                                 + "\nDT           " + root.fixed(root.simulation.dt_ms, 3) + " ms"
@@ -7852,7 +7856,7 @@ Item {
                             Row {
                                 width: parent.width
                                 spacing: 4
-                                Text {
+                                GGText { colorKey: "ui.GameEngineSurface.73";
                                     text: "PROFILE"
                                     color: root.muted
                                     font.family: "monospace"
@@ -7861,7 +7865,7 @@ Item {
                                 }
                                 Repeater {
                                     model: ["POTATO", "PS2_CLASSIC", "BALANCED", "MODERN", "CINEMATIC"]
-                                    delegate: GgButton {
+                                    delegate: GgButton { property string uiColorScope: "ui.control.GameEngineSurface.69";
                                         required property string modelData
                                         text: modelData === "PS2_CLASSIC"
                                             ? "PS2" : modelData
@@ -7873,7 +7877,7 @@ Item {
                                 }
                             }
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.74";
                                 width: parent.width
                                 text: root.page !== "PERF" ? "" : (
                                     "AA           " + String(root.render.anti_aliasing
@@ -7893,7 +7897,7 @@ Item {
                                 wrapMode: Text.WordWrap
                             }
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.75";
                                 width: parent.width
                                 text: "OPTIONAL GPU  DLSS / FSR / XeSS\n"
                                     + "STATUS         runtime probe required"
@@ -7902,7 +7906,7 @@ Item {
                                 font.pixelSize: 10
                             }
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.76";
                                 width: parent.width
                                 text: "ENTITY POOL  " + String(root.simulation.active_entities || 0)
                                     + " / " + String(root.simulation.entity_capacity || 0)
@@ -7950,14 +7954,14 @@ Item {
                             spacing: 7
                             visible: root.page === "NET"
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.77";
                                 text: "NETWORK SEAM"
                                 color: root.ledgerGreen
                                 font.family: "monospace"
                                 font.pixelSize: 11
                                 font.bold: true
                             }
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.78";
                                 width: parent.width
                                 text: "MODE          " + String(root.network.mode || "LOCAL_LOOPBACK")
                                     + "\nTRANSPORT     " + String(root.network.transport || "NOT_CONNECTED")
@@ -7973,20 +7977,20 @@ Item {
                             Row {
                                 width: parent.width
                                 spacing: 5
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.70";
                                     text: "SAVE MEMORY"
                                     implicitWidth: 104
                                     implicitHeight: 25
                                     onClicked: root.saveGameState()
                                 }
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.71";
                                     text: "LOAD MEMORY"
                                     implicitWidth: 104
                                     implicitHeight: 25
                                     onClicked: root.loadGameState()
                                 }
                             }
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.79";
                                 width: parent.width
                                 text: "PERSISTENCE " + String(root.network.persistence
                                     ? root.network.persistence.mode : "MEMORY_ONLY")
@@ -8005,14 +8009,14 @@ Item {
                             spacing: 7
                             visible: root.page === "ASSETS" && !root.assetEditorMode
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.80";
                                 text: "ASSET / RUNTIME BOUNDARY"
                                 color: root.ledgerGreen
                                 font.family: "monospace"
                                 font.pixelSize: 11
                                 font.bold: true
                             }
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.81";
                                 width: parent.width
                                 text: "FORMAT         " + String(root.selectedAsset.format || "-")
                                     + "\nSOURCE         " + String(
@@ -8029,7 +8033,7 @@ Item {
                                 font.family: "monospace"
                                 font.pixelSize: 10
                             }
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.82";
                                 width: parent.width
                                 text: "SKIN           " + String(
                                         root.selectedAsset.skinned ? "READY" : "NO"
@@ -8081,7 +8085,7 @@ Item {
                                 font.pixelSize: 10
                                 wrapMode: Text.WordWrap
                             }
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.83";
                                 width: parent.width
                                 text: "CONTENT       " + String(root.content.abilities || 0)
                                     + " abilities · " + String(root.content.items || 0) + " items"
@@ -8105,7 +8109,7 @@ Item {
                                 font.pixelSize: 10
                                 wrapMode: Text.WordWrap
                             }
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.84";
                                 width: parent.width
                                 text: "ITEM GRAPH    " + String(
                                         root.items.catalog
@@ -8152,7 +8156,7 @@ Item {
                             Row {
                                 width: parent.width
                                 spacing: 4
-                                Text {
+                                GGText { colorKey: "ui.GameEngineSurface.85";
                                     text: "RACE"
                                     color: root.muted
                                     font.family: "monospace"
@@ -8161,7 +8165,7 @@ Item {
                                 }
                                 Repeater {
                                     model: ["ISLANDER", "TIDEBORN", "SKYKIN"]
-                                    delegate: GgButton {
+                                    delegate: GgButton { property string uiColorScope: "ui.control.GameEngineSurface.72";
                                         required property string modelData
                                         text: modelData
                                         implicitWidth: 62
@@ -8174,7 +8178,7 @@ Item {
                             Row {
                                 width: parent.width
                                 spacing: 4
-                                Text {
+                                GGText { colorKey: "ui.GameEngineSurface.86";
                                     text: "SPEC"
                                     color: root.muted
                                     font.family: "monospace"
@@ -8183,7 +8187,7 @@ Item {
                                 }
                                 Repeater {
                                     model: ["EXPLORER", "WARDEN", "DUELIST"]
-                                    delegate: GgButton {
+                                    delegate: GgButton { property string uiColorScope: "ui.control.GameEngineSurface.73";
                                         required property string modelData
                                         text: modelData
                                         implicitWidth: 62
@@ -8193,7 +8197,7 @@ Item {
                                     }
                                 }
                             }
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.87";
                                 width: parent.width
                                 text: "CAPABILITIES"
                                 color: root.ledgerGold
@@ -8203,7 +8207,7 @@ Item {
                             }
                             Repeater {
                                 model: root.capabilities
-                                delegate: Text {
+                                delegate: GGText { colorKey: "ui.GameEngineSurface.88";
                                     required property string modelData
                                     width: parent.width
                                     text: "· " + modelData
@@ -8212,7 +8216,7 @@ Item {
                                     font.pixelSize: 10
                                 }
                             }
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.89";
                                 width: parent.width
                                 text: "ALLOWLIST       local glTF 2.0 · max 8 authored instances\nThe bundled hero is a seam fixture, not final production art."
                                 color: root.muted
@@ -8227,14 +8231,14 @@ Item {
                             spacing: 7
                             visible: root.page === "UI"
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.90";
                                 text: "UI / ADDONS"
                                 color: root.ledgerGreen
                                 font.family: "monospace"
                                 font.pixelSize: 11
                                 font.bold: true
                             }
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.91";
                                 width: parent.width
                                 text: "OSINT OVERLAY  24%  ·  DATA-FIRST  ·  EVENT-DRIVEN"
                                     + "\nUNIT FRAMES  " + (
@@ -8250,7 +8254,7 @@ Item {
                                 wrapMode: Text.WordWrap
                             }
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.92";
                                 text: "KEYBINDINGS  ·  WOW CLASSIC"
                                 color: root.ledgerGold
                                 font.family: "monospace"
@@ -8265,7 +8269,7 @@ Item {
                                     width: parent.width
                                     spacing: 4
 
-                                    Text {
+                                    GGText { colorKey: "ui.GameEngineSurface.93";
                                         width: parent.width - 78
                                         text: modelData.label
                                         color: root.text
@@ -8274,7 +8278,7 @@ Item {
                                         verticalAlignment: Text.AlignVCenter
                                         elide: Text.ElideRight
                                     }
-                                    GgButton {
+                                    GgButton { property string uiColorScope: "ui.control.GameEngineSurface.74";
                                         text: root.bindingCaptureAction === modelData.id
                                             ? "PRESS…"
                                             : root.keysFor(modelData.id)
@@ -8292,13 +8296,13 @@ Item {
                             Row {
                                 width: parent.width
                                 spacing: 5
-                                GgButton {
+                                GgButton { property string uiColorScope: "ui.control.GameEngineSurface.75";
                                     text: "RESET BINDS"
                                     implicitWidth: 104
                                     implicitHeight: 24
                                     onClicked: root.resetKeybindings()
                                 }
-                                Text {
+                                GGText { colorKey: "ui.GameEngineSurface.94";
                                     width: parent.width - 109
                                     text: root.bindingCaptureAction !== ""
                                         ? "PRESS A KEY…"
@@ -8315,10 +8319,10 @@ Item {
                             Rectangle {
                                 width: parent.width
                                 height: 1
-                                color: "#333333"
+                                color: RuntimeTheme.GGTheme.line
                             }
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.95";
                                 text: "BUILT-IN ADDONS"
                                 color: root.ledgerGold
                                 font.family: "monospace"
@@ -8333,7 +8337,7 @@ Item {
                                     width: parent.width
                                     spacing: 4
 
-                                    GgButton {
+                                    GgButton { property string uiColorScope: "ui.control.GameEngineSurface.76";
                                         text: modelData.enabled ? "ON" : "OFF"
                                         implicitWidth: 38
                                         implicitHeight: 22
@@ -8346,7 +8350,7 @@ Item {
                                     Column {
                                         width: parent.width - 42
                                         spacing: 1
-                                        Text {
+                                        GGText { colorKey: "ui.GameEngineSurface.96";
                                             width: parent.width
                                             text: String(modelData.name || modelData.id)
                                             color: root.text
@@ -8354,7 +8358,7 @@ Item {
                                             font.pixelSize: 9
                                             elide: Text.ElideRight
                                         }
-                                        Text {
+                                        GGText { colorKey: "ui.GameEngineSurface.97";
                                             width: parent.width
                                             text: String(modelData.category || "UI")
                                                 + " · " + String(
@@ -8371,7 +8375,7 @@ Item {
                                 }
                             }
 
-                            Text {
+                            GGText { colorKey: "ui.GameEngineSurface.98";
                                 width: parent.width
                                 text: "ADDON ABI  " + String(
                                     root.addonState.execution
@@ -8396,19 +8400,19 @@ Item {
         }
     }
 
-    GameInventoryPanel {
+    GameInventoryPanel { property string uiColorScope: "ui.widget.GameEngineSurface.GameInventoryPanel.99";
         objectName: "gameCharacterInventoryPanel"
         anchors.fill: parent
         z: 100
         visible: root.page === "BAG"
         game: root
     }
-    GameLocalActionsPanel {
+    GameLocalActionsPanel { property string uiColorScope: "ui.widget.GameEngineSurface.GameLocalActionsPanel.100";
         anchors.fill: parent
         z: 110
         game: root
     }
-    GamePresentation {
+    GamePresentation { property string uiColorScope: "ui.widget.GameEngineSurface.GamePresentation.101";
         anchors.fill: parent
         z: 50
         surfaceHost: root.surfaceHost
@@ -8430,14 +8434,14 @@ Item {
         visible:root.paneLive && (root.mountedWorldState.status==="LOADING" || root.mountedWorldState.status==="UNAVAILABLE")
         anchors.top:parent.top;anchors.horizontalCenter:parent.horizontalCenter;anchors.topMargin:60
         width:Math.min(480,parent.width-32);height:message.implicitHeight+20;z:160
-        color:"#ed19232b";border.color:"#806d47";radius:5
-        Text {
+        color:"#ed19232b";border.color:RuntimeTheme.GGTheme.edge;radius:5
+        GGText { colorKey: "ui.GameEngineSurface.99";
             id:message;anchors.centerIn:parent;width:parent.width-24
             text:root.mountedWorldState.message || "";textFormat:Text.PlainText
             color:"#eed494";font.pixelSize:12;wrapMode:Text.WordWrap;horizontalAlignment:Text.AlignHCenter
         }
     }
-    GgButton {
+    GgButton { property string uiColorScope: "ui.control.GameEngineSurface.77";
         objectName: "gameLocalServicesButton"
         text: "TJÄNSTER"
         anchors.right: parent.right
@@ -8447,7 +8451,7 @@ Item {
         enabled: !!root.surfaceHost
         onClicked: localServices.open()
     }
-    LocalGameServices {
+    LocalGameServices { property string uiColorScope: "ui.widget.GameEngineSurface.LocalGameServices.103";
         id: localServices
         surfaceHost: root.surfaceHost
         game: root
@@ -8459,9 +8463,9 @@ Item {
         onVisibleChanged: if(visible) {root.clearMovementInput();if(root.surfaceHost&&root.surfaceHost.gameEngineClientControl)root.surfaceHost.gameEngineClientControl(JSON.stringify({kind:"input",op:"Cancel"}))}
         onServiceUpdated: function(snapshot) { root.localServiceState=LocalServiceState.retain(root.localServiceState,((snapshot.player || {}).client_controls || {}).services || root.localServiceState);root.refresh() }
     }
-    GameItemBindingDialog { game:root }
-    GameLootBindingDialog { game:root }
-    GameEnchantingDialog { game:root }
-    GameDressingRoom { game:root }
+    GameItemBindingDialog { property string uiColorScope: "ui.widget.GameEngineSurface.GameItemBindingDialog.104"; game:root }
+    GameLootBindingDialog { property string uiColorScope: "ui.widget.GameEngineSurface.GameLootBindingDialog.105"; game:root }
+    GameEnchantingDialog { property string uiColorScope: "ui.widget.GameEngineSurface.GameEnchantingDialog.106"; game:root }
+    GameDressingRoom { property string uiColorScope: "ui.widget.GameEngineSurface.GameDressingRoom.107"; game:root }
 
 }

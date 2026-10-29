@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 import "TmogReadings.js" as Readings
@@ -7,16 +9,16 @@ Item {
     objectName: "workspaceTmogPane"
 
     property var surfaceHost: null
-    property color frameBorder: "#6a6a6a"
+    property color frameBorder: RuntimeTheme.GGTheme.edge
     property int frameRadius: 4
-    readonly property color ink: "#e6edf3"
-    readonly property color text: "#c8cdd4"
-    readonly property color muted: "#8b949e"
-    readonly property color panel: "#181818"
-    readonly property color panelRaised: "#202020"
-    readonly property color selectedPanel: "#34383d"
-    readonly property color ledgerGold: "#c8a97e"
-    readonly property color ledgerGreen: "#8db89a"
+    readonly property color ink: RuntimeTheme.GGTheme.bright
+    readonly property color text: RuntimeTheme.GGTheme.text
+    readonly property color muted: RuntimeTheme.GGTheme.dim
+    readonly property color panel: RuntimeTheme.GGTheme.panel
+    readonly property color panelRaised: RuntimeTheme.GGTheme.raised
+    readonly property color selectedPanel: RuntimeTheme.GGTheme.line
+    readonly property color ledgerGold: RuntimeTheme.GGTheme.accent
+    readonly property color ledgerGreen: RuntimeTheme.GGTheme.positive
     property bool sidebarCollapsed: false
     property string statusJson: "{}"
     property int selectedPid: -1
@@ -78,6 +80,9 @@ Item {
     property real liveNetYMax: 64
     property real liveDiskYMax: 256
     property bool diskLampOn: false
+    property bool cpuLampOn: false
+    property bool networkLampOn: false
+    property bool gpuLampOn: false
 
     readonly property var nav: [
         "SUMMARY",
@@ -414,6 +419,15 @@ Item {
         return Readings.text(root.readingSource(name), name, digits, suffix)
     }
 
+    function historyColorKey(name) {
+        var series={cpu_hist:"cpu",cpu_busy:"cpu",CPU:"cpu",gpu_hist:"gpu",gpu_busy:"gpu",GPU:"gpu",mem_hist:"memory",mem_used_kb:"memory",MEMORY:"memory",temp_hist:"temperature",temp_c:"temperature",THERMALS:"temperature",net_hist:"network",NETWORK:"network",disk_hist:"disk",DISK:"disk",energy_hist:"energy",ENERGY:"energy",mhz:"frequency"}
+        return "ui.chart.tmog."+(series[name] || String(name).toLowerCase())
+    }
+
+    function activityReading(name) {
+        return Readings.value(root.readingSource(name),name)
+    }
+
     function readingSource(name) {
         return root.hasReadingPulse && root.pulseReadingFields.indexOf(name) >= 0 ? root.readingPulse : root.status
     }
@@ -579,11 +593,19 @@ Item {
             root.liveDiskYMax = diskNow * 1.2
         else
             root.liveDiskYMax += (Math.max(256, diskNow * 1.2) - root.liveDiskYMax) * 0.01
-        var diskIo = Number(p.disk_read_bps || 0) + Number(p.disk_write_bps || 0)
+        var diskIo = Number(root.activityReading("disk_read_bps") || 0) + Number(root.activityReading("disk_write_bps") || 0)
         if (diskIo < 1024)
             root.diskLampOn = false
         else
             root.diskLampOn = (root.liveTicks % 6) < 3
+        // Reuse the existing sampled activity cadence. Unknown/stale readings
+        // remain off; colour choices never manufacture activity or a timer.
+        var cpuActivity=root.activityReading("cpu_busy")
+        var gpuActivity=root.activityReading("gpu_busy")
+        var netReceive=root.activityReading("net_rx_bps"),netSend=root.activityReading("net_tx_bps")
+        root.cpuLampOn=cpuActivity!==null && cpuActivity>0 && (root.liveTicks%6)<3
+        root.gpuLampOn=gpuActivity!==null && gpuActivity>0 && (root.liveTicks%6)<3
+        root.networkLampOn=(netReceive!==null || netSend!==null) && Number(netReceive||0)+Number(netSend||0)>0 && (root.liveTicks%6)<3
         // Per-core history has no consumers outside the performance page.
         if (root.page !== "PERFORMANCE")
             return
@@ -652,8 +674,8 @@ Item {
 
         Rectangle {
             anchors.fill: parent
-            color: "#161616"
-            border.color: "#4a4a4a"
+            color: RuntimeTheme.GGTheme.panel
+            border.color: RuntimeTheme.GGTheme.edge
             border.width: 1
             radius: 4
             antialiasing: true
@@ -665,8 +687,8 @@ Item {
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             width: root.sidebarCollapsed ? 48 : Math.max(154, Math.min(210, parent.width * 0.17))
-            color: "#181818"
-            border.color: "#4a4a4a"
+            color: RuntimeTheme.GGTheme.panel
+            border.color: RuntimeTheme.GGTheme.edge
             border.width: 1
             radius: 4
             antialiasing: true
@@ -687,7 +709,7 @@ Item {
                 Item {
                     width: navCol.width
                     height: 30
-                    Text {
+                    GGText { colorKey: "ui.TmogSurface.1";
                         anchors.centerIn: parent
                         text: "☰"
                         color: root.ink
@@ -713,7 +735,7 @@ Item {
                                 : (hit.containsMouse ? "#202a35" : "transparent")
                             radius: 4
                         }
-                        Text {
+                        GGText { colorKey: "ui.TmogSurface.2";
                             visible: !root.sidebarCollapsed
                             anchors.left: parent.left
                             anchors.leftMargin: 12
@@ -723,7 +745,7 @@ Item {
                             font.family: "monospace"
                             font.pixelSize: 15
                         }
-                        Text {
+                        GGText { colorKey: "ui.TmogSurface.3";
                             visible: !root.sidebarCollapsed
                             anchors.left: parent.left
                             anchors.leftMargin: 38
@@ -736,7 +758,7 @@ Item {
                             font.bold: root.page === modelData
                             elide: Text.ElideRight
                         }
-                        Text {
+                        GGText { colorKey: "ui.TmogSurface.4";
                             visible: root.sidebarCollapsed
                             anchors.centerIn: parent
                             text: root.navIcon(modelData)
@@ -758,10 +780,10 @@ Item {
                 Rectangle {
                     width: navCol.width
                     height: 1
-                    color: "#3a3a3a"
+                    color: RuntimeTheme.GGTheme.selected
                 }
 
-                Text {
+                GGText { colorKey: "ui.TmogSurface.5";
                     width: navCol.width
                     text: root.sidebarCollapsed ? "" : "PRO"
                     color: root.ledgerGold
@@ -785,7 +807,7 @@ Item {
                                 : (hit.containsMouse ? "#202a35" : "transparent")
                             radius: 4
                         }
-                        Text {
+                        GGText { colorKey: "ui.TmogSurface.6";
                             visible: !root.sidebarCollapsed
                             anchors.left: parent.left
                             anchors.leftMargin: 12
@@ -795,7 +817,7 @@ Item {
                             font.family: "monospace"
                             font.pixelSize: 15
                         }
-                        Text {
+                        GGText { colorKey: "ui.TmogSurface.7";
                             visible: !root.sidebarCollapsed
                             anchors.left: parent.left
                             anchors.leftMargin: 38
@@ -808,7 +830,7 @@ Item {
                             font.bold: root.page === modelData
                             elide: Text.ElideRight
                         }
-                        Text {
+                        GGText { colorKey: "ui.TmogSurface.8";
                             visible: root.sidebarCollapsed
                             anchors.centerIn: parent
                             text: root.navIcon(modelData)
@@ -838,9 +860,9 @@ Item {
                     anchors.right: parent.right
                     anchors.top: parent.top
                     height: 1
-                    color: "#3a3a3a"
+                    color: RuntimeTheme.GGTheme.selected
                 }
-                Text {
+                GGText { colorKey: "ui.TmogSurface.9";
                     visible: !root.sidebarCollapsed
                     anchors.left: parent.left
                     anchors.leftMargin: 14
@@ -853,7 +875,7 @@ Item {
                     font.bold: true
                     font.letterSpacing: 1.2
                 }
-                Text {
+                GGText { colorKey: "ui.TmogSurface.10";
                     visible: !root.sidebarCollapsed
                     anchors.left: parent.left
                     anchors.bottom: parent.bottom
@@ -863,7 +885,7 @@ Item {
                     font.family: "monospace"
                     font.pixelSize: 11
                 }
-                Text {
+                GGText { colorKey: "ui.TmogSurface.11";
                     visible: root.sidebarCollapsed
                     anchors.centerIn: parent
                     text: "⚙"
@@ -881,7 +903,7 @@ Item {
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             width: 1
-            color: "#3a3a3a"
+            color: RuntimeTheme.GGTheme.selected
         }
 
         Item {
@@ -892,7 +914,7 @@ Item {
             anchors.top: parent.top
             height: 54
 
-            Text {
+            GGText { colorKey: "ui.TmogSurface.12";
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 text: String(root.page)
@@ -901,7 +923,7 @@ Item {
                 font.pixelSize: 18
                 font.bold: false
             }
-            Text {
+            GGText { colorKey: "ui.TmogSurface.13";
                 anchors.left: parent.left
                 anchors.leftMargin: 2
                 anchors.top: parent.top
@@ -918,11 +940,11 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: refreshLabel.implicitWidth + 24
                 height: 28
-                color: refreshHit.pressed ? "#20262d" : "#181b1f"
+                color: refreshHit.pressed ? RuntimeTheme.GGTheme.raised : "#181b1f"
                 border.color: refreshHit.containsMouse ? root.ledgerGold : "#3c444d"
                 border.width: 1
                 radius: 3
-                Text {
+                GGText { colorKey: "ui.TmogSurface.14";
                     id: refreshLabel
                     anchors.centerIn: parent
                     text: "↻  REFRESH"
@@ -948,7 +970,7 @@ Item {
                 border.color: fullTmogHit.containsMouse ? root.ledgerGreen : "#486553"
                 border.width: 1
                 radius: 3
-                Text {
+                GGText { colorKey: "ui.TmogSurface.15";
                     id: fullTmogLabel
                     anchors.centerIn: parent
                     text: "OPEN FULL TMOG"
@@ -988,7 +1010,7 @@ Item {
                         Item {
                             anchors.fill: parent
 
-                        TmogCard {
+                        TmogCard { property string uiColorScope: "ui.widget.TmogSurface.TmogCard.1";
                             id: barsCard
                             anchors.left: parent.left
                             anchors.top: parent.top
@@ -1014,9 +1036,9 @@ Item {
                                             : (index === 1 ? Math.max(1, root.n("mhz_max"))
                                                 : (index === 2 ? 105 : 100))
                                         readonly property color barColor: index === 0
-                                            ? "#8db89a"
+                                            ? RuntimeTheme.GGTheme.positive
                                             : (index === 1 ? "#d58b8b"
-                                                : (index === 2 ? "#c8a97e" : "#78a8d8"))
+                                                : (index === 2 ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.blue))
                                         width: Math.max(
                                             2,
                                             (sysBars.width - sysBars.spacing * 3) / 4
@@ -1024,10 +1046,10 @@ Item {
                                         height: parent.height
                                         Rectangle {
                                             anchors.fill: parent
-                                            color: "#1c1c1c"
-                                            border.color: "#2a2a2a"
+                                            color: RuntimeTheme.GGTheme.raised
+                                            border.color: RuntimeTheme.GGTheme.hover
                                         }
-                                        Rectangle {
+                                        Rectangle { GGColorTarget { colorKey: root.historyColorKey(barKey); percentageCapable:true;fraction:typeof root.status[barKey]==="number"&&isFinite(root.status[barKey])?(index===3?root.liveGpu:root.n(barKey))/barCap:NaN; }
                                             anchors.left: parent.left
                                             anchors.right: parent.right
                                             anchors.bottom: parent.bottom
@@ -1037,7 +1059,7 @@ Item {
                                             )
                                             color: barColor
                                         }
-                                        Text {
+                                        GGText { colorKey: "ui.TmogSurface.16";
                                             anchors.top: parent.top
                                             anchors.topMargin: 4
                                             anchors.horizontalCenter: parent.horizontalCenter
@@ -1046,7 +1068,7 @@ Item {
                                             font.family: "monospace"
                                             font.pixelSize: 7
                                         }
-                                        Text {
+                                        GGText { colorKey: "ui.TmogSurface.17";
                                             anchors.bottom: parent.bottom
                                             anchors.bottomMargin: 4
                                             anchors.horizontalCenter: parent.horizontalCenter
@@ -1057,7 +1079,7 @@ Item {
                                                     : (index === 2
                                                         ? root.metricText("temp_c", 0, "C")
                                                         : root.metricText("gpu_busy", 0, "%")))
-                                            color: "#d8dee9"
+                                            color: RuntimeTheme.GGTheme.text
                                             font.family: "monospace"
                                             font.pixelSize: 7
                                         }
@@ -1066,7 +1088,7 @@ Item {
                             }
                         }
 
-                        TmogCard {
+                        TmogCard { property string uiColorScope: "ui.widget.TmogSurface.TmogCard.2";
                             id: cpuCard
                             anchors.left: barsCard.right
                             anchors.leftMargin: 8
@@ -1075,6 +1097,13 @@ Item {
                             anchors.top: parent.top
                             height: barsCard.height
                             leftLegend: "CPU OVERVIEW"
+                            lamp: true
+                            lampOn: root.cpuLampOn
+                            lampColorKey: root.historyColorKey("cpu_hist")
+                            lampOnColor: RuntimeTheme.GGTheme.positive
+                            lampOffColor: "#142419"
+                            lampPercentageCapable: true
+                            lampFraction: root.activityReading("cpu_busy")!==null ? root.n("cpu_busy")/100 : NaN
                             rightLegend: root.metricText("cpu_busy", 1, "%")
 
                             Row {
@@ -1083,15 +1112,15 @@ Item {
                                 spacing: 6
                                 Repeater {
                                     model: [
-                                        { "label": "CPU", "key": "cpu_hist", "max": 100, "color": "#8db89a", "fill": "#1c2a22" },
-                                        { "label": "TEMP", "key": "temp_hist", "max": 105, "color": "#c8a97e", "fill": "#2a2418" },
-                                        { "label": "GPU", "key": "gpu_hist", "max": 100, "color": "#78a8d8", "fill": "#182536" }
+                                        { "label": "CPU", "key": "cpu_hist", "max": 100, "color": RuntimeTheme.GGTheme.positive, "fill": "#1c2a22" },
+                                        { "label": "TEMP", "key": "temp_hist", "max": 105, "color": RuntimeTheme.GGTheme.accent, "fill": "#2a2418" },
+                                        { "label": "GPU", "key": "gpu_hist", "max": 100, "color": RuntimeTheme.GGTheme.blue, "fill": "#182536" }
                                     ]
                                     delegate: Item {
                                         required property var modelData
                                         width: (parent.width - 12) / 3
                                         height: parent.height
-                                        Text {
+                                        GGText { colorKey: "ui.TmogSurface.18";
                                             anchors.left: parent.left
                                             anchors.top: parent.top
                                             text: modelData.label
@@ -1099,7 +1128,8 @@ Item {
                                             font.family: "monospace"
                                             font.pixelSize: 10
                                         }
-                                        TmogSpark {
+                                        TmogSpark { property string uiColorScope: "ui.widget.TmogSurface.TmogSpark.3";
+                                            seriesColorKey: root.historyColorKey(modelData.key)
                                             anchors.left: parent.left
                                             anchors.right: parent.right
                                             anchors.top: parent.top
@@ -1115,7 +1145,7 @@ Item {
                             }
                         }
 
-                        TmogCard {
+                        TmogCard { property string uiColorScope: "ui.widget.TmogSurface.TmogCard.4";
                             id: topCard
                             anchors.right: parent.right
                             anchors.top: parent.top
@@ -1127,7 +1157,7 @@ Item {
                             Column {
                                 anchors.fill: parent
                                 spacing: 2
-                                Text {
+                                GGText { colorKey: "ui.TmogSurface.19";
                                     width: parent.width
                                     text: "PID       NAME              CPU    GPU   MEMORY"
                                     color: "#8793a0"
@@ -1137,7 +1167,7 @@ Item {
                                 }
                                 Repeater {
                                     model: root.sortedProcesses(17)
-                                    delegate: TmogRow {
+                                    delegate: TmogRow { property string uiColorScope: "ui.widget.TmogSurface.TmogRow.5";
                                         required property var modelData
                                         width: parent.width
                                         text: String(modelData.pid).padStart(7, " ")
@@ -1158,7 +1188,7 @@ Item {
                             }
                         }
 
-                        TmogCard {
+                        TmogCard { property string uiColorScope: "ui.widget.TmogSurface.TmogCard.6";
                             id: memCard
                             anchors.left: parent.left
                             anchors.right: parent.right
@@ -1172,20 +1202,22 @@ Item {
                             Column {
                                 anchors.fill: parent
                                 spacing: 6
-                                TmogMeter {
+                                TmogMeter { property string uiColorScope: "ui.widget.TmogSurface.TmogMeter.7";
+                                    seriesColorKey: root.historyColorKey("mem_hist")
                                     width: parent.width
                                     ratio: root.n("mem_total_kb")
                                         ? root.n("mem_used_kb") / root.n("mem_total_kb")
                                         : 0
-                                    onColor: "#b6a6c8"
+                                    onColor: RuntimeTheme.GGTheme.purple
                                     segments: 32
                                 }
-                                TmogSpark {
+                                TmogSpark { property string uiColorScope: "ui.widget.TmogSurface.TmogSpark.8";
+                                    seriesColorKey: root.historyColorKey("mem_hist")
                                     width: parent.width
                                     height: parent.height - 22
                                     values: root.arr("mem_hist")
                                     yMax: 100
-                                    stroke: "#b6a6c8"
+                                    stroke: RuntimeTheme.GGTheme.purple
                                     fill: "#241c28"
                                 }
                             }
@@ -1200,7 +1232,7 @@ Item {
                             anchors.bottom: parent.bottom
                             spacing: 8
 
-                            TmogCard {
+                            TmogCard { property string uiColorScope: "ui.widget.TmogSurface.TmogCard.9";
                                 id: pressureCard
                                 width: (parent.width - 24) / 4
                                 height: parent.height
@@ -1209,7 +1241,7 @@ Item {
                                 Column {
                                     anchors.fill: parent
                                     spacing: 7
-                                    Text {
+                                    GGText { colorKey: "ui.TmogSurface.20";
                                         width: parent.width
                                         text: "LOW · Load demand " + root.pressureLoad().toFixed(1)
                                             + "% · Memory stalls " + root.memoryPressure()
@@ -1218,14 +1250,14 @@ Item {
                                         font.pixelSize: 10
                                         wrapMode: Text.WordWrap
                                     }
-                                    TmogMeter {
+                                    TmogMeter { property string uiColorScope: "ui.widget.TmogSurface.TmogMeter.10";
                                         width: parent.width
                                         height: 12
                                         ratio: root.pressureLoad() / 100
                                         onColor: root.ledgerGreen
                                         segments: 22
                                     }
-                                    Text {
+                                    GGText { colorKey: "ui.TmogSurface.21";
                                         width: parent.width
                                         text: "LOAD " + String(root.n("load1")) + "  "
                                             + String(root.n("load5")) + "  "
@@ -1234,7 +1266,7 @@ Item {
                                         font.family: "monospace"
                                         font.pixelSize: 10
                                     }
-                                    Text {
+                                    GGText { colorKey: "ui.TmogSurface.22";
                                         width: parent.width
                                         text: "TASKS " + String(root.n("tasks_running"))
                                             + " / " + String(root.n("process_count"))
@@ -1244,23 +1276,29 @@ Item {
                                     }
                                 }
                             }
-                            TmogCard {
+                            TmogCard { property string uiColorScope: "ui.widget.TmogSurface.TmogCard.11";
                                 width: (parent.width - 24) / 4
                                 height: parent.height
                                 leftLegend: "NETWORK"
+                                lamp: true
+                                lampOn: root.networkLampOn
+                                lampColorKey: root.historyColorKey("net_hist")
+                                lampOnColor: RuntimeTheme.GGTheme.cyan
+                                lampOffColor: "#122427"
                                 rightLegend: String(root.status.net_iface || "—")
                                 Column {
                                     anchors.fill: parent
                                     spacing: 5
-                                    TmogSpark {
+                                    TmogSpark { property string uiColorScope: "ui.widget.TmogSurface.TmogSpark.12";
+                                        seriesColorKey: root.historyColorKey("net_hist")
                                         width: parent.width
                                         height: Math.max(34, parent.height - 34)
                                         values: root.arr("net_hist")
                                         yMax: root.liveNetYMax
-                                        stroke: "#8a8a8a"
+                                        stroke: RuntimeTheme.GGTheme.dim
                                         fill: "#1c2024"
                                     }
-                                    Text {
+                                    GGText { colorKey: "ui.TmogSurface.23";
                                         width: parent.width
                                         text: "R " + root.bps(root.n("net_rx_bps"))
                                             + " · S " + root.bps(root.n("net_tx_bps"))
@@ -1270,26 +1308,29 @@ Item {
                                     }
                                 }
                             }
-                            TmogCard {
+                            TmogCard { property string uiColorScope: "ui.widget.TmogSurface.TmogCard.13";
                                 width: (parent.width - 24) / 4
                                 height: parent.height
                                 leftLegend: "DISK"
                                 lamp: true
                                 lampOn: root.diskLampOn
+                                lampColorKey: root.historyColorKey("disk_hist")
+                                lampOnColor: RuntimeTheme.GGColorContext.colorFor("ui.fill.TmogCard.1",RuntimeTheme.GGTheme.negative)
                                 rightLegend: root.bps(root.n("disk_read_bps")
                                     + root.n("disk_write_bps"))
                                 Column {
                                     anchors.fill: parent
                                     spacing: 5
-                                    TmogSpark {
+                                    TmogSpark { property string uiColorScope: "ui.widget.TmogSurface.TmogSpark.14";
+                                        seriesColorKey: root.historyColorKey("disk_hist")
                                         width: parent.width
                                         height: Math.max(34, parent.height - 34)
                                         values: root.arr("disk_hist")
                                         yMax: root.liveDiskYMax
-                                        stroke: root.ledgerGreen
+                                        stroke: RuntimeTheme.GGColorContext.colorFor("ui.fill.TmogCard.1",root.ledgerGreen)
                                         fill: "#1c2a22"
                                     }
-                                    Text {
+                                    GGText { colorKey: "ui.TmogSurface.24";
                                         width: parent.width
                                         text: "R " + root.bps(root.n("disk_read_bps"))
                                             + " · W " + root.bps(root.n("disk_write_bps"))
@@ -1299,15 +1340,22 @@ Item {
                                     }
                                 }
                             }
-                            TmogCard {
+                            TmogCard { property string uiColorScope: "ui.widget.TmogSurface.TmogCard.15";
                                 width: (parent.width - 24) / 4
                                 height: parent.height
                                 leftLegend: "GPUs"
+                                lamp: true
+                                lampOn: root.gpuLampOn
+                                lampColorKey: root.historyColorKey("gpu_hist")
+                                lampOnColor: RuntimeTheme.GGTheme.blue
+                                lampOffColor: "#15202b"
+                                lampPercentageCapable: true
+                                lampFraction: root.activityReading("gpu_busy")!==null ? root.n("gpu_busy")/100 : NaN
                                 rightLegend: root.metricText("gpu_busy", 0, "%")
                                 Column {
                                     anchors.fill: parent
                                     spacing: 7
-                                    Text {
+                                    GGText { colorKey: "ui.TmogSurface.25";
                                         width: parent.width
                                         text: root.gpuLabel()
                                         color: root.text
@@ -1315,13 +1363,14 @@ Item {
                                         font.pixelSize: 11
                                         elide: Text.ElideRight
                                     }
-                                    TmogMeter {
+                                    TmogMeter { property string uiColorScope: "ui.widget.TmogSurface.TmogMeter.16";
+                                        seriesColorKey: root.historyColorKey("gpu_hist")
                                         width: parent.width
                                         ratio: root.n("gpu_busy") / 100
-                                        onColor: "#78a8d8"
+                                        onColor: RuntimeTheme.GGTheme.blue
                                         segments: 22
                                     }
-                                    Text {
+                                    GGText { colorKey: "ui.TmogSurface.26";
                                         width: parent.width
                                         text: "SYS TEMP " + root.metricText("temp_c", 0, " C")
                                             + " · PKG " + root.metricText("energy_w", 1, " W")
@@ -1330,12 +1379,13 @@ Item {
                                         font.pixelSize: 10
                                         wrapMode: Text.WordWrap
                                     }
-                                    TmogSpark {
+                                    TmogSpark { property string uiColorScope: "ui.widget.TmogSurface.TmogSpark.17";
+                                        seriesColorKey: root.historyColorKey("gpu_hist")
                                         width: parent.width
                                         height: Math.max(30, parent.height - 74)
                                         values: root.arr("gpu_hist")
                                         yMax: 100
-                                        stroke: "#78a8d8"
+                                        stroke: RuntimeTheme.GGTheme.blue
                                         fill: "#182536"
                                     }
                                 }
@@ -1366,27 +1416,28 @@ Item {
 
                             Repeater {
                                 model: [
-                                    { "k": "CPU", "c": "#8db89a", "h": "cpu_hist" },
-                                    { "k": "GPU", "c": "#78a8d8", "h": "gpu_hist" },
-                                    { "k": "MEMORY", "c": "#b6a6c8", "h": "mem_hist" },
-                                    { "k": "ENERGY", "c": "#c8a97e", "h": "energy_hist" },
-                                    { "k": "THERMALS", "c": "#c8a97e", "h": "temp_hist" },
-                                    { "k": "DISK", "c": "#8db89a", "h": "disk_hist" },
-                                    { "k": "NETWORK", "c": "#8a8a8a", "h": "net_hist" }
+                                    { "k": "CPU", "c": RuntimeTheme.GGTheme.positive, "h": "cpu_hist" },
+                                    { "k": "GPU", "c": RuntimeTheme.GGTheme.blue, "h": "gpu_hist" },
+                                    { "k": "MEMORY", "c": RuntimeTheme.GGTheme.purple, "h": "mem_hist" },
+                                    { "k": "ENERGY", "c": RuntimeTheme.GGTheme.accent, "h": "energy_hist" },
+                                    { "k": "THERMALS", "c": RuntimeTheme.GGTheme.accent, "h": "temp_hist" },
+                                    { "k": "DISK", "c": RuntimeTheme.GGTheme.positive, "h": "disk_hist" },
+                                    { "k": "NETWORK", "c": RuntimeTheme.GGTheme.dim, "h": "net_hist" }
                                 ]
-                                delegate: TmogCard {
+                                delegate: TmogCard { property string uiColorScope: "ui.widget.TmogSurface.TmogCard.18";
                                     required property var modelData
                                     width: perfNav.width
                                     height: 52
                                     leftLegend: modelData.k
                                     borderColor: root.perfKey === modelData.k
-                                        ? "#8b949e"
-                                        : "#3a3a3a"
-                                    TmogSpark {
+                                        ? RuntimeTheme.GGTheme.dim
+                                        : RuntimeTheme.GGTheme.selected
+                                    TmogSpark { property string uiColorScope: "ui.widget.TmogSurface.TmogSpark.19";
+                                        seriesColorKey: root.historyColorKey(modelData.h)
                                         anchors.fill: parent
                                         values: root.arr(modelData.h)
                                         stroke: modelData.c
-                                        fill: "#161616"
+                                        fill: RuntimeTheme.GGTheme.panel
                                         yMax: modelData.k === "CPU" || modelData.k === "MEMORY" || modelData.k === "GPU"
                                             ? 100
                                             : (modelData.k === "THERMALS"
@@ -1408,7 +1459,7 @@ Item {
                             }
                         }
 
-                        TmogCard {
+                        TmogCard { property string uiColorScope: "ui.widget.TmogSurface.TmogCard.20";
                             anchors.left: perfNav.right
                             anchors.leftMargin: 10
                             anchors.right: parent.right
@@ -1435,7 +1486,8 @@ Item {
                                 anchors.fill: parent
                                 spacing: 8
 
-                                TmogMeter {
+                                TmogMeter { property string uiColorScope: "ui.widget.TmogSurface.TmogMeter.21";
+                                    seriesColorKey: root.historyColorKey(root.perfKey)
                                     width: parent.width
                                     height: 16
                                     ratio: root.perfKey === "CPU"
@@ -1454,16 +1506,17 @@ Item {
                                                         : Math.min(1, root.n("energy_w") / Math.max(40, root.liveEnergyYMax)))
                                                     : 0.05))))
                                     onColor: root.perfKey === "GPU"
-                                        ? "#78a8d8"
+                                        ? RuntimeTheme.GGTheme.blue
                                         : (root.perfKey === "MEMORY"
-                                            ? "#b6a6c8"
+                                            ? RuntimeTheme.GGTheme.purple
                                             : (root.perfKey === "THERMALS" || root.perfKey === "ENERGY"
-                                                ? "#c8a97e"
-                                                : "#8db89a"))
+                                                ? RuntimeTheme.GGTheme.accent
+                                                : RuntimeTheme.GGTheme.positive))
                                     segments: 36
                                 }
 
-                                TmogHistoryGraph {
+                                TmogHistoryGraph { property string uiColorScope: "ui.widget.TmogSurface.TmogHistoryGraph.22";
+                                    seriesColorKey: root.historyColorKey(root.perfKey)
                                     id: perfHistoryGraph
                                     width: parent.width
                                     height: root.perfKey === "CPU"
@@ -1496,12 +1549,12 @@ Item {
                                                     ? root.liveNetYMax
                                                     : 0))))
                                     stroke: root.perfKey === "GPU"
-                                        ? "#78a8d8"
+                                        ? RuntimeTheme.GGTheme.blue
                                         : (root.perfKey === "MEMORY"
-                                            ? "#b6a6c8"
+                                            ? RuntimeTheme.GGTheme.purple
                                             : (root.perfKey === "THERMALS" || root.perfKey === "ENERGY"
-                                                ? "#c8a97e"
-                                                : "#8db89a"))
+                                                ? RuntimeTheme.GGTheme.accent
+                                                : RuntimeTheme.GGTheme.positive))
                                     fill: root.perfKey === "GPU"
                                         ? "#182536"
                                         : (root.perfKey === "MEMORY"
@@ -1521,26 +1574,26 @@ Item {
                                 Row {
                                     width: parent.width
                                     spacing: 10
-                                    Text {
+                                    GGText { colorKey: "ui.TmogSurface.27";
                                         text: root.rangeLabel()
                                         color: root.rangeActive ? root.ledgerGold : root.muted
                                         font.family: "monospace"
                                         font.pixelSize: 10
                                     }
-                                    Text {
+                                    GGText { colorKey: "ui.TmogSurface.28";
                                         text: "DRAG OVER GRAPH TO INSPECT"
                                         color: root.muted
                                         font.family: "monospace"
                                         font.pixelSize: 10
                                     }
-                                    Text {
+                                    GGText { colorKey: "ui.TmogSurface.29";
                                         visible: root.rangeActive
                                         text: "· process sample at selected interval"
                                         color: root.text
                                         font.family: "monospace"
                                         font.pixelSize: 10
                                     }
-                                    Text {
+                                    GGText { colorKey: "ui.TmogSurface.30";
                                         visible: root.rangeActive
                                         text: "CLEAR"
                                         color: root.ledgerGold
@@ -1560,7 +1613,7 @@ Item {
                                     visible: root.perfKey === "CPU"
                                     Repeater {
                                         model: root.arr("cores")
-                                        delegate: TmogCard {
+                                        delegate: TmogCard { property string uiColorScope: "ui.widget.TmogSurface.TmogCard.23";
                                             required property var modelData
                                             required property int index
                                             width: 92
@@ -1568,7 +1621,8 @@ Item {
                                             compactLegend: true
                                             leftLegend: "CPU " + modelData.id
                                             rightLegend: root.coreText(Number(modelData.id))
-                                            TmogSpark {
+                                            TmogSpark { property string uiColorScope: "ui.widget.TmogSurface.TmogSpark.24";
+                                                seriesColorKey: "ui.chart.tmog.core."+modelData.id
                                                 anchors.fill: parent
                                                 values: {
                                                     var all = root.arr("core_hist")
@@ -1577,17 +1631,17 @@ Item {
                                                     return root.emptyHist
                                                 }
                                                 yMax: 100
-                                                stroke: "#8db89a"
+                                                stroke: RuntimeTheme.GGTheme.positive
                                                 fill: "#1c2a22"
                                             }
                                         }
                                     }
                                 }
 
-                                Text {
+                                GGText { colorKey: "ui.TmogSurface.31";
                                     width: parent.width
                                     wrapMode: Text.WordWrap
-                                    color: "#c8cdd4"
+                                    color: RuntimeTheme.GGTheme.text
                                     font.family: "monospace"
                                     font.pixelSize: 12
                                     text: root.perfKey === "CPU"
@@ -1636,7 +1690,7 @@ Item {
                     Component {
                         id: listPage
                         Item {
-                            TmogCard {
+                            TmogCard { property string uiColorScope: "ui.widget.TmogSurface.TmogCard.25";
                                 anchors.fill: parent
                                 visible: root.page === "PROCESSES"
                                 leftLegend: "PROCESSES"
@@ -1660,7 +1714,7 @@ Item {
                                 Row {
                                     width: parent.width
                                     height: 22
-                                    Text {
+                                    GGText { colorKey: "ui.TmogSurface.32";
                                         width: Math.max(150, parent.width * 0.32)
                                         text: "NAME" + (root.processSortKey === "name" ? " ↕" : "")
                                         color: root.processSortKey === "name" ? root.ledgerGold : root.muted
@@ -1672,28 +1726,28 @@ Item {
                                             onClicked: root.toggleProcessSort("name")
                                         }
                                     }
-                                    Text {
+                                    GGText { colorKey: "ui.TmogSurface.33";
                                         width: 76
                                         text: "PID"
                                         color: root.muted
                                         font.family: "monospace"
                                         font.pixelSize: 11
                                     }
-                                    Text {
+                                    GGText { colorKey: "ui.TmogSurface.34";
                                         width: 96
                                         text: "STATUS"
                                         color: root.muted
                                         font.family: "monospace"
                                         font.pixelSize: 11
                                     }
-                                    Text {
+                                    GGText { colorKey: "ui.TmogSurface.35";
                                         width: 110
                                         text: "USER"
                                         color: root.muted
                                         font.family: "monospace"
                                         font.pixelSize: 11
                                     }
-                                    Text {
+                                    GGText { colorKey: "ui.TmogSurface.36";
                                         width: 72
                                         text: "CPU" + (root.processSortKey === "cpu_pct" ? " ↕" : "")
                                         color: root.processSortKey === "cpu_pct" ? root.ledgerGold : root.muted
@@ -1705,7 +1759,7 @@ Item {
                                             onClicked: root.toggleProcessSort("cpu_pct")
                                         }
                                     }
-                                    Text {
+                                    GGText { colorKey: "ui.TmogSurface.37";
                                         text: "RSS     THR"
                                         color: root.muted
                                         font.family: "monospace"
@@ -1714,11 +1768,11 @@ Item {
                                 }
                                 Repeater {
                                     model: root.sortedProcesses()
-                                    delegate: TmogRow {
+                                    delegate: TmogRow { property string uiColorScope: "ui.widget.TmogSurface.TmogRow.26";
                                         required property var modelData
                                         width: parent.width
                                         selected: Number(modelData.pid) === root.selectedPid
-                                        textColor: modelData.tombstone ? "#c98989" : "#c8cdd4"
+                                        textColor: modelData.tombstone ? RuntimeTheme.GGTheme.negative : RuntimeTheme.GGTheme.text
                                         text: String(modelData.comm || "").padEnd(14, " ").slice(0, 14)
                                             + " " + String(modelData.pid).padStart(6, " ")
                                             + "  " + String(modelData.status || "").padEnd(11, " ").slice(0, 11)
@@ -1734,14 +1788,14 @@ Item {
                                         }
                                     }
                                 }
-                                Text {
+                                GGText { colorKey: "ui.TmogSurface.38";
                                     width: parent.width
                                     visible: root.selected !== null
                                     text: root.selected
                                         ? "#" + root.selected.pid + "  "
                                             + (root.selected.cmdline || "")
                                         : ""
-                                    color: "#c8a97e"
+                                    color: RuntimeTheme.GGTheme.accent
                                     font.family: "monospace"
                                     font.pixelSize: 12
                                     wrapMode: Text.WrapAnywhere
@@ -1750,7 +1804,7 @@ Item {
                             }
                             }
 
-                            TmogCard {
+                            TmogCard { property string uiColorScope: "ui.widget.TmogSurface.TmogCard.27";
                                 anchors.fill: parent
                                 visible: root.page === "SYSTEM"
                                 leftLegend: "SYSTEM"
@@ -1764,7 +1818,7 @@ Item {
                             Column {
                                 id: sysCol
                                 width: parent.width
-                            Text {
+                            GGText { colorKey: "ui.TmogSurface.39";
                                 width: parent.width
                                 text: "HOST     " + (root.status.hostname || "—")
                                     + "\nOS       " + (root.status.os || "—")
@@ -1781,7 +1835,7 @@ Item {
                                     + " running / " + String(root.n("process_count"))
                                     + "\nNET      " + String(root.status.net_iface || "—")
                                     + "\nUP       " + root.clock(root.n("uptime_s"))
-                                color: "#d8dee9"
+                                color: RuntimeTheme.GGTheme.text
                                 font.family: "monospace"
                                 font.pixelSize: 12
                                 wrapMode: Text.WordWrap
@@ -1790,7 +1844,7 @@ Item {
                             }
                             }
 
-                            TmogCard {
+                            TmogCard { property string uiColorScope: "ui.widget.TmogSurface.TmogCard.28";
                                 anchors.fill: parent
                                 visible: root.page === "FLIGHT"
                                 leftLegend: "FLIGHT RECORDER"
@@ -1798,7 +1852,7 @@ Item {
                                 Column {
                                     anchors.fill: parent
                                     spacing: 8
-                                    Text {
+                                    GGText { colorKey: "ui.TmogSurface.40";
                                         width: parent.width
                                         text: "Select a CPU or memory history range to inspect the live sample."
                                         color: root.text
@@ -1806,7 +1860,9 @@ Item {
                                         font.pixelSize: 11
                                         wrapMode: Text.WordWrap
                                     }
-                                    TmogHistoryGraph {
+                                    TmogHistoryGraph { property string uiColorScope: "ui.widget.TmogSurface.TmogHistoryGraph.29";
+                                        seriesColorKey: root.historyColorKey("cpu_hist")
+                                        overlayColorKey: root.historyColorKey("mem_hist")
                                         width: parent.width
                                         height: Math.max(120, parent.height * 0.34)
                                         selectable: true
@@ -1814,7 +1870,7 @@ Item {
                                         values: root.arr("cpu_hist")
                                         overlayValues: root.arr("mem_hist")
                                         stroke: root.ledgerGreen
-                                        overlayStroke: "#b6a6c8"
+                                        overlayStroke: RuntimeTheme.GGTheme.purple
                                         fill: "#1c2a22"
                                         yMax: 100
                                         rangeStart: root.rangeStart
@@ -1827,25 +1883,25 @@ Item {
                                     }
                                     Row {
                                         spacing: 16
-                                        Text {
+                                        GGText { colorKey: "ui.TmogSurface.41";
                                             text: "CPU " + root.metricText("cpu_busy", 1, "%")
                                             color: root.ledgerGreen
                                             font.family: "monospace"
                                             font.pixelSize: 11
                                         }
-                                        Text {
+                                        GGText { colorKey: "ui.TmogSurface.42";
                                             text: "MEM " + root.kib(root.n("mem_used_kb"))
-                                            color: "#b6a6c8"
+                                            color: RuntimeTheme.GGTheme.purple
                                             font.family: "monospace"
                                             font.pixelSize: 11
                                         }
-                                        Text {
+                                        GGText { colorKey: "ui.TmogSurface.43";
                                             text: "RANGE " + root.rangeLabel()
                                             color: root.ledgerGold
                                             font.family: "monospace"
                                             font.pixelSize: 11
                                         }
-                                        Text {
+                                        GGText { colorKey: "ui.TmogSurface.44";
                                             visible: root.rangeActive
                                             text: "CLEAR"
                                             color: root.ledgerGold
@@ -1858,7 +1914,7 @@ Item {
                                             }
                                         }
                                     }
-                                    Text {
+                                    GGText { colorKey: "ui.TmogSurface.45";
                                         width: parent.width
                                         text: "PROCESSES ACTIVE IN SELECTED RANGE"
                                         color: root.muted
@@ -1867,7 +1923,7 @@ Item {
                                     }
                                     Repeater {
                                         model: root.flightRows()
-                                        delegate: TmogRow {
+                                        delegate: TmogRow { property string uiColorScope: "ui.widget.TmogSurface.TmogRow.30";
                                             required property var modelData
                                             width: parent.width
                                             text: String(modelData.pid).padStart(7, " ")
@@ -1886,7 +1942,7 @@ Item {
                                 }
                             }
 
-                            TmogCard {
+                            TmogCard { property string uiColorScope: "ui.widget.TmogSurface.TmogCard.31";
                                 anchors.fill: parent
                                 visible: root.page === "DRIVERS"
                                 leftLegend: "DRIVERS"
@@ -1902,7 +1958,7 @@ Item {
                                         id: driverCol
                                         width: parent.width
                                         spacing: 2
-                                        Text {
+                                        GGText { colorKey: "ui.TmogSurface.46";
                                             width: parent.width
                                             text: "DRIVER MODULE                         SIZE       USERS"
                                             color: root.muted
@@ -1911,7 +1967,7 @@ Item {
                                         }
                                         Repeater {
                                             model: root.arr("drivers")
-                                            delegate: TmogRow {
+                                            delegate: TmogRow { property string uiColorScope: "ui.widget.TmogSurface.TmogRow.32";
                                                 required property var modelData
                                                 width: parent.width
                                                 text: String(modelData.name || "")
@@ -1929,7 +1985,7 @@ Item {
                                 }
                             }
 
-                            TmogCard {
+                            TmogCard { property string uiColorScope: "ui.widget.TmogSurface.TmogCard.33";
                                 anchors.fill: parent
                                 visible: root.page === "USERS"
                                 leftLegend: "USERS"
@@ -1945,15 +2001,15 @@ Item {
                                 id: userCol
                                 width: parent.width
                                 spacing: 2
-                                Text {
+                                GGText { colorKey: "ui.TmogSurface.47";
                                     text: "USER            PROCS"
-                                    color: "#a8b0b8"
+                                    color: RuntimeTheme.GGTheme.muted
                                     font.family: "monospace"
                                     font.pixelSize: 12
                                 }
                                 Repeater {
                                     model: root.arr("users")
-                                    delegate: TmogRow {
+                                    delegate: TmogRow { property string uiColorScope: "ui.widget.TmogSurface.TmogRow.34";
                                         required property var modelData
                                         width: parent.width
                                         text: String(modelData.name || "").padEnd(16, " ")
@@ -1968,7 +2024,7 @@ Item {
                             }
                             }
 
-                            TmogCard {
+                            TmogCard { property string uiColorScope: "ui.widget.TmogSurface.TmogCard.35";
                                 anchors.fill: parent
                                 visible: root.page === "CONNECTIONS"
                                 leftLegend: "CONNECTIONS"
@@ -1986,7 +2042,7 @@ Item {
                                 spacing: 2
                                 Repeater {
                                     model: root.arr("connections")
-                                    delegate: TmogRow {
+                                    delegate: TmogRow { property string uiColorScope: "ui.widget.TmogSurface.TmogRow.36";
                                         required property var modelData
                                         width: parent.width
                                         text: String(modelData.state || "").padEnd(11, " ").slice(0, 11)
@@ -2003,12 +2059,14 @@ Item {
                             }
                             }
 
-                            TmogCard {
+                            TmogCard { property string uiColorScope: "ui.widget.TmogSurface.TmogCard.37";
                                 anchors.fill: parent
                                 visible: root.page === "DISK"
                                 leftLegend: "DISK"
                                 lamp: true
                                 lampOn: root.diskLampOn
+                                lampColorKey: root.historyColorKey("disk_hist")
+                                lampOnColor: RuntimeTheme.GGColorContext.colorFor("ui.fill.TmogCard.1",RuntimeTheme.GGTheme.negative)
                                 rightLegend: root.bps(root.n("disk_read_bps") + root.n("disk_write_bps"))
                             Flickable {
                                 anchors.fill: parent
@@ -2024,12 +2082,12 @@ Item {
                                 Rectangle {
                                     width: parent.width
                                     height: 8
-                                    color: "#1a1a1a"
+                                    color: RuntimeTheme.GGTheme.raised
                                     radius: 2
-                                    Rectangle {
+                                    Rectangle { GGColorTarget { colorKey: root.historyColorKey("disk_hist"); colorActive:root.n("disk_led")>0.04;fallbackColor:RuntimeTheme.GGTheme.negative }
                                         width: Math.max(4, parent.width * Math.min(1, root.n("disk_led")))
                                         height: parent.height
-                                        color: root.n("disk_led") > 0.04 ? "#e05050" : "#3a3a3a"
+                                        color: root.n("disk_led") > 0.04 ? RuntimeTheme.GGTheme.negative : RuntimeTheme.GGTheme.selected
                                         radius: 2
                                     }
                                 }
@@ -2039,18 +2097,18 @@ Item {
                                         required property var modelData
                                         width: parent.width
                                         height: 40
-                                        Text {
+                                        GGText { colorKey: "ui.TmogSurface.48";
                                             text: String(modelData.path || "")
                                                 + "   " + root.kib(Number(modelData.used || 0) / 1024)
                                                 + " / " + root.kib(Number(modelData.total || 0) / 1024)
                                                 + "   " + String(modelData.fstype || "")
-                                            color: "#c8cdd4"
+                                            color: RuntimeTheme.GGTheme.text
                                             font.family: "monospace"
                                             font.pixelSize: 12
                                             elide: Text.ElideRight
                                             width: parent.width
                                         }
-                                        TmogMeter {
+                                        TmogMeter { property string uiColorScope: "ui.widget.TmogSurface.TmogMeter.38";
                                             anchors.left: parent.left
                                             anchors.right: parent.right
                                             anchors.bottom: parent.bottom
@@ -2058,7 +2116,7 @@ Item {
                                             ratio: Number(modelData.total)
                                                 ? Number(modelData.used) / Number(modelData.total)
                                                 : 0
-                                            onColor: "#8db89a"
+                                            onColor: RuntimeTheme.GGTheme.positive
                                         }
                                         MouseArea {
                                             anchors.fill: parent
@@ -2074,7 +2132,7 @@ Item {
                             }
                             }
 
-                            TmogCard {
+                            TmogCard { property string uiColorScope: "ui.widget.TmogSurface.TmogCard.39";
                                 anchors.fill: parent
                                 visible: root.page === "FREQ"
                                 leftLegend: "FREQ"
@@ -2096,22 +2154,23 @@ Item {
                                         required property var modelData
                                         width: parent.width
                                         height: 28
-                                        Text {
+                                        GGText { colorKey: "ui.TmogSurface.49";
                                             text: "CPU " + modelData.id
                                                 + "   " + (Readings.metadataAvailable(root.readingSource("mhz"), "mhz")
                                                     ? Readings.text({mhz:modelData.mhz}, "mhz", 0, " MHz") : "--") + "   "
                                                 + root.coreText(Number(modelData.id))
-                                            color: "#c8cdd4"
+                                            color: RuntimeTheme.GGTheme.text
                                             font.family: "monospace"
                                             font.pixelSize: 12
                                         }
-                                        TmogMeter {
+                                        TmogMeter { property string uiColorScope: "ui.widget.TmogSurface.TmogMeter.40";
+                                            seriesColorKey: "ui.chart.tmog.core."+modelData.id
                                             anchors.left: parent.left
                                             anchors.right: parent.right
                                             anchors.bottom: parent.bottom
                                             height: 12
                                             ratio: Math.min(1, Number(modelData.pct || 0) / 100)
-                                            onColor: "#8db89a"
+                                            onColor: RuntimeTheme.GGTheme.positive
                                             segments: 24
                                         }
                                     }
@@ -2120,7 +2179,7 @@ Item {
                             }
                             }
 
-                            TmogCard {
+                            TmogCard { property string uiColorScope: "ui.widget.TmogSurface.TmogCard.41";
                                 anchors.fill: parent
                                 visible: root.page === "STARTUP"
                                 leftLegend: "STARTUP"
@@ -2136,16 +2195,16 @@ Item {
                                 id: startCol
                                 width: parent.width
                                 spacing: 2
-                                Text {
+                                GGText { colorKey: "ui.TmogSurface.50";
                                     visible: root.arr("startup").length === 0
                                     text: "no autostart entries"
-                                    color: "#a8b0b8"
+                                    color: RuntimeTheme.GGTheme.muted
                                     font.family: "monospace"
                                     font.pixelSize: 12
                                 }
                                 Repeater {
                                     model: root.arr("startup")
-                                    delegate: TmogRow {
+                                    delegate: TmogRow { property string uiColorScope: "ui.widget.TmogSurface.TmogRow.42";
                                         required property var modelData
                                         width: parent.width
                                         text: String(modelData.name || modelData.id || "")
@@ -2160,7 +2219,7 @@ Item {
                             }
                             }
 
-                            TmogCard {
+                            TmogCard { property string uiColorScope: "ui.widget.TmogSurface.TmogCard.43";
                                 anchors.fill: parent
                                 visible: root.page === "APPS"
                                 leftLegend: "APPS"
@@ -2176,16 +2235,16 @@ Item {
                                 id: appCol
                                 width: parent.width
                                 spacing: 2
-                                Text {
+                                GGText { colorKey: "ui.TmogSurface.51";
                                     visible: root.arr("apps").length === 0
                                     text: "no desktop applications found"
-                                    color: "#a8b0b8"
+                                    color: RuntimeTheme.GGTheme.muted
                                     font.family: "monospace"
                                     font.pixelSize: 12
                                 }
                                 Repeater {
                                     model: root.arr("apps")
-                                    delegate: TmogRow {
+                                    delegate: TmogRow { property string uiColorScope: "ui.widget.TmogSurface.TmogRow.44";
                                         required property var modelData
                                         width: parent.width
                                         text: String(modelData.name || modelData.id || "")
@@ -2199,7 +2258,7 @@ Item {
                             }
                             }
 
-                            TmogCard {
+                            TmogCard { property string uiColorScope: "ui.widget.TmogSurface.TmogCard.45";
                                 anchors.fill: parent
                                 visible: root.page === "BENCHMARKS"
                                 leftLegend: "BENCHMARKS"
@@ -2207,7 +2266,7 @@ Item {
                                 Column {
                                     anchors.fill: parent
                                     spacing: 10
-                                    Text {
+                                    GGText { colorKey: "ui.TmogSurface.52";
                                         width: parent.width
                                         text: "LIVE HARDWARE BASELINE"
                                         color: root.ledgerGold
@@ -2215,7 +2274,7 @@ Item {
                                         font.pixelSize: 11
                                         font.bold: true
                                     }
-                                    Text {
+                                    GGText { colorKey: "ui.TmogSurface.53";
                                         width: parent.width
                                         text: (root.status.cpu_model || "CPU") + "\n"
                                             + String(root.status.core_count || 0) + " logical cores · "
@@ -2227,14 +2286,15 @@ Item {
                                         font.pixelSize: 12
                                         wrapMode: Text.WordWrap
                                     }
-                                    TmogMeter {
+                                    TmogMeter { property string uiColorScope: "ui.widget.TmogSurface.TmogMeter.46";
+                                        seriesColorKey: root.historyColorKey("cpu_hist")
                                         width: parent.width
                                         height: 14
                                         ratio: root.n("cpu_busy") / 100
                                         onColor: root.ledgerGreen
                                         segments: 30
                                     }
-                                    Text {
+                                    GGText { colorKey: "ui.TmogSurface.54";
                                         width: parent.width
                                         text: "CPU " + root.metricText("cpu_busy", 1, "%") + "  ·  "
                                             + "TEMP " + root.metricText("temp_c", 1, " C") + "  ·  "
@@ -2250,7 +2310,7 @@ Item {
                                         border.color: "#486553"
                                         border.width: 1
                                         radius: 3
-                                        Text {
+                                        GGText { colorKey: "ui.TmogSurface.55";
                                             anchors.centerIn: parent
                                             text: "OPEN FULL TMOG BENCHMARKS"
                                             color: root.ledgerGreen
@@ -2266,7 +2326,7 @@ Item {
                                 }
                             }
 
-                            TmogCard {
+                            TmogCard { property string uiColorScope: "ui.widget.TmogSurface.TmogCard.47";
                                 anchors.fill: parent
                                 visible: root.page === "SERVICES"
                                 leftLegend: "SERVICES"
@@ -2282,16 +2342,16 @@ Item {
                                 id: svcCol
                                 width: parent.width
                                 spacing: 2
-                                Text {
+                                GGText { colorKey: "ui.TmogSurface.56";
                                     visible: root.arr("services").length === 0
                                     text: "no running units in cgroup"
-                                    color: "#a8b0b8"
+                                    color: RuntimeTheme.GGTheme.muted
                                     font.family: "monospace"
                                     font.pixelSize: 12
                                 }
                                 Repeater {
                                     model: root.arr("services")
-                                    delegate: TmogRow {
+                                    delegate: TmogRow { property string uiColorScope: "ui.widget.TmogSurface.TmogRow.48";
                                         required property var modelData
                                         width: parent.width
                                         text: String(modelData.scope || "").padEnd(7, " ")
@@ -2318,9 +2378,9 @@ Item {
         font.family: "monospace"
         font.pixelSize: 12
         background: Rectangle {
-            color: "#161616"
+            color: RuntimeTheme.GGTheme.panel
             border.width: 1
-            border.color: "#6a6a6a"
+            border.color: RuntimeTheme.GGTheme.edge
             radius: 2
             implicitWidth: 168
         }
@@ -2332,15 +2392,15 @@ Item {
             rightPadding: 10
             font.family: "monospace"
             font.pixelSize: 12
-            contentItem: Text {
+            contentItem: GGText { colorKey: "ui.TmogSurface.57";
                 text: item.text
                 font.family: "monospace"
                 font.pixelSize: 12
-                color: item.highlighted ? "#e6e6e6" : "#c8cdd4"
+                color: item.highlighted ? RuntimeTheme.GGTheme.bright : RuntimeTheme.GGTheme.text
                 verticalAlignment: Text.AlignVCenter
             }
             background: Rectangle {
-                color: item.highlighted ? "#1c1c1c" : "transparent"
+                color: item.highlighted ? RuntimeTheme.GGTheme.raised : "transparent"
                 radius: 1
             }
         }
@@ -2349,7 +2409,9 @@ Item {
             visible: root.menuKind === "proc"
             height: visible ? implicitHeight : 0
             onTriggered: root.copyText(String(root.menuRow.pid || ""))
-        }
+        
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignLeft }
+}
         MenuItem {
             text: "Copy name"
             visible: root.menuKind === "proc" || root.menuKind === "app"
@@ -2357,37 +2419,49 @@ Item {
                 || root.menuKind === "driver"
             height: visible ? implicitHeight : 0
             onTriggered: root.copyText(root.rowLabel(root.menuRow))
-        }
+        
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignLeft }
+}
         MenuItem {
             text: "Copy command"
             visible: root.menuKind === "proc"
             height: visible ? implicitHeight : 0
             onTriggered: root.copyText(String(root.menuRow.cmdline || root.menuRow.comm || ""))
-        }
+        
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignLeft }
+}
         MenuItem {
             text: "Copy local"
             visible: root.menuKind === "conn"
             height: visible ? implicitHeight : 0
             onTriggered: root.copyText(String(root.menuRow.local || ""))
-        }
+        
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignLeft }
+}
         MenuItem {
             text: "Copy remote"
             visible: root.menuKind === "conn"
             height: visible ? implicitHeight : 0
             onTriggered: root.copyText(String(root.menuRow.remote || ""))
-        }
+        
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignLeft }
+}
         MenuItem {
             text: "Copy path"
             visible: root.menuKind === "mount" || root.menuKind === "app"
             height: visible ? implicitHeight : 0
             onTriggered: root.copyText(String(root.menuRow.path || root.menuRow.src || ""))
-        }
+        
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignLeft }
+}
         MenuItem {
             text: "Copy id"
             visible: root.menuKind === "svc" || root.menuKind === "app"
             height: visible ? implicitHeight : 0
             onTriggered: root.copyText(String(root.menuRow.id || ""))
-        }
+        
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignLeft }
+}
     }
 
     Item {

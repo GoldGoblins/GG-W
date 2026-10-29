@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
@@ -13,12 +15,12 @@ Item {
 
     implicitHeight: 196
 
-    GgFrame {
+    GgFrame { property string uiColorScope: "ui.widget.SettingsDeveloperModule.GgFrame.1";
         anchors.fill: parent
         leftLegend: "DEVELOPER"
         rightLegend: "ALPHA"
-        backgroundColor: "#161616"
-        borderColor: "#6a6a6a"
+        backgroundColor: RuntimeTheme.GGTheme.panel
+        borderColor: RuntimeTheme.GGTheme.edge
     }
 
     Column {
@@ -29,7 +31,7 @@ Item {
         anchors.bottomMargin: 12
         spacing: 8
 
-        GgSwitch {
+        GgSwitch { property string uiColorScope: "ui.widget.SettingsDeveloperModule.GgSwitch.2";
             id: demoSwitch
             width: parent.width
             text: "Show DEMO / SAMPLE fixtures"
@@ -41,16 +43,16 @@ Item {
                 )
         }
 
-        Text {
+        GGText { colorKey: "ui.SettingsDeveloperModule.1";
             width: parent.width
             text: "LIVE alpha hides synthetic fixtures by default. "
                 + "This switch exposes legacy examples only for comparison."
-            color: "#c8cdd4"
+            color: RuntimeTheme.GGTheme.text
             wrapMode: Text.WordWrap
             font.pixelSize: 12
         }
 
-        GgSwitch {
+        GgSwitch { property string uiColorScope: "ui.widget.SettingsDeveloperModule.GgSwitch.3";
             id: productSourceSwitch
             width: parent.width
             text: "Show product source files"
@@ -62,12 +64,12 @@ Item {
                 )
         }
 
-        Text {
+        GGText { colorKey: "ui.SettingsDeveloperModule.2";
             width: parent.width
             text: "ContextComposer.qml and the other desk papers are "
                 + "internal sources. They stay off the CODE tabs unless "
                 + "this is on."
-            color: "#c8cdd4"
+            color: RuntimeTheme.GGTheme.text
             wrapMode: Text.WordWrap
             font.pixelSize: 12
         }

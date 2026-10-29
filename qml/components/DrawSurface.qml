@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
@@ -11,12 +13,12 @@ Item {
     property var surfaceHost: null
     property string statusJson: "{}"
     property string editorId: "sketch"
-    property color frameBorder: "#6a6a6a"
+    property color frameBorder: RuntimeTheme.GGTheme.edge
     property int frameRadius: 4
     property int docW: 1280
     property int docH: 720
     property string tool: "brush"
-    property color paintColor: "#e6e6e6"
+    property color paintColor: RuntimeTheme.GGTheme.bright
     property int brushSize: 8
     property real zoom: 0.55
     property int layerIndex: 0
@@ -86,9 +88,9 @@ Item {
     Component.onCompleted: root.refresh()
 
     readonly property var swatches: [
-        "#e6e6e6", "#121212", "#c8a97e", "#8db89a",
-        "#c98989", "#6aa8c8", "#b6a6c8", "#d4c84a",
-        "#e09040", "#4eb8b0", "#7cc86a", "#8a8a8a"
+        RuntimeTheme.GGTheme.bright, RuntimeTheme.GGTheme.canvas, RuntimeTheme.GGTheme.accent, RuntimeTheme.GGTheme.positive,
+        RuntimeTheme.GGTheme.negative, RuntimeTheme.GGTheme.cyan, RuntimeTheme.GGTheme.purple, RuntimeTheme.GGTheme.warning,
+        "#e09040", "#4eb8b0", "#7cc86a", RuntimeTheme.GGTheme.dim
     ]
 
     function activeCanvas() {
@@ -234,7 +236,7 @@ Item {
         ctx.save()
         if (root.tool === "eraser") {
             ctx.globalCompositeOperation = "destination-out"
-            ctx.strokeStyle = "#ffffff"
+            ctx.strokeStyle = RuntimeTheme.GGTheme.bright
         } else {
             ctx.globalCompositeOperation = "source-over"
             ctx.strokeStyle = root.paintColor
@@ -325,9 +327,9 @@ Item {
 
             Row {
                 spacing: 10
-                Text {
+                GGText { colorKey: "ui.DrawSurface.1";
                     text: "SKETCH"
-                    color: root.editorId === "sketch" ? "#d8dee9" : "#a8b0b8"
+                    color: root.editorId === "sketch" ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
                     font.family: "monospace"
                     font.pixelSize: 12
                     font.bold: root.editorId === "sketch"
@@ -339,12 +341,12 @@ Item {
                 }
                 Repeater {
                     model: root.editors
-                    delegate: Text {
+                    delegate: GGText { colorKey: "ui.DrawSurface.2";
                         required property var modelData
                         text: String(modelData.label || modelData.id)
                         color: root.editorId === String(modelData.id)
-                            ? "#d8dee9"
-                            : (modelData.present ? "#8b949e" : "#3a3a3a")
+                            ? RuntimeTheme.GGTheme.text
+                            : (modelData.present ? RuntimeTheme.GGTheme.dim : RuntimeTheme.GGTheme.selected)
                         font.family: "monospace"
                         font.pixelSize: 12
                         font.bold: root.editorId === String(modelData.id)
@@ -358,7 +360,7 @@ Item {
                 }
             }
 
-            Text {
+            GGText { colorKey: "ui.DrawSurface.3";
                 width: parent.width
                 visible: !root.sketchMode
                 text: {
@@ -369,15 +371,15 @@ Item {
                     }
                     return "Install Krita, GIMP, Inkscape or darktable for the real desks."
                 }
-                color: "#c8cdd4"
+                color: RuntimeTheme.GGTheme.text
                 wrapMode: Text.WordWrap
                 font.pixelSize: 12
             }
 
-            Text {
+            GGText { colorKey: "ui.DrawSurface.4";
                 visible: !root.sketchMode
                 text: "OPEN " + root.editorId.toUpperCase()
-                color: "#c8a97e"
+                color: RuntimeTheme.GGTheme.accent
                 font.family: "monospace"
                 font.pixelSize: 12
                 font.bold: true
@@ -399,10 +401,10 @@ Item {
                     border.color: root.frameBorder
                     border.width: 1
                 }
-                Text {
+                GGText { colorKey: "ui.DrawSurface.5";
                     anchors.centerIn: parent
                     text: root.editorId.toUpperCase()
-                    color: "#3a3a3a"
+                    color: RuntimeTheme.GGTheme.selected
                     font.family: "monospace"
                     font.pixelSize: 18
                     font.bold: true
@@ -419,10 +421,10 @@ Item {
                 spacing: 10
                 Repeater {
                     model: ["brush", "eraser", "line", "rect", "oval", "pick", "pan"]
-                    delegate: Text {
+                    delegate: GGText { colorKey: "ui.DrawSurface.6";
                         required property string modelData
                         text: modelData.toUpperCase()
-                        color: root.tool === modelData ? "#d8dee9" : "#a8b0b8"
+                        color: root.tool === modelData ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         font.bold: root.tool === modelData
@@ -433,9 +435,9 @@ Item {
                         }
                     }
                 }
-                Text {
+                GGText { colorKey: "ui.DrawSurface.7";
                     text: "SIZE " + root.brushSize
-                    color: "#c8cdd4"
+                    color: RuntimeTheme.GGTheme.text
                     font.family: "monospace"
                     font.pixelSize: 12
                 }
@@ -443,9 +445,9 @@ Item {
 
             Row {
                 spacing: 12
-                Text {
+                GGText { colorKey: "ui.DrawSurface.8";
                     text: "NEW"
-                    color: "#c8a97e"
+                    color: RuntimeTheme.GGTheme.accent
                     font.family: "monospace"
                     font.pixelSize: 12
                     MouseArea {
@@ -457,9 +459,9 @@ Item {
                         }
                     }
                 }
-                Text {
+                GGText { colorKey: "ui.DrawSurface.9";
                     text: "OPEN"
-                    color: "#c8a97e"
+                    color: RuntimeTheme.GGTheme.accent
                     font.family: "monospace"
                     font.pixelSize: 12
                     MouseArea {
@@ -468,9 +470,9 @@ Item {
                         onClicked: openDialog.open()
                     }
                 }
-                Text {
+                GGText { colorKey: "ui.DrawSurface.10";
                     text: "SAVE"
-                    color: "#c8a97e"
+                    color: RuntimeTheme.GGTheme.accent
                     font.family: "monospace"
                     font.pixelSize: 12
                     MouseArea {
@@ -479,9 +481,9 @@ Item {
                         onClicked: saveDialog.open()
                     }
                 }
-                Text {
+                GGText { colorKey: "ui.DrawSurface.11";
                     text: "UNDO"
-                    color: "#c8a97e"
+                    color: RuntimeTheme.GGTheme.accent
                     font.family: "monospace"
                     font.pixelSize: 12
                     MouseArea {
@@ -490,9 +492,9 @@ Item {
                         onClicked: root.undo()
                     }
                 }
-                Text {
+                GGText { colorKey: "ui.DrawSurface.12";
                     text: "REDO"
-                    color: "#c8a97e"
+                    color: RuntimeTheme.GGTheme.accent
                     font.family: "monospace"
                     font.pixelSize: 12
                     MouseArea {
@@ -501,9 +503,9 @@ Item {
                         onClicked: root.redo()
                     }
                 }
-                Text {
+                GGText { colorKey: "ui.DrawSurface.13";
                     text: "LAYER+"
-                    color: "#c8a97e"
+                    color: RuntimeTheme.GGTheme.accent
                     font.family: "monospace"
                     font.pixelSize: 12
                     MouseArea {
@@ -512,9 +514,9 @@ Item {
                         onClicked: root.addLayer()
                     }
                 }
-                Text {
+                GGText { colorKey: "ui.DrawSurface.14";
                     text: "LAYER-"
-                    color: "#c8a97e"
+                    color: RuntimeTheme.GGTheme.accent
                     font.family: "monospace"
                     font.pixelSize: 12
                     MouseArea {
@@ -563,8 +565,8 @@ Item {
                                 for (y = 0; y < height; y += s) {
                                     for (x = 0; x < width; x += s) {
                                         ctx.fillStyle = ((x + y) / s) % 2 === 0
-                                            ? "#1a1a1a"
-                                            : "#141414"
+                                            ? RuntimeTheme.GGTheme.raised
+                                            : RuntimeTheme.GGTheme.panel
                                         ctx.fillRect(x, y, s, s)
                                     }
                                 }
@@ -720,9 +722,9 @@ Item {
                     height: parent.height
                     spacing: 6
 
-                    Text {
+                    GGText { colorKey: "ui.DrawSurface.15";
                         text: "COLOR"
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
@@ -731,7 +733,7 @@ Item {
                         width: 28
                         height: 28
                         color: root.paintColor
-                        border.color: "#d8dee9"
+                        border.color: RuntimeTheme.GGTheme.text
                         border.width: 1
                     }
 
@@ -746,8 +748,8 @@ Item {
                                 height: 16
                                 color: modelData
                                 border.color: root.paintColor === modelData
-                                    ? "#e6e6e6"
-                                    : "#2a2a2a"
+                                    ? RuntimeTheme.GGTheme.bright
+                                    : RuntimeTheme.GGTheme.hover
                                 border.width: 1
                                 MouseArea {
                                     anchors.fill: parent
@@ -758,14 +760,14 @@ Item {
                         }
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.DrawSurface.16";
                         text: "SIZE · " + String(root.brushSize)
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
 
-                    GgSlider {
+                    GgSlider { property string uiColorScope: "ui.widget.DrawSurface.GgSlider.1";
                         width: parent.width
                         from: 1
                         to: 64
@@ -774,14 +776,14 @@ Item {
                         onMoved: root.brushSize = Math.round(value)
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.DrawSurface.17";
                         text: "ZOOM · " + String(Math.round(root.zoom * 100)) + "%"
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
 
-                    GgSlider {
+                    GgSlider { property string uiColorScope: "ui.widget.DrawSurface.GgSlider.2";
                         width: parent.width
                         from: 0.2
                         to: 2.5
@@ -790,16 +792,16 @@ Item {
                         onMoved: root.zoom = value
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.DrawSurface.18";
                         text: "LAYERS"
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
 
                     Repeater {
                         model: layers
-                        delegate: Text {
+                        delegate: GGText { colorKey: "ui.DrawSurface.19";
                             required property int index
                             required property string name
                             required property bool hidden
@@ -807,7 +809,7 @@ Item {
                             text: (root.layerIndex === index ? "▶ " : "  ")
                                 + name
                                 + (hidden ? " · off" : "")
-                            color: root.layerIndex === index ? "#d8dee9" : "#c8cdd4"
+                            color: root.layerIndex === index ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.text
                             font.family: "monospace"
                             font.pixelSize: 12
                             elide: Text.ElideRight
@@ -826,10 +828,10 @@ Item {
                         }
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.DrawSurface.20";
                         width: parent.width
                         text: "Wheel zoom. PAN to move. Right-click a layer to hide it."
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         wrapMode: Text.WordWrap
                         font.pixelSize: 12
                     }

@@ -1,0 +1,49 @@
+{
+  "schema": "gg.dagoblin.benchmark-contract.v1",
+  "as_of": "2026-10-29",
+  "status": "RESEARCH_TARGETS_NOT_ACHIEVED",
+  "original_intent": "Adaptive throughput, mobile participation, low resource cost and explicit security; outperform comparable networks",
+  "current_implementation": "Local signed-proposal DAG; no global finality; classical Ed25519",
+  "comparison_requirements": [
+    "same hardware allocations and total machine budget",
+    "same network topology, bandwidth, delay, loss and partitions",
+    "same user transaction payload, signatures, witnesses and conflict ratio",
+    "same commit predicate and receipt validation",
+    "same data availability, pruning, recovery and retention obligations",
+    "same membership, adversary, corruption and fault assumptions",
+    "same cryptographic security profile",
+    "same offered load, interval, warmup and inclusion definition"
+  ],
+  "metrics": {
+    "successful_finalized_user_tps": {"direction": "higher", "aspiration_ratio": 10, "excludes": ["votes", "duplicates", "failed transactions", "unfinalized proposals", "synthetic payload counters"]},
+    "finality_latency_p50_p95_p99_ms": {"direction": "lower", "clock": "client submission through independently verified final receipt", "separate": ["signing", "admission", "availability", "ordering", "execution", "receipt"]},
+    "proposal_blocks_per_second": {"direction": "descriptive", "cannot_substitute_for_finalized_tps": true},
+    "resource_cost": {"units": ["peak RSS/private bytes of process tree", "CPU seconds per successful finalized user transaction", "ingress/egress bytes per role and useful transaction", "disk bytes/fsync latency", "queue age/count", "energy joules only if measured"]},
+    "scale": {"axes": ["independent validators", "data workers", "physical machines per operator", "mobile light clients", "conflict-free partitions"], "never_assume_linear_scaling": true},
+    "ux": {"metrics": ["install/recovery time", "idle resource use", "safe status/cancel feedback on slow signing", "p95 render frame time separate from block cadence"]},
+    "security": {"ratio": null, "gate": "specified model, invariants and independent protocol review; no universal 10x-security scalar"}
+  },
+  "test_stages": [
+    {"stage": "local deterministic model", "state": "PARTIAL_IMPLEMENTED", "limits": "finite signed DAG; no remote adversary/global finality"},
+    {"stage": "multi-process data/order integration", "state": "NOT_IMPLEMENTED_FOR_DAGOBLIN"},
+    {"stage": "independent Linux Windows physical Termux devices", "state": "PHYSICAL_CROSS_DEVICE_PENDING"},
+    {"stage": "controlled WAN and faults", "state": "PENDING"},
+    {"stage": "matched repeated baseline trials", "state": "PENDING", "report": "all trials, median, distributions, uncertainty and failures"},
+    {"stage": "external protocol/PQ implementation review", "state": "PENDING"}
+  ],
+  "adversarial_cases": ["valid/invalid overload", "identity churn/eclipse", "equivocation", "same-nonce conflicts", "withheld data", "stale roots", "different delivery orders", "slow signer", "crash restart", "epoch/key rotation", "downgrade", "partition/recovery"],
+  "adaptive_capacity": {
+    "protocol_tps_ceiling": null,
+    "meaning": "No arbitrary universal throughput target; each node retains authenticated resource and parser limits",
+    "bounds": ["signing", "verification", "payload/relay bandwidth", "disk/memory window", "execution conflicts", "data availability/consensus quorum"],
+    "unknown_capacity": "UNKNOWN_NOT_INFINITE",
+    "slow_signing": "status or cancel; no automatic second economic transaction",
+    "current_lab_caps": "UNCHANGED"
+  },
+  "claim_policy": {
+    "tenfold": "Only a named metric with comparable recorded runs meeting requirements, not a blanket protocol guarantee",
+    "unknown": "UNKNOWN or INCOMPARABLE, never zero cost or PASS",
+    "paper_performance": "Source-reported unless matching reproduction exists",
+    "quantum": "No PQ claim from Merkle trees or metadata alone"
+  }
+}

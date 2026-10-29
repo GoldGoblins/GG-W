@@ -1,5 +1,8 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
+import "GGPalette.js" as BasePalette
 import QtQuick
 import QtQuick.Controls
 
@@ -18,8 +21,9 @@ Item {
 
     property real chatWidthRatio: 0.31
     property int telemetryWidth: 168
-    property color accentColor: "#8a8a8a"
-    property color frameBorder: "#6a6a6a"
+    property color accentColor: RuntimeTheme.GGTheme.accent
+    property var paletteRoles: ({})
+    property color frameBorder: RuntimeTheme.GGTheme.edge
     property int frameRadius: 4
     property bool showDemoFixtures: false
     property bool showProductSourceTabs: false
@@ -39,6 +43,7 @@ Item {
     signal chatWidthRatioChangedByUser(real value)
     signal telemetryWidthChangedByUser(int value)
     signal accentColorChangedByUser(color value)
+    signal paletteRolesChangedByUser(var value)
     signal frameBorderChangedByUser(color value)
     signal frameRadiusChangedByUser(int value)
     signal demoVisibilityChangedByUser(bool value)
@@ -66,8 +71,9 @@ Item {
     function resetStandard() {
         root.chatWidthRatioChangedByUser(0.31)
         root.telemetryWidthChangedByUser(168)
-        root.accentColorChangedByUser("#8a8a8a")
-        root.frameBorderChangedByUser("#6a6a6a")
+        root.accentColorChangedByUser(BasePalette.accent)
+        root.paletteRolesChangedByUser({})
+        root.frameBorderChangedByUser(RuntimeTheme.GGTheme.edge)
         root.frameRadiusChangedByUser(4)
         root.demoVisibilityChangedByUser(false)
         root.productSourceTabsChangedByUser(false)
@@ -82,13 +88,13 @@ Item {
         root.resetExtensionsRequested()
     }
 
-    GgFrame {
+    GgFrame { property string uiColorScope: "ui.widget.SettingsSurface.GgFrame.1";
         id: settingsChrome
         anchors.fill: parent
         visible: !root.embedded
         leftLegend: ""
         rightLegend: ""
-        backgroundColor: "#161616"
+        backgroundColor: RuntimeTheme.GGTheme.panel
         borderColor: root.frameBorder
         radius: root.frameRadius
     }
@@ -102,24 +108,25 @@ Item {
         anchors.bottomMargin: 14
         clip: true
         contentWidth: width
-        contentHeight: modulesColumn.implicitHeight
+        contentHeight: modulesColumn.y + modulesColumn.implicitHeight
         flickableDirection: Flickable.VerticalFlick
         boundsBehavior: Flickable.StopAtBounds
 
-        ScrollBar.vertical: GgScrollBar {}
+        ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.SettingsSurface.GgScrollBar.2";}
 
         Column {
             id: modulesColumn
+            // Captions straddle the border by8px; retain them inside the clip.
+            y: 8
             width: settingsFlick.width
             spacing: 10
 
-            Text {
+            GGText { colorKey: "ui.SettingsSurface.1";
                 width: parent.width
-                height: visible ? implicitHeight : 0
                 visible: root.section === "ALL"
                 text: "Settings modules are separated by concern. "
                     + "Only controls with real alpha wiring are interactive."
-                color: "#c8cdd4"
+                color: RuntimeTheme.GGTheme.text
                 wrapMode: Text.WordWrap
                 font.pixelSize: 12
             }
@@ -131,11 +138,15 @@ Item {
                     : 0
                 visible: root.sectionVisible("APPEARANCE")
                 accentColor: root.accentColor
+                paletteRoles: root.paletteRoles
                 frameBorder: root.frameBorder
                 frameRadius: root.frameRadius
 
                 onAccentColorChangedByUser: function(value) {
                     root.accentColorChangedByUser(value)
+                }
+                onPaletteRolesChangedByUser: function(value) {
+                    root.paletteRolesChangedByUser(value)
                 }
 
                 onFrameBorderChangedByUser: function(value) {
@@ -147,7 +158,7 @@ Item {
                 }
             }
 
-            SettingsLayoutModule {
+            SettingsLayoutModule { property string uiColorScope: "ui.widget.SettingsSurface.SettingsLayoutModule.3";
                 width: parent.width
                 height: root.sectionVisible("LAYOUT")
                     ? implicitHeight
@@ -175,7 +186,7 @@ Item {
                 }
             }
 
-            SettingsChatModule {
+            SettingsChatModule { property string uiColorScope: "ui.widget.SettingsSurface.SettingsChatModule.4";
                 width: parent.width
                 height: root.sectionVisible("CHAT")
                     ? implicitHeight
@@ -193,7 +204,7 @@ Item {
                 }
             }
 
-            SettingsWorkspaceModule {
+            SettingsWorkspaceModule { property string uiColorScope: "ui.widget.SettingsSurface.SettingsWorkspaceModule.5";
                 width: parent.width
                 height: root.sectionVisible("WORKSPACE")
                     ? implicitHeight
@@ -224,7 +235,7 @@ Item {
                 }
             }
 
-            SettingsActivityModule {
+            SettingsActivityModule { property string uiColorScope: "ui.widget.SettingsSurface.SettingsActivityModule.6";
                 width: parent.width
                 height: root.sectionVisible("ACTIVITY")
                     ? implicitHeight
@@ -232,7 +243,7 @@ Item {
                 visible: root.sectionVisible("ACTIVITY")
             }
 
-            SettingsDeveloperModule {
+            SettingsDeveloperModule { property string uiColorScope: "ui.widget.SettingsSurface.SettingsDeveloperModule.7";
                 width: parent.width
                 height: root.sectionVisible("DEVELOPER")
                     ? implicitHeight
@@ -250,7 +261,7 @@ Item {
                 }
             }
 
-            SettingsExtensionsModule {
+            SettingsExtensionsModule { property string uiColorScope: "ui.widget.SettingsSurface.SettingsExtensionsModule.8";
                 width: parent.width
                 height: root.sectionVisible("EXTENSIONS")
                     ? implicitHeight
@@ -272,20 +283,20 @@ Item {
                 visible: root.section === "ALL"
                 spacing: 8
 
-                GgButton {
+                GgButton { property string uiColorScope: "ui.control.SettingsSurface.1";
                     text: "Reset standard layout"
                     onClicked: root.resetStandard()
                 }
 
-                GgButton {
+                GgButton { property string uiColorScope: "ui.control.SettingsSurface.2";
                     text: "Close settings"
                     onClicked: root.closeRequested()
                 }
 
-                Text {
+                GGText { colorKey: "ui.SettingsSurface.2";
                     anchors.verticalCenter: parent.verticalCenter
                     text: "theme-id · " + root.themeId
-                    color: "#a8b0b8"
+                    color: RuntimeTheme.GGTheme.muted
                     font.family: "monospace"
                     font.pixelSize: 12
                 }

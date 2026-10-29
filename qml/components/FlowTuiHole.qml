@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
@@ -80,7 +82,7 @@ FocusScope {
 
     Rectangle {
         anchors.fill: parent
-        color: "#161616"
+        color: RuntimeTheme.GGTheme.panel
     }
 
     Flickable {
@@ -98,24 +100,24 @@ FocusScope {
         boundsBehavior: Flickable.StopAtBounds
         contentWidth: width
         contentHeight: logCol.height
-        ScrollBar.vertical: GgScrollBar {}
+        ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.FlowTuiHole.GgScrollBar.1";}
 
         Column {
             id: logCol
             width: logFlick.width
             spacing: 10
 
-            Text {
+            GGText { colorKey: "ui.FlowTuiHole.1";
                 visible: root.transcript.length === 0
                 width: parent.width
                 text: "FLOW TUI · one task ledger · one motor works at a time.\nGROK TUI scopes and reviews; GPTUI owns the assigned work. Each handoff stays in this chat."
-                color: "#8a8a8a"
+                color: RuntimeTheme.GGTheme.dim
                 font.family: "monospace"
                 font.pixelSize: 12
                 wrapMode: Text.WordWrap
             }
 
-            Text {
+            GGText { colorKey: "ui.FlowTuiHole.2";
                 visible: root.transcript.length > 0
                 width: parent.width
                 text: {
@@ -128,7 +130,7 @@ FocusScope {
                         + " · " + owner + " owns " + String(work.phase || "")
                         + " · DONE " + completed.length + " · OPEN " + openItems.length
                 }
-                color: root.busy ? "#8db89a" : "#8a8a8a"
+                color: root.busy ? RuntimeTheme.GGTheme.positive : RuntimeTheme.GGTheme.dim
                 font.family: "monospace"
                 font.pixelSize: 11
                 wrapMode: Text.WordWrap
@@ -136,7 +138,7 @@ FocusScope {
 
             Repeater {
                 model: root.transcript
-                delegate: ChatNode {
+                delegate: ChatNode { property string uiColorScope: "ui.widget.FlowTuiHole.ChatNode.2";
                     required property var modelData
                     authorLabel: String(modelData.role || "FLOW")
                         + (modelData.stage ? " · " + String(modelData.stage) : "")
@@ -161,7 +163,7 @@ FocusScope {
         spacing: 8
         height: 28
 
-        GgField {
+        GgField { property string uiColorScope: "ui.widget.FlowTuiHole.GgField.3";
             id: input
             objectName: "flowTuiPrompt"
             width: Math.max(80, parent.width - 90)
@@ -171,9 +173,9 @@ FocusScope {
             onTextChanged: root.draft = text
             Keys.onReturnPressed: root.submit()
         }
-        Text {
+        GGText { colorKey: "ui.FlowTuiHole.3";
             text: "SEND"
-            color: root.busy ? "#555555" : "#8db89a"
+            color: root.busy ? RuntimeTheme.GGTheme.edge : RuntimeTheme.GGTheme.positive
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: true
@@ -185,9 +187,9 @@ FocusScope {
                 onClicked: root.submit()
             }
         }
-        Text {
+        GGText { colorKey: "ui.FlowTuiHole.4";
             text: "RESET"
-            color: root.busy ? "#555555" : "#c8a97e"
+            color: root.busy ? RuntimeTheme.GGTheme.edge : RuntimeTheme.GGTheme.accent
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: true

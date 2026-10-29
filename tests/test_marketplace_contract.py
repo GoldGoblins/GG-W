@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 import json
+import copy
 import sys
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 PROJECT = Path(__file__).resolve().parents[1]
 if str(PROJECT) not in sys.path:
@@ -14,7 +16,48 @@ from backend import marketplace_contract
 from backend.surface_intent import parse_surface_intent
 
 
+def test_receipt_version_integrity() -> None:
+    with tempfile.TemporaryDirectory() as directory, patch.object(marketplace_contract,'STATE_DIR',Path(directory)), patch.object(marketplace_contract,'load_wallet',return_value={}), patch.object(marketplace_contract,'load_network',return_value='testnet'):
+        item=marketplace_contract.list_item({'title':'Receipt fixture','category':'ITEM','material':'UNKNOWN','price_sol':'1'})
+        original=json.loads(marketplace_contract.catalog_path().read_text(encoding='utf-8'))
+        if marketplace_contract.load_catalog()[0]['id']!=item['id']:raise AssertionError('current receipt rejected')
+        def save(row):
+            payload=copy.deepcopy(original);payload['listings']=[row]
+            marketplace_contract.catalog_path().write_text(json.dumps(payload),encoding='utf-8')
+        def reject(row):
+            save(row)
+            try:marketplace_contract.load_catalog()
+            except ValueError as exc:
+                if str(exc)!='MARKETPLACE_RECEIPT_INTEGRITY':raise
+            else:raise AssertionError('unverified receipt accepted')
+        current=original['listings'][0]
+        for version in (None,2,4,'3',True):
+            changed=copy.deepcopy(current);changed['origin']='changed without receipt update'
+            if version is None:changed.pop('identity_version')
+            else:changed['identity_version']=version
+            reject(changed)
+        unhashed=copy.deepcopy(current)
+        for key in ('identity_version','identity_sha256','state_sha256'):unhashed.pop(key)
+        reject(unhashed)
+        # Historical paper receipts hashed the seed before generating the mint,
+        # then hashed the final state including that exact generated reference.
+        legacy=copy.deepcopy(current);legacy.pop('identity_version')
+        legacy['identity_sha256']=marketplace_contract.hash_identity(dict(legacy,mint=''))
+        legacy['id']='lst-'+legacy['identity_sha256'][:16];legacy['mint']='paper:'+legacy['identity_sha256'][:32]
+        legacy['state_sha256']=marketplace_contract.hash_state(legacy);save(legacy)
+        if marketplace_contract.load_catalog()[0]['id']!=legacy['id']:raise AssertionError('valid legacy paper receipt rejected')
+        changed=copy.deepcopy(legacy);changed['owner']='changed owner';reject(changed)
+        changed=copy.deepcopy(legacy);changed['origin']='changed origin';reject(changed)
+        # Explicit legacy versions and supplied public mint references remain
+        # valid only when both recorded identity and state hashes verify.
+        legacy['identity_version']=2;legacy['mint']='11111111111111111111111111111111'
+        legacy['identity_sha256']=marketplace_contract.hash_identity(legacy);legacy['id']='lst-'+legacy['identity_sha256'][:16]
+        legacy['state_sha256']=marketplace_contract.hash_state(legacy);save(legacy)
+        if marketplace_contract.load_catalog()[0]['mint']!=legacy['mint']:raise AssertionError('valid legacy mint receipt rejected')
+
+
 def main() -> int:
+    test_receipt_version_integrity()
     src = (PROJECT / "backend" / "marketplace_contract.py").read_text(encoding="utf-8")
     host_src = (PROJECT / "backend" / "marketplace_host.py").read_text(encoding="utf-8")
     qml = (PROJECT / "qml" / "components" / "MarketplaceSurface.qml").read_text(
@@ -34,10 +77,9 @@ def main() -> int:
     if "leftLegend: \"MARKETPLACE\"" in qml:
         raise AssertionError("marketplace pane still nests a MARKETPLACE GgFrame")
     crypto_at = ws.index('text: "CRYPTO"')
-    market_at = ws.index('text: "MP"')
     tmog_at = ws.index('text: "TMOG"')
-    if not (crypto_at < market_at < tmog_at):
-        raise AssertionError("MARKETPLACE tab not between CRYPTO and TMOG")
+    if 'text: "MP"' in ws or not crypto_at < tmog_at:
+        raise AssertionError("MARKETPLACE must live inside CRYPTO without a duplicate workspace tab")
     if 'hostKind === "MARKETPLACE"' not in ws:
         raise AssertionError("workspace host kind missing MARKETPLACE")
     if parse_surface_intent("marketplace") != "MARKETPLACE":

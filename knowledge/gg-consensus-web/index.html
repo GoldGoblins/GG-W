@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GG · Certifikatkontroll</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/viewer.js" defer></script>
+</head>
+<body>
+  <header><span>GG AI DESKTOP</span><span class="gold">NÄTVERK / CERTIFIKAT</span><span id="connection">Läser lokal förankring…</span></header>
+  <main>
+    <section class="workspace">
+      <div class="heading"><div><p class="eyebrow">LÄTT KLIENT · LOKAL KONTROLL</p><h1>Kontrollera en saldobild</h1></div><span class="badge">GG-NET-TEST</span></div>
+      <p class="intro">Klistra in ett offentligt bevispaket från GG. Certifikatet och saldot kontrolleras här i webbläsaren med samma CometBFT-kod som i GG.</p>
+      <label for="packet">OFFENTLIGT BEVISPAKET <span id="packet-size">0 / 256 KiB</span></label>
+      <textarea id="packet" spellcheck="false" autocomplete="off" placeholder="Klistra in JSON från GG NÄTVERK…" maxlength="262144"></textarea>
+      <div class="actions"><button id="verify" disabled>Kontrollera certifikat →</button><button id="clear" class="quiet">Rensa</button><span id="elapsed"></span></div>
+      <section class="result" aria-live="polite"><div class="section-title"><span>RESULTAT</span><span id="result-status">Väntar på bevispaket</span></div><p id="result-title">Ingen saldobild har kontrollerats.</p><dl id="result-details"></dl></section>
+    </section>
+    <aside>
+      <section><div class="section-title"><span>FÖRANKRING</span><span class="dot"></span></div><dl><dt>Källa</dt><dd>Den här GG-sessionen</dd><dt>Kedja</dt><dd id="chain">—</dd><dt>Validatorer</dt><dd>4 fasta · 3 krävs</dd><dt>Kontroll</dt><dd>CometBFT SDK · WebAssembly</dd><dt>Bevispaket</dt><dd>Högst 256 KiB</dd><dt>Tidsgräns</dt><dd>3 sekunder</dd></dl><p>Förankringen låses när sidan öppnas. Ett nytt nät kräver en ny sida från GG.</p></section>
+      <section><div class="section-title"><span>VAD SOM VERIFIERAS</span></div><ul><li>Rätt kedja och validatorer</li><li>Minst 3 av 4 signaturer</li><li>Certifierad tillståndsrot</li><li>Kontobevis när det finns</li><li>Överföring när fullständigt bevis finns</li></ul></section>
+      <section><div class="section-title"><span>TESTNÄT / EN DATOR</span></div><p>En godkänd kontroll gäller den angivna höjden. Den bevisar inte att bilden är det senaste saldot.</p><p>Fyra processer på en dator är ett operatörsområde. Detta är ett lokalt utvecklingsnät.</p><p>Kontrollen läser bara offentliga uppgifter. Inga plånboksnycklar eller signeringsfunktioner används.</p><p id="artifact">Verifieraren laddas först vid kontroll.</p></section>
+    </aside>
+  </main>
+  <footer><span>GG · CERTIFIERAD HISTORIK</span><span>INGEN PUBLIK NÄTVERKSANSLUTNING</span></footer>
+</body>
+</html>

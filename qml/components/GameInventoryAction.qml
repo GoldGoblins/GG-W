@@ -19,7 +19,7 @@ Rectangle {
         border.color: "#465451"
         border.width: 1
     }
-    Text {
+    GGText { colorKey: "ui.GameInventoryAction.1";
         id: label
         anchors.centerIn: parent
         text: action.text

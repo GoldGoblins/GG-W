@@ -8,7 +8,7 @@ import time
 
 PROJECT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT))
-from backend import research_jobs, research_lab, research_desk, research_learning
+from backend import research_jobs, research_lab, research_desk, research_learning, research_workbench
 
 
 def main():
@@ -17,12 +17,17 @@ def main():
     sub.add_parser('tools')
     sub.add_parser('history')
     sub.add_parser('self-test')
+    s = sub.add_parser('workbench', help='Data-only workbench operation with a JSON object on stdin')
+    s.add_argument('operation', choices=sorted(research_workbench._OPERATIONS))
+    s = sub.add_parser('check', help='Run one declared local unittest and retain its version-bound receipt')
+    s.add_argument('requirement_id')
     for name in ['analyze', 'search', 'function', 'decompile', 'xrefs', 'php_analyze']:
         s = sub.add_parser(name)
         s.add_argument('path')
         if name not in {'analyze', 'php_analyze'}:
             s.add_argument('query')
         s.add_argument('--wait', action='store_true')
+        s.add_argument('--compact-session', help='Retain the full redacted JSON and return a compact, retrievable observation')
     for name in ['status', 'cancel']:
         s = sub.add_parser(name)
         s.add_argument('job_id')
@@ -34,7 +39,22 @@ def main():
     s = sub.add_parser('methods')
     s.add_argument('query')
     args = p.parse_args()
-    if args.command == 'tools':
+    if args.command == 'workbench':
+        try:
+            raw = sys.stdin.read(1024 * 1024 + 1)
+            if len(raw) > 1024 * 1024:
+                raise ValueError('REQUEST_SIZE_LIMIT')
+            payload = json.loads(raw or '{}')
+            result = research_workbench.command(args.operation, payload)
+        except (ValueError, TypeError, OSError) as exc:
+            reason = str(exc) if isinstance(exc, ValueError) and str(exc).replace('_', '').isupper() else type(exc).__name__
+            result = {'status': 'ERROR', 'reason': reason}
+    elif args.command == 'check':
+        try:
+            result = research_workbench.run_requirement(args.requirement_id)
+        except (ValueError, OSError) as exc:
+            result = {'status': 'ERROR', 'reason': type(exc).__name__}
+    elif args.command == 'tools':
         result = research_lab.tool_inventory()
     elif args.command == 'history':
         result = research_jobs.history()
@@ -55,8 +75,22 @@ def main():
             while result.get('status') in research_jobs.BUSY and time.monotonic() < deadline:
                 time.sleep(0.25)
                 result = research_jobs.status(result['job_id'])
+    exit_status = int(result.get('status') in {'ERROR', 'FAIL', 'CANCELLED', 'STALE', 'UNVERIFIED', 'NO_TESTS', 'INCOMPLETE', 'TIMEOUT', 'OUTPUT_LIMIT', 'INVALID_OUTPUT', 'INTERRUPTED'})
+    if getattr(args, 'compact_session', None):
+        try:
+            original_json = json.dumps(result, ensure_ascii=False, indent=2)
+            compact = research_workbench.observe(args.compact_session, getattr(args, 'path', ''),
+                original_json, 'RESEARCH ' + args.command, exit_status)
+            presentation = {'status': result.get('status'), 'job_id': result.get('job_id'), 'observation': compact}
+            # Include retrieval metadata in the comparison. Small results can
+            # cost more to summarize; in that case return the complete result.
+            if compact['redacted'] or len(json.dumps(presentation, ensure_ascii=False, indent=2).encode('utf-8')) < len(original_json.encode('utf-8')):
+                result = presentation
+        except (ValueError, OSError):
+            # Storage pressure must not swallow the original tool result.
+            result['compaction'] = {'status': 'UNAVAILABLE', 'original_returned': True}
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    return int(result.get('status') in {'ERROR', 'FAIL', 'CANCELLED'})
+    return exit_status
 
 
 from backend.platform_support import configure_stdio

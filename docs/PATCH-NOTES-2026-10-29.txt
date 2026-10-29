@@ -1,0 +1,129 @@
+GG-W update · 2026-10-29
+Complete desktop and headless source update since the published 2026-10-26 patch
+
+Scope
+
+This release candidate includes the entire reviewed distributable source delta
+since the latest published GG-W main patch of October 26. Already published MEDIA
+and KNOWLEDGE work is retained. The update includes every later distributable
+change, beyond the latest LAN work. The final source list,
+fresh release checks and known limitations are recorded in WINDOWS-PORT.json.
+
+CRYPTO, wallet and marketplace
+
+- A shared network/asset model drives the market explorer, wallet, marketplace
+  and network workspace. Connection, watch-address and token-import views keep
+  source/network identity and exact quantities separate from display rounding.
+  Unknown prices and stale reads remain explicit instead of becoming zero.
+- Wallet creation/recovery includes 12/24-word BIP39 flows, account roles,
+  public watch accounts, local encrypted vault/backup helpers and separate PAPER
+  and AI signing choices. Secret entry/reveal uses the protected local UI;
+  provider credentials and existing user wallets are not part of a source update.
+  Solana mnemonic derivation uses its documented path; support for a watched
+  address on another chain does not imply signing support for that chain.
+- Marketplace browsing adds network/category facets, object and collection
+  passports, media, provenance/receipt views and retained layouts for narrow
+  workspaces. RPC, catalogue and large serialization work use bounded lanes.
+
+Local network engines and DAGoblin
+
+- GG TESTNET uses owned local Hardhat EVM processes with actual headers,
+  transactions, receipts and token-contract fixtures. A separate local CometBFT
+  ledger uses four owned validators and verified certificates. These engines
+  keep their own real rules and are not relabelled as a public DAG network.
+- The shared compact dashboards show measured work and up to 128 actual live
+  block/proposal records. Dots and links refer to observed identities and real
+  parent references; missing records are never filled with invented points.
+  A common conveyor retains the dense tail, while bounded movement of the
+  newest real points and their link endpoints provides the advancing head.
+- Local DAGoblin production uses eight independently paced signers by default,
+  variable timing and one to seven known parents. Actual signatures and
+  admission are distinct from canonical finality, which remains zero.
+- Stop has a priority cancellation lane independent of busy ordinary UI/RPC
+  work. Owned workers/processes finish cleanup outside the GUI thread; duplicate
+  requests do not create an unbounded queue. Hidden observers release only
+  their own interest, and session changes reject superseded observations.
+- Private LAN setup pairs exactly three peers, with two own producer keys per
+  peer. Signed public bootstrap/invitation announcements remove manual remote-IP
+  entry. The coordinator explicitly reviews the roster before distributing it.
+  Authentication, session/sequence binding, missing-parent repair and fixed
+  transport/resource budgets are separate from public-network consensus.
+- An optional GG-LAN(TEST) ledger requires signed opt-in by all three peers.
+  Each peer signs its own exact-integer transfers; the paired coordinator
+  orders them and signs hash-chained receipts replayed by all participants.
+  A bounded ring benchmark uses authenticated fixed-purpose remote requests,
+  batched transfers, measured throughput and explicit synchronization checks.
+  This test asset has no economic value and does not claim DAG finality.
+
+Headless CLI
+
+- The shared terminal backend supports Windows, Linux and Termux installation
+  paths without requiring Qt, a browser or a graphical session. Foreground
+  sessions have explicit ownership and Ctrl+C cleanup; separate one-shot commands
+  do not control another already-running process.
+- Public TESTNET/MAINNET descriptors and readiness reporting do not automatically
+  start nodes, create a genesis, grant signing authority or declare deployment
+  ready. Public testnet/mainnet activation remains outside this LAN release.
+- Platform source packages contain explicit reviewed files and pinned dependency
+  bootstrap instructions, not installed tools, private user state or a claim
+  that native Python dependencies have already been verified on every phone.
+
+Appearance and MODEL telemetry
+
+- Shared thin Ledger borders and semantic roles keep status colours consistent.
+  The 64-colour context picker supports text, selected character ranges, linked
+  chart series and percentage/deadline modes where applicable. Wallet token
+  colours reuse the same picker. Dynamic values retain the colour of their slot.
+- Activity LEDs retain real activity, blinking and off states after recolouring.
+  CPU, network and GPU indicators use measured sample availability alongside the
+  existing disk indicator; unknown hardware is not painted as active.
+- MODEL now has one LIMIT percentage bar and a RESET time plus Swedish date.
+  WEEK and the second bar are removed. Codex usage is read on a one-second
+  background cadence; unchanged files are cached and only complete appended
+  records are parsed. Sparse updates preserve known provider values, missing
+  active sessions do not adopt unrelated logs, and unknown usage is not 0%.
+  Reset dates come from provider records and are never hardcoded.
+
+Retained MEDIA/KNOWLEDGE work and subsequent shared runtime changes
+
+The MEDIA/KNOWLEDGE features released on October 26 remain in this distribution.
+Their playback, browsing and knowledge behavior is preserved alongside newer
+shared theme, layout, wallet and network integrations.
+
+- MEDIA includes language-aware source/library filters, Swedish and nostalgia
+  catalogues, local audio metadata, playback queues, next-episode navigation,
+  fullscreen controls and asynchronous paged discovery/search. Availability and
+  source-health controls distinguish actual checks from cached entries.
+- The media catalogue/index and bounded background services retain browse and
+  selection state while data is loaded; navigation does not rerun a complete
+  library operation on every GUI change. Existing Qt audio/video and application
+  volume behavior remain part of the Windows distribution.
+- KNOWLEDGE Atlas imports local material into searchable evidence and cited
+  raster views, including body/object and clickable scene presentation. This
+  does not turn an illustration into verified editable Blender geometry.
+- RESEARCH gains the workbench/service layer and explicit evidence/capacity
+  tools. Secure local file helpers, deferred feature loading, bounded memory
+  maintenance and shutdown/backpressure regressions accompany the desktop work.
+
+Validation boundaries and next device check
+
+The current private LAN transport baseline exchanges real empty signed proposals.
+Financial token execution and canonical DAG checkpoints are not implied by a
+moving graph. A physical Windows/Linux/Termux token-circle test is still pending
+and must be recorded separately after all three clients are started and paired.
+Local three-process tests do not prove three physical devices or a Termux native
+installation. The test-token ledger explicitly identifies its single paired
+coordinator authority and does not claim permissionless consensus or production
+balances. Canonical DAG checkpoints and financial execution remain separate work.
+
+No guaranteed whole-program RAM ceiling, universal 60 Hz frame rate, quantum
+security, mainnet readiness or immunity to all attacks is claimed. Fixed sessions
+and resource budgets remain visible. Prior test runs are not substituted for the
+fresh release-candidate checks.
+
+Update and state
+
+Update the GG-W checkout with git pull, then close and restart the entire app.
+RELOAD alone does not replace the Python backend or persistent native objects.
+Installed runtimes, sign-ins, sessions, wallet secrets, local measurements and
+machine-specific configuration are retained locally and are not distributed.

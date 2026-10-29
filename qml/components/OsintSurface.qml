@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -8,19 +10,19 @@ Item {
     signal researchRequested(string section)
 
     property var surfaceHost: null
-    property color frameBorder: "#4a4a4a"
+    property color frameBorder: RuntimeTheme.GGTheme.edge
     property int frameRadius: 4
-    readonly property color ink: "#e6edf3"
-    readonly property color text: "#c8cdd4"
-    readonly property color muted: "#7f8993"
-    readonly property color panel: "#181818"
-    readonly property color panelRaised: "#202020"
-    readonly property color selectedPanel: "#34383d"
-    readonly property color ledgerGold: "#c8a97e"
-    readonly property color ledgerGreen: "#8db89a"
-    readonly property color signalBlue: "#7fa9c4"
-    readonly property color signalRed: "#c98989"
-    readonly property color signalViolet: "#b6a6c8"
+    readonly property color ink: RuntimeTheme.GGTheme.bright
+    readonly property color text: RuntimeTheme.GGTheme.text
+    readonly property color muted: RuntimeTheme.GGTheme.dim
+    readonly property color panel: RuntimeTheme.GGTheme.panel
+    readonly property color panelRaised: RuntimeTheme.GGTheme.raised
+    readonly property color selectedPanel: RuntimeTheme.GGTheme.line
+    readonly property color ledgerGold: RuntimeTheme.GGTheme.accent
+    readonly property color ledgerGreen: RuntimeTheme.GGTheme.positive
+    readonly property color signalBlue: RuntimeTheme.GGTheme.blue
+    readonly property color signalRed: RuntimeTheme.GGTheme.negative
+    readonly property color signalViolet: RuntimeTheme.GGTheme.purple
     property string statusJson: "{}"
     property string page: "OVERVIEW"
     property bool sidebarCollapsed: false
@@ -213,9 +215,9 @@ Item {
         if (kind === "conflicts")
             return root.signalViolet
         if (kind === "cameras")
-            return "#6ec4d8"
+            return RuntimeTheme.GGTheme.cyan
         if (kind === "gdelt" || kind === "news")
-            return "#7fa9c4"
+            return RuntimeTheme.GGTheme.blue
         return root.text
     }
 
@@ -853,7 +855,7 @@ Item {
         root.saveUi()
     }
 
-    OsintGlobe {
+    OsintGlobe { property string uiColorScope: "ui.widget.OsintSurface.OsintGlobe.1";
         id: overviewGlobe
         visible: true
         anchors.fill: parent
@@ -863,7 +865,7 @@ Item {
         muted: root.muted
         signalBlue: root.signalBlue
         ledgerGold: root.ledgerGold
-        panel: "#05070c"
+        panel: RuntimeTheme.GGTheme.canvas
         onViewportChanged: function(view) { root.refreshViewport(view) }
     }
 
@@ -892,7 +894,7 @@ Item {
             contentWidth: width
             contentHeight: navColumn.height
             boundsBehavior: Flickable.StopAtBounds
-            ScrollBar.vertical: GgScrollBar { }
+            ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.OsintSurface.GgScrollBar.2"; }
 
             Column {
                 id: navColumn
@@ -902,7 +904,7 @@ Item {
             Item {
                 width: navColumn.width
                 height: 30
-                Text {
+                GGText { colorKey: "ui.OsintSurface.1";
                     anchors.centerIn: parent
                     text: "☰"
                     color: root.ink
@@ -927,9 +929,9 @@ Item {
                         radius: 3
                         color: root.page === modelData
                             ? root.selectedPanel
-                            : (navHit.containsMouse ? "#2a2a2a" : "transparent")
+                            : (navHit.containsMouse ? RuntimeTheme.GGTheme.hover : "transparent")
                     }
-                    Text {
+                    GGText { colorKey: "ui.OsintSurface.2";
                         visible: !root.sidebarCollapsed
                         anchors.left: parent.left
                         anchors.leftMargin: 12
@@ -939,7 +941,7 @@ Item {
                         font.family: "monospace"
                         font.pixelSize: 14
                     }
-                    Text {
+                    GGText { colorKey: "ui.OsintSurface.3";
                         visible: !root.sidebarCollapsed
                         anchors.left: parent.left
                         anchors.leftMargin: 38
@@ -952,9 +954,9 @@ Item {
                         font.bold: root.page === modelData
                         elide: Text.ElideRight
                         style: Text.Outline
-                        styleColor: "#05070c"
+                        styleColor: RuntimeTheme.GGTheme.canvas
                     }
-                    Text {
+                    GGText { colorKey: "ui.OsintSurface.4";
                         visible: root.sidebarCollapsed
                         anchors.centerIn: parent
                         text: root.navIcon(modelData)
@@ -980,7 +982,7 @@ Item {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             height: root.sidebarCollapsed ? 50 : 82
-            Text {
+            GGText { colorKey: "ui.OsintSurface.5";
                 visible: !root.sidebarCollapsed
                 anchors.left: parent.left
                 anchors.leftMargin: 14
@@ -993,9 +995,9 @@ Item {
                 font.bold: true
                 font.letterSpacing: 1.1
                 style: Text.Outline
-                styleColor: "#05070c"
+                styleColor: RuntimeTheme.GGTheme.canvas
             }
-            Text {
+            GGText { colorKey: "ui.OsintSurface.6";
                 visible: !root.sidebarCollapsed
                 anchors.left: parent.left
                 anchors.leftMargin: 14
@@ -1006,9 +1008,9 @@ Item {
                 font.family: "monospace"
                 font.pixelSize: 10
                 style: Text.Outline
-                styleColor: "#05070c"
+                styleColor: RuntimeTheme.GGTheme.canvas
             }
-            Text {
+            GGText { colorKey: "ui.OsintSurface.7";
                 visible: root.sidebarCollapsed
                 anchors.centerIn: parent
                 text: "⌁"
@@ -1043,14 +1045,14 @@ Item {
                     {key: "aircraft", label: "AIRCRAFT", color: root.signalBlue},
                     {key: "earthquakes", label: "EARTHQUAKES", color: root.ledgerGold},
                     {key: "fires", label: "FIRES", color: root.signalRed},
-                    {key: "cameras", label: "CCTV", color: "#6ec4d8"},
+                    {key: "cameras", label: "CCTV", color: RuntimeTheme.GGTheme.cyan},
                     {key: "news", label: "NEWS", color: root.text}
                 ]
                 delegate: Item {
                     required property var modelData
                     width: Math.max(metricLegend.implicitWidth, metricCount.implicitWidth)
                     height: 44
-                    Text {
+                    GGText { colorKey: "ui.OsintSurface.8";
                         id: metricLegend
                         anchors.top: parent.top
                         text: String(modelData.label)
@@ -1059,9 +1061,9 @@ Item {
                         font.pixelSize: 10
                         font.bold: true
                         style: Text.Outline
-                        styleColor: "#05070c"
+                        styleColor: RuntimeTheme.GGTheme.canvas
                     }
-                    Text {
+                    GGText { colorKey: "ui.OsintSurface.9";
                         id: metricCount
                         anchors.left: parent.left
                         anchors.bottom: parent.bottom
@@ -1070,7 +1072,7 @@ Item {
                         font.family: "monospace"
                         font.pixelSize: 20
                         style: Text.Outline
-                        styleColor: "#05070c"
+                        styleColor: RuntimeTheme.GGTheme.canvas
                     }
                 }
             }
@@ -1091,8 +1093,8 @@ Item {
                 anchors.fill: parent
                 anchors.margins: 8
                 spacing: 5
-                Text { text: "NEARBY · Wi-Fi / Bluetooth"; color: root.ledgerGold; font.family: "monospace"; font.pixelSize: 10 }
-                Text {
+                GGText { colorKey: "ui.OsintSurface.10"; text: "NEARBY · Wi-Fi / Bluetooth"; color: root.ledgerGold; font.family: "monospace"; font.pixelSize: 10 }
+                GGText { colorKey: "ui.OsintSurface.11";
                     width: parent.width
                     text: !root.nearbyActive ? "Pausad · aktiveras vid NAV-rutt eller zoom ≥15"
                         : root.nearbyPayload.status === "UNAVAILABLE" ? "Sensorkällor är inte tillgängliga"
@@ -1105,7 +1107,7 @@ Item {
                     height: Math.max(0, nearbyCard.height - 78)
                     clip: true
                     model: root.nearbyPayload.rows || []
-                    delegate: Text {
+                    delegate: GGText { colorKey: "ui.OsintSurface.12";
                         required property var modelData
                         width: ListView.view.width
                         height: 34
@@ -1140,7 +1142,7 @@ Item {
                 anchors.right: parent.right
                 anchors.top: parent.top
                 height: 22
-                Text {
+                GGText { colorKey: "ui.OsintSurface.13";
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     text: "INTELLIGENCE STREAM"
@@ -1149,9 +1151,9 @@ Item {
                     font.pixelSize: 12
                     font.bold: true
                     style: Text.Outline
-                    styleColor: "#05070c"
+                    styleColor: RuntimeTheme.GGTheme.canvas
                 }
-                Text {
+                GGText { colorKey: "ui.OsintSurface.14";
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     text: root.fetchBusy ? "FETCHING" : (root.statusText() + "  ↻")
@@ -1159,7 +1161,7 @@ Item {
                     font.family: "monospace"
                     font.pixelSize: 10
                     style: Text.Outline
-                    styleColor: "#05070c"
+                    styleColor: RuntimeTheme.GGTheme.canvas
                     MouseArea {
                         id: refreshHit
                         anchors.fill: parent
@@ -1185,7 +1187,7 @@ Item {
                         radius: 3
                         color: root.streamMode === modelData ? root.selectedPanel : "#181818cc"
                         border.color: root.streamMode === modelData ? root.ledgerGold : root.frameBorder
-                        Text {
+                        GGText { colorKey: "ui.OsintSurface.15";
                             id: filterLabel
                             anchors.centerIn: parent
                             text: modelData
@@ -1201,7 +1203,7 @@ Item {
                     }
                 }
             }
-            Text {
+            GGText { colorKey: "ui.OsintSurface.16";
                 anchors.top: streamFilters.bottom
                 anchors.topMargin: 16
                 visible: overviewNewsList.count === 0
@@ -1229,9 +1231,9 @@ Item {
                         radius: 3
                         color: root.selectedEvent && root.selectedEvent.id === modelData.id
                             ? root.selectedPanel
-                            : (newsHit.containsMouse ? "#2a2a2a" : "transparent")
+                            : (newsHit.containsMouse ? RuntimeTheme.GGTheme.hover : "transparent")
                     }
-                    Text {
+                    GGText { colorKey: "ui.OsintSurface.17";
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.top: parent.top
@@ -1250,9 +1252,9 @@ Item {
                         font.bold: root.selectedEvent && root.selectedEvent.id === modelData.id
                         elide: Text.ElideRight
                         style: Text.Outline
-                        styleColor: "#05070c"
+                        styleColor: RuntimeTheme.GGTheme.canvas
                     }
-                    Text {
+                    GGText { colorKey: "ui.OsintSurface.18";
                         anchors.left: parent.left
                         anchors.bottom: parent.bottom
                         anchors.leftMargin: 8
@@ -1269,7 +1271,7 @@ Item {
                         font.family: "monospace"
                         font.pixelSize: 9
                         style: Text.Outline
-                        styleColor: "#05070c"
+                        styleColor: RuntimeTheme.GGTheme.canvas
                     }
                     MouseArea {
                         id: newsHit
@@ -1294,7 +1296,7 @@ Item {
                 : Math.min(Math.max(168, detailColumn.height + 28), parent.height * 0.48)
             Rectangle {
                 anchors.fill: parent
-                color: root.navMode ? "#1a1a1a" : "#181818"
+                color: root.navMode ? RuntimeTheme.GGTheme.raised : RuntimeTheme.GGTheme.panel
                 opacity: 0.96
             }
             Item {
@@ -1305,7 +1307,7 @@ Item {
                     visible: root.navMode
                     anchors.fill: parent
                     spacing: 5
-                    Text {
+                    GGText { colorKey: "ui.OsintSurface.19";
                         width: parent.width
                         text: root.navMeta !== ""
                             ? root.navMeta
@@ -1315,7 +1317,7 @@ Item {
                         font.family: "monospace"
                         font.pixelSize: 9
                     }
-                    Text {
+                    GGText { colorKey: "ui.OsintSurface.20";
                         width: parent.width
                         text: root.navigationLabel()
                         color: overviewGlobe.positionState.fresh ? root.signalBlue : root.muted
@@ -1323,7 +1325,7 @@ Item {
                         textFormat: Text.PlainText
                         wrapMode: Text.WordWrap
                     }
-                    GgButton {
+                    GgButton { property string uiColorScope: "ui.control.OsintSurface.1";
                         objectName: "osintFollowPositionButton"
                         text: overviewGlobe.positionState.following ? "STOP FOLLOWING" : "FOLLOW POSITION"
                         onClicked: overviewGlobe.setFollowing(!overviewGlobe.positionState.following)
@@ -1347,12 +1349,12 @@ Item {
                                 id: placeChip
                                 width: parent.width
                                 height: 22
-                                color: placeDrag.drag.active ? "#2a2a2a" : "#202020"
+                                color: placeDrag.drag.active ? RuntimeTheme.GGTheme.hover : RuntimeTheme.GGTheme.raised
                                 border.color: root.frameBorder
                                 border.width: 1
                                 radius: 4
                                 antialiasing: true
-                                Text {
+                                GGText { colorKey: "ui.OsintSurface.21";
                                     anchors.left: parent.left
                                     anchors.leftMargin: 8
                                     anchors.verticalCenter: parent.verticalCenter
@@ -1361,7 +1363,7 @@ Item {
                                     font.family: "monospace"
                                     font.pixelSize: 10
                                 }
-                                Text {
+                                GGText { colorKey: "ui.OsintSurface.22";
                                     anchors.right: parent.right
                                     anchors.rightMargin: 8
                                     anchors.verticalCenter: parent.verticalCenter
@@ -1400,7 +1402,7 @@ Item {
                             }
                         }
                     }
-                    GgField {
+                    GgField { property string uiColorScope: "ui.widget.OsintSurface.GgField.4";
                         id: navDraftField
                         width: parent.width
                         placeholderText: root.navPlaces.length < 1
@@ -1424,12 +1426,12 @@ Item {
                                 required property var modelData
                                 width: navBtnLabel.implicitWidth + 12
                                 height: 22
-                                color: navBtnHit.containsMouse ? "#2a2a2a" : "#202020"
-                                border.color: navBtnHit.containsMouse ? "#8a8a8a" : root.frameBorder
+                                color: navBtnHit.containsMouse ? RuntimeTheme.GGTheme.hover : RuntimeTheme.GGTheme.raised
+                                border.color: navBtnHit.containsMouse ? RuntimeTheme.GGTheme.dim : root.frameBorder
                                 border.width: 1
                                 radius: 4
                                 antialiasing: true
-                                Text {
+                                GGText { colorKey: "ui.OsintSurface.23";
                                     id: navBtnLabel
                                     anchors.centerIn: parent
                                     text: modelData.label
@@ -1471,7 +1473,7 @@ Item {
                         id: detailColumn
                         width: parent.width
                         spacing: 5
-                        Text {
+                        GGText { colorKey: "ui.OsintSurface.24";
                             width: parent.width
                             text: root.selectedEvent ? String(root.selectedEvent.title || "") : ""
                             color: root.ink
@@ -1480,9 +1482,9 @@ Item {
                             font.pixelSize: 12
                             font.bold: true
                             style: Text.Outline
-                            styleColor: "#05070c"
+                            styleColor: RuntimeTheme.GGTheme.canvas
                         }
-                        Text {
+                        GGText { colorKey: "ui.OsintSurface.25";
                             width: parent.width
                             text: root.selectedEvent
                                 ? String(root.selectedEvent.source || "")
@@ -1493,7 +1495,7 @@ Item {
                             font.family: "monospace"
                             font.pixelSize: 9
                             style: Text.Outline
-                            styleColor: "#05070c"
+                            styleColor: RuntimeTheme.GGTheme.canvas
                         }
                         Image {
                             visible: !!(root.selectedEvent && (root.selectedEvent.photo || root.selectedEvent.media_url))
@@ -1507,7 +1509,7 @@ Item {
                         }
                         Repeater {
                             model: root.eventFacts(root.selectedEvent)
-                            Text {
+                            GGText { colorKey: "ui.OsintSurface.26";
                                 required property string modelData
                                 width: detailColumn.width
                                 text: modelData
@@ -1517,7 +1519,7 @@ Item {
                                 font.pixelSize: 10
                             }
                         }
-                        Text {
+                        GGText { colorKey: "ui.OsintSurface.27";
                             width: parent.width
                             visible: root.selectedEvent
                                 && root.selectedEvent.kind !== "aircraft"
@@ -1529,20 +1531,20 @@ Item {
                             font.family: "monospace"
                             font.pixelSize: 10
                         }
-                        GgButton {
+                        GgButton { property string uiColorScope: "ui.control.OsintSurface.2";
                             objectName: "osintCopyArticleButton"
                             visible: root.selectedEvent && root.selectedEvent.kind === "news" && !!root.selectedEvent.url
                             text: "COPY ARTICLE URL"
                             onClicked: root.copyText(root.selectedEvent.url)
                         }
-                        GgButton {
+                        GgButton { property string uiColorScope: "ui.control.OsintSurface.3";
                             objectName: "osintSaveEvidenceButton"
                             text: "SAVE TO RESEARCH"
                             enabled: root.selectedEvent && !root.selectedEvent.cluster
                                 && root.surfaceHost && !!root.surfaceHost.osintRecordEvidence
                             onClicked: root.saveEvidence()
                         }
-                        Text {
+                        GGText { colorKey: "ui.OsintSurface.28";
                             width: parent.width
                             visible: root.evidenceNotice.length > 0
                             text: root.evidenceNotice
@@ -1582,7 +1584,7 @@ Item {
                             required property var modelData
                             width: hudBtnText.implicitWidth + 16
                             height: 24
-                            color: hudBtnHit.containsMouse ? "#202020" : "#181818cc"
+                            color: hudBtnHit.containsMouse ? RuntimeTheme.GGTheme.raised : "#181818cc"
                             border.color: (
                                 (modelData.mode === "globe" && !(overviewGlobe.savedView && overviewGlobe.savedView.projection === "mercator"))
                                 || (modelData.mode === "mercator" && overviewGlobe.savedView && overviewGlobe.savedView.projection === "mercator")
@@ -1595,7 +1597,7 @@ Item {
                             border.width: 1
                             radius: 4
                             antialiasing: true
-                            Text {
+                            GGText { colorKey: "ui.OsintSurface.29";
                                 id: hudBtnText
                                 anchors.centerIn: parent
                                 text: modelData.label
@@ -1628,7 +1630,7 @@ Item {
                         }
                     }
                 }
-                Text {
+                GGText { colorKey: "ui.OsintSurface.30";
                     width: parent.width
                     text: root.positionLabel()
                     color: overviewGlobe.positionState.fresh ? root.signalBlue : root.muted
@@ -1636,14 +1638,14 @@ Item {
                     font.pixelSize: 10
                     elide: Text.ElideRight
                 }
-                Text {
+                GGText { colorKey: "ui.OsintSurface.31";
                     text: (overviewGlobe.savedView ? overviewGlobe.savedView.terrainStatus : "TERRAIN OFF")
                         + (overviewGlobe.savedView && overviewGlobe.savedView.buildingsEnabled ? " · BUILDINGS ≥14" : "")
                     color: root.muted
                     font.family: "monospace"
                     font.pixelSize: 10
                 }
-                Text {
+                GGText { colorKey: "ui.OsintSurface.32";
                     text: (
                         overviewGlobe.savedView && overviewGlobe.savedView.projection === "mercator"
                             ? "2D MAP"
@@ -1659,7 +1661,7 @@ Item {
                     font.family: "monospace"
                     font.pixelSize: 10
                     style: Text.Outline
-                    styleColor: "#05070c"
+                    styleColor: RuntimeTheme.GGTheme.canvas
                 }
             }
         }
@@ -1681,14 +1683,14 @@ Item {
             Item {
                 id: mapPage
                 objectName: "osintMapPage"
-                TmogCard {
+                TmogCard { property string uiColorScope: "ui.widget.OsintSurface.TmogCard.7";
                     visible: false
                     leftLegend: "EVENT MAP"
                     rightLegend: root.number(root.renderedPointCount()) + " POINTS"
                     borderColor: root.frameBorder
                     fill: root.panel
                 }
-                TmogCard {
+                TmogCard { property string uiColorScope: "ui.widget.OsintSurface.TmogCard.8";
                     visible: false
                     leftLegend: "LAYER COUNTS"
                     borderColor: root.frameBorder
@@ -1710,14 +1712,14 @@ Item {
                                     required property var modelData
                                     width: parent.width
                                     height: 23
-                                    Text {
+                                    GGText { colorKey: "ui.OsintSurface.33";
                                         anchors.left: parent.left
                                         text: modelData.label
                                         color: root.muted
                                         font.family: "monospace"
                                         font.pixelSize: 10
                                     }
-                                    Text {
+                                    GGText { colorKey: "ui.OsintSurface.34";
                                         anchors.right: parent.right
                                         text: root.number(root.count(modelData.key))
                                         color: root.ink
@@ -1726,7 +1728,7 @@ Item {
                                     }
                                 }
                             }
-                            Text {
+                            GGText { colorKey: "ui.OsintSurface.35";
                                 width: parent.width
                                 text: "MapLibre 3D globe with OpenFreeMap dark tiles, local land fallback, and bounded public feed points."
                                 color: root.muted
@@ -1748,13 +1750,13 @@ Item {
                         width: parent.width
                         height: 100
                         spacing: 10
-                        TmogCard {
+                        TmogCard { property string uiColorScope: "ui.widget.OsintSurface.TmogCard.9";
                             width: parent.width * 0.33 - 7
                             height: parent.height
                             leftLegend: "AIRCRAFT"
                             borderColor: root.frameBorder
                             fill: root.panel
-                            Text {
+                            GGText { colorKey: "ui.OsintSurface.36";
                                 anchors.left: parent.left
                                 anchors.leftMargin: 6
                                 anchors.bottom: parent.bottom
@@ -1765,21 +1767,21 @@ Item {
                                 font.pixelSize: 25
                             }
                         }
-                        TmogCard {
+                        TmogCard { property string uiColorScope: "ui.widget.OsintSurface.TmogCard.10";
                             width: parent.width * 0.67 - 3
                             height: parent.height
                             leftLegend: "FLIGHT SNAPSHOT"
                             rightLegend: String(root.payload.focus && root.payload.focus.label || "REGION")
                             borderColor: root.frameBorder
                             fill: root.panel
-                            TmogSpark {
+                            TmogSpark { property string uiColorScope: "ui.widget.OsintSurface.TmogSpark.11";
                                 anchors.fill: parent
                                 values: root.history("aircraft")
                                 stroke: root.signalBlue
                                 fill: "#192631"
                                 yMax: 0
                             }
-                            Text {
+                            GGText { colorKey: "ui.OsintSurface.37";
                                 anchors.left: parent.left
                                 anchors.leftMargin: 6
                                 anchors.bottom: parent.bottom
@@ -1791,7 +1793,7 @@ Item {
                             }
                         }
                     }
-                    TmogCard {
+                    TmogCard { property string uiColorScope: "ui.widget.OsintSurface.TmogCard.12";
                         width: parent.width
                         height: parent.height - 110
                         leftLegend: "AIRCRAFT TABLE"
@@ -1810,9 +1812,9 @@ Item {
                                 height: 27
                                 Rectangle {
                                     anchors.fill: parent
-                                    color: rowHit.containsMouse ? "#20262d" : (index % 2 ? "#171717" : "transparent")
+                                    color: rowHit.containsMouse ? RuntimeTheme.GGTheme.raised : (index % 2 ? "#171717" : "transparent")
                                 }
-                                Text {
+                                GGText { colorKey: "ui.OsintSurface.38";
                                     anchors.left: parent.left
                                     anchors.leftMargin: 6
                                     anchors.verticalCenter: parent.verticalCenter
@@ -1823,7 +1825,7 @@ Item {
                                     font.pixelSize: 10
                                     elide: Text.ElideRight
                                 }
-                                Text {
+                                GGText { colorKey: "ui.OsintSurface.39";
                                     anchors.left: parent.left
                                     anchors.leftMargin: parent.width * 0.25
                                     anchors.verticalCenter: parent.verticalCenter
@@ -1834,7 +1836,7 @@ Item {
                                     font.pixelSize: 10
                                     elide: Text.ElideRight
                                 }
-                                Text {
+                                GGText { colorKey: "ui.OsintSurface.40";
                                     anchors.left: parent.left
                                     anchors.leftMargin: parent.width * 0.48
                                     anchors.verticalCenter: parent.verticalCenter
@@ -1844,7 +1846,7 @@ Item {
                                     font.family: "monospace"
                                     font.pixelSize: 10
                                 }
-                                Text {
+                                GGText { colorKey: "ui.OsintSurface.41";
                                     anchors.right: parent.right
                                     anchors.rightMargin: 8
                                     anchors.verticalCenter: parent.verticalCenter
@@ -1875,14 +1877,14 @@ Item {
                 Row {
                     anchors.fill: parent
                     spacing: 10
-                    TmogCard {
+                    TmogCard { property string uiColorScope: "ui.widget.OsintSurface.TmogCard.13";
                         width: parent.width * 0.36
                         height: parent.height
                         leftLegend: "SEISMIC ACTIVITY"
                         rightLegend: "M2.5+ · 24H"
                         borderColor: root.frameBorder
                         fill: root.panel
-                        TmogSpark {
+                        TmogSpark { property string uiColorScope: "ui.widget.OsintSurface.TmogSpark.14";
                             anchors.left: parent.left
                             anchors.right: parent.right
                             anchors.top: parent.top
@@ -1891,7 +1893,7 @@ Item {
                             stroke: root.ledgerGold
                             fill: "#2b2418"
                         }
-                        Text {
+                        GGText { colorKey: "ui.OsintSurface.42";
                             id: summaryText
                             anchors.left: parent.left
                             anchors.right: parent.right
@@ -1903,7 +1905,7 @@ Item {
                             font.pixelSize: 10
                         }
                     }
-                    TmogCard {
+                    TmogCard { property string uiColorScope: "ui.widget.OsintSurface.TmogCard.15";
                         width: parent.width * 0.64 - 10
                         height: parent.height
                         leftLegend: "EARTHQUAKES"
@@ -1921,9 +1923,9 @@ Item {
                                 height: 32
                                 Rectangle {
                                     anchors.fill: parent
-                                    color: quakeHit.containsMouse ? "#20262d" : "transparent"
+                                    color: quakeHit.containsMouse ? RuntimeTheme.GGTheme.raised : "transparent"
                                 }
-                                Text {
+                                GGText { colorKey: "ui.OsintSurface.43";
                                     anchors.left: parent.left
                                     anchors.leftMargin: 7
                                     anchors.verticalCenter: parent.verticalCenter
@@ -1932,7 +1934,7 @@ Item {
                                     font.family: "monospace"
                                     font.pixelSize: 12
                                 }
-                                Text {
+                                GGText { colorKey: "ui.OsintSurface.44";
                                     anchors.left: parent.left
                                     anchors.leftMargin: 52
                                     anchors.right: parent.right
@@ -1943,7 +1945,7 @@ Item {
                                     font.pixelSize: 10
                                     elide: Text.ElideRight
                                 }
-                                Text {
+                                GGText { colorKey: "ui.OsintSurface.45";
                                     anchors.right: parent.right
                                     anchors.rightMargin: 7
                                     anchors.bottom: parent.bottom
@@ -1975,7 +1977,7 @@ Item {
                 Row {
                     anchors.fill: parent
                     spacing: 10
-                    TmogCard {
+                    TmogCard { property string uiColorScope: "ui.widget.OsintSurface.TmogCard.16";
                         width: parent.width * 0.34
                         height: parent.height
                         leftLegend: "FIRES / EVENTS"
@@ -1985,19 +1987,19 @@ Item {
                         Column {
                             anchors.fill: parent
                             spacing: 10
-                            Text {
+                            GGText { colorKey: "ui.OsintSurface.46";
                                 text: root.number(root.count("fires"))
                                 color: root.signalRed
                                 font.family: "monospace"
                                 font.pixelSize: 28
                             }
-                            TmogMeter {
+                            TmogMeter { property string uiColorScope: "ui.widget.OsintSurface.TmogMeter.17";
                                 width: parent.width
                                 ratio: Math.min(1, root.count("fires") / 100)
                                 segments: 22
                                 onColor: root.signalRed
                             }
-                            Text {
+                            GGText { colorKey: "ui.OsintSurface.47";
                                 width: parent.width
                                 text: "Open EONET wildfire and volcano events with coordinates."
                                 color: root.text
@@ -2007,7 +2009,7 @@ Item {
                             }
                         }
                     }
-                    TmogCard {
+                    TmogCard { property string uiColorScope: "ui.widget.OsintSurface.TmogCard.18";
                         width: parent.width * 0.66 - 10
                         height: parent.height
                         leftLegend: "ACTIVE EVENTS"
@@ -2024,9 +2026,9 @@ Item {
                                 height: 38
                                 Rectangle {
                                     anchors.fill: parent
-                                    color: fireHit.containsMouse ? "#20262d" : "transparent"
+                                    color: fireHit.containsMouse ? RuntimeTheme.GGTheme.raised : "transparent"
                                 }
-                                Text {
+                                GGText { colorKey: "ui.OsintSurface.48";
                                     anchors.left: parent.left
                                     anchors.leftMargin: 7
                                     anchors.top: parent.top
@@ -2038,7 +2040,7 @@ Item {
                                     font.pixelSize: 10
                                     elide: Text.ElideRight
                                 }
-                                Text {
+                                GGText { colorKey: "ui.OsintSurface.49";
                                     anchors.left: parent.left
                                     anchors.leftMargin: 7
                                     anchors.bottom: parent.bottom
@@ -2074,14 +2076,14 @@ Item {
                         width: parent.width
                         height: 112
                         spacing: 10
-                        TmogCard {
+                        TmogCard { property string uiColorScope: "ui.widget.OsintSurface.TmogCard.19";
                             width: parent.width * 0.34
                             height: parent.height
                             leftLegend: "SOLAR WEATHER"
                             rightLegend: "NOAA SWPC"
                             borderColor: root.frameBorder
                             fill: root.panel
-                            Text {
+                            GGText { colorKey: "ui.OsintSurface.50";
                                 anchors.left: parent.left
                                 anchors.leftMargin: 7
                                 anchors.bottom: parent.bottom
@@ -2091,7 +2093,7 @@ Item {
                                 font.family: "monospace"
                                 font.pixelSize: 22
                             }
-                            Text {
+                            GGText { colorKey: "ui.OsintSurface.51";
                                 anchors.right: parent.right
                                 anchors.rightMargin: 7
                                 anchors.bottom: parent.bottom
@@ -2102,14 +2104,14 @@ Item {
                                 font.pixelSize: 10
                             }
                         }
-                        TmogCard {
+                        TmogCard { property string uiColorScope: "ui.widget.OsintSurface.TmogCard.20";
                             width: parent.width * 0.66 - 10
                             height: parent.height
                             leftLegend: "STATION CATALOG"
                             rightLegend: "CELESTRAK"
                             borderColor: root.frameBorder
                             fill: root.panel
-                            Text {
+                            GGText { colorKey: "ui.OsintSurface.52";
                                 anchors.left: parent.left
                                 anchors.leftMargin: 7
                                 anchors.bottom: parent.bottom
@@ -2121,7 +2123,7 @@ Item {
                             }
                         }
                     }
-                    TmogCard {
+                    TmogCard { property string uiColorScope: "ui.widget.OsintSurface.TmogCard.21";
                         width: parent.width
                         height: parent.height - 122
                         leftLegend: "SATELLITES"
@@ -2140,9 +2142,9 @@ Item {
                                 height: 26
                                 Rectangle {
                                     anchors.fill: parent
-                                    color: satelliteHit.containsMouse ? "#20262d" : (index % 2 ? "#171717" : "transparent")
+                                    color: satelliteHit.containsMouse ? RuntimeTheme.GGTheme.raised : (index % 2 ? "#171717" : "transparent")
                                 }
-                                Text {
+                                GGText { colorKey: "ui.OsintSurface.53";
                                     anchors.left: parent.left
                                     anchors.leftMargin: 7
                                     anchors.verticalCenter: parent.verticalCenter
@@ -2153,7 +2155,7 @@ Item {
                                     font.pixelSize: 10
                                     elide: Text.ElideRight
                                 }
-                                Text {
+                                GGText { colorKey: "ui.OsintSurface.54";
                                     anchors.right: parent.right
                                     anchors.rightMargin: 7
                                     anchors.verticalCenter: parent.verticalCenter
@@ -2178,7 +2180,7 @@ Item {
             Item {
                 id: newsPage
                 objectName: "osintNewsPage"
-                TmogCard {
+                TmogCard { property string uiColorScope: "ui.widget.OsintSurface.TmogCard.22";
                     anchors.fill: parent
                     leftLegend: "WORLD NEWS"
                     rightLegend: "BBC WORLD · RISK HEURISTIC"
@@ -2196,10 +2198,10 @@ Item {
                             height: 58
                             Rectangle {
                                 anchors.fill: parent
-                                color: newsPageHit.containsMouse ? "#20262d" : "transparent"
+                                color: newsPageHit.containsMouse ? RuntimeTheme.GGTheme.raised : "transparent"
                                 radius: 3
                             }
-                            Text {
+                            GGText { colorKey: "ui.OsintSurface.55";
                                 anchors.left: parent.left
                                 anchors.right: riskLabel.left
                                 anchors.top: parent.top
@@ -2212,7 +2214,7 @@ Item {
                                 font.pixelSize: 11
                                 elide: Text.ElideRight
                             }
-                            Text {
+                            GGText { colorKey: "ui.OsintSurface.56";
                                 anchors.left: parent.left
                                 anchors.right: parent.right
                                 anchors.bottom: parent.bottom
@@ -2225,7 +2227,7 @@ Item {
                                 font.pixelSize: 9
                                 elide: Text.ElideRight
                             }
-                            Text {
+                            GGText { colorKey: "ui.OsintSurface.57";
                                 id: riskLabel
                                 anchors.right: parent.right
                                 anchors.top: parent.top
@@ -2257,7 +2259,7 @@ Item {
                 Row {
                     anchors.fill: parent
                     spacing: 10
-                    TmogCard {
+                    TmogCard { property string uiColorScope: "ui.widget.OsintSurface.TmogCard.23";
                         width: parent.width * 0.48
                         height: parent.height
                         leftLegend: "REFERENCE WATCHLIST"
@@ -2275,7 +2277,7 @@ Item {
                                 height: 29
                                 Rectangle {
                                     anchors.fill: parent
-                                    color: conflictHit.containsMouse ? "#20262d" : "transparent"
+                                    color: conflictHit.containsMouse ? RuntimeTheme.GGTheme.raised : "transparent"
                                 }
                                 Rectangle {
                                     anchors.left: parent.left
@@ -2286,7 +2288,7 @@ Item {
                                     radius: 4
                                     color: Number(modelData.severity || 0) >= 4 ? root.signalRed : root.signalViolet
                                 }
-                                Text {
+                                GGText { colorKey: "ui.OsintSurface.58";
                                     anchors.left: parent.left
                                     anchors.leftMargin: 22
                                     anchors.verticalCenter: parent.verticalCenter
@@ -2295,7 +2297,7 @@ Item {
                                     font.family: "monospace"
                                     font.pixelSize: 10
                                 }
-                                Text {
+                                GGText { colorKey: "ui.OsintSurface.59";
                                     anchors.right: parent.right
                                     anchors.rightMargin: 8
                                     anchors.verticalCenter: parent.verticalCenter
@@ -2317,7 +2319,7 @@ Item {
                             }
                         }
                     }
-                    TmogCard {
+                    TmogCard { property string uiColorScope: "ui.widget.OsintSurface.TmogCard.24";
                         width: parent.width * 0.52 - 10
                         height: parent.height
                         leftLegend: "INTERPRETATION"
@@ -2326,14 +2328,14 @@ Item {
                         Column {
                             anchors.fill: parent
                             spacing: 14
-                            Text {
+                            GGText { colorKey: "ui.OsintSurface.60";
                                 width: parent.width
                                 text: "OSIRIS REFERENCE LAYER"
                                 color: root.signalViolet
                                 font.family: "monospace"
                                 font.pixelSize: 15
                             }
-                            Text {
+                            GGText { colorKey: "ui.OsintSurface.61";
                                 width: parent.width
                                 text: "The locations are a stable orientation layer for the map. They are not presented as a live incident feed and do not replace source verification."
                                 color: root.text
@@ -2341,11 +2343,11 @@ Item {
                                 font.family: "monospace"
                                 font.pixelSize: 11
                             }
-                            TmogRail {
+                            TmogRail { property string uiColorScope: "ui.widget.OsintSurface.TmogRail.25";
                                 leftLegend: "SOURCE"
                                 rightLegend: "OSIRIS / README"
                             }
-                            Text {
+                            GGText { colorKey: "ui.OsintSurface.62";
                                 width: parent.width
                                 text: "Use NEWS, USGS, NASA and the source panel for current evidence."
                                 color: root.muted
@@ -2364,25 +2366,25 @@ Item {
                 Column {
                     anchors.fill: parent
                     spacing: 10
-                    TmogCard {
+                    TmogCard { property string uiColorScope: "ui.widget.OsintSurface.TmogCard.26";
                         width: parent.width
                         height: 78
                         leftLegend: "PUBLIC CCTV"
                         rightLegend: "SNAPSHOT FEEDS"
                         borderColor: root.frameBorder
                         fill: root.panel
-                        Text {
+                        GGText { colorKey: "ui.OsintSurface.63";
                             anchors.left: parent.left
                             anchors.leftMargin: 6
                             anchors.bottom: parent.bottom
                             anchors.bottomMargin: 8
                             text: root.number(root.count("cameras")) + " public cameras · snapshot on click"
-                            color: "#6ec4d8"
+                            color: RuntimeTheme.GGTheme.cyan
                             font.family: "monospace"
                             font.pixelSize: 13
                         }
                     }
-                    TmogCard {
+                    TmogCard { property string uiColorScope: "ui.widget.OsintSurface.TmogCard.27";
                         width: parent.width
                         height: parent.height - 88
                         leftLegend: "PUBLIC OSM PINS"
@@ -2401,9 +2403,9 @@ Item {
                                 height: 27
                                 Rectangle {
                                     anchors.fill: parent
-                                    color: camHit.containsMouse ? "#20262d" : (index % 2 ? "#171717" : "transparent")
+                                    color: camHit.containsMouse ? RuntimeTheme.GGTheme.raised : (index % 2 ? "#171717" : "transparent")
                                 }
-                                Text {
+                                GGText { colorKey: "ui.OsintSurface.64";
                                     anchors.left: parent.left
                                     anchors.leftMargin: 6
                                     anchors.verticalCenter: parent.verticalCenter
@@ -2414,16 +2416,16 @@ Item {
                                     font.pixelSize: 10
                                     elide: Text.ElideRight
                                 }
-                                Text {
+                                GGText { colorKey: "ui.OsintSurface.65";
                                     anchors.left: parent.left
                                     anchors.leftMargin: parent.width * 0.42
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: root.number(modelData.lat, 2) + " / " + root.number(modelData.lon, 2)
-                                    color: "#6ec4d8"
+                                    color: RuntimeTheme.GGTheme.cyan
                                     font.family: "monospace"
                                     font.pixelSize: 10
                                 }
-                                Text {
+                                GGText { colorKey: "ui.OsintSurface.66";
                                     anchors.right: parent.right
                                     anchors.rightMargin: 8
                                     anchors.verticalCenter: parent.verticalCenter
@@ -2451,7 +2453,7 @@ Item {
             Item {
                 id: sourcesPage
                 objectName: "osintSourcesPage"
-                TmogCard {
+                TmogCard { property string uiColorScope: "ui.widget.OsintSurface.TmogCard.28";
                     anchors.fill: parent
                     leftLegend: "SOURCE HEALTH"
                     rightLegend: String(root.payload.generated_at || "NOT FETCHED")
@@ -2463,7 +2465,7 @@ Item {
                         contentHeight: sourceColumn.height
                         clip: true
                         boundsBehavior: Flickable.StopAtBounds
-                        ScrollBar.vertical: GgScrollBar { }
+                        ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.OsintSurface.GgScrollBar.29"; }
                         Column {
                             id: sourceColumn
                             width: parent.width
@@ -2476,7 +2478,7 @@ Item {
                                 height: Math.max(88, sourceDetail.implicitHeight + 48)
                                 Rectangle {
                                     anchors.fill: parent
-                                    color: sourceHit.containsMouse ? "#20262d" : "transparent"
+                                    color: sourceHit.containsMouse ? RuntimeTheme.GGTheme.raised : "transparent"
                                     radius: 3
                                 }
                                 Rectangle {
@@ -2493,7 +2495,7 @@ Item {
                                             : (String(modelData.status || "") === "ERROR" ? root.signalRed
                                                 : (String(modelData.status || "") === "IDLE" ? root.muted : root.ledgerGold)))
                                 }
-                                Text {
+                                GGText { colorKey: "ui.OsintSurface.67";
                                     anchors.left: parent.left
                                     anchors.leftMargin: 24
                                     anchors.top: parent.top
@@ -2503,7 +2505,7 @@ Item {
                                     font.family: "monospace"
                                     font.pixelSize: 10
                                 }
-                                Text {
+                                GGText { colorKey: "ui.OsintSurface.68";
                                     anchors.left: parent.left
                                     anchors.leftMargin: 24
                                     anchors.top: parent.top
@@ -2513,7 +2515,7 @@ Item {
                                     font.family: "monospace"
                                     font.pixelSize: 9
                                 }
-                                Text {
+                                GGText { colorKey: "ui.OsintSurface.69";
                                     id: sourceDetail
                                     anchors.left: parent.left
                                     anchors.leftMargin: 24
@@ -2530,7 +2532,7 @@ Item {
                                     font.family: "monospace"
                                     font.pixelSize: 9
                                 }
-                                Text {
+                                GGText { colorKey: "ui.OsintSurface.70";
                                     anchors.right: parent.right
                                     anchors.rightMargin: 8
                                     anchors.verticalCenter: parent.verticalCenter
@@ -2559,7 +2561,7 @@ Item {
                 Row {
                     anchors.fill: parent
                     spacing: 10
-                    TmogCard {
+                    TmogCard { property string uiColorScope: "ui.widget.OsintSurface.TmogCard.30";
                         width: parent.width * 0.55
                         height: parent.height
                         leftLegend: "RECON BOUNDARY"
@@ -2569,14 +2571,14 @@ Item {
                         Column {
                             anchors.fill: parent
                             spacing: 14
-                            Text {
+                            GGText { colorKey: "ui.OsintSurface.71";
                                 width: parent.width
                                 text: "PUBLIC READ-ONLY RECON"
                                 color: root.ledgerGreen
                                 font.family: "monospace"
                                 font.pixelSize: 16
                             }
-                            Text {
+                            GGText { colorKey: "ui.OsintSurface.72";
                                 width: parent.width
                                 text: "The native surface implements the observation side of OSIRIS: fixed public feeds, source health, event mapping and copyable references."
                                 color: root.text
@@ -2584,13 +2586,13 @@ Item {
                                 font.family: "monospace"
                                 font.pixelSize: 11
                             }
-                            TmogRail {
+                            TmogRail { property string uiColorScope: "ui.widget.OsintSurface.TmogRail.31";
                                 leftLegend: "ENABLED"
                                 rightLegend: "PUBLIC FEEDS"
                             }
                             Repeater {
                                 model: root.payload.recon && root.payload.recon.available || []
-                                delegate: Text {
+                                delegate: GGText { colorKey: "ui.OsintSurface.73";
                                     required property string modelData
                                     width: parent.width
                                     text: "✓  " + modelData
@@ -2601,7 +2603,7 @@ Item {
                             }
                         }
                     }
-                    TmogCard {
+                    TmogCard { property string uiColorScope: "ui.widget.OsintSurface.TmogCard.32";
                         width: parent.width * 0.45 - 10
                         height: parent.height
                         leftLegend: "NOT ENABLED"
@@ -2617,7 +2619,7 @@ Item {
                                     required property string modelData
                                     width: parent.width
                                     height: 27
-                                    Text {
+                                    GGText { colorKey: "ui.OsintSurface.74";
                                         anchors.left: parent.left
                                         anchors.verticalCenter: parent.verticalCenter
                                         text: "—  " + modelData
@@ -2627,7 +2629,7 @@ Item {
                                     }
                                 }
                             }
-                            Text {
+                            GGText { colorKey: "ui.OsintSurface.75";
                                 width: parent.width
                                 text: "Public feeds accept no user-supplied target, URL or credential. Save observations to the shared RESEARCH workspace to investigate and corroborate them."
                                 color: root.ledgerGold

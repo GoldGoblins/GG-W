@@ -4,19 +4,19 @@
   "source_root": ".",
   "dependency_catalog": "config/dependencies.json",
   "categories": {
-    "application-code": 469,
-    "configuration": 11,
-    "contracts": 5,
-    "documentation": 7,
-    "entrypoints-and-guidance": 36,
+    "application-code": 523,
+    "configuration": 13,
+    "contracts": 6,
+    "documentation": 8,
+    "entrypoints-and-guidance": 37,
     "gg-skills": 9,
-    "gpt-knowledge": 93,
+    "gpt-knowledge": 161,
     "installation-and-packaging": 6,
-    "interface": 234,
+    "interface": 291,
     "native-engine": 1188,
-    "shared-support": 54,
-    "tests": 451,
-    "tools": 35
+    "shared-support": 93,
+    "tests": 547,
+    "tools": 38
   },
   "files": [
     {
@@ -83,24 +83,24 @@
       "path": "README.md",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 122804,
-      "sha256": "fc4977b98588b7e353196540c70c0d14702670fee9b1a4ba9a99feea90adeab3",
+      "bytes": 124059,
+      "sha256": "954dc524f0f24d137da6340b48e0cb5baddf2fc3de4e2e94ac429786eb047c9e",
       "mode": "0o600"
     },
     {
       "path": "SOURCE-MANIFEST.json",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 517623,
-      "sha256": "dab8d6edcb1861aee57bbd8c329564107897c71973f543b6bb40553bcaf46338",
+      "bytes": 566412,
+      "sha256": "409d2a2d5b7a799044b55b1543151a2aa1cf546ed0d0bb5e650da21cc0771018",
       "mode": "0o644"
     },
     {
       "path": "WINDOWS-PORT.json",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 157608,
-      "sha256": "30b6e06f802ac41b62cce435c6b298cc33aef1bd194f88651382a25070075766",
+      "bytes": 1555947,
+      "sha256": "7511bfacf621268cb4a5ca12208b1e567c2becf00b89a0de528dba1a3f99dfeb",
       "mode": "0o644"
     },
     {
@@ -224,6 +224,14 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/bitcoin_address.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 1697,
+      "sha256": "31eb666ca15e8c3787cb3af715031da519e9dacae09bf1fd8d776fdce1cfaa39",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/blender_contract.py",
       "category": "application-code",
       "kind": "file",
@@ -307,8 +315,8 @@
       "path": "backend/chat_surface_host.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 264153,
-      "sha256": "b8e63de06a0969132ed753b6e8c85a4f9d7f2f6727b310ac9191e1520138ab04",
+      "bytes": 282071,
+      "sha256": "fdf3cf0d57fe38a634bac1b23922e3c1f1a124eda82be2aa0cccf99165c733ed",
       "mode": "0o600"
     },
     {
@@ -323,8 +331,8 @@
       "path": "backend/codex_wallet.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 8847,
-      "sha256": "9258a736e0c61f706cc52d0ca502d3b9afbc9d215e66d0ce25ab1fd376d8b525",
+      "bytes": 13170,
+      "sha256": "8416b2b4d6ac02aede846126972eb4397f89bbb219e13817b1c6059838f9ba8e",
       "mode": "0o644"
     },
     {
@@ -376,6 +384,14 @@
       "mode": "0o600"
     },
     {
+      "path": "backend/crypto_activity.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 280,
+      "sha256": "477e0039088bb55bc64a1cb45de1499ff50115bb60aef11cf6346d621f85027d",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/crypto_backtest.py",
       "category": "application-code",
       "kind": "file",
@@ -416,6 +432,14 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/crypto_connections.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 6971,
+      "sha256": "8d80a1a9af001fd58f69994933a8a2f12c2328e39558214db4ee6ca79c9939f2",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/crypto_contract.py",
       "category": "application-code",
       "kind": "file",
@@ -440,6 +464,14 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/crypto_explorer.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 41180,
+      "sha256": "d3d5160439bce333bd5ffe2c964b540eef235e9fae6fc225857efc9fd51df265",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/crypto_flash_arb.py",
       "category": "application-code",
       "kind": "file",
@@ -451,8 +483,8 @@
       "path": "backend/crypto_host.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 85515,
-      "sha256": "2778ac35b66004961ffd10b1262de656ee8d1a5f2341049e2da1140125bf98eb",
+      "bytes": 86859,
+      "sha256": "3ec89a1fd9ad4fd09466f7bae3969314bff140d1de27e46eae8f79c0d70e9b6f",
       "mode": "0o644"
     },
     {
@@ -483,16 +515,16 @@
       "path": "backend/crypto_lab.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 15532,
-      "sha256": "f9e3f2b37689a8a019b76f117896159b6a2349ade1d1fac0aa3b9f159425b530",
+      "bytes": 16317,
+      "sha256": "77c539ad3138d640b21792049a05040354d840f7a6b1e716f4184ab52573e788",
       "mode": "0o644"
     },
     {
       "path": "backend/crypto_market.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 11551,
-      "sha256": "748addbfa07f1819faf81414b1ab21ba2ae929392b5308c863303945cdb2ea74",
+      "bytes": 12190,
+      "sha256": "802332d3363e2ee00c4f16619b11fb03efb4430ec69a98b54d994e163946f86c",
       "mode": "0o644"
     },
     {
@@ -507,8 +539,8 @@
       "path": "backend/crypto_paper.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 12519,
-      "sha256": "d450c5dc3c8e5d42e385aecd62a765c6addacbcac45b06ac1c8749da87f28a5c",
+      "bytes": 13200,
+      "sha256": "8a31181c9a7e050e6686d12a29c2d183e259962869b788b048853eaa1c5aeca1",
       "mode": "0o644"
     },
     {
@@ -531,8 +563,8 @@
       "path": "backend/crypto_pump_accounts.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 27901,
-      "sha256": "138ae32674d633c32cc5eefa3e83b518b2c2019f96b5c0f7baa0ddbb0e8a60ac",
+      "bytes": 28529,
+      "sha256": "523ac41f016497cc86921ff33303818fafc814ee3be67f46dfb73e51b466ff57",
       "mode": "0o644"
     },
     {
@@ -592,6 +624,14 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/crypto_svm.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 8603,
+      "sha256": "afac9efae91b6de069f230cf6a9de4618bd8550544e7c0652821f0f0b3602c91",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/crypto_trader.py",
       "category": "application-code",
       "kind": "file",
@@ -603,8 +643,8 @@
       "path": "backend/crypto_tx.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 6400,
-      "sha256": "d6c480c666549947ed7a439ca93551e08ec8d3dc612fcdbddcd2c553663fbdae",
+      "bytes": 6463,
+      "sha256": "78de7d3b2513c4fff3d002ee3940f11f01dd114f49090c20d4664d43152b0d6f",
       "mode": "0o644"
     },
     {
@@ -624,19 +664,27 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/deferred_backend.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 762,
+      "sha256": "e8b1700503994e18149d50f4d9ae2c6ba1d392c288bb75292a9b977fecfad47b",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/desktop_operator.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 13509,
-      "sha256": "38903837f4faa78622673086394a397a2c3e663d9dacd6f65bfc8a9b6e6a3de2",
+      "bytes": 14212,
+      "sha256": "24015a8d17fe6a907427ea27075e7755ebc850cf5ea6ada50a5bcbb69f7c15c8",
       "mode": "0o644"
     },
     {
       "path": "backend/desktop_settings.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 5572,
-      "sha256": "24c2c852453c8b8d559a92f68481001922a964a4348b38e83b9af90a545554a4",
+      "bytes": 6403,
+      "sha256": "a4ba297948dd7dc745bd6a8cd2d49e7966670e7bb9f0642648389b872f031cbe",
       "mode": "0o600"
     },
     {
@@ -2320,6 +2368,78 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/gg_block_graph.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 10935,
+      "sha256": "c4b520fa640c1f04fcd420ac53f47a4eb81c982c9c80b024a2e7cf23e089a984",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_consensus.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 44641,
+      "sha256": "509271e8c4cf4185140985a644695d66bb1116bb49627469ee9dcfdc96318f6e",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_consensus_web.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 10138,
+      "sha256": "9ed722a4591afc8cf219f77064a3e3db9b7d914259ee8f20b032b80ea26f0b0f",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_ed25519.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 1034,
+      "sha256": "1061f6c6b088770f5b1d6e682c9127d57d066c1332c02b8230b84ed112d376b1",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_lan_dag.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 60397,
+      "sha256": "66c942f8a0b9c7439ba98bc4702adb0c990a251d5dd410fd797c93678ef96d2a",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_lan_test_tokens.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 12788,
+      "sha256": "7b6db2b814acccdb87f104121767393fc0bf038703a029b20b474503205c1768",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_parallel_dag.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 63041,
+      "sha256": "4764ca4069b8a17b0ca100443628354ea1764c25abbab464422c7e06ab1b819f",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_testnet.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 36387,
+      "sha256": "64862eee80c37348b6d3b3b9ffb36088e6f0413bbb0815c7d56295319bd1d925",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_testnet_process.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 7868,
+      "sha256": "01f3c36900210d14507eda202a40e48b71249c40a0bf7e30e5bd906e264f161a",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/gpt_memory_commands.py",
       "category": "application-code",
       "kind": "file",
@@ -2347,8 +2467,8 @@
       "path": "backend/grok_wallet.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 12471,
-      "sha256": "28973793b5dfdaa0826ffd9126d297bfe37963845487c188885b07ff39847414",
+      "bytes": 13071,
+      "sha256": "403ccdb5d1479a1df5b5eb06506786dde54a59f3e7b4016f153ddceb3f7cb050",
       "mode": "0o600"
     },
     {
@@ -2416,19 +2536,35 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/kaspa_address.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 2404,
+      "sha256": "ae9fe4057647f0318341e19c23ca0f0975757f6d7300942c0428cbd3af6f3c78",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/kaspa_contract.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 2361,
-      "sha256": "cfbd8b99a9596c0d2487ee4b827544da3ed5689ac9af1d903d1cab5d73742a93",
+      "bytes": 2359,
+      "sha256": "80c0c01929555c7eb5466aa17b029d30400d99bd0c620ae87c48d28c536e08c1",
       "mode": "0o644"
     },
     {
       "path": "backend/kaspa_covenant.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 7763,
-      "sha256": "2bdc0426c55c390c9b960f61d5b876f11b8c097b4a5c4a4f2e392272570dd1d1",
+      "bytes": 9895,
+      "sha256": "e314cac3ce6a693e3050d6121dbbc55373f64f3adac67d1e44f07042d1766e53",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/kaspa_node.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 6543,
+      "sha256": "89c6afc55f51a38b93da0051117a04eb8d36fa85092f8b49e47a2fac71deecb2",
       "mode": "0o644"
     },
     {
@@ -2469,6 +2605,14 @@
       "kind": "file",
       "bytes": 7593,
       "sha256": "31c39f80889e31e1816fec252a5fe7514d67ab36bb8fc1e47d84afb055d06ee9",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/lan_dag_runtime.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 19000,
+      "sha256": "2faa55269b3482c7c0e9f86cf7d3153227ad79d4d4baa7cf5f70719787b1632e",
       "mode": "0o644"
     },
     {
@@ -2731,24 +2875,24 @@
       "path": "backend/live_vision.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 22636,
-      "sha256": "2767775b292ceba3137ab3181d49aee7b1916234bcce47496adc95ce48465de8",
+      "bytes": 23586,
+      "sha256": "b79138b7ceb8788700208ec86826729d17d64cffef83f9294422f122f5a61eb9",
       "mode": "0o644"
     },
     {
       "path": "backend/live_vision_capture.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 21043,
-      "sha256": "04419a44dcd7afeb957dffb2eb1b336509ba73cdfdc2dd3aecfcc90d168188e3",
+      "bytes": 21884,
+      "sha256": "4264c8789062d5ad459f305a995c207773a00dc72fb3486d210f266f89ce5f5f",
       "mode": "0o644"
     },
     {
       "path": "backend/live_vision_kwin.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 10656,
-      "sha256": "745cc45fdee926876181e7f12c4a3af41fbbe4e680c05e191eb5b261e3fe89ec",
+      "bytes": 11143,
+      "sha256": "abe43c1d5c5822b83a86312f470d0340729153febe1abbd6e70264e3f0069f10",
       "mode": "0o644"
     },
     {
@@ -2803,16 +2947,40 @@
       "path": "backend/marketplace_contract.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 28026,
-      "sha256": "b6d9c3408c1973cae8478405b249978b36b9cae0f0b04e9f8641d40b63ab6fa3",
+      "bytes": 34143,
+      "sha256": "67b42186ad9d26c6062746103516ba7f49f9e2a7543b126f79fc0b989e80e70a",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/marketplace_discovery.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 17804,
+      "sha256": "ee18d6d31c9f8fb2cc69a1ff25d2c6da23e1b4673131b2fdcefed3de5eada8d9",
       "mode": "0o644"
     },
     {
       "path": "backend/marketplace_host.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 1603,
-      "sha256": "e74b37da96cc1920f3272fd7bd81ebbc0c84b648324d2ef2e26f7ff28b4867c3",
+      "bytes": 2201,
+      "sha256": "4e4f15eb95965131dc23a500a6da3bbccca09f9f86eb050cb8d018213a23f589",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/marketplace_media.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 2468,
+      "sha256": "b30f8958f500c20140c89a04a3990e3263ad23182f69fe180d6f9329f288b79e",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/marketplace_protocols.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 9562,
+      "sha256": "a8c5b57ba7de0a4a48bcf69ab90ebafe994c983126b104a1857d01dbc51515b9",
       "mode": "0o644"
     },
     {
@@ -2867,8 +3035,8 @@
       "path": "backend/media_diagnostics.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 7055,
-      "sha256": "3d6457eaddd278088e82cce83562a6c140226ddcb1d7f38a5caeb23878cde9b2",
+      "bytes": 8265,
+      "sha256": "1baf29567daef3eff0f6995df81fc5768dc9d10906446d9ba9b9981b90b72a10",
       "mode": "0o644"
     },
     {
@@ -3038,6 +3206,14 @@
       "bytes": 23276,
       "sha256": "07fac057522e3a79c19836bd3c76bec26eb88c7cc62a1c7459a7f86950fc333d",
       "mode": "0o600"
+    },
+    {
+      "path": "backend/model_usage_runtime.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 3221,
+      "sha256": "3b2b031b548c3142f89eae9c33d1e0799d4db3a043fd0014549020ff3b99c74c",
+      "mode": "0o644"
     },
     {
       "path": "backend/native/linux-x86_64/build.json",
@@ -3304,6 +3480,30 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/network_profiles.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 7318,
+      "sha256": "6a2ca085ec3fbcdc88f300efe587184e344e44d7028010664b8dd6a1ee3ad3b1",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/network_stop.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 3603,
+      "sha256": "a0dc91adc198f32ba5168c8a2bdc9b0fca91323e3ac6bba6ad21ed298cee4dec",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/network_telemetry.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 7518,
+      "sha256": "6dae6e61e0b61e6275f498b8ed69ceea71f60630b831d0cc37304a4aa3b06e61",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/node_flow.py",
       "category": "application-code",
       "kind": "file",
@@ -3312,11 +3512,91 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/omni_assets.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 14708,
+      "sha256": "a3caa7e59e0366e597e4c7a063223134978e6a3bf379b8586b95b2e4c4ec9903",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/omni_bots.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 3661,
+      "sha256": "d7d5853c6211ff815441abe8afbbb38b073e8f03adb6763f8ec01c88f57ae18a",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/omni_discovery.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 7716,
+      "sha256": "a7fefc693630572d3ddc8fdbb4858b0bbd56b3fdd4793c96e01387d90bd81053",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/omni_gpt_profiles.py",
       "category": "application-code",
       "kind": "file",
       "bytes": 17844,
       "sha256": "48883c581a6d5acc6ceb6ef6102701c1d4b220d3ea4412388382ae8ec9335429",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/omni_intents.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 1950,
+      "sha256": "a1a340439c844272676d01225093e7f5d00c54bc676ad25acf15e0f5791163da",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/omni_lab.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 28505,
+      "sha256": "3fb8e67e86af336384df92e45aac9cbdee4024c37c8f0535b677a2889d7516a1",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/omni_rpc.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 10961,
+      "sha256": "7be11028b7a65b07274b6644758770cb60b30c328d9cebc14da37e0a0cd78309",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/omni_service.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 13607,
+      "sha256": "d67061c0862bbea49a213dd11d4260ac62b551980b0b4368bf86c26f63a2493a",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/omni_transport.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 5506,
+      "sha256": "6dd815e10c8587691f2cf9712faa6c2a8b1cabbe07c13c5260e89063db9d74bc",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/omni_wallet.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 13404,
+      "sha256": "f2f16f1cd6f22fca3ddb18db5651bbf1b553c65baab689c00ee0332dea4211f3",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/omni_web.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 2768,
+      "sha256": "f773449a90b783c71a703ef6e749f56a29fe35f8cc81a62db523473500a46d9c",
       "mode": "0o644"
     },
     {
@@ -3419,8 +3699,8 @@
       "path": "backend/platform_files.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 13821,
-      "sha256": "1f0e031d0c1500a7d31d258f2d896f062271e796530f94944378b1c708196766",
+      "bytes": 14133,
+      "sha256": "2e4eb6e9c1a762519e9221c479ccd81f863c8d61bdd02d5fbf4648105ec17a1f",
       "mode": "0o644"
     },
     {
@@ -3448,6 +3728,14 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/portable_wallet_vault.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 2994,
+      "sha256": "da6cfd1e68fe9e271fb32c522ea6b15dab089c8d4b45fce252d183067aa62cb7",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/qip_lab.py",
       "category": "application-code",
       "kind": "file",
@@ -3459,8 +3747,8 @@
       "path": "backend/research_desk.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 30598,
-      "sha256": "f36ec3007c45217b7f948fde778f6bbf6d7a8a14306ab365e0b4383384a0f78c",
+      "bytes": 33910,
+      "sha256": "fb9c075e0a6949bdb2b96f43e1a2c1b2c1b0a10e6e03bebab16c17a1075bc049",
       "mode": "0o644"
     },
     {
@@ -3475,8 +3763,8 @@
       "path": "backend/research_lab.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 17376,
-      "sha256": "b56e3b1cb8ffc8dc2154a0e2dc3748b0246a0e51811b811ecdb924a2ea8d9630",
+      "bytes": 17770,
+      "sha256": "882f556cd5cc6dbe33790689341873e3d5d81a7dc5ecd2010c063ff91948dd34",
       "mode": "0o644"
     },
     {
@@ -3485,6 +3773,22 @@
       "kind": "file",
       "bytes": 9897,
       "sha256": "d65936244446608e84c858c182c76373c6e1e1d6cb78610c22f89dd1b27769e8",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/research_workbench.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 35341,
+      "sha256": "cab1c4047fec7e84235fd811f50d63d54c86cb94bc15bdfeca4f6a7961d31f08",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/research_workbench_service.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 2068,
+      "sha256": "3526c129e92d6be8beadc6c051cd40b07bbb9e3ac8dccb90740d450f4f126dcc",
       "mode": "0o644"
     },
     {
@@ -3509,6 +3813,22 @@
       "kind": "file",
       "bytes": 34399,
       "sha256": "bac59c8d474d6a64f7966b67c8e236548c8be257a352903d7bff173f67e8a3b4",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/runtime_heap_reclaim.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 2419,
+      "sha256": "7c957976eabc8aa389becfa525f59ec96b5ebf0dd35a7f0a67cb2d4245c578f3",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/runtime_memory_maintenance.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 5286,
+      "sha256": "967e526c5f4767c838a169a6b84058ced06f2980cf0f4acc8330d485ecd292d8",
       "mode": "0o644"
     },
     {
@@ -3541,6 +3861,14 @@
       "kind": "file",
       "bytes": 22628,
       "sha256": "11b76338d6d79846bea410d4ec311ce789961cc33fad46e7f14af330a611223d",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/sensitive_ui_guard.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 10084,
+      "sha256": "b3d459108382dbcf7cdc4dde87682b309077c54346860cc36762bb66886b6493",
       "mode": "0o644"
     },
     {
@@ -3616,6 +3944,22 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/solana_metadata.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 1958,
+      "sha256": "696d64e3e9e492e0bf2e2bf44c896a4b919af1a8f3a20d8f743f8d26453261f3",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/solana_transfers.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 23644,
+      "sha256": "b33e9ac0fdd1e1187d44a5cd413b1e84ea88d5b21d646b898c6e8aa5a58fadf9",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/solver_router.py",
       "category": "application-code",
       "kind": "file",
@@ -3656,11 +4000,35 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/terminal_approval.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 5733,
+      "sha256": "1824607edbdf59268dc20764b4960c01248ea1a71df921799f1e004f660bc286",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/terminal_cli.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 46602,
+      "sha256": "c01f10b98178774a80b6b0986d6507dd5259096cd4cd647111d2a2a11a842629",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/terminal_grid.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 48234,
-      "sha256": "534fe705ca020f933a0ec586040a5c4aed534d4dcfccb9cf40dc2ce0c7dea51e",
+      "bytes": 48469,
+      "sha256": "531d9fb63034d642fa65fe32e944318f558a62bf3f7cea94870347a28b32d00b",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/terminal_service.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 25816,
+      "sha256": "e10568e756ec44d51ea83cc4c9a34b58a0a63cd4deabbd646d10a139fd5c3ae2",
       "mode": "0o644"
     },
     {
@@ -3704,11 +4072,27 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/token_market_prices.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 19223,
+      "sha256": "4fef66b8006b19c23a7dfdb5bacc09af7749abdc84a6ce4976f7fdb9c7e47f51",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/torlink_embed.py",
       "category": "application-code",
       "kind": "file",
       "bytes": 6872,
       "sha256": "832cd58653b1eef94d24dc0a8e9ea1a7e3411cc45c956295087c2449e8380363",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/ui_color_customization.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 21703,
+      "sha256": "4a557330bff6fb8a7826b6e28c30876f11fb7c3cd563c7a45a6592e95d918a64",
       "mode": "0o644"
     },
     {
@@ -3728,11 +4112,59 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/wallet_account_roles.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 3416,
+      "sha256": "e8a701870a3586d65d4030efc8ec102fbe05d9a0fce7e250dd9021cea28db7e8",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/wallet_approval.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 13725,
+      "sha256": "2a8bc9379c83266529149f78354212aa68dd76fce705de470542814adc62bd43",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/wallet_mnemonic.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 16429,
+      "sha256": "a5fd7ba4da79537263365cf7fe293aaddd06e4730df6a88e9f8532552429502b",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/wallet_recovery_ui.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 9187,
+      "sha256": "1908c7923983e25df9423b63cc5b59b4d3ec2b99559efb4c215a9a41ec53ae72",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/wallet_token_colors.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 3005,
+      "sha256": "6e0f708f7941285d9908f110b8a9fdbeaad015750846c977721f1439cefc6e7b",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/wallet_vault.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 14904,
+      "sha256": "9bb66a0d6143387d5f30dc35d125d20e6f93afbd89aa3e68ca0e3ab51873a87b",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/web_operator.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 30397,
-      "sha256": "f19a09971a22518709705b918608a7ff3fb92c9aaa4a4b2d6f89cb648e3d5c86",
+      "bytes": 30898,
+      "sha256": "14f638b750025410fc4405421476fbbb6a2aa5251570dd70b64fa2a2c651d6fc",
       "mode": "0o644"
     },
     {
@@ -3803,8 +4235,8 @@
       "path": "backend/windows_vision.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 9513,
-      "sha256": "7a6eb489c7b03035d81729b05c0a02e2badbc1f44e2ca6798eaefcfdec1b4d46",
+      "bytes": 10367,
+      "sha256": "a2f95e65d22e323c2e81a7e4b87d60e5d6a89777679543283466364a01189063",
       "mode": "0o644"
     },
     {
@@ -3883,8 +4315,16 @@
       "path": "config/dependencies.json",
       "category": "configuration",
       "kind": "file",
-      "bytes": 14713,
-      "sha256": "b5b5cda45fb015d82e20b993187170b925bae2d36dfaf668f1697ce1619f0feb",
+      "bytes": 19527,
+      "sha256": "bdc2b60478a4d1a3823accc1cae76e00236235c9ddd656240f8aa5a38f32a4ac",
+      "mode": "0o644"
+    },
+    {
+      "path": "config/gg-palette.json",
+      "category": "configuration",
+      "kind": "file",
+      "bytes": 3217,
+      "sha256": "f3e52acc2d0f97285700e4a62b49b1717bc43d9edc0dd465dec4d13cf2899b1a",
       "mode": "0o644"
     },
     {
@@ -3925,6 +4365,14 @@
       "kind": "file",
       "bytes": 1813056,
       "sha256": "0805cfe110841088102eaf5de4d09323fb4b7cec9271d84a55f4b543f98a8397",
+      "mode": "0o644"
+    },
+    {
+      "path": "config/omni-networks.json",
+      "category": "configuration",
+      "kind": "file",
+      "bytes": 2310,
+      "sha256": "4b9df174b7c6896b9358e51f17559db6cdb3a049cc18da3df2211b9c5c9c679b",
       "mode": "0o644"
     },
     {
@@ -3992,6 +4440,14 @@
       "mode": "0o644"
     },
     {
+      "path": "docs/PATCH-NOTES-2026-10-29.txt",
+      "category": "documentation",
+      "kind": "file",
+      "bytes": 8061,
+      "sha256": "df4006dc0c5b2cc4e5cb3f117090cceae571973a61299972ac5d996e36fe4168",
+      "mode": "0o644"
+    },
+    {
       "path": "docs/gg-ai-desktop.png",
       "category": "documentation",
       "kind": "file",
@@ -4005,7 +4461,7 @@
       "kind": "file",
       "bytes": 362,
       "sha256": "a93af0785a37267027164222d9d0028daecde4b53b68cbe435193f22075b2b5f",
-      "mode": "0o644"
+      "mode": "0o755"
     },
     {
       "path": "gg-blender.cmd",
@@ -4013,6 +4469,14 @@
       "kind": "file",
       "bytes": 312,
       "sha256": "6d6856e3f9b3a1e4e6cf7caf6c267ff85c5bf159e058bdab07ac08223a279635",
+      "mode": "0o644"
+    },
+    {
+      "path": "gg-cli.py",
+      "category": "entrypoints-and-guidance",
+      "kind": "file",
+      "bytes": 2285,
+      "sha256": "e042bafbd87940bb672ccd4208f2ba62590db02958c9e20f188d1e36f98c505a",
       "mode": "0o644"
     },
     {
@@ -4099,8 +4563,8 @@
       "path": "gg-research",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 2544,
-      "sha256": "af82ab084551aba099840a0887af2addc790a0f0b9e8b870f989ee931cc107c6",
+      "bytes": 4923,
+      "sha256": "aa142d7db160205bf43a3c816735ebdad9a642b2f1eb97dfe77669bc6f68cf1e",
       "mode": "0o755"
     },
     {
@@ -4147,8 +4611,544 @@
       "path": "kaspa/counter.sil",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 584,
-      "sha256": "ad1154baffc0715542381f5b18f43c45f2e0f54b1647d3d5f259619f95ea892e",
+      "bytes": 596,
+      "sha256": "d61d9a37ad1cad6468d1f08a6927ba186fbb1d0a3809a90d0bcae3a17d3072f9",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/crypto-runtime.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 7268,
+      "sha256": "c6b6ffb14d8faa0787031281fb13c048a241e1f4a856068f59727668e2eea06c",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/crypto-session-review.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 10252,
+      "sha256": "98619f68fb625ee66ae53b227848d2688a3d0e6f7944d93103f371fcb2809315",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/crypto-space-session-audit.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 6534,
+      "sha256": "990a3109bedacf89d9bc192aa4d4bd86f94e8d7a2451bd4c65a55f03cff3ddf1",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/crypto-space-tui.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 9862,
+      "sha256": "988ecd6a9ff0979ccac1436a8d63f0da73c1735c6ea8f986f2fd378dfce3f004",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/dagoblin-lan.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 6646,
+      "sha256": "7f9a77458e7b4bfa69aaae9ee0f420756e0c8ea57bb51cb05cae7686cf58aadb",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/dagoblin-launch-readiness.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 4721,
+      "sha256": "08c02d575ab9b93ede180658ec6971a7bb9a8542ea914b506f2de6db642cbbd5",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/design/crypto-space-v1/README.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 3430,
+      "sha256": "8d97436ff49e0f925667347cc1f31ac409e060f3f4c91f6f9f7f4246aab106b9",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/design/crypto-space-v1/implementation.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 8010,
+      "sha256": "f0cb6f36f8cb995130900fdc45a07e8e61421dd35bae121c39381d62c5636028",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/design/crypto-space-v1/marketplace.png",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 1918473,
+      "sha256": "ba0a0036cd8ce5f0dbd7d42eb1df03f9d244fd71d97172b8872ae22e7b6fdfc5",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/design/crypto-space-v1/overview.png",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 1556120,
+      "sha256": "d95409a0e12c77edcd105ab3cb719f20020fa26bc5a2a1a66539b81e29b2aa86",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/design/crypto-space-v1/wallet.png",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 1472431,
+      "sha256": "f1e7e01c7c9e5ccb5de40aafcd452c8a518b7cb77d22e9ccd9e3762e5b11d328",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/design/gg-network-wallet-v12/concept.png",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 1778771,
+      "sha256": "d0db117878f5ae6cd142582138f8e722cd795a6baf9b5eb487b6797989be250d",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/design/gg-network-wallet-v12/prompt.txt",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 1427,
+      "sha256": "3c8c1f9d9c53be3a6bf370c7a194cd8a4d98f76960bc911c1cb3bbdc529e21f7",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/design/gg-network-wallet-v13/README.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 2142,
+      "sha256": "4a9e98d8ac24f4a514c4dbababbbb46486b9745adab03f1035622b19b9eb60ee",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/design/gg-network-wallet-v13/appearance-semantic-16.png",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 33047,
+      "sha256": "136067a1adb0676594bfdd869b22d857e5c14514414c9360e48cd6e231f7f70d",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/design/gg-network-wallet-v13/parallel-dag.png",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 315536,
+      "sha256": "83416d21293f762bebe566ab3d660e6058e7e240aec46b667c62e750d84c4589",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/design/gg-ui-colors64/README.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 1581,
+      "sha256": "83196a2352781b58fdcde7dd090caddb831119d78411d07451f5cfba6217be16",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/design/gg-ui-colors64/block-points.png",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 30728,
+      "sha256": "641f9633f3f0a4475245a40a0ab95e58d74d6736c4d9c3f858edf388469cac1d",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/design/gg-ui-colors64/dag-points.png",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 62193,
+      "sha256": "05260308c93893dfac3763b33a4bfd5a835390fc4fcff595709a2f7356888451",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/design/gg-ui-colors64/role-colors.png",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 39651,
+      "sha256": "67a8cf64602b868869b190441905ee3285e0a9de1259a798e4855903187a3c84",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/design/ledger-chrome.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 2639,
+      "sha256": "7a3acd2982bd42b79a0287dee0451b08c49ca1e2272e0c6ac468fdaa9a231726",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/design/network-dashboard-v1/README.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 7012,
+      "sha256": "2484bdb0cb0ac6170990f4ce33a6ad21b0c28b27f5fbf5ae6c0cdb555a554f6f",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/design/network-dashboard-v1/concept-lab.png",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 1528031,
+      "sha256": "db7889be510d1adee3b11328a44211857aa2fc86feb21d3c8cbd90476a1b6625",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/design/network-dashboard-v1/concept-testnet.png",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 1629002,
+      "sha256": "8202d4735db1d3083bd0711c02b747ac0f3b7ed55b424bc062b1d7eeb27f284e",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/design/network-dashboard-v1/prompt-lab.txt",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 4542,
+      "sha256": "72663a0f022545b71b9b76e96caa540e14469811a1c9aa49f673e62425dd04a5",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/design/network-dashboard-v1/prompt-testnet.txt",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 3437,
+      "sha256": "15fdf5427764811ac3d6f94ccd449bdefe6b1e75be3a91cf871b28b6dfb8c8af",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/design/wallet-popup-v1/README.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 2448,
+      "sha256": "e1b2a21be1af9f01a9e40fd140a5d0abd91d297c118972a164416f2e98a8513c",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/design/wallet-popup-v1/concept.png",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 1285159,
+      "sha256": "8d7363a4d571ac35b7cd7629f46d51616e9955fed56530922f2b930bc4cd25b9",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/design/wallet-popup-v1/prompt.txt",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 2644,
+      "sha256": "b70f19bf2343b3eb4a89b9ee0a6fcda3f821c5bcc8001acf79827d4174a65942",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/gg-block-cadence-v13.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 2600,
+      "sha256": "d8fc523899af2e624a6a341593bde4f7b27502a16bbd062eb6ef83238f5972fb",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/gg-block-telemetry.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 7840,
+      "sha256": "bb45312c77ae467c75aec85e3c0b8997bd7782965a1f950611c39776a1e23cb1",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/gg-consensus-web/README.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 1414,
+      "sha256": "24c51dcfafc4e32dd31cc57ed0bef6e83f9abf10757470797446593b9827b536",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/gg-consensus-web/index.html",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 2873,
+      "sha256": "4e850780a2bf8a26b82095dfdf4e56e3d8a0c016706543dd1a7066cf842b074a",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/gg-consensus-web/proof-policy.js",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 4816,
+      "sha256": "63e24dd9ff5101ec603398d2ebc9f345d8f55f00d64e278cddf3113940e3b38c",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/gg-consensus-web/style.css",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 3400,
+      "sha256": "39616a5d8abe78ca938e8fcac9462d465723d6ce2c8e3f2e92d08feadb77277a",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/gg-consensus-web/verify-worker.js",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 1125,
+      "sha256": "1b8e3ec0c75ab0db97920b968679b62a371640fb18eb4b43fcc1516d1638fcda",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/gg-consensus-web/viewer.js",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5233,
+      "sha256": "8a1288c195f83a883656fbd03342114e4b50faa1bcddc2b364e08a4761284b6d",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/gg-network-foundation-v11.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 8300,
+      "sha256": "9a8da18b9cf78f659429434531b4b7fd6dc249c28a49f861e9df904a6394528a",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/gg-network-live.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 11829,
+      "sha256": "221c769367a150176ba9e8813f516aca3d61138a46e3126fdee16b26db73a681",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/gg-network-wallet-v12.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 8657,
+      "sha256": "2f0a3d264cbee63db4bc296f31163c900dc00ab449a8904513a15dbef88a61c3",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/gg-network-wallet-v13.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 7778,
+      "sha256": "2c8b57234f2a8b47e983a7d8bcc8c3254caca274c5b4e7470e8dfaede4f9c56a",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/gg-node-web/app.mjs",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 3430,
+      "sha256": "fcdf3835d350e47cf0906a4fe670092e056f82021b6896ab66a9eb44ce3afc8a",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/gg-node-web/core.mjs",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 4617,
+      "sha256": "a3dd811acd372f15ae368c43e5634c972ba8bdd2d03b3ffbe8c38c329db0e983",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/gg-node-web/index.html",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 1932,
+      "sha256": "6cbe23906d06c350ae74a402a8b8c9a73a5a92bfc1c79d846b47f275a0ef1971",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/gg-node-web/manifest.webmanifest",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 188,
+      "sha256": "26ba346412a8e4c3e9cf50d59084bb2fec3309cc6af5d6cf41da1ef29c76698d",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/gg-node-web/style.css",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 1105,
+      "sha256": "8d864bb356a721976bd0b69d1878f3fe7ee2500bd16546d0251e8f16e2ebf66a",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/gg-node-web/sw.js",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 745,
+      "sha256": "9fb9de80f1bf32dac3334520e7899d65b8408d0c9615aedb51bdf954536be785",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/gg-parallel-dag.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 8853,
+      "sha256": "d7d9626e90b480a35eecb937f755af60fa80f5f4c8fb02adbafc262fd4f016fa",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/gg-terminal-palette.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 4528,
+      "sha256": "4bf822979c351de2d262d285df5621efdd2aa5f09352f3e0daed9b3203225c00",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/gg-ui-colors64.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 7551,
+      "sha256": "033d9d66f2b02e8fd2ad9b13912812da3d600896a65a1b0cab5fdf58d3c94bb1",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/ledger-visual-design.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 4283,
+      "sha256": "8368516366bbb4f4923cd57426ca0c2d47ac3e4f05de6bf1872fc4f6d751fc52",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/omni-network-and-marketplace.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 12785,
+      "sha256": "c7e1c5e8f74514700af9de7aa2393d5ad546a130270c51b89767da44172cd877",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/references/velo-LICENSE.txt",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 1085,
+      "sha256": "dbfaacc0ee925e084ecc0379a25d6d6945fd3a5cf3b2a675f158d7ad2b82cb3e",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research-workbench.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5356,
+      "sha256": "ed69045ba321370fc1ba2db104892b1be9c4fc217833c63dea65f507f6b036f5",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/README.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5175,
+      "sha256": "633f2c4c840882d570e12d5e95b099ebd8b8a4e3050a99285e8c7f3dfb38445b",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/benchmark-contract.json",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 4020,
+      "sha256": "b5bcf6a6c2e2d3c57f1cbbe10c31d958c4b5c48d79bcf5f6e27f59b54a5d9539",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/broader-primary-sources.json",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 11911,
+      "sha256": "21fa05bf8462b3c75158f619fa37df210eac5a69a7b37f41549bd2b78b982694",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/consensus-comparison.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 8421,
+      "sha256": "92c7a3cddc9813b50960e1f400d8bd1ec277e0fe1a765b6de7aba3e4f6fbad0b",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/dagoblin-v0-spec.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 9641,
+      "sha256": "701b2cc98caaf46d1c0a3956d15062c963c25dcdb7d480b1ad70b2b67899046e",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/kaspa-ghostdag-dagknight.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 27483,
+      "sha256": "c7e0a44b47caa2182ecf644bbbe8d475925d9e729541cb62975301815fb92dd6",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/kaspa-primary-sources.json",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 49103,
+      "sha256": "e8b6ebf73c22884d51fe00d8d8ad49acd811ff02562d495ab44c333f08ea14c3",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/quantum-and-layers.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5427,
+      "sha256": "0efc3229368fde7098c3b14b01fa1fef4f4f7aaebfb972f0a3a97520ba2a0066",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/security-neighbor-merkle.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 18124,
+      "sha256": "fc6779d9e6fee9c60e4eb9e224151d6d6541396c4cbdeda07fbf5080e8c9a3e6",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/tooling-code-audit.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 11115,
+      "sha256": "d14ee78749b2315588c2a7d5ef2a513406ee06f6695bccf728dacea582ee78aa",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/sensitive-ui-capture-boundary.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 3318,
+      "sha256": "6af6c6c379a888af35a715ac5896b7085338038d3078715ba4aa7f1fcca5000d",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/solana-wallet-and-receive.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 7897,
+      "sha256": "26e480e4e7eb0efd2b8902f7cd70454518b004cb414428448ad7ee713c708b6f",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/token-market-pricing.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 9281,
+      "sha256": "d4be080d7f7cd27e2f6c82e93fc5a87b04631450774c64aeb267941d5c743924",
       "mode": "0o644"
     },
     {
@@ -4896,11 +5896,19 @@
       "mode": "0o644"
     },
     {
+      "path": "knowledge/windows-secure-open-memory.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 7314,
+      "sha256": "63f49928935a6eed47abcfd1843a3e4229e70f80f988908465b3872e75278fe7",
+      "mode": "0o644"
+    },
+    {
       "path": "main.py",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 395096,
-      "sha256": "1fed1c4acb844f9d017afdc8e8866aa8849e48150e1f422de5b01b9db17b22fd",
+      "bytes": 401445,
+      "sha256": "26859913dca2a02427112b2870760afea8c4e143dafe69381673579be098311e",
       "mode": "0o644"
     },
     {
@@ -14411,8 +15419,8 @@
       "path": "packaging/catalog.py",
       "category": "installation-and-packaging",
       "kind": "file",
-      "bytes": 8699,
-      "sha256": "f574eee6e11b15ff8c4296aa1b9ecb38fbc55f36a46287ce21d2df526ed548e9",
+      "bytes": 8709,
+      "sha256": "6f657dca81b111c5564ca6a31ec8df354686d5abf0cf49d5664e47b9075d9a67",
       "mode": "0o755"
     },
     {
@@ -14451,16 +15459,16 @@
       "path": "packaging/source-base.json",
       "category": "installation-and-packaging",
       "kind": "file",
-      "bytes": 120503,
-      "sha256": "b2492be3ae9a28ea747e0486307b027a31ffa0ad129f78e33a7944afb85abc19",
+      "bytes": 118600,
+      "sha256": "e95477516d2df539ed255ebd79d950197eb3e042805fd58e2ec3768c2d422dc0",
       "mode": "0o644"
     },
     {
       "path": "qml/Main.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 152635,
-      "sha256": "200c241ebc725ac5fd390ee7562a1d0f49a2c97561adb4139551d07b7aff48e3",
+      "bytes": 158004,
+      "sha256": "693c502567223516f67877e014d8f1b339d5b8a6cacb72669bc2b4e70ed1d14d",
       "mode": "0o644"
     },
     {
@@ -14483,8 +15491,8 @@
       "path": "qml/components/ActivityStrip.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 3220,
-      "sha256": "a454194cead637a46b5d643f106ee66ab989616107007f14a42acbbc93173dea",
+      "bytes": 3350,
+      "sha256": "773fcc15e32355968326a3af05442434923911b15d159564b9ea6f1ad4765827",
       "mode": "0o644"
     },
     {
@@ -14507,120 +15515,152 @@
       "path": "qml/components/AgentFlowSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 8570,
-      "sha256": "41cfd7c3be04348a2a6b5d5a0f70a7ea048b61ff0b9bb7225d608015745afd23",
+      "bytes": 9540,
+      "sha256": "891c70a50a545f944a8834d5029e38fd56239544b0dbeabb7ccbc17d3691f6d3",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/AssetIcon.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 6288,
+      "sha256": "19d831f4d388323e57ab9e143fd4dc77629dc4066739afc55e95c2629f303711",
       "mode": "0o644"
     },
     {
       "path": "qml/components/AuthoringStatus.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 526,
-      "sha256": "18c23148fbf8d8c97ffc5d2b65d7c97d106e3bbe7c61683d1ec4d7ad915dc23a",
+      "bytes": 657,
+      "sha256": "90b7386c962d1b826fea46300eb386ce697ac6dfcd1e7bf3eadef9e4d34f4cf1",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/BlockRelationsGraph.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 44568,
+      "sha256": "333f7031837c5928fcc784fcb39b6b01ddcd797f805f6eef46e1177e435106d3",
       "mode": "0o644"
     },
     {
       "path": "qml/components/BufferMark.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 1055,
-      "sha256": "adb5bf69d293d9579a217d423547ad5eef7c0cbc9b69be309b554b4e62a8c622",
+      "bytes": 1101,
+      "sha256": "0fb6df166d78b67cb5bc55aba0340f78799b705ddeb98fa13718be482eccaabf",
       "mode": "0o644"
     },
     {
       "path": "qml/components/CharacterCreationPanel.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 13139,
-      "sha256": "d4bee266bba7bd8cbc0b40925954e7b249dfd81c28af37f64ed144769dc0ef64",
+      "bytes": 14320,
+      "sha256": "b93f3147ad9ebe09577ad3eecd5c7f202daf335ff2ee11d99e9b14e71ec07494",
       "mode": "0o644"
     },
     {
       "path": "qml/components/ChatActivityEvent.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 6106,
-      "sha256": "c54f9b4272577d93728eda04f01b65f8414ca0d00098fb22b01a4f35de9c3db3",
+      "bytes": 6842,
+      "sha256": "cf5ecbd14f661f0b091ec85d9f5d3f26a56805948c0426f891ed473957c4fae6",
       "mode": "0o600"
     },
     {
       "path": "qml/components/ChatLiveAidWork.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 3466,
-      "sha256": "640cb34002c0019a46337965d4ffaa0c35b977688a46f30b3b039b3e22b24b7a",
+      "bytes": 3902,
+      "sha256": "374dd83145f471b5cf26700430286663216f7edc829dd549ae6eff3e2e9af0b9",
       "mode": "0o644"
     },
     {
       "path": "qml/components/ChatNode.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 8607,
-      "sha256": "61f2693938a4b0c00b8727b3bf84c9741a5a52c12c850533380500b4b1ecd74b",
+      "bytes": 9252,
+      "sha256": "05c376b261a68283f810ed2e1790d355a41b1c3e30e2b299a6d41d3d1196f055",
       "mode": "0o644"
     },
     {
       "path": "qml/components/CodeRunnerBar.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 6841,
-      "sha256": "750bfcb63654006332a2a68dc268f54f5c4ca6c0dad5765b9e4b3e0decf8e282",
+      "bytes": 7536,
+      "sha256": "f6e194699bd67ded44b102ac041a5f67951e31dc45439b67d25978f67e7e854e",
       "mode": "0o644"
     },
     {
       "path": "qml/components/CommandPalette.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 8171,
-      "sha256": "db6f439ee4a9a5066d39fa191a3acdcd83fe13ccf382275a3b4c404781b1deaf",
+      "bytes": 8824,
+      "sha256": "2ed72de932d2fb4016121c4839b3e63a0bba4b8a9d800b99fd068065771dbd29",
       "mode": "0o644"
     },
     {
       "path": "qml/components/ContextComposer.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 22434,
-      "sha256": "27ca4ec01c3d182edd1f28d123b05a1f0bc880bddebf4953d7bbfffa21087d88",
+      "bytes": 24720,
+      "sha256": "35d959b88bd0ec61acd90c2864bb0d087013063ffb00035d0252dc4581e3c1ff",
       "mode": "0o644"
     },
     {
       "path": "qml/components/CryptoButton.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 1722,
-      "sha256": "0fbaaa8d43f5432092cf0cdbae2d792a5e2c96aff81939168964bb550c3705a6",
+      "bytes": 2152,
+      "sha256": "ce70a8de410118b0916f68bc43e3f6951c797d22ae1f6709686073c4cf46675d",
       "mode": "0o644"
     },
     {
       "path": "qml/components/CryptoChart.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 3710,
-      "sha256": "2248bdd8edec48be81bf8cb4d88c36e7762a7cab1efc371ef93201b1ff0abd91",
+      "bytes": 3755,
+      "sha256": "f5de6dc7721fd0b7dacc1eca6d3893c945ca1cb5e9eef7fe3b7d094c491e7ac6",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/CryptoConnectionPanel.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 7405,
+      "sha256": "fe5ca365279cae24d9c79bfcf7f0e43ae269540926936f630532bb92a77d4c84",
       "mode": "0o644"
     },
     {
       "path": "qml/components/CryptoField.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 562,
-      "sha256": "27ee1e273216bbad5e78877dd6a1411c0ca352447be78ee042f86724644c5933",
+      "bytes": 709,
+      "sha256": "a0dd1b9f86fba11f249faf0e68ab01780ec6a4bd75717a25bd85ddedf44eec60",
       "mode": "0o644"
     },
     {
       "path": "qml/components/CryptoHoldings.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 13596,
-      "sha256": "551170fb4bf6fd6580fe3182936553ea20647ed416b32b24c3d0838b9919c9e0",
+      "bytes": 14845,
+      "sha256": "0afd8f97121687bbf31928a7d9b926d1b7c461d9b625d61b7d76e8e4f7a55a17",
       "mode": "0o644"
     },
     {
       "path": "qml/components/CryptoPaperAccounts.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 7469,
-      "sha256": "f1c414a0f6bf3c8a0c7dde892b5791262295de8ee7cf7c13cd8079a0f12b0e53",
+      "bytes": 8295,
+      "sha256": "26369595e0f76c932e395f4c35289bf4c7cc3b159b23a3b6942e6f789a03149c",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/CryptoPick.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 1951,
+      "sha256": "44474a19800b138561414bf822b509f7616e972205830be34325f035fc382a7e",
       "mode": "0o644"
     },
     {
@@ -14635,88 +15675,216 @@
       "path": "qml/components/CryptoPortfolioSummary.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 4067,
-      "sha256": "498d43a130164be52163032a3b9183921d9d55495ba372a319c4991fdf478432",
+      "bytes": 4958,
+      "sha256": "11e467f943c6bc8634b66712ae392efb6cd129b13d617254522b93611d1b3cda",
       "mode": "0o644"
     },
     {
       "path": "qml/components/CryptoPumpPanel.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 30358,
-      "sha256": "9825471735f6db774c4e14bf4f660fb752dd3ef6d784d1e9658e8248ef5c3b61",
+      "bytes": 33912,
+      "sha256": "5b24e64371407e29b1b30ce4e4f35c81a866dc30a9155b04b2a171724d8057b9",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/CryptoSpaceFrame.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 9014,
+      "sha256": "ddacc64e76cbcd5cab3a97b2756b472fe5351a320e0ae05d97635743dc32fb02",
       "mode": "0o644"
     },
     {
       "path": "qml/components/CryptoSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 186785,
-      "sha256": "fa03bc1617a9375cf3998da1ce8eaedeec032bc483d63d2112cbbd3374a4680d",
+      "bytes": 207289,
+      "sha256": "d163d39570cb3248b96bdfbc72883a01c63dd33cd5e6e0eef1b858823f38f553",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/CryptoToggle.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 1120,
+      "sha256": "75d56f7ce618cfb408bcd59658b21c2fd6b0459ed8b7d018c0f6427e9f385318",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/DeferredSurface.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 672,
+      "sha256": "58b5c757bec41c7338be18b7397ddcaa29883829676b44887a3e1e9b330788b0",
       "mode": "0o644"
     },
     {
       "path": "qml/components/DrawSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 31070,
-      "sha256": "7f096bf2b401b3075ed98539e2532fe5b77fa2479301bac9a118cdf5e0232cbb",
+      "bytes": 32611,
+      "sha256": "f0252c1bdca76b7ec329d4d8264d3d1cf0f2f1fd33d7d7b7f7f99ac3520c4f6b",
       "mode": "0o644"
     },
     {
       "path": "qml/components/ExternalSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 5372,
-      "sha256": "e9cfc0421c919019cca41e74a11dd38ba3a8491cc527f85c2b3368dd127a3dfe",
+      "bytes": 5788,
+      "sha256": "5865113193f02393243fd5ecbbf6a1fde03a8295054151a60f38d9786686b0f1",
       "mode": "0o644"
     },
     {
       "path": "qml/components/FlowTuiHole.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 6436,
-      "sha256": "7651c2f0bda16a8483ac57bb312c224c4cf0e44eb44e56a86d0610237e13b005",
+      "bytes": 6929,
+      "sha256": "e72f6bbc14c7aedeed5e38af1ed8cbbe8bb09a246e7a879affec2320159dfa84",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/GGColorContext.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 6555,
+      "sha256": "8e9b0cdbd6eb049e9cedd552edecafdd20257bc7f234dbf06db4370d38dcef17",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/GGColorPopup.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 9588,
+      "sha256": "e0a072d316138facc98caec3ea322d6fdd4eb3d2d6cdd8540fc3804eb7aadda8",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/GGColorTarget.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 1655,
+      "sha256": "c478ae327e1adad4280aeea9e3b3fe1f164b22f80e1a366a91737250cc8755db",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/GGConsensusDashboard.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 61892,
+      "sha256": "20e9204fdb3d61b4c7cbf6554c1e326470005d011abdb01c8de9b837252bd1df",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/GGControlCaption.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 906,
+      "sha256": "bc0d184c9b4f36412d0df797945f6f30753c83ebdb82ca93821cf613c8777607",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/GGLabel.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 105,
+      "sha256": "31f23f1c5e9fb0582c6ccf16f81d51a27d9d7c04fd172d8bc71813b26fb7fa22",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/GGMeasurementBar.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 1310,
+      "sha256": "883e6fa35526e2fae12737b06e7e53554bec587ec4292bfd2e6aac1155022694",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/GGPalette.js",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 2789,
+      "sha256": "03330683be9c84dfb5bdee97feb2d4823293ca390ffd042d32abca227790e99b",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/GGParallelDagDashboard.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 43797,
+      "sha256": "e2adff83697da2ed2ab09bcc6a861edd7720f04240118c45e6103b9b24ee9586",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/GGStreamClock.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 1458,
+      "sha256": "56b7d68ca95db71ff1ab5b96233224d1221fc6b8f83d5028f2d308ce6ce8171a",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/GGTestnetDashboard.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 62058,
+      "sha256": "9dcb580fb28cfb98771f0e84e130824d6f6250549e3a4212374ff16c75fc15b9",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/GGText.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 13073,
+      "sha256": "e3484acaca76b7f10203d15d870fe622cc852e4ef7f3894bf23bce0c2374ff4b",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/GGTheme.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 3131,
+      "sha256": "40e8c9a76fa406168393193423aecca9b18fec2e35251f3dd702930b7ae73632",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GameActionBar.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 8108,
-      "sha256": "0df4dc2cdba3d36e4515c0e778f0ac778160cdb048a8aa3d062c30cbcedaf317",
+      "bytes": 8762,
+      "sha256": "39fbe3087598137da5db7367e19b9b38d78875d1a41767ccc99ef07ba9fc5852",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GameAddonsPanel.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 6623,
-      "sha256": "60c485617b805805a31b12bf4211b2bf790820abf827d22763ed0b3179575837",
+      "bytes": 7433,
+      "sha256": "a220e55bf1ec41e847ba9142ac25707fa9fffac6797324d037d0b267f298c5a9",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GameAmmunitionControls.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 2197,
-      "sha256": "8f20b504cea7c55c6aa07051a64a796f1af7905b9f238ab8db4d94bb185e47a0",
+      "bytes": 2577,
+      "sha256": "028ae268e39a3b6f658b8f109e24c9b9d00b3297cdfdaf040041be9dfeb84c81",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GameAssetInspector.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 24837,
-      "sha256": "7cf7ddbab62ecc70111a8913ea720d7018f7cd1c32e6d184692eb639cefa720f",
+      "bytes": 29206,
+      "sha256": "3d7155088a69c0531f3d207fb97ce7df27d4e7c9bf58b0bbdb90e5129b514d6c",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GameAssetPreview.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 2961,
-      "sha256": "a3a5bfcc4fe5b7943ce07d07fab8411444d7e04095bf21b8a4b55f485a10caa6",
+      "bytes": 2998,
+      "sha256": "e2a079cc65d103e105334552b217001c05579585d0f5282f0492d5d90fa6458c",
       "mode": "0o644"
     },
     {
@@ -14731,104 +15899,104 @@
       "path": "qml/components/GameDressingRoom.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 2357,
-      "sha256": "9b9c4ae56f421ac38ff0814e68c2a6aec8126116ded151ff0392148e273fd0ba",
+      "bytes": 3189,
+      "sha256": "fc8ae6546c34b78ec91474612de26a273f8ac9c26194d4bdd02c12828bade690",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GameEnchantingControls.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 5507,
-      "sha256": "2988b76d7e96a68f2cefe991a43af10ae68f5ef046d8109569d3fc3d84779d75",
+      "bytes": 6368,
+      "sha256": "a511eb265352e04ea3d9b3d148440edcb9af1706ec51d596a00e36c59997a664",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GameEnchantingDialog.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 2176,
-      "sha256": "788cb6a8f3b2cdd3115647de262ec473eaf4efaf267714d1349de91f7ddaffab",
+      "bytes": 2649,
+      "sha256": "19445e900d8c6848c63004c7fa28ff6471d79c63d7672da0dbcb83dcf9755ff8",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GameEngineSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 440215,
-      "sha256": "3ee90ec250d9f60bf5d729bd409e8f36a3c7dfb8f4342cabf4746a5566294d4f",
+      "bytes": 452244,
+      "sha256": "678ad18b7fbab8dae3cedac3f4d78928bb9a842ad96b55bc72e18fb8f7e35d5c",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GameInventoryAction.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 1037,
-      "sha256": "c8a22636dfbad7bfee2c7ba3ceb792e32b8311f4610e2d889861848d71e5acbc",
+      "bytes": 1077,
+      "sha256": "4fb1157da153adaf1d192a6d3405a8bfcc439815edb5d4bfadb89ea99a94729d",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GameInventoryPanel.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 46184,
-      "sha256": "d79f8c39bec4efa4f25754133c8dd813973001fae5bad1bea2680d99730d1de2",
+      "bytes": 49502,
+      "sha256": "7bcb1a558e2ae5bb2a3c4c576c5a0304aaba93da32a27da3b0a9e80fe54ee644",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GameInventorySlot.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 4614,
-      "sha256": "f1da883e8a732e29f9294295aa68773c2fd082aef92bb2e80387805f181f7fbb",
+      "bytes": 4652,
+      "sha256": "d5e9539568ef72028b803d87b8681cdd212d1c71a09efd951871b09d027a5b41",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GameItemBindingDialog.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 2190,
-      "sha256": "19cc19c306e6b268c0f7d6d2b50e165113d442d12f7f4009e020503a44603ad7",
+      "bytes": 2666,
+      "sha256": "8e4a0bc1b1d3d2ec8b1ae35284982762e650641d433f2ee5f456e7d77748963c",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GameLocalActionsPanel.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 7834,
-      "sha256": "85c048708aad3a7a3bc42e6923067773fdbded80c5cba8c09f4edc9f94ba1111",
+      "bytes": 8980,
+      "sha256": "1772062891d42714331c7a7d64436aa51a231bd739cdfa56caff3827746236c3",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GameLootBindingDialog.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 1496,
-      "sha256": "3acfb686b4ab23f89eb03238cff97f5037718fd8cfd5bd1e3e53e1942b122395",
+      "bytes": 1972,
+      "sha256": "a203a0079c5147e469eb3cac073dfc80079cf7b49784b8ff7f0503016182abf7",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GameNaturePrompt.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 2688,
-      "sha256": "ded1c6015f392ae32c68922ec4135f5726743e4731c75a850684ea530f319247",
+      "bytes": 2899,
+      "sha256": "8e1f3e87433d9f275fd5f45a3050c2a1b70059000190f590e139349515d3fb0e",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GamePresentation.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 4875,
-      "sha256": "f5d48a90f51eda3d186c71dc0b6a2e2f649b5fe5147439dde33fd225643ebf36",
+      "bytes": 5487,
+      "sha256": "d39036385bbbb85281fa68a1ec98bdcddea8ac2aa5d9b4d97ed92c7e936978de",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GameWorldFeedback.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 2454,
-      "sha256": "39763cb879609c4ccd7febaa1e888f55a67e302b54e9238e9556db8524b571c5",
+      "bytes": 2492,
+      "sha256": "739265207a95303b3cad9789e6b447735b02b1aa418bb09915a004c40241988f",
       "mode": "0o644"
     },
     {
@@ -14843,16 +16011,16 @@
       "path": "qml/components/GgButton.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 1170,
-      "sha256": "4b7bf440181aff392d40cfe9bd274697d974c189cdc93b97bf35cec26566a0bb",
+      "bytes": 1345,
+      "sha256": "986d6fe60cb4ad3f004d7ed20d707ae54a3227adfe3b8b0fe9f3cdf9e50a58b9",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GgCheck.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 1260,
-      "sha256": "1bff726fff3dbf6a9cba8e420ad3667e0287e5ffe3bb0fb15a477de553235f4f",
+      "bytes": 1420,
+      "sha256": "96139379bdea3b98902d1b76574b1939f261673549b909580002b82c01df80f8",
       "mode": "0o644"
     },
     {
@@ -14907,8 +16075,8 @@
       "path": "qml/components/GgEngineModelPane.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 8769,
-      "sha256": "cf1ad86f7ead0b1a29c976878f527a0d4de34b942ab5df4407cdac122124cd0f",
+      "bytes": 8854,
+      "sha256": "b0cf3d242bd28f69577f7566d2d25ea961f6d068114efb1120e0ccab8ced360a",
       "mode": "0o644"
     },
     {
@@ -14955,128 +16123,176 @@
       "path": "qml/components/GgEngineWorldActorsPage.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 4277,
-      "sha256": "59983ed18b138379a4b9a60a7b057962ea1292d3fd55787dbdc4657615ea328d",
+      "bytes": 4368,
+      "sha256": "79f3249e41a3da24d5dd1d2083cdc4f6561367131ddd1673ba9b3f562ab214d9",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GgEngineWorldPage.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 21399,
-      "sha256": "14924518fc84d6d55bd0cd1bdf6d4943532658cf4e5d8ee04e39aa61691148b4",
+      "bytes": 22258,
+      "sha256": "36b72cdfd03849ec92a0a5782991cb532378e71af7ba7c07ffe9d93e79cf6369",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GgField.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 558,
-      "sha256": "682b3c48397d840ac2c5775e51aeab11476c34ae16d1e95e51db16951b210acc",
+      "bytes": 706,
+      "sha256": "9726cc9df739346f84e0912eb31d4c5253429d137f1bc170d957cb4e8e1da7f3",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GgFrame.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 5325,
-      "sha256": "094ce84e46e1d7303772b728bea3010122ca8bdd97db23e857a5ad5fbbb18822",
+      "bytes": 8142,
+      "sha256": "3eb4b3606c2d0e63ad2c87331ffe1afadba0d1b0bbbbfd80c0972fee841ece2e",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GgScrollBar.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 638,
-      "sha256": "7c9cf8615551c0f7142b5fbdf865d2f123f0cc788a5dc7e275dbc0473e78666f",
+      "bytes": 697,
+      "sha256": "6ecc93efd5099920883a2e76b54900c692a23a125ed17a1fff268859e673d36c",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GgSlider.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 1100,
-      "sha256": "be7da592a8c622ec1dea812bd848a6766b6048e124b27258c6a8d28ff885e041",
+      "bytes": 1210,
+      "sha256": "ebf8f7601936c31b42a598297fffaffbf65af19aaa414faed695b0adc9e1496c",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GgSwitch.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 1260,
-      "sha256": "227973726d6cd7676c2fba79e71b0727b77e4a8e7cf730781dfd9d356578477e",
+      "bytes": 1474,
+      "sha256": "0866b2c36f3d4c1b021620e673e29dfcad7363847648e767e8deb6116cacf42f",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GgWindowChrome.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 5783,
-      "sha256": "b169192a69a2f19b015bcb48326b17bef9ee827dd6aba83fdfe190b7c8e954d7",
+      "bytes": 6247,
+      "sha256": "65d891a7aaed219cc8b6f180684b54c6e7e8380856f2fe83dea94aaea56082d5",
       "mode": "0o644"
     },
     {
       "path": "qml/components/GrokTuiHole.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 10647,
-      "sha256": "5e6b8fcc728adced09e896130476b387059e5c78419e7015412497391370c7b6",
+      "bytes": 11064,
+      "sha256": "5708b54dcae4c3e73686a39311d3563510f912e06384d3c262b4eca78cad6847",
       "mode": "0o600"
     },
     {
       "path": "qml/components/GrokWorkStream.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 28807,
-      "sha256": "aa27941355d82e6f717b73d47ed944501165f6b2d901255bf41f837090cedd7a",
+      "bytes": 30472,
+      "sha256": "8529f70c0ebd9510ca7f20d56b99716ce73a5dfe93ff5818853802439a93664a",
       "mode": "0o600"
     },
     {
       "path": "qml/components/GroundCoverMaterial.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 736,
-      "sha256": "24ea5641ff4f13567df99316ed4ee7302c1a4101a29f1d5857d923c51f1f45aa",
+      "bytes": 817,
+      "sha256": "4e272bf8a77be865664abefca01077d4cd1e75d9603f29daa43f9d6216dc350e",
       "mode": "0o644"
     },
     {
       "path": "qml/components/KnowledgeBodyView.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 51987,
-      "sha256": "8994de76520b71b80389f10b3e5d752c3c72166191aef0910c824cdc294852d8",
+      "bytes": 57024,
+      "sha256": "8c15c8dd11bf56c497e39ec24dfa521b2e408011333b16c660d0d855e9abfcb2",
       "mode": "0o644"
     },
     {
       "path": "qml/components/KnowledgeRasterView.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 9727,
-      "sha256": "f0e92e9bbefbff59a74212e3a2c76fda89542b1296df2fef4fd25b528907e00f",
+      "bytes": 10251,
+      "sha256": "ee77ff48ae42b7bde1f3b752bc71ef53c9a67e8216e864c1363d0cbf83e7837f",
       "mode": "0o644"
     },
     {
       "path": "qml/components/KnowledgeSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 46308,
-      "sha256": "7ead26dbf8b32e96523033a61f65b8ab1090d3787d112e018988337303a94083",
+      "bytes": 50429,
+      "sha256": "550d214d55ccfa363dd3f077a9b87ff8bdc125ec39379dd17aadcc0753165a24",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/LanDagSetupPopup.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 17938,
+      "sha256": "4a8a6702c1a45044dbe55594fa14fed44dabb4f0a55a66e1130749fae31cac2e",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/LedgerBorder.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 2571,
+      "sha256": "c99f5e66ffb43f7e1144e2f99240cbdb5009fc24f913ef71c044b57f3ac6d145",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/LedgerGeometry.js",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 1052,
+      "sha256": "e730cb7c5060465a231546d3bb91c1d763a9bf0339f502acf2e3d52054c8db86",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/LedgerGlyph.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 2947,
+      "sha256": "a470c734b52db1275b40c29437d787253578c32c663adb3de29ad574dfce6307",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/LedgerRule.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 658,
+      "sha256": "65b33f50e2b1fc6cf8363c1fc49e7bbd97d6d5217cf373dae082762f3141fede",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/LedgerTheme.js",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 750,
+      "sha256": "12ef7c27cc710a0a5df518703ed73601222a571b5b6178d7a66fa83021ec19d8",
       "mode": "0o644"
     },
     {
       "path": "qml/components/LiveAidLineAnnotation.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 1641,
-      "sha256": "aaf327f3b336bc5545712879909057d63d93c4efc01a3c01cfa38aabb79bd067",
+      "bytes": 1811,
+      "sha256": "31426c30ae8693b5fe74f05a0825d71f58118d65bb39d797970b43d777d957ad",
       "mode": "0o644"
     },
     {
       "path": "qml/components/LiveAidObject.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 2807,
-      "sha256": "25a022ec8aa29f36ef2cd2dbe69398a05608fe6a5aa52b33fdfce8fbba34b744",
+      "bytes": 3136,
+      "sha256": "76a41f65c2d42f869a026c5e6d6529b2fe88933de07940bbc8387d4e02f425fa",
       "mode": "0o644"
     },
     {
@@ -15091,24 +16307,24 @@
       "path": "qml/components/LocalGameServices.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 70472,
-      "sha256": "9b9364e6d565271163753a72ae4e797b5e30ba832f86e06b72736cc2929d8641",
+      "bytes": 93520,
+      "sha256": "48debe6d985d5065533216998506a411c5942e78c4e4701f2aa74b8ab1d72d0b",
       "mode": "0o644"
     },
     {
       "path": "qml/components/LocalGameSessions.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 6763,
-      "sha256": "8e6ee5f7af0155fac799aaf188a586e2cff1787a77fc903aad80d69b09a8486f",
+      "bytes": 8804,
+      "sha256": "eca29fd418d808a4c5fe03ad8a52b6a6c69ec38d02a3529386b987ee81ce8ae7",
       "mode": "0o644"
     },
     {
       "path": "qml/components/LocalServiceComboBox.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 2396,
-      "sha256": "6109f72f0400e3a19fdcbe15f7aa7580936d5cf862d9281920e77ee28882c2f1",
+      "bytes": 2568,
+      "sha256": "90da18a4e28b56e0b89f20616382c0f7485d7612839062f819b520e7de818379",
       "mode": "0o644"
     },
     {
@@ -15120,99 +16336,275 @@
       "mode": "0o644"
     },
     {
+      "path": "qml/components/MarketExplorer.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 22886,
+      "sha256": "99d4acd9806264d6d0af465d998fe5e6f6c3ab18ad0955033dcd44ef23a2b276",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/MarketFormat.js",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 2118,
+      "sha256": "bd0d98b683aedd45c3bbfd156744c8fc4f726a1e7dbac5d562514925f7893d9d",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/MarketPriceChart.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 5530,
+      "sha256": "2d5346b5ac64182628897264905e42c4ed393802a59006b5ca550c4f15940e8d",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/MarketplaceBrowse.js",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 1541,
+      "sha256": "faa7cae4b8515a9875ec8fdb8a50364a8f326ba0bf30df85806a2b0efae44942",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/MarketplaceBrowser.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 10083,
+      "sha256": "603ff74b64f644a7226801de4efa89ef53deb6d9d7f206bcdd78735b8ff0148a",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/MarketplaceCollectionPassport.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 7152,
+      "sha256": "6e8a11ab276f46b1a73061c338724cff9700d6d28d12a9fd0b8a699ba3438781",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/MarketplaceDiscovery.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 9326,
+      "sha256": "abdf90abbec60f916fe1077266afe8c01919f5c41937f4abafeb71664667aada",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/MarketplaceFacetTree.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 7392,
+      "sha256": "046289abd77d7b3d496de832819e17961fc9cc0ceaa07ec8f22f4478524453dc",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/MarketplaceGrid.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 4882,
+      "sha256": "5c1b53a16125ba7ba220476d8ea4aa844e3bb9e12cb19790e6da12468dd1f6f0",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/MarketplaceNetworkTree.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 6468,
+      "sha256": "65b6ff6ba48cb08efc9fe2fd688620471b6a14346846989fec0b628fa325c9bf",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/MarketplaceObjectPassport.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 8645,
+      "sha256": "5c95c7b99323465938c55f69efc6407bfbd939105c92ba6b0220292e2667de5f",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/MarketplacePassport.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 11647,
+      "sha256": "7309b3d0524ec2af1beb0c9557fd03e101534c3af542205e931b7d7ad44fc40f",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/MarketplaceReceiptTree.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 3182,
+      "sha256": "3465ce5465a767b901aff5e19ee6ee790bbc417f10df5a53bd3d2d82d8426842",
+      "mode": "0o644"
+    },
+    {
       "path": "qml/components/MarketplaceSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 44990,
-      "sha256": "966d711a5ce2138b483650033f1c0627245c40ffa176f50b79d1bd29c24b569f",
+      "bytes": 68074,
+      "sha256": "285f3c6e511586a7d2b1f9edfb4347972624a0296a407946f159e671ecb7e0fd",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/MarketplaceTimeline.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 3046,
+      "sha256": "e725717c94a0381d125039b0bb839bb19ce6237089afd77d2cf030edaf8d8e3d",
       "mode": "0o644"
     },
     {
       "path": "qml/components/MediaFullscreenControls.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 10510,
-      "sha256": "567a38d30e50d87d776fbaede6a8b80f36f5942189925f2e0f654a0e63d1a0a4",
+      "bytes": 10770,
+      "sha256": "f6ae59ee4b97a8a27905eae937e1b5f7c03715da15a38c0902e0167b8ac5aab4",
       "mode": "0o644"
     },
     {
       "path": "qml/components/MediaSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 153164,
-      "sha256": "8059ddb9923280160fa002e8cb52e643d2a7d4a78a0db661fac0bfd8483ae85f",
+      "bytes": 156730,
+      "sha256": "818ef73238512be235fe9eca6204792c58033e83808cd4c32800276d1cb82a35",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/NetworkDashboard.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 57564,
+      "sha256": "0cb1ce0dde11de06cd8b4645f77031d5a3599a9365f65c68df88af1a67d4fd06",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/NetworkRailLayout.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 3727,
+      "sha256": "495c7c9efe70793c343aedddf4ae66d7bde9f331e1a895026482c01cfa2e7dc4",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/NetworkWorkspaceLayout.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 6828,
+      "sha256": "311d9401719e253d0a2da506d0de98a424fee384b3ddb519643437c5a9be34a0",
       "mode": "0o644"
     },
     {
       "path": "qml/components/NodeSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 16477,
-      "sha256": "e93530f69fd99711b6415605e3b3c9723fb5dd96e1b2924307d395e6bf1ee28c",
+      "bytes": 17155,
+      "sha256": "c3d62c68e7e3fb77aa8d5293b06fec95a45806ada141029ed20e60aeb0292153",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/OmniSurface.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 30149,
+      "sha256": "15a4df8aa8830ab71b7a5c0fdd5005c6ee9f7f1ef9f3955c9de27b93d6c7f820",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/OmniWalletPanel.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 58496,
+      "sha256": "63ac8998a28a5faf9198a9fdf81c302264f566b32a9244adaf362cd5cb6ed08c",
       "mode": "0o644"
     },
     {
       "path": "qml/components/OsintGlobe.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 9805,
-      "sha256": "36afc26bff491bdce9851f5ab857c4630ef2a245e47c481826813e49d3fbb838",
+      "bytes": 9918,
+      "sha256": "846462159485c48da627d13875cbd6715bb72ff9d145053f6c41712969abe40e",
       "mode": "0o644"
     },
     {
       "path": "qml/components/OsintSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 117899,
-      "sha256": "5dd1a4139490c679867bfd2d3cc9a9aa3f1efec53f88d33fbe404f10f673105b",
+      "bytes": 123459,
+      "sha256": "84d2ed63b97473fd6cfe724c7f2569edfdaeecffae08197491303afa1b6b261c",
       "mode": "0o644"
     },
     {
       "path": "qml/components/PaintedClayMaterial.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 905,
-      "sha256": "f529fc41c62271739cad9d51bca9aef770776e6298711f3fa17c480a6aed2cfc",
+      "bytes": 986,
+      "sha256": "726cedcf3623937ae60da6b4dbc4a031c63a9d1292979177928535490f2f3560",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/PriceSparkline.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 2114,
+      "sha256": "55ece1b7bbbef5f69c1e91f0c2977f4d02edbb3110b1fc2ded40c91cf20c2543",
       "mode": "0o644"
     },
     {
       "path": "qml/components/QipSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 15521,
-      "sha256": "3089b82b6144e0faa8e0485fbc032503087078bc009a799e142e031fdb915ac9",
+      "bytes": 16692,
+      "sha256": "36414a9fa8ab445585414cadcc7dd9541ad12582521bcb1d337db7aabced7d99",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/ResearchAction.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 2568,
+      "sha256": "5e6566cbb1909776e8fd157fdd2472929b8653a0be0fbd03793e3ea9d3260261",
       "mode": "0o644"
     },
     {
       "path": "qml/components/ResearchFrame.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 516,
-      "sha256": "9d80be86c7c2860f7f73b93b00b92409f8731b0f11746fd139857c54881c6011",
+      "bytes": 583,
+      "sha256": "090b12236e454e13b78be6a415dbebe5e75367449a6a1e1dbfd2bf26ac96fe81",
       "mode": "0o644"
     },
     {
       "path": "qml/components/ResearchGamesSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 26040,
-      "sha256": "55536abb7c8050eed87c4533f9ced35904a5d553f9442318bac3e064d8b26838",
+      "bytes": 31169,
+      "sha256": "f9946a5fa7935af22df43d4f5fdbacd416a9fc0879f3853b86b878eb7b005cdd",
       "mode": "0o644"
     },
     {
       "path": "qml/components/ResearchReverseSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 23263,
-      "sha256": "592883ac10d86af1dc198c2657b975e65692912e503e074156bc294bdd702f29",
+      "bytes": 25745,
+      "sha256": "927a2856f399abfd292df4c3d44f65f39405bafd964c44f54c92fe3e2ff941c6",
       "mode": "0o644"
     },
     {
       "path": "qml/components/ResearchSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 34278,
-      "sha256": "1e8bd54a257fd699478451ab9b6d3856884a32a30813c2f35425c8ba447991bb",
+      "bytes": 39806,
+      "sha256": "e6ae5fb8f7cffe96cf8f0fc5a25f110210e72aee20cd8d88e8c8c08a1088c6d8",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/ResearchWorkbenchSurface.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 26363,
+      "sha256": "f01566a7f0f4ee3fd7b84637f1e0f6705ae7ebbae83d46013f239a85cfcd7779",
       "mode": "0o644"
     },
     {
@@ -15227,120 +16619,128 @@
       "path": "qml/components/SettingsActivityModule.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 723,
-      "sha256": "3bbf15c32e22cf75daf8048e98dceee5ba0364c676559b77b75f265fc597527f",
+      "bytes": 919,
+      "sha256": "b6e624a31de44df592c1a93c860a404e4f2cf3278b0fc2af9d1602604d464b8e",
       "mode": "0o644"
     },
     {
       "path": "qml/components/SettingsAppearanceModule.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 4285,
-      "sha256": "429ce52fbdbb80308d146fd72b0c2b1d236672f21e41406a308686d40ae5660c",
+      "bytes": 8752,
+      "sha256": "93626238b6cb938d2b53bb8eb10b923cc9cf93dbdb354321d2fae6864d938c0d",
       "mode": "0o644"
     },
     {
       "path": "qml/components/SettingsChatModule.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 3564,
-      "sha256": "56ce6c098c7d21dbe8dc902897c8db23fae3ee94911ce8a3bb4c32557a3ea476",
+      "bytes": 4200,
+      "sha256": "db9c9199b9a496210a768f18db54465ed4fbc4666df40534f08fa9b3c528d436",
       "mode": "0o644"
     },
     {
       "path": "qml/components/SettingsDeveloperModule.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 1963,
-      "sha256": "b1353591f3199d919734c1fa2311f4cdfdcd6d029ceaf4c0db4f83d302829b4a",
+      "bytes": 2377,
+      "sha256": "d85eb03ef55fd10ecec8b8c7f97f6e2d480e42e8342e6e6d481fbe1351963e07",
       "mode": "0o644"
     },
     {
       "path": "qml/components/SettingsExtensionsModule.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 6382,
-      "sha256": "d8e63b0e2610d25326bd59dc0f4b9390da64b06b8e88420f0f41edd3a96f5de8",
+      "bytes": 7163,
+      "sha256": "6b6e8e3e83a0f2aee079752842ee1dcc50208f14802716713b020eb0eb048b49",
       "mode": "0o644"
     },
     {
       "path": "qml/components/SettingsLayoutModule.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 3472,
-      "sha256": "6c009e6ad59cbe66ec9d50e5b78f6dab12cf1dbeb03cc56965c01e1c034a46ad",
+      "bytes": 4192,
+      "sha256": "089300daeb5416c85868dbbf2ca5c49638c79a67684bdc50dbc64462516f365c",
       "mode": "0o644"
     },
     {
       "path": "qml/components/SettingsPopup.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 22878,
-      "sha256": "81bb1a3834a69a2a480be26b9a0f599bfa6faad9479d7efa72d0b8a4b2ed56d0",
+      "bytes": 28212,
+      "sha256": "1dadc05ffda3d7f445ad3341f90ef4e27f558df0d0aa407460984701e4715200",
       "mode": "0o644"
     },
     {
       "path": "qml/components/SettingsSearchModule.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 4898,
-      "sha256": "ebca3cd56bb692fcf54e811d559600d89eeebda3a4af857a22d594755800e9e0",
+      "bytes": 5411,
+      "sha256": "234d622512586151680646780bbb26f2ba86e8b736db6a5d97a00c4b0395ba5a",
       "mode": "0o644"
     },
     {
       "path": "qml/components/SettingsSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 10396,
-      "sha256": "353ecc7a2b98515c992d5ec159bc451210876284e1d639c570f334ac68cfceb0",
+      "bytes": 11786,
+      "sha256": "d898603a388a551227e6f77c80e7a0b2b2593338829fd7b488130530565e24ee",
       "mode": "0o644"
     },
     {
       "path": "qml/components/SettingsWorkspaceModule.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 8554,
-      "sha256": "d00866674f57db68050f8a3753a980c1fef0c84ca982d3d68167f8351b6cfb91",
+      "bytes": 9416,
+      "sha256": "478ef3114e29dccdcfe64a9b57ff35f4411c87a74aae6d1cfdfe1804bbb762a0",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/SpaceActivityFeed.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 2658,
+      "sha256": "ebdc8f07c4a18d56dcb362ee3303e0e39fc1304d36b1ea9d9a2839cbf74a3cb5",
       "mode": "0o644"
     },
     {
       "path": "qml/components/TelemetryRail.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 23992,
-      "sha256": "169b249b10d0c1ad0a41e4624f3e87ed4a28c93abdd3c0863e7032cee431d0c8",
+      "bytes": 25800,
+      "sha256": "0fc338b809533758a869d1b2133d6192858e6ade492bccabaaf59c806cbd7dc2",
       "mode": "0o644"
     },
     {
       "path": "qml/components/TmogCard.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 4662,
-      "sha256": "e092d6ce80897a7cd03919668edc38e6e17d53f2d0b34f0449a214bbf100442b",
+      "bytes": 7875,
+      "sha256": "3bd6f1cecc3ab0f7325278b952b45f0ff7d2068598ec2e4f06bb9d009ef6b99b",
       "mode": "0o644"
     },
     {
       "path": "qml/components/TmogHistoryGraph.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 2282,
-      "sha256": "f6d87ae7759ed519e8be09fa82e63b5d0263740072bc9976b81d7f20f78e4359",
+      "bytes": 2680,
+      "sha256": "dceb3654e92b133a3bd3bba5f78329e9787e0f668f2d730b9775906e21f9c66e",
       "mode": "0o644"
     },
     {
       "path": "qml/components/TmogMeter.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 772,
-      "sha256": "5e3619f78270f496b7fd3e3e8aa1a118b844d83578806f572f470065b0f23279",
+      "bytes": 1699,
+      "sha256": "69ed80866ae196095060e8b80bcc6452bcb6dbdcef88b8c69f7a50de38dbe44e",
       "mode": "0o644"
     },
     {
       "path": "qml/components/TmogRail.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 1367,
-      "sha256": "36b2689402537dd0da108b73072c74857258a2722c302725307a9803d29ce07c",
+      "bytes": 2754,
+      "sha256": "4c3c31693ed77dd7cacf18dca9e520a203b3c227ffc4855524888ecf50850b06",
       "mode": "0o644"
     },
     {
@@ -15355,72 +16755,128 @@
       "path": "qml/components/TmogRow.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 1092,
-      "sha256": "c75f0a07b328f1333f74e4bcfac41198eb1f06e36697461cc6b50b842404bdc2",
+      "bytes": 1200,
+      "sha256": "0463bd5e0bb768cf1f8bbe785fb89f7c0a68f09bb72c3eb545207f4e7ebac495",
       "mode": "0o644"
     },
     {
       "path": "qml/components/TmogSpark.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 6415,
-      "sha256": "655b4864f11ad5861d1259d4b63aca470ca9fd8456245b2f63d66b8fa0af8970",
+      "bytes": 7791,
+      "sha256": "54dad8f5b4e5fbab0550ed1038198b77cf0a0fc7734c872dcda45974513ec6aa",
       "mode": "0o644"
     },
     {
       "path": "qml/components/TmogSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 117230,
-      "sha256": "4ea029286116c51d5739eccbefdf347ff56e45d9643def583b2cc771233ba559",
+      "bytes": 129020,
+      "sha256": "53505e1bcf74f14f0438f9087f911465f991456e4105b864a5b372058eab236c",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/TokenColorPicker.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 1345,
+      "sha256": "7514675ac110c6121b2045d5c8fbde42ffb65a6c22d767128e2b19730f34d791",
       "mode": "0o644"
     },
     {
       "path": "qml/components/UtilitySurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 45647,
-      "sha256": "81a519a10bc1cb79d51f2437eeebe69eeaf315619a46ef8b925c995b38d0a5e9",
+      "bytes": 48285,
+      "sha256": "deb7b69a33ca45139e3c2c3c8a792ef10b4bc4a4ea22fe0812572efa9f63f605",
       "mode": "0o644"
     },
     {
       "path": "qml/components/VisualEditorModule.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 5866,
-      "sha256": "f632c851df942a3590d98bcba1febafa900712eedf1775b4ca879ebfe90775be",
+      "bytes": 6739,
+      "sha256": "46c22e8bf91ffda771d12f02217fe6778bafcb4dc5c4c38ce6efe1e290a5337b",
       "mode": "0o644"
     },
     {
       "path": "qml/components/VisualLayoutOverlay.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 12592,
-      "sha256": "7a09a48d75543b709e8503b0cba0d685b7f1a2fe3f5a584f18becb1908e3bd16",
+      "bytes": 13249,
+      "sha256": "73ad91744b1bc5a05f83bc2db7a1309cc73fb38958ea6a1ceae90a01721ef1bb",
       "mode": "0o644"
     },
     {
       "path": "qml/components/VisualProfilesModule.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 4545,
-      "sha256": "9b4ec3089d0be9d0444d476b8baf41ab1d8b4fd0a416d002566ede3e4e3c89ba",
+      "bytes": 5363,
+      "sha256": "880049704ad06ddaaa71cb938e026279ac1f6302432f5296ccb132e715850a80",
       "mode": "0o644"
     },
     {
       "path": "qml/components/VisualSurfacesModule.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 4108,
-      "sha256": "968dbc14cc5ea302c92ac98eac4d96975238eb9ae0f0cccc130d23ff5bc53c61",
+      "bytes": 4660,
+      "sha256": "e2ada41ca71c88405bee07f7f4887e9bbceaa2bdbf70f5518e208885073a43c6",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/WalletActions.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 50349,
+      "sha256": "ddaed352eddaac3381eced308f8be551f9a97495838d1621cb3c2b2d7e38b6b1",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/WalletAllocationArc.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 1992,
+      "sha256": "7790f46f99eb24da0ce7eccaee724ec1673f36e67ae3f3332310ce6ac0396d90",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/WalletCompactHeader.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 8896,
+      "sha256": "9f5b9620f40d8ac66905c083411853e4499c1f43c7a3bc44c2312a0e962b0bdb",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/WalletCreationWizard.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 25719,
+      "sha256": "67dcc8b37c074ff92f4ac919c834c77a4d75ad5ed0213301820a73d7aa1c6e73",
       "mode": "0o644"
     },
     {
       "path": "qml/components/WalletPopup.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 20040,
-      "sha256": "e2a3e1bedac7610dbe87816de7d3bb8ba9d1ffb8baeb2b2b0787f3c5eae8d71f",
+      "bytes": 27223,
+      "sha256": "2e96e60089d7d4717e0d3d2997df5183712effe95ca8ba83a07f1ebb2b385665",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/WalletRecoveryPanel.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 7743,
+      "sha256": "b4ad9a1ab1cf0d1c96cdbab00527e79ed95a22f7e4fb6cec05cc33825d050250",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/WalletTelemetry.qml",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 20660,
+      "sha256": "3cfb85cfcb5a15e86bfeb2a2456bc2971f4169c664d3ef18dcec4fd1b30360d6",
       "mode": "0o644"
     },
     {
@@ -15435,8 +16891,8 @@
       "path": "qml/components/WebPane.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 55769,
-      "sha256": "c0472c48b1a67e545002f9e6e23b0bfb0e03f2f06bc3d6364871b735216a1004",
+      "bytes": 56124,
+      "sha256": "5f474d89a7cdf3268b78b766781f65d571df5bee9bda3fda04dfad4c56b8c2bc",
       "mode": "0o600"
     },
     {
@@ -15459,24 +16915,24 @@
       "path": "qml/components/WorkObject.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 9734,
-      "sha256": "7191b35cded9a1271f4dfb469a829c26833da5f1406783f8ac9ad7a36ccecfb1",
+      "bytes": 10315,
+      "sha256": "85fd58b30e519e7e304c96c6eb489f8584fc9f86af6d78d9811559b9b281629c",
       "mode": "0o644"
     },
     {
       "path": "qml/components/WorkspaceObjectNode.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 2855,
-      "sha256": "5e17fe1abc6db21b9cff37cdb17750d57cf654e7f71040dd955465c29096223d",
+      "bytes": 3329,
+      "sha256": "1e0ef762b20412804a2c894102a6be873cf0b78748071800b706fb87ece9b149",
       "mode": "0o600"
     },
     {
       "path": "qml/components/WorkspaceSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 170517,
-      "sha256": "579d8247dda34cea561a3d6ab77e0d39436425b64b513debf21446afd8fb9e95",
+      "bytes": 180712,
+      "sha256": "4f2e7ad30bb2214d0790e16a4c968b2ae8c9e86b30afa30e37bd918ffd10cb1c",
       "mode": "0o644"
     },
     {
@@ -15509,6 +16965,14 @@
       "kind": "file",
       "bytes": 70,
       "sha256": "d5a51b6aed15684ec8c123e30fe5703155359d6543b6d7b47cb5766ef44939de",
+      "mode": "0o644"
+    },
+    {
+      "path": "qml/components/qmldir",
+      "category": "interface",
+      "kind": "file",
+      "bytes": 82,
+      "sha256": "56c52b5fac143e0bf8487280df59a8d51d3a8226f08e52e219bdcba54fe5ec4a",
       "mode": "0o644"
     },
     {
@@ -16331,8 +17795,8 @@
       "path": "requirements.txt",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 341,
-      "sha256": "bd9ab5ae2728370f1616f015d625f5d1998020c7346254b60a2c094d9ec0e62d",
+      "bytes": 431,
+      "sha256": "265bbe8f2820aa5c4339a936d66579740eb3041c6500a745797c6d9d12d4e1d7",
       "mode": "0o644"
     },
     {
@@ -16350,6 +17814,14 @@
       "bytes": 470,
       "sha256": "e114720a415318f7a763bfd34505fd8f27f0a8c1cf236fc6b42da73a0aeb90d5",
       "mode": "0o755"
+    },
+    {
+      "path": "schemas/gg-intent.schema.json",
+      "category": "contracts",
+      "kind": "file",
+      "bytes": 1077,
+      "sha256": "6c8cecdcf0fa82673d5a30e7ce99d4f7e27cc190fac8589b459cfd75df86f81e",
+      "mode": "0o644"
     },
     {
       "path": "schemas/live-aid/diagnostic.schema.json",
@@ -16621,6 +18093,318 @@
       "kind": "file",
       "bytes": 15196,
       "sha256": "b1c512c7ff9c62e322e575e8c9eb24b31879616b74a0caf242fbbab255ac9298",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/dagoblin/README.md",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 2201,
+      "sha256": "faf88ae9f7033060f218c83e49c66856d01f56e8a4d2e2086ebbdff2d852b9c5",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/dagoblin/analyze.py",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 27274,
+      "sha256": "6ba3f0a2be9082c602b69fb1026992a3be289241b353095a57c996f2fc87649d",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/dagoblin/capacity.example.json",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 363,
+      "sha256": "27ec703b341ea8978edaf542cff002d4841117184f067ce50074c4fb4f7fd57f",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-cli/README.md",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 18679,
+      "sha256": "83591afe919e72fa55b338b26456f80bc919d1f8f512711e74c9a6f721149a37",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-cli/bootstrap.py",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 3021,
+      "sha256": "3956e59a7831e1fee4776a94d83cad537bb5bda26f89631591b822cda8635b57",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-cli/build_release.py",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 8805,
+      "sha256": "9343a9c36accb08de54f96cff819134c89ea4d995e865d12630f1c796b4b5e0f",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-cli/install.py",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 4329,
+      "sha256": "e4208fa16b056f89e955bb06b6f937e9b2eccb983603803f40a2eed1f919d67c",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-cli/install/linux.sh",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 153,
+      "sha256": "08a3cf0b9321bb3ebfc18abaad6fe3c51bcf219863a43982223db9bc7dd52a4d",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-cli/install/termux.sh",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 237,
+      "sha256": "9127f5c234df9927b17294751280f28197db9a6e5d356169b88870ee2fb9cb98",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-cli/install/windows.cmd",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 222,
+      "sha256": "d34d2636a0464ebd11360d6154a54ad83f79fb473c6890e82df29b40152f71f5",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-cli/repository-README.md",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 5603,
+      "sha256": "3594c7c1db6c3a05abfbcefba769234063d63508540e2a637a24666e63281505",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-cli/repository.gitignore",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 264,
+      "sha256": "5c0e17386f5716fadfbf2e6599769715a236e3069629e7087b421d3af8c55721",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-cli/requirements-wallet.txt",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 132,
+      "sha256": "b03e2bc15100926b959428b632c5e23d1da1eb6a4680289450e1cb254e6c70ba",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-cli/requirements.txt",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 260,
+      "sha256": "81f0343b1af3f09b599e64868a01525391dc933e3aa5a80351daa7d8ba2cd8bc",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-cli/test_install.py",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 3504,
+      "sha256": "ecba121b62f09a948e1c3a206ec42afb919bb6ed972a3ade14eb6e8e797ed8af",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-cli/test_release.py",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 7778,
+      "sha256": "4497e75a465bd2a497ce3c38f170702942c35148a21a32ec7b48bd3f72c7da30",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/README.md",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 18510,
+      "sha256": "b737e9ed065a3db94ce7fafc358ceb511be8d88d89a2c9d49489b654024cd903",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/benchmark.py",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 26723,
+      "sha256": "6e77eaaee01d193f0c0ee1f4b3777001d3f109e5ebd7edbcc6ab47c24881d60e",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/go.mod",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 7227,
+      "sha256": "0e3845c6fe64f7767f9f6e8346105b7ba4a6244c49593a4697c387c594f9c9a6",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/go.sum",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 52721,
+      "sha256": "254f956e002ba248d2be5c814e0b7a530e85fe74626a65ee9e4c10c3dd0acf9d",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/install_toolchain.py",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 15082,
+      "sha256": "35175f12226470e158573c8848c1129f799d025ace720cbc86435cc58e45a54c",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/ledger.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 18307,
+      "sha256": "7eb3ffb3c7b82565d5f9c693db8cb75d9c0917d2512a414f8ddbe911cc026e04",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/ledger_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 14010,
+      "sha256": "6b5cdcfd6a5e454fbdbd6f9b21229956a9695530253f29e3b16456726661948a",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/light/fixture_export_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 2853,
+      "sha256": "2d3232c23c350e2175a092ef4694095bb3e2d787b72fa5f9fe6cf2b0262b5a27",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/light/node_verify.cjs",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 1603,
+      "sha256": "d22d9cd6b8b4189f96e886e8d6265dd83e3763ab535dcabacbf8ceb4b1318e3d",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/light/node_worker.cjs",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 1272,
+      "sha256": "f8bba90337e6a6092e7d39ce90e84800679819aebb8b8e88afad7d22df2c1b63",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/light/render_viewer.py",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 6443,
+      "sha256": "e0fb6939827032a1559915a8c85890cbb4338ddc5b402828574940fb707585f0",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/light/wasm_main.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 1480,
+      "sha256": "0d1fd071babb954331a32ff064efd431f1400ad20b213a74258eb16603cb8457",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/main.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 11922,
+      "sha256": "44032c0714775384b1d856c65717acbab3b041fb8f4e412bb0f78003c1205890",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/toolchain.json",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 400,
+      "sha256": "58eeefd94f086390d223948d70e886b4441ff5080ac9a74be67b09e5903446bf",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/verify.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 7138,
+      "sha256": "2dee9e9e986e44de2a7d4a2757e5894ec73c1d066475560f3aff9a44595b8a2a",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-testnet/GGTestToken.json",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 17120,
+      "sha256": "bb273f8a692d29a42ddac5cc7ac1213b794a9af55c8ce01fd4b05a70662d7f7c",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-testnet/README.md",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 3854,
+      "sha256": "ff68453e816414a5764a4f13132f71747483bed77382e677601cd0a1ae20337b",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-testnet/compile.mjs",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 3637,
+      "sha256": "95bd151aa8daea92e47d4792fe11d07261e7590ccf09761764e7ab93f6d874a4",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-testnet/contracts/GGTestToken.sol",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 530,
+      "sha256": "e9a56e993c33bb7552c4b0bfdbb3ce8df786070db6524e127d1b343050a8306d",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-testnet/hardhat.config.ts",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 1239,
+      "sha256": "33a4f90f73ad004ebea665c8a852137fa1a6f00a2d7b09ee41ba94242edb88bf",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-testnet/install_toolchain.py",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 2166,
+      "sha256": "4dc5c8654025b8918e8067e2bdd345a3027ee77bfbc477bb9738e99358f8a7c2",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-testnet/package-lock.json",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 44500,
+      "sha256": "b524166bf00e0ad4db57ed511324a932b5f2ca27b8d606c032def7302a8e194c",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-testnet/package.json",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 390,
+      "sha256": "8e1e5c2f645177d944fb4e898d9b13deec39bb7ba7c93f3c2956d9d299d428aa",
       "mode": "0o644"
     },
     {
@@ -16984,6 +18768,14 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/pump-gg-token-public-2026-10-29.json",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 1684,
+      "sha256": "70f73e1dab2bb8f818eeceacb0a3d3f7e32d35a684fe34bd36b3e7a63591ee01",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/run_crypto_checks.py",
       "category": "tests",
       "kind": "file",
@@ -16997,6 +18789,14 @@
       "kind": "file",
       "bytes": 3996,
       "sha256": "d608b3481b5bbf797845ba058edf170fd29b5cbdb9c95624e081d7fadef7d4bc",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_activity_color_bindings.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 8209,
+      "sha256": "29c14d1847d3f5867466f1638c81075c7734d49f41d8eb8ea8af437a8d7167f0",
       "mode": "0o644"
     },
     {
@@ -17027,8 +18827,8 @@
       "path": "tests/test_application_bundle.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 9915,
-      "sha256": "de313a8c9f32f3cccd823c8caee31398a16136b938801b72ef0c54fe92a754f6",
+      "bytes": 9948,
+      "sha256": "dfb4f695576f6d2945dab592bb4db49fa10113505831c9cd4e522faa70c02dfd",
       "mode": "0o644"
     },
     {
@@ -17101,6 +18901,30 @@
       "kind": "file",
       "bytes": 4287,
       "sha256": "ad588ce199759394efaadce56700d43a79d1ce61caa000a300f283066af4a4f5",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_block_graph_conveyor.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 8579,
+      "sha256": "57af1fe00c30e80ca88be02476dbbd3327b2d086fdab03ef60cbab51f23b1670",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_block_graph_focus.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 4586,
+      "sha256": "5f71e662ab9cb83ec181994f739312830cc2c800e9335ef81b39335b84061946",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_block_relations_graph.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11310,
+      "sha256": "223554d0cb0ca1665d621157a0424f446e5b19f31a816300d828e56b98a1cc1f",
       "mode": "0o644"
     },
     {
@@ -17184,6 +19008,14 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_codex_wallet_limits.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 8716,
+      "sha256": "abd101fe4b2fc175b8f9d9dcaee344a5620785f143540a3667d277253c0e1e12",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_compiled_focus.py",
       "category": "tests",
       "kind": "file",
@@ -17232,6 +19064,14 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_crypto_connections.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 13754,
+      "sha256": "bac9e1af23725f64ec7f4cb91b9be4a0969a70e5b9a6dd7f146a7c756e70e935",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_crypto_contract.py",
       "category": "tests",
       "kind": "file",
@@ -17240,11 +19080,19 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_crypto_dashboard.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11412,
+      "sha256": "f1a05beeddb57640f57b74e38412488610b2b5845583bb57e7378f759f024cbb",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_crypto_design.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 20952,
-      "sha256": "d90ec3626147009a3ded45d112e44ccba47e17a636deec10b6239c3616dd6168",
+      "bytes": 23528,
+      "sha256": "ba7e7e4ed9b37da494f45889465512c1b4b9c19dddc2e1c4a46494334ec28ea4",
       "mode": "0o644"
     },
     {
@@ -17261,6 +19109,22 @@
       "kind": "file",
       "bytes": 5824,
       "sha256": "e52f63c91de13fffb9208e8739d1ec45e3fc846744a774f61d2542df5414b8a2",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_explorer.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 20853,
+      "sha256": "595512dff100ce7d05163edf622f95aa45be664e174d699ed97a53da29b6469f",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_explorer_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 26512,
+      "sha256": "f6a143bbd06755f6b7cf37c280896215db7dbb077d17e9d6d993b6a388a50bfb",
       "mode": "0o644"
     },
     {
@@ -17307,8 +19171,8 @@
       "path": "tests/test_crypto_lab_windows.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 6754,
-      "sha256": "9bc72d7f828257d9c5735803486e9462573f84850a665da471ea3e936239fdb1",
+      "bytes": 6815,
+      "sha256": "2a9caef2eb86cdb0119dc2cb7b74b99437d72e4620b7bcc01b74c983bedf3383",
       "mode": "0o644"
     },
     {
@@ -17317,6 +19181,22 @@
       "kind": "file",
       "bytes": 11530,
       "sha256": "95ff62bd3e917e0d418cedb5735d3136bd9ee6a7316b7e71a1f2edfa7d852d86",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_omni.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 21624,
+      "sha256": "73f4f458acd4ecc192c7f8ee2d03f394bb1178f168930403377609ad0fea70fa",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_omni_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 24723,
+      "sha256": "2bd40de85e0df4e411285463b977c314bca5e13e55044ffaef1a2680abb6166d",
       "mode": "0o644"
     },
     {
@@ -17339,16 +19219,24 @@
       "path": "tests/test_crypto_portfolio.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 6150,
-      "sha256": "f34d9efffbd2d0f188cb47366a743bd1edc40955c6de622ab04275c9e2895717",
+      "bytes": 6169,
+      "sha256": "74378497a7778f25acb4197326d9627127c204f7182eaab950be484354b52c03",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_presentation.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 1866,
+      "sha256": "866b97eafe8423d286030cd866540fb51b52af27013a78420a0c192590057c75",
       "mode": "0o644"
     },
     {
       "path": "tests/test_crypto_pump_accounts.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 17682,
-      "sha256": "1842e644004f909321fe30aea8df39aa08b447f9fbf91dd45fcd36ba0120b129",
+      "bytes": 19048,
+      "sha256": "b03cdec4a51d3307bf61483b182cb50e96959e31878e44f0a5671e85e2449c37",
       "mode": "0o644"
     },
     {
@@ -17411,8 +19299,8 @@
       "path": "tests/test_crypto_reliability.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 18869,
-      "sha256": "1cf465633a6197f3641d80767787d5db67dc33eaddea0268aea1f4c4afab28ec",
+      "bytes": 18873,
+      "sha256": "0d07d10885cafae35a8a59a7a676f4462133058b7e1461524502a118f423ab4b",
       "mode": "0o644"
     },
     {
@@ -17429,6 +19317,22 @@
       "kind": "file",
       "bytes": 8212,
       "sha256": "9e3d7412a8a723783f332f8ab1b3903f3ad041dbf73770db7f115d5c16a74ba8",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_solana_wallet.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 32164,
+      "sha256": "d6bd3dd4221c02ba246c7083fbc70e8a6f4fe1284ec03667558d06795edbb10e",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_space.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 10477,
+      "sha256": "a8464f5679765363ad100d98c0c3287828840975ffcae3798bad31a712ad007e",
       "mode": "0o644"
     },
     {
@@ -17456,6 +19360,14 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_crypto_transfer_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 29260,
+      "sha256": "177d1f3a9c0b97dfd82c8bba33a2268af691f3c9a01df2d9bbc3147b89b9af0d",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_crypto_ui_refresh.py",
       "category": "tests",
       "kind": "file",
@@ -17477,6 +19389,14 @@
       "kind": "file",
       "bytes": 1338,
       "sha256": "0c117e40e4af5a6c2e42e825f4ba06efb8dccbb16a0295c6a98a7c0263936dff",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_crypto_workspace_layout.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 8587,
+      "sha256": "0d1ad4f536c5f32db1295eca825ea1a0610ef1aab14c2d75a4d2cde586a5aa7c",
       "mode": "0o644"
     },
     {
@@ -17560,6 +19480,38 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_dag_relations_graph.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11052,
+      "sha256": "ff84b3c5074dad0ae1fc116208b2b2feca4e0ef4b32760459a0eef8ea0b3a350",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_dagoblin_analysis.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 21110,
+      "sha256": "2085bdb86f75a191ec3f70ae6e7cdb901223de047540a812c4dd8e86e2a0d841",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_deferred_backend.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 2419,
+      "sha256": "2387244a1a00d28542ee863d8b551b5eab1245c853cf1e7eca863404fc4deeb1",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_deferred_surface.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 9241,
+      "sha256": "d15845661fb8e09ba0d9346d3cce9d957b532565edd96218bf53b6bb3fdb3301",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_desktop_idle_load.py",
       "category": "tests",
       "kind": "file",
@@ -17582,6 +19534,14 @@
       "bytes": 4996,
       "sha256": "168ddb3e604ded226bc3e9651a6c8cfce4c9e196bf09906bbd86c427fd84c7b4",
       "mode": "0o600"
+    },
+    {
+      "path": "tests/test_desktop_teardown.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 1206,
+      "sha256": "f55bff124d86378628a0123f6ad9d424873a533cb55c7b5fa4094cb11dd06922",
+      "mode": "0o644"
     },
     {
       "path": "tests/test_deterministic_solver_executor.py",
@@ -19264,11 +21224,131 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_gg_block_cadence.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 6970,
+      "sha256": "79a0baa3cda213eecc9a64f2377fcd2ca63ee3544b00cb09ddd8e9981e82e616",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_gg_block_graph.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 18077,
+      "sha256": "0b076ffd8fcebf011aa258a3564cd5a392baf62aa4c4b82f0c6ee051c9790ea2",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_gg_consensus_dashboard_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 19188,
+      "sha256": "75c5c5c35ef16feddb9b2d052a8b39b330c766af7c7d4f602575e8f00894a9f0",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_gg_consensus_light.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11128,
+      "sha256": "bf0e6b33e59aa09c6882740e5df7da6f86a22c6bc2434a755f4c5cabc68c7079",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_gg_consensus_ownership.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 2471,
+      "sha256": "a8cd4305b85a40482f8e47d85eb4322aa6d47b25c971b9809eb69d73f04171e2",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_gg_consensus_service.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 21265,
+      "sha256": "367ee3cc0bbf91245564b562c62fe41e032cb53e7a5ff222dc8366a156f3a20e",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_gg_consensus_ui_integration.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 14393,
+      "sha256": "d2a19fd4dd052ddf0c2b8b5809b90ef2f3f3ffd5423e11614d8f3477b6c41d19",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_gg_network_benchmark_cli.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 14493,
+      "sha256": "58270c6a6a59dff81004155db4784d4ac057b03cfacd94582b10ab5c2f6567ea",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_gg_palette.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 7413,
+      "sha256": "636fafabb3884a8c12c8c448523b7ff42b91fb4bbee3b8dc98a9ce204ad7a65e",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_gg_parallel_dag.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 14394,
+      "sha256": "50736564fce4c979a7f7df22e381286bc495ad285b024593273b21d52e0cc403",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_gg_testnet_contract.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 9396,
+      "sha256": "347e2a924c892a82c2d6be020d429e2c2c1a06a5e6487ec9f5432438152ea1a8",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_gg_testnet_process.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 6514,
+      "sha256": "eb160882bdb067e3b0b31927196ac218b2b2e19b832a9d17aece83682d0228ed",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_gg_testnet_rpc_batch.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 12074,
+      "sha256": "23b7ca281f9a566c5d90c47c3ed0b84c52ca8b9d4d318d026797754085f4ec00",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_gg_testnet_service.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 28408,
+      "sha256": "3e3c1f570c0569931828448da2a6cfdf3fdf2358a429c00c38dcf4648213dffd",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_gg_testnet_ui_integration.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 14655,
+      "sha256": "304ed49a27b261100e1eeeb5086b088be050684fb475df8bc9034d2be885f87c",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_gpt_tui.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 13966,
-      "sha256": "81c3b93f5c48a0e5bd7f6e4049485705c2828f4272839dcc8fd492bda9f6438b",
+      "bytes": 13939,
+      "sha256": "98d765ca2f62f61f6941e5f68da582200dfcafe48ed9d373bd94dc2c7b4307cb",
       "mode": "0o644"
     },
     {
@@ -19286,6 +21366,14 @@
       "bytes": 4437,
       "sha256": "b435104582355778d8eba5049491f1998663a24b7f09d75957d19d4527777e48",
       "mode": "0o600"
+    },
+    {
+      "path": "tests/test_grok_wallet_tail_memory.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 6621,
+      "sha256": "d82ca738b78faaf62ccfe9afdcc0861000b7490abe7346b7f1ce4c716880c508",
+      "mode": "0o644"
     },
     {
       "path": "tests/test_grok_worker_contract.py",
@@ -19331,8 +21419,8 @@
       "path": "tests/test_kaspa_covenant.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 5115,
-      "sha256": "84cdcad0860165a0744451d3fa62220454719fc08ac406c2d69d76e50382c280",
+      "bytes": 5167,
+      "sha256": "7d6cf7a7e2f4d0361ec37bb4b036ea72ce2e5d2e93feda3674b15d1945de8d76",
       "mode": "0o644"
     },
     {
@@ -19384,6 +21472,94 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_lan_dag.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 21627,
+      "sha256": "1da7517b405415677b558bf7dbb82fee311baaa2708f58ff33c7fbe2446ceb82",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_dag_runtime.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 9064,
+      "sha256": "863aa28725d7bb8a72903fab78f7158abe36db04d41f5a204adedb2b3f28f9ab",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_desktop_routing.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 3302,
+      "sha256": "1a913c73c48a3a4b76921e5f3031f653560fbc11fdc2cf919549a67e2cc14284",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_desktop_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 3392,
+      "sha256": "42ad0e6d599b5db634797d152b248473b1508a38d635d9797003b7d1c8bc2601",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_terminal.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 8392,
+      "sha256": "6bdae35eef474177d9927fe973e1da4acac72a23ff33178e6053c98bdce445a1",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_test_token_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 3730,
+      "sha256": "6088fbb363240f350b524580c4fa4dd7e90ec96539740f5bb926ec5157b42cc8",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_test_tokens_audit.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 19058,
+      "sha256": "93264dd8b4c020556a5f0a18aaf4205da57d304cbb841ff35dc04ec404c3396d",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_token_runtime.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 2805,
+      "sha256": "5301551468ae3f2f91750b5392479dcd995533b7cb39984e2e01d80a2897e4e9",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_token_transport.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 12618,
+      "sha256": "409d92b94e607e44ae4c1d14ef415c939b95542d68fa033066d90d7ded85e123",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lazy_settings.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 13891,
+      "sha256": "257753d564aa9693448f3df350320c94739cb20f402c44269793c105db4f1ef9",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_ledger_chrome.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11844,
+      "sha256": "31a1eaff262361a20a1fd75ad1b39cbe1840ac7f9b673e530e3959c0d0329881",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_live_aid.py",
       "category": "tests",
       "kind": "file",
@@ -19416,11 +21592,27 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_live_graph_density.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 9840,
+      "sha256": "3e240cb2287ac2d7a6dad3d33cb56708659aed8b264852eede645321ce3718a1",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_live_mandate_store.py",
       "category": "tests",
       "kind": "file",
       "bytes": 13042,
       "sha256": "1482d4efc044b8dd3cb4419ec97f3ff72a2989b0b797a868230c8d76e4cc1231",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_live_measurement_presentation.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 10896,
+      "sha256": "5a495bc3f762855547caba1a8b44aacff0e7469251b15b10c812966755e9a6ea",
       "mode": "0o644"
     },
     {
@@ -19451,8 +21643,24 @@
       "path": "tests/test_marketplace_contract.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 9059,
-      "sha256": "a443c27128dec7e580f35862c6625549d4b9a97f2f59cf5dc90bdcf140864174",
+      "bytes": 12127,
+      "sha256": "6543164746d3dfa56c305f26c8a21e2c39f265f43a9e3626752aa28c2541f3b1",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_marketplace_discovery.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11351,
+      "sha256": "8c93f7be859657324b3967ef28fad4d0dcc0fc7e01096efa31a41cbe17a53127",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_marketplace_gallery_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 12727,
+      "sha256": "42eae30fe1a5f051f117562c827c9da5bf39a76e1283b4ba407f5923e97a98cb",
       "mode": "0o644"
     },
     {
@@ -19541,6 +21749,14 @@
       "kind": "file",
       "bytes": 9390,
       "sha256": "93448f7378e37da53ced2e16b777e728837788bc062ba13dce303c260b142ba2",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_media_diagnostics.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 4584,
+      "sha256": "2b9f2ed1e6aaba6faec3178c61e63a8ef9343c284cf99280e97073ed3a82d628",
       "mode": "0o644"
     },
     {
@@ -19760,6 +21976,22 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_model_limit_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 4181,
+      "sha256": "27814989497e9e936dc27a6bef2caa717c479f8ec8a551dc0f4d4c6a9344dc2a",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_model_usage_runtime.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 5682,
+      "sha256": "d8e6107f24473868852fd83903156a5690806b970e945fb099f751c39f3cb228",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_natural_safe_tool.py",
       "category": "tests",
       "kind": "file",
@@ -19773,6 +22005,62 @@
       "kind": "file",
       "bytes": 12230,
       "sha256": "94f3243531d3170b10df95424b2f766695235bbbd589ce59c5000e5194944b47",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_network_dashboard_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 29225,
+      "sha256": "9951305c1ea8b525914e01e117b174266577b292aa3806a5c5d0256ad00a5a04",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_network_lab_metrics.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 10366,
+      "sha256": "207b468a8fc4e784c271bc7de7988d6f4e49cde20ed86de559ec84d9a660b71f",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_network_live_provenance.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 42409,
+      "sha256": "66fb647532907eb8f187749dcea2c3825eb22f6a2368e4fd1e9aab1621cfa7ca",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_network_profiles.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 12343,
+      "sha256": "1c7947c646ae23ae498fff525a6a6b4d5b3718a10c68fdd9ab9dab72dee54159",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_network_stop_priority.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 16312,
+      "sha256": "c8d1d682cb419694e6e3b99ade4e85d17ac1ad7901a2b858367b9695ec63b86a",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_network_telemetry.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 18684,
+      "sha256": "535041528627da9efdaa00dab1c50668a40be92b9cc901125ff456c3255dc48b",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_network_telemetry_lifecycle.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 14893,
+      "sha256": "f5cfe5ee1a483154838c381e047d5655c8498241ca5dc24cec28ff4c1c873583",
       "mode": "0o644"
     },
     {
@@ -19880,6 +22168,46 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_parallel_dag_async.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 10996,
+      "sha256": "c51023aa8c6ddece53e279c5692f7621212046b7f4794a0517ad0699666b958e",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_parallel_dag_dashboard_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 17460,
+      "sha256": "f4103ad3b1616e09e2c1d91ea4973fb780538292b28c8fff81665f0aaf59abd7",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_parallel_dag_live.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 8814,
+      "sha256": "834c4db62622598fcb4a752364dad73a0de45377612b111faf916e60f4929f85",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_parallel_dag_service.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 6435,
+      "sha256": "eeed46678e76ecd74d4b6f6b7cdc466f89970e1e11eab5433f5f6a9e195405e3",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_parallel_dag_start_runtime.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 4483,
+      "sha256": "03f80887d23f976dd2333cd9703b3ace1d81c0834fe13ec4b81d11f85576f182",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_php_source_analysis.py",
       "category": "tests",
       "kind": "file",
@@ -19896,11 +22224,27 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_platform_files_memory.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 4276,
+      "sha256": "dfab2d32339f3f5a5d530e0469cad34681a6772d79f92747d86c5c0ddb9bb2b1",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_polymarket_research.py",
       "category": "tests",
       "kind": "file",
       "bytes": 5419,
       "sha256": "1d207f09e3b54a171bf62c2cbd62969cfd5899201110e08e09df4bcc3f8f313c",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_portable_wallet_vault.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 3636,
+      "sha256": "9e22f3f4e3aaf35f64e2e7ffdd28c431d45055e65c62d18d33ab7b5f070f0b47",
       "mode": "0o644"
     },
     {
@@ -19992,6 +22336,14 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_research_workbench.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 21050,
+      "sha256": "f0f7a9913fc161febaaf6fd659b8cfc59178302d3bc393ba29ea3b61f1a3ddc9",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_research_workspace.py",
       "category": "tests",
       "kind": "file",
@@ -20040,6 +22392,22 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_runtime_memory_maintenance.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 3949,
+      "sha256": "cc3a97e7c494bf2e4691eee03166cdd23ef465ff59eb8e4485d1c2eeba556dc3",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_runtime_theme.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11673,
+      "sha256": "fe4f48b6562f206fd583e0c434964644356b5efa1669447b168f77f9441823ea",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_safe_edit_engine.py",
       "category": "tests",
       "kind": "file",
@@ -20072,6 +22440,14 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_sensitive_ui_guard.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 8403,
+      "sha256": "9e4931711c042197b5441cfa48146176341d449003ef122fa39d119da82defa4",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_sftp_operator.py",
       "category": "tests",
       "kind": "file",
@@ -20083,8 +22459,8 @@
       "path": "tests/test_shell_load.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 2014,
-      "sha256": "8a5ca76778b5abd0678f4620704ba648a1e6db8ad40bca8036ea8a05fe8735ad",
+      "bytes": 2225,
+      "sha256": "4802452daca343da9331de53a5cd8892fd982812caf249acf9d73e786efa39fb",
       "mode": "0o644"
     },
     {
@@ -20192,6 +22568,30 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_terminal_approval.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 6918,
+      "sha256": "81bfabb0dfa79441b438071119172b9b4eec71b299f1c62a1962c729daf9bc06",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_terminal_cli.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 19646,
+      "sha256": "b529af7d3a161525718d678a5c963962b8c5077eebb464a2982c3832ecbd4b07",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_terminal_color_cache.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 1845,
+      "sha256": "2c0d03f6db74ee2765a0e5204b3835b5fc4a21079ed37b83d1df0ac340af31c9",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_terminal_grid.py",
       "category": "tests",
       "kind": "file",
@@ -20216,6 +22616,22 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_terminal_mnemonic.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 12902,
+      "sha256": "3ad5305752dd3c40e0b749b56f1776c22cdf4958a78eea3259980bad9540fe1c",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_terminal_service.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 9249,
+      "sha256": "3a8322c861ec3fd92e5909e4711045aa4b48e202a51e48eb9268a48e3689d185",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_terminal_snapshot_backpressure.py",
       "category": "tests",
       "kind": "file",
@@ -20229,6 +22645,14 @@
       "kind": "file",
       "bytes": 12554,
       "sha256": "dbd55164e8e3dc5ad583e7a9830034dc911763ec20f7c1b27f41e5bef51ed5a7",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_testnet_live_observation.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 3881,
+      "sha256": "d59cbc153abcfccdc7244162c8195c2487222a42a67ce2ce7f6e19ebcceea04b",
       "mode": "0o644"
     },
     {
@@ -20288,11 +22712,43 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_token_market_prices.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 22500,
+      "sha256": "4a888d32df6bcb8f10ddf4c3c287c6157e5983f22abc731b98c47b462edecbef",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_tui_chat_input.py",
       "category": "tests",
       "kind": "file",
       "bytes": 9314,
       "sha256": "93a8ef91faa8c81d34d0510afc5a4b02f63fbaed6e9187ce71d29dd37ce93f0e",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_ui_color_customization.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 20650,
+      "sha256": "45b3c24923a04a5641326d0453c0c75e6cd0a036bc85ec49e143aaa0a373c2b6",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_ui_color_display.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 20914,
+      "sha256": "a7c876d644866c8a7239bcf31aabe4759b02ffdd0c078e2be4eb10ae35a0d616",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_ui_color_groups.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 12671,
+      "sha256": "a8dbf43f61742d29120b1fe6185028d97604becb79166df3f8bc93bd1aa2d85a",
       "mode": "0o644"
     },
     {
@@ -20307,8 +22763,8 @@
       "path": "tests/test_ux_baseline_contract.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 58289,
-      "sha256": "1b87b5365c3b67b8709d535832114338a9b7915b96d3db9e8e2b06926510c9de",
+      "bytes": 58842,
+      "sha256": "b0df326d409999f2bb2d7aca295046c9e1feb460f8750290e6d787e3ee5a301b",
       "mode": "0o644"
     },
     {
@@ -20317,6 +22773,102 @@
       "kind": "file",
       "bytes": 1242,
       "sha256": "2e6f17160728513c508cd1af0ca1df86d19f561cde40b93bed8d13d2e5942655",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_wallet_account_roles.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 15186,
+      "sha256": "0ca00813ed476b09139bcebecb297ba5ad80bc20e61aa32b1d7bfabc43cf7f2c",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_wallet_color_host.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 4426,
+      "sha256": "e0e5c330e13bea3dee7d0967aef40c542cc626c43c9e97ae72ce6dfa4b6ddb43",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_wallet_creation_wizard.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 13986,
+      "sha256": "af803ceb637560914087b57414ea13dbb61b99b002f3133996c814c070078d20",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_wallet_mnemonic.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 15588,
+      "sha256": "6f3eafe1fb7b516fc64846e7d778d542c1702f1c5c61593a86c234d48baa2a8f",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_wallet_operation_approval.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 20940,
+      "sha256": "03ec563de36abd1c04379588e5ea2c257c59285a2fb4c2c6782a5e55ff515246",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_wallet_overview_density.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 10553,
+      "sha256": "54c0a501dbccfdc576bff6bda52ec2533bbb903396b62ced2e8f710d1726819b",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_wallet_popup_compact.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 24027,
+      "sha256": "260c93029775ea479479d6efdf02de51fba6da8ab91f1dfdedd43cdd905ffb23",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_wallet_private_host.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 14289,
+      "sha256": "389154cd1ceccbf17994de0531007ac740082d523abb064f9a27a3c9e77206e7",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_wallet_recovery_panel.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 7532,
+      "sha256": "1ffba4cfe5dda088147a9671c5a0f86f6daa1f07db5556b526807a09a6bfb1ba",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_wallet_recovery_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 13061,
+      "sha256": "76ecf04af560d84412ec7a4390f4da8831eee0f35c72e3150b8aa5888e658f22",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_wallet_telemetry_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 8887,
+      "sha256": "980a02b7a040023ac25cc5236febfd9bc5e0d2f24e9dce37096e8d3837c5ebf5",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_wallet_token_colors.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 18381,
+      "sha256": "b09c85d4867eec346874e0e11ada0bf437f9d3aa1bd421fde48a889f41800c32",
       "mode": "0o644"
     },
     {
@@ -20363,8 +22915,8 @@
       "path": "tests/test_window_chrome.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 5859,
-      "sha256": "2eb9063be4ba35b71808ff9aaa83c92ab09a1f724054029253b46cabae295e32",
+      "bytes": 7205,
+      "sha256": "a9c6f464517c9689bb5a4b829f36a571095fad814ba6763ba9492d3af08800dc",
       "mode": "0o644"
     },
     {
@@ -20443,8 +22995,8 @@
       "path": "tests/test_windows_research_ui.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 13165,
-      "sha256": "d4cb0333d193982bfbf6aff91be508964fc244316489944a83b4e7e2bbf63c01",
+      "bytes": 17084,
+      "sha256": "27e72faa540ab04412e491b97a52642d9a18c90100a1b7c1768c876114766474",
       "mode": "0o644"
     },
     {
@@ -20648,6 +23200,14 @@
       "mode": "0o644"
     },
     {
+      "path": "tools/install_crypto_runtime.py",
+      "category": "tools",
+      "kind": "file",
+      "bytes": 3614,
+      "sha256": "97c344708f465095221c063a252c9aab6db32371542ab5857f6cdb2bb0367d93",
+      "mode": "0o644"
+    },
+    {
       "path": "tools/install_gg_eyes_capture.py",
       "category": "tools",
       "kind": "file",
@@ -20712,10 +23272,26 @@
       "mode": "0o644"
     },
     {
+      "path": "tools/serve_omni_node.py",
+      "category": "tools",
+      "kind": "file",
+      "bytes": 911,
+      "sha256": "6b0caf41de566c61c6f8dfd930d8999444f0f6474ee2830128c160b6814f7d27",
+      "mode": "0o644"
+    },
+    {
       "path": "tools/skills/gg-live-eyes",
       "category": "tools",
       "kind": "symlink",
       "target": "../../skills/gg-live-eyes"
+    },
+    {
+      "path": "tools/verify_crypto_runtime.py",
+      "category": "tools",
+      "kind": "file",
+      "bytes": 3495,
+      "sha256": "27903efc6b5848967e1a4949df37ea83db14c0bec4878765e66e2ca950b514f3",
+      "mode": "0o644"
     },
     {
       "path": "tools/verify_site_runtime.py",

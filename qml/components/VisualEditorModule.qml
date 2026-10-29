@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
@@ -36,9 +38,9 @@ Item {
         width: parent.width
         spacing: 8
 
-        Text {
+        GGText { colorKey: "ui.VisualEditorModule.1";
             text: "EDITOR · LOCK / SOURCE"
-            color: "#e6edf3"
+            color: RuntimeTheme.GGTheme.bright
             font.family: "monospace"
             font.pixelSize: 13
             font.bold: true
@@ -47,21 +49,21 @@ Item {
         Row {
             spacing: 7
 
-            GgButton {
+            GgButton { property string uiColorScope: "ui.control.VisualEditorModule.1";
                 text: root.layoutLocked ? "UNLOCK LAYOUT" : "LOCK LAYOUT"
                 checkable: true
                 checked: !root.layoutLocked
                 onClicked: root.lockRequested(!root.layoutLocked)
             }
 
-            GgButton {
+            GgButton { property string uiColorScope: "ui.control.VisualEditorModule.2";
                 text: "NORMAL"
                 checkable: true
                 checked: root.editorMode === "NORMAL"
                 onClicked: root.modeRequested("NORMAL")
             }
 
-            GgButton {
+            GgButton { property string uiColorScope: "ui.control.VisualEditorModule.3";
                 text: "SHOW SOURCE"
                 checkable: true
                 checked: root.editorMode === "SOURCE"
@@ -69,12 +71,12 @@ Item {
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.VisualEditorModule.2";
             width: parent.width
             text: root.layoutLocked
                 ? "Locked is the safe default. Unlocking exposes six-dot move bars and diagonal corner resize handles."
                 : "Unlocked presentation mode. Geometry is saved to the active profile, while the current UI components remain the renderer."
-            color: root.layoutLocked ? "#a8b0b8" : "#8db89a"
+            color: root.layoutLocked ? RuntimeTheme.GGTheme.muted : RuntimeTheme.GGTheme.positive
             wrapMode: Text.WordWrap
             font.family: "monospace"
             font.pixelSize: 10
@@ -83,14 +85,14 @@ Item {
         Rectangle {
             width: parent.width
             height: 1
-            color: "#343a40"
+            color: RuntimeTheme.GGTheme.line
         }
 
-        Text {
+        GGText { colorKey: "ui.VisualEditorModule.3";
             text: "SELECT SURFACE · " + (root.selectedSurface.length
                 ? root.selectedSurface
                 : "none")
-            color: "#c7a873"
+            color: RuntimeTheme.GGTheme.accent
             font.family: "monospace"
             font.pixelSize: 11
             font.bold: true
@@ -102,7 +104,7 @@ Item {
 
             Repeater {
                 model: root.rows()
-                delegate: GgButton {
+                delegate: GgButton { property string uiColorScope: "ui.control.VisualEditorModule.4";
                     required property var modelData
                     text: String(modelData.title || modelData.id || "SURFACE")
                     checkable: true
@@ -116,11 +118,11 @@ Item {
             width: parent.width
             spacing: 8
 
-            Text {
+            GGText { colorKey: "ui.VisualEditorModule.4";
                 text: root.sourcePath.length
                     ? root.sourcePath
                     : "Select a surface to load its source buffer."
-                color: "#8b949e"
+                color: RuntimeTheme.GGTheme.dim
                 font.family: "monospace"
                 font.pixelSize: 10
                 elide: Text.ElideMiddle
@@ -128,7 +130,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
             }
 
-            GgButton {
+            GgButton { property string uiColorScope: "ui.control.VisualEditorModule.5";
                 text: "CLOSE SOURCE"
                 width: 112
                 height: 24
@@ -141,7 +143,7 @@ Item {
             width: parent.width
             height: Math.max(150, Math.min(430, root.height - 135))
             clip: true
-            ScrollBar.vertical: GgScrollBar {}
+            ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.VisualEditorModule.GgScrollBar.6";}
 
             TextArea {
                 id: sourceEditor
@@ -150,8 +152,8 @@ Item {
                 text: root.sourceText
                 enabled: root.editorMode === "SOURCE"
                 color: "#d9e0e7"
-                selectedTextColor: "#f2f2f2"
-                selectionColor: "#343a40"
+                selectedTextColor: RuntimeTheme.GGTheme.bright
+                selectionColor: RuntimeTheme.GGTheme.line
                 font.family: "monospace"
                 font.pixelSize: 10
                 wrapMode: TextEdit.NoWrap
@@ -159,8 +161,8 @@ Item {
                 background: Rectangle {
                     color: "#0d0f10"
                     border.color: sourceEditor.activeFocus
-                        ? "#8a8a8a"
-                        : "#343a40"
+                        ? RuntimeTheme.GGTheme.dim
+                        : RuntimeTheme.GGTheme.line
                     border.width: 1
                 }
             }
@@ -169,20 +171,20 @@ Item {
         Row {
             spacing: 8
 
-            GgButton {
+            GgButton { property string uiColorScope: "ui.control.VisualEditorModule.6";
                 text: "SAVE BUFFER"
                 enabled: root.selectedSurface.length > 0
                     && root.editorMode === "SOURCE"
                 onClicked: root.sourceSaveRequested(sourceEditor.text)
             }
 
-            Text {
+            GGText { colorKey: "ui.VisualEditorModule.5";
                 text: root.sourceStatus.length
                     ? root.sourceStatus
                     : "profile-local buffer · canonical write authority: NONE"
                 color: root.sourceStatus.indexOf("FAIL") >= 0
                     ? "#d18b8b"
-                    : "#8b949e"
+                    : RuntimeTheme.GGTheme.dim
                 font.family: "monospace"
                 font.pixelSize: 10
                 anchors.verticalCenter: parent.verticalCenter

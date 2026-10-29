@@ -6102,6 +6102,30 @@ class ChatBridge(QObject):
         )
         if callable(set_tui_handler):
             set_tui_handler(self._handle_tui_chat_line)
+        set_wallet_handler = getattr(surface_host, 'set_wallet_action_approval_handler', None)
+        if callable(set_wallet_handler):
+            set_wallet_handler(self._capture_wallet_operation)
+
+    def _capture_wallet_operation(self, identifier: str) -> None:
+        """Route a public wallet operation into the same ordinary ja/nej gate."""
+        from backend import wallet_approval
+        request = wallet_approval.request(identifier)
+        context_reference, workspace_object_id = self._tui_chat_context()
+        scope = {'risk_class': 'RED', 'capability_human_id': 'wallet.' + request['name'],
+            'effect_class': 'WALLET_OPERATION', 'external': False,
+            'persistent_write': 'EXACT_WALLET_OPERATION', 'network': 'TASK_SCOPED' if request['allowed_hosts'] else 'NONE',
+            'allowed_hosts': request['allowed_hosts'], 'summary': request['summary'],
+            'wallet_operation': identifier}
+        try:
+            pending_id = self._capture_chat_native_mandate(
+                user_text=request['summary'], chat_scope=scope,
+                workspace_context=request['context'], context_reference=context_reference,
+                workspace_object_id=workspace_object_id)
+            self._pending_mandates[pending_id]['wallet_operation'] = identifier
+            self._pending_mandates[pending_id]['wallet_operation_name'] = request['name']
+        except Exception:
+            wallet_approval.cancel(identifier)
+            raise
 
     def _native_tui_engine_active(self) -> bool:
         try:
@@ -6186,12 +6210,17 @@ class ChatBridge(QObject):
         return True
 
     def _waiting_chat_native_mandates(self) -> list[dict[str, object]]:
-        return [
-            pending
-            for pending in self._pending_mandates.values()
-            if pending.get("status") == "WAITING_APPROVAL"
-            and pending.get("approval_mode") == "CHAT_NATIVE_TASK_SCOPED"
-        ]
+        waiting = []
+        for pending in self._pending_mandates.values():
+            if pending.get('status') != 'WAITING_APPROVAL' or pending.get('approval_mode') != 'CHAT_NATIVE_TASK_SCOPED':
+                continue
+            if pending.get('wallet_operation'):
+                from backend import wallet_approval
+                if not wallet_approval.is_available(str(pending['wallet_operation'])):
+                    pending['status'] = 'EXPIRED'
+                    continue
+            waiting.append(pending)
+        return waiting
 
     def _latest_waiting_chat_native_mandate(self) -> dict[str, object] | None:
         waiting = self._waiting_chat_native_mandates()
@@ -6212,6 +6241,9 @@ class ChatBridge(QObject):
             if pending.get("approval_mode") != "CHAT_NATIVE_TASK_SCOPED":
                 continue
             pending["status"] = "SUPERSEDED"
+            if pending.get('wallet_operation'):
+                from backend import wallet_approval
+                wallet_approval.cancel(str(pending['wallet_operation']))
 
     def _tui_approval_notice(self, action: str) -> str:
         waiting = self._waiting_chat_native_mandates()
@@ -6896,6 +6928,16 @@ class ChatBridge(QObject):
                 ]
             )
 
+        if chat_scope.get('wallet_operation'):
+            # The wallet descriptor binds this operation's concrete inputs.
+            # Web-site restrictions and generic source-file assumptions do
+            # not describe key custody, encrypted backup or a reviewed send.
+            scope = [normalized, 'the exact queued wallet operation and its public input revision',
+                'one execution after ordinary chat approval', 'no password or private key in chat, logs or approval records']
+            forbidden_scope = ['approval bypass', 'approval scope drift', 'target scope drift',
+                'cross-task grant reuse', 'grant replay', 'unbounded background autonomy',
+                'automatic authority expansion', 'passwords or private keys in chat, logs or approval records']
+
         ready_core = {
             "owner": "GG",
             "goal": normalized,
@@ -7086,6 +7128,8 @@ class ChatBridge(QObject):
         pending = self._pending_mandates[pending_id]
         pending["approval_mode"] = "CHAT_NATIVE_TASK_SCOPED"
         pending["chat_scope"] = copy.deepcopy(chat_scope)
+        if chat_scope.get('wallet_operation'):
+            pending['wallet_operation'] = str(chat_scope['wallet_operation'])
         pending["operator_ready"] = False
         self._supersede_older_chat_native_mandates(keep=pending)
         return pending_id
@@ -7331,6 +7375,28 @@ class ChatBridge(QObject):
         if callable(persist_action_approval):
             persist_action_approval()
 
+        if pending.get('wallet_operation'):
+            from backend import wallet_approval
+            identifier = str(pending['wallet_operation'])
+            wallet_approval.bind_approval(identifier, approved_record, store_root=store.root)
+            transport = getattr(self, '_resident_chat', None)
+            surface_host = getattr(transport, '_surface_host', None)
+            resume = getattr(surface_host, 'resume_wallet_operation', None)
+            if not callable(resume):
+                wallet_approval.cancel(identifier)
+                raise RuntimeError('WALLET_APPROVAL_REQUIRED')
+            try:
+                resume(identifier)
+            except Exception:
+                wallet_approval.cancel(identifier)
+                raise
+            pending['status'] = 'EXECUTION_RUNNING'
+            pending['execution_state'] = 'DISPATCHED'
+            action_task_continuity.record_action_dispatch(self._task_ledger, pending)
+            self._append('GG MANDATE', 'VALID', 'Godkänt. Den granskade walletåtgärden utförs en gång.',
+                context_reference + ' · ' + workspace_object_id, 'RUNNING', 20)
+            return
+
         self._append(
             "GG MANDATE",
             "VALID",
@@ -7364,6 +7430,8 @@ class ChatBridge(QObject):
         workspace_object_id: str,
     ) -> None:
         """Continue the approved instruction through the selected chat motor."""
+        if pending.get('wallet_operation'):
+            raise RuntimeError('WALLET_OPERATION_ALREADY_DISPATCHED')
         transport = getattr(self, "_resident_chat", None)
         submit = getattr(transport, "submit", None)
         if not callable(submit):
@@ -7523,7 +7591,15 @@ class ChatBridge(QObject):
                 pending["status"] = "BLOCKED_STALE"
                 raise RuntimeError("MANIFEST_CHANGED_AFTER_MANDATE_REQUEST")
 
-            if pending.get("approval_mode") == "CHAT_NATIVE_TASK_SCOPED":
+            if pending.get('wallet_operation'):
+                from backend import wallet_approval
+                if parsed.get('action') == 'REJECT':
+                    # A human can always reject the queued operation, even
+                    # when its input has changed since the request.
+                    workspace = {'sha256': pending['action_intent']['target_source_revision']}
+                else:
+                    workspace = wallet_approval.context(str(pending['wallet_operation']))
+            elif pending.get("approval_mode") == "CHAT_NATIVE_TASK_SCOPED":
                 workspace = _chat_identity_workspace_context(
                     workspace_object_id
                 )
@@ -7570,6 +7646,14 @@ class ChatBridge(QObject):
 
             if parsed.get("action") == "REJECT":
                 pending["status"] = "REJECTED"
+                if pending.get('wallet_operation'):
+                    from backend import wallet_approval
+                    wallet_approval.cancel(str(pending['wallet_operation']))
+                    transport = getattr(self, '_resident_chat', None)
+                    surface_host = getattr(transport, '_surface_host', None)
+                    notice = getattr(surface_host, '_wallet_operation_notice', None)
+                    if callable(notice):
+                        notice(str(pending.get('wallet_operation_name') or 'wallet'), 'cancelled', '')
                 if getattr(self, "_live_mandate_store", None) is not None:
                     live_mandate_store.reject(
                         self._live_mandate_store,
@@ -7787,6 +7871,10 @@ class ChatBridge(QObject):
                 workspace_object_id=workspace_object_id,
             )
         except Exception as exc:
+            if pending.get('wallet_operation'):
+                from backend import wallet_approval
+                pending['status'] = 'BLOCKED_STALE'
+                wallet_approval.cancel(str(pending['wallet_operation']))
             self._append(
                 "GG SYSTEM",
                 "MANDATE",
@@ -7821,6 +7909,11 @@ class ChatBridge(QObject):
         }
         if action == "APPROVE":
             parsed["approver_id"] = "GG_CHAT"
+        if pending.get('wallet_operation'):
+            # The visible wallet target is independent of whichever chat
+            # pane the user selected to answer the latest ja/nej question.
+            context_reference = str(pending['context_reference'])
+            workspace_object_id = str(pending['workspace_object_id'])
         self._shutdown_resident_idle_for_task()
         self._submit_mandate(parsed, context_reference, workspace_object_id)
         return True
@@ -7830,6 +7923,8 @@ class ChatBridge(QObject):
         statuses: set[str],
     ) -> dict[str, object] | None:
         for pending in reversed(list(self._pending_mandates.values())):
+            if pending.get('wallet_operation'):
+                continue
             if pending.get("approval_mode") != "CHAT_NATIVE_TASK_SCOPED":
                 continue
             if str(pending.get("status") or "") in statuses:
@@ -12400,6 +12495,15 @@ def initialize_loaded_window(root: QObject, app: QApplication) -> None:
     for name, value in qml_initial_properties(config).items():
         if not root.setProperty(name, value):
             raise RuntimeError("Main window rejected startup property: " + name)
+
+    # Presentation-only, local and event-driven. Both launchers use this path;
+    # no polling, network access or financial operation belongs to this bridge.
+    from backend.ui_color_customization import UiColorController
+    ui_colors = UiColorController(app)
+    app._gg_ui_colors = ui_colors  # type: ignore[attr-defined]
+    if not root.setProperty("uiColorHost", ui_colors):
+        raise RuntimeError("Main window rejected presentation color controller")
+    ui_colors.installWindow(root)
 
     root.setProperty("shellLoadLabel", "PREPARING DESKTOP…")
     root.setProperty(

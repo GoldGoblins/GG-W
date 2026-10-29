@@ -20,20 +20,11 @@ def main() -> int:
     for name in (
         "qml/components/GgFrame.qml",
         "qml/components/GgButton.qml",
-        "qml/components/GgSwitch.qml",
-        "qml/components/GgSlider.qml",
-        "qml/components/GgCheck.qml",
         "qml/components/GgField.qml",
         "qml/components/GgScrollBar.qml",
-        "qml/components/TmogSurface.qml",
-        "qml/components/CryptoSurface.qml",
-        "qml/components/MarketplaceSurface.qml",
-        "qml/components/CryptoChart.qml",
+        "qml/components/DeferredSurface.qml",
         "qml/components/BufferMark.qml",
-        "qml/components/MediaSurface.qml",
-        "qml/components/DrawSurface.qml",
         "qml/components/WorkObject.qml",
-        "qml/components/SettingsSurface.qml",
     ):
         if name not in rows:
             raise AssertionError("missing real dependency: " + name)
@@ -43,6 +34,13 @@ def main() -> int:
         raise AssertionError("chart vendor leaked into QML load queue")
     if "qml/components/WebPane.qml" in rows:
         raise AssertionError("Chromium WebPane still warms the shell queue")
+    for name in ("CryptoSurface", "MarketplaceSurface", "TmogSurface", "OsintSurface",
+                 "MediaSurface", "DrawSurface", "GameEngineSurface", "NodeSurface",
+                 "AgentFlowSurface", "ResearchSurface", "KnowledgeSurface", "CryptoChart",
+                 "SettingsSurface", "VisualProfilesModule", "VisualSurfacesModule",
+                 "VisualEditorModule", "SettingsSearchModule", "GgSwitch", "GgSlider", "GgCheck"):
+        if "qml/components/" + name + ".qml" in rows:
+            raise AssertionError("unopened surface still warms the shell queue: " + name)
     if len(rows) < 8:
         raise AssertionError("queue too small to be a real graph")
     if len(rows) != len(set(rows)):

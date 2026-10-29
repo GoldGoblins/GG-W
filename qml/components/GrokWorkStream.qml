@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
@@ -40,12 +42,14 @@ Item {
     }
 
     function colorForState(label) {
+        if (label === "WAITING_FOR_USER" || label === "WAITING")
+            return RuntimeTheme.GGTheme.warning
         if (
             label === "PASS"
             || label === "READY"
             || label === "SELECTED"
         )
-            return "#8db89a"
+            return RuntimeTheme.GGTheme.positive
 
         if (
             label === "FAIL"
@@ -53,7 +57,7 @@ Item {
             || label === "BLOCKED"
             || label === "TIMED_OUT"
         )
-            return "#c98989"
+            return RuntimeTheme.GGTheme.negative
 
         if (
             label === "RUNNING"
@@ -65,9 +69,9 @@ Item {
             || label === "QUEUED"
             || label === "STOPPING"
         )
-            return "#c8a97e"
+            return RuntimeTheme.GGTheme.accent
 
-        return "#8b949e"
+        return RuntimeTheme.GGTheme.dim
     }
 
     function parseCards(raw) {
@@ -507,14 +511,14 @@ Item {
         opacity: root.livePulse ? 1.0 : 0.75
     }
 
-    GgFrame {
+    GgFrame { property string uiColorScope: "ui.widget.GrokWorkStream.GgFrame.1";
         id: frame
         x: 8
         width: parent.width - 8
         leftLegend: root.authorLabel
         rightLegend: root.stateLabel
-        backgroundColor: "#1c1c1c"
-        borderColor: "#6a6a6a"
+        backgroundColor: RuntimeTheme.GGTheme.raised
+        borderColor: RuntimeTheme.GGTheme.edge
         rightLegendColor: root.stateColor
 
         Column {
@@ -550,11 +554,11 @@ Item {
                     readonly property var fences:
                         root.fencesFromCard(streamRow.modelData)
 
-                    Text {
+                    GGText { colorKey: "ui.GrokWorkStream.1";
                         visible: streamRow.isThought
                         width: parent.width
                         text: "Thought"
-                        color: "#7d8590"
+                        color: RuntimeTheme.GGTheme.dim
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
@@ -565,18 +569,18 @@ Item {
                             && streamRow.modelData.text.length > 0
                         width: parent.width
                         text: streamRow.modelData.text
-                        color: "#9aa7b3"
+                        color: RuntimeTheme.GGTheme.muted
                         readOnly: true
                         selectByMouse: true
                         selectByKeyboard: true
                         persistentSelection: true
-                        selectionColor: "#3a3a3a"
-                        selectedTextColor: "#f2f2f2"
+                        selectionColor: RuntimeTheme.GGTheme.selected
+                        selectedTextColor: RuntimeTheme.GGTheme.bright
                         textFormat: TextEdit.PlainText
                         wrapMode: TextEdit.WordWrap
                         height: implicitHeight
 
-                        SelectionGuard {}
+                        SelectionGuard { property string uiColorScope: "ui.widget.GrokWorkStream.SelectionGuard.2";}
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
@@ -589,25 +593,25 @@ Item {
                             ).length > 0
                         width: parent.width
                         text: root.textWithoutFences(streamRow.modelData.text)
-                        color: "#e6edf3"
+                        color: RuntimeTheme.GGTheme.bright
                         readOnly: true
                         selectByMouse: true
                         selectByKeyboard: true
                         persistentSelection: true
-                        selectionColor: "#3a3a3a"
-                        selectedTextColor: "#f2f2f2"
+                        selectionColor: RuntimeTheme.GGTheme.selected
+                        selectedTextColor: RuntimeTheme.GGTheme.bright
                         textFormat: TextEdit.PlainText
                         wrapMode: TextEdit.WordWrap
                         height: implicitHeight
 
-                        SelectionGuard {}
+                        SelectionGuard { property string uiColorScope: "ui.widget.GrokWorkStream.SelectionGuard.3";}
                         font.pixelSize: 13
                     }
 
                     Repeater {
                         model: streamRow.fences
 
-                        delegate: WorkObject {
+                        delegate: WorkObject { property string uiColorScope: "ui.widget.GrokWorkStream.WorkObject.4";
                             required property var modelData
 
                             x: 16
@@ -632,7 +636,7 @@ Item {
                         }
                     }
 
-                    WorkObject {
+                    WorkObject { property string uiColorScope: "ui.widget.GrokWorkStream.WorkObject.5";
                         visible: streamRow.isTerminal
                         x: 16
                         width: Math.max(1, contentColumn.width - 16)
@@ -663,7 +667,7 @@ Item {
                         height: visible ? implicitHeight : 0
                     }
 
-                    WorkObject {
+                    WorkObject { property string uiColorScope: "ui.widget.GrokWorkStream.WorkObject.6";
                         visible: streamRow.isCode
                         x: 16
                         width: Math.max(1, contentColumn.width - 16)
@@ -686,18 +690,18 @@ Item {
                         visible: streamRow.isUser
                         width: parent.width
                         text: streamRow.modelData.text
-                        color: "#d8dee9"
+                        color: RuntimeTheme.GGTheme.text
                         readOnly: true
                         selectByMouse: true
                         selectByKeyboard: true
                         persistentSelection: true
-                        selectionColor: "#3a3a3a"
-                        selectedTextColor: "#f2f2f2"
+                        selectionColor: RuntimeTheme.GGTheme.selected
+                        selectedTextColor: RuntimeTheme.GGTheme.bright
                         textFormat: TextEdit.PlainText
                         wrapMode: TextEdit.WordWrap
                         height: implicitHeight
 
-                        SelectionGuard {}
+                        SelectionGuard { property string uiColorScope: "ui.widget.GrokWorkStream.SelectionGuard.7";}
                         font.pixelSize: 13
                     }
 
@@ -706,18 +710,18 @@ Item {
                         visible: streamRow.isError
                         width: parent.width
                         text: streamRow.modelData.text
-                        color: "#c98989"
+                        color: RuntimeTheme.GGTheme.negative
                         readOnly: true
                         selectByMouse: true
                         selectByKeyboard: true
                         persistentSelection: true
-                        selectionColor: "#3a3a3a"
-                        selectedTextColor: "#f2f2f2"
+                        selectionColor: RuntimeTheme.GGTheme.selected
+                        selectedTextColor: RuntimeTheme.GGTheme.bright
                         textFormat: TextEdit.PlainText
                         wrapMode: TextEdit.WordWrap
                         height: implicitHeight
 
-                        SelectionGuard {}
+                        SelectionGuard { property string uiColorScope: "ui.widget.GrokWorkStream.SelectionGuard.8";}
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
@@ -732,18 +736,18 @@ Item {
                             && root.boxedLine(streamRow.modelData).length > 0
                         width: parent.width
                         text: root.boxedLine(streamRow.modelData)
-                        color: "#9aa7b3"
+                        color: RuntimeTheme.GGTheme.muted
                         readOnly: true
                         selectByMouse: true
                         selectByKeyboard: true
                         persistentSelection: true
-                        selectionColor: "#3a3a3a"
-                        selectedTextColor: "#f2f2f2"
+                        selectionColor: RuntimeTheme.GGTheme.selected
+                        selectedTextColor: RuntimeTheme.GGTheme.bright
                         textFormat: TextEdit.PlainText
                         wrapMode: TextEdit.WordWrap
                         height: implicitHeight
 
-                        SelectionGuard {}
+                        SelectionGuard { property string uiColorScope: "ui.widget.GrokWorkStream.SelectionGuard.9";}
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
@@ -784,37 +788,37 @@ Item {
                         objectName: "grokWorkLogText"
                         width: workLogFlick.width
                         text: root.workLogText
-                        color: root.workLogHasError ? "#c98989" : "#9aa7b3"
+                        color: root.workLogHasError ? RuntimeTheme.GGTheme.negative : RuntimeTheme.GGTheme.muted
                         readOnly: true
                         selectByMouse: true
                         selectByKeyboard: true
                         persistentSelection: true
-                        selectionColor: "#3a3a3a"
-                        selectedTextColor: "#f2f2f2"
+                        selectionColor: RuntimeTheme.GGTheme.selected
+                        selectedTextColor: RuntimeTheme.GGTheme.bright
                         textFormat: TextEdit.PlainText
                         wrapMode: TextEdit.WordWrap
                         height: implicitHeight
 
-                        SelectionGuard {}
+                        SelectionGuard { property string uiColorScope: "ui.widget.GrokWorkStream.SelectionGuard.10";}
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
 
-                    ScrollBar.vertical: GgScrollBar {
+                    ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.GrokWorkStream.GgScrollBar.11";
                     }
                 }
             }
 
-            Text {
+            GGText { colorKey: "ui.GrokWorkStream.2";
                 visible: root.endTitle.length > 0 && root.endTitle !== "end"
                 width: parent.width
                 text: root.endTitle
-                color: "#7d8590"
+                color: RuntimeTheme.GGTheme.dim
                 font.family: "monospace"
                 font.pixelSize: 12
             }
 
-            Text {
+            GGText { colorKey: "ui.GrokWorkStream.3";
                 visible: root.contextReference.length > 0
                 width: parent.width
                 text: "ctx " + root.contextReference
@@ -823,7 +827,7 @@ Item {
                             ? " · " + root.taskId
                             : ""
                     )
-                color: "#a8b0b8"
+                color: RuntimeTheme.GGTheme.muted
                 font.family: "monospace"
                 font.pixelSize: 12
             }
@@ -841,9 +845,9 @@ Item {
         anchors.rightMargin: 8
         anchors.bottomMargin: 8
         radius: 2
-        color: "#2a2a2a"
+        color: RuntimeTheme.GGTheme.hover
         border.width: 1
-        border.color: "#3a3a3a"
+        border.color: RuntimeTheme.GGTheme.selected
 
         Column {
             id: overlayColumn
@@ -853,7 +857,7 @@ Item {
             anchors.margins: 8
             spacing: 6
 
-            Text {
+            GGText { colorKey: "ui.GrokWorkStream.4";
                 text: "YOU · IN STREAM"
                 color: "#9a9a9a"
                 font.family: "monospace"
@@ -864,7 +868,7 @@ Item {
             Repeater {
                 model: root.userCards
 
-                delegate: Text {
+                delegate: GGText { colorKey: "ui.GrokWorkStream.5";
                     id: userCard
                     required property var modelData
 

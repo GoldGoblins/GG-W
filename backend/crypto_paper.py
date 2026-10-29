@@ -6,6 +6,8 @@ data window; old candles are not replayed as new trades after an app restart.
 from __future__ import annotations
 
 import json
+import contextvars
+import hashlib
 from backend.platform_support import file_locks as fcntl
 from backend.platform_files import sync_directory
 from contextlib import contextmanager
@@ -25,6 +27,19 @@ MAX_CATCHUP = 24
 MAX_DRAWDOWN = .20
 MAX_DAY_LOSS = .05
 _lock = threading.RLock()
+_asset_scope = contextvars.ContextVar('gg_paper_asset_scope', default='')
+
+
+@contextmanager
+def asset_scope(asset_id: str):
+    """Isolate same-ticker assets without changing the existing strategy engine."""
+    from backend.omni_assets import asset
+    asset(asset_id)
+    token = _asset_scope.set(asset_id)
+    try:
+        yield
+    finally:
+        _asset_scope.reset(token)
 
 
 @contextmanager
@@ -43,7 +58,9 @@ def _transaction():
 def _path(pair: str):
     if pair not in PAIRS:
         raise ValueError("CRYPTO_PAPER_PAIR")
-    return ensure_state_dir() / ("paper-" + pair.lower() + ".json")
+    scope = _asset_scope.get()
+    suffix = '-' + hashlib.sha256(scope.encode()).hexdigest()[:32] if scope else ''
+    return ensure_state_dir() / ("paper-" + pair.lower() + suffix + ".json")
 
 
 def _load(pair: str) -> dict[str, Any]:
@@ -51,11 +68,13 @@ def _load(pair: str) -> dict[str, Any]:
     try:
         value = read_state_json(path)
     except FileNotFoundError:
-        return {"schema": SCHEMA, "pair": pair, "primary": "1h", "accounts": {}, "events": []}
+        return {"schema": SCHEMA, "pair": pair, "asset_id": _asset_scope.get(), "primary": "1h", "accounts": {}, "events": []}
     except (OSError, ValueError):
         raise ValueError('CRYPTO_PAPER_STATE_CORRUPT') from None
     if value.get("schema") != SCHEMA or value.get("pair") != pair:
         raise ValueError("CRYPTO_PAPER_STATE_VERSION")
+    if value.get('asset_id', '') != _asset_scope.get():
+        raise ValueError('CRYPTO_PAPER_ASSET_IDENTITY')
     if (not isinstance(value.get('accounts'), dict) or not isinstance(value.get('events'), list)
             or not all(isinstance(account, dict) for account in value['accounts'].values())):
         raise ValueError('CRYPTO_PAPER_STATE_CORRUPT')

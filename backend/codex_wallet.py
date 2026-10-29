@@ -5,7 +5,11 @@ from __future__ import annotations
 from backend.application_paths import STATE_ROOT, USER_CODEX_HOME, WORKSPACE_ROOT
 
 import json
+import os
 import re
+import threading
+from collections import OrderedDict
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -21,7 +25,25 @@ DESKTOP_CODEX_SESSIONS = DESKTOP_CODEX_HOME / "sessions"
 DESKTOP_CODEX_SESSION_STATE = DESKTOP_CODEX_HOME / "active-session.json"
 _SESSION_ID_RE = re.compile(r"^[0-9a-fA-F-]{36}$")
 _SESSION_PATH_CACHE: dict[tuple[str, str], Path] = {}
-_SNAPSHOT_CACHE: dict[str, tuple[int, int, dict[str, Any]]] = {}
+_MONTHS_SV = ("jan", "feb", "mars", "apr", "maj", "juni", "juli", "aug", "sep", "okt", "nov", "dec")
+
+
+@dataclass
+class _UsageRecord:
+    identity: tuple[int, int]
+    stamp: tuple[int, int] = (-1, -1)
+    offset: int = 0
+    anchor: bytes = b""
+    tokens: dict[str, Any] = field(default_factory=dict)
+    turn: dict[str, Any] = field(default_factory=dict)
+    primary: dict[str, Any] = field(default_factory=dict)
+    secondary: dict[str, Any] = field(default_factory=dict)
+    limit_id: str | None = None
+    result: dict[str, Any] = field(default_factory=dict)
+
+
+_SNAPSHOT_CACHE: OrderedDict[str, _UsageRecord] = OrderedDict()
+_SNAPSHOT_LOCK = threading.RLock()
 
 
 def _fmt(value: int | None) -> str:
@@ -36,14 +58,17 @@ def _fmt(value: int | None) -> str:
 
 
 def _reset_label(value: Any) -> str:
+    if isinstance(value, bool):
+        return "—"
     try:
         timestamp = int(value)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return "—"
     if timestamp <= 0:
         return "—"
     try:
-        return datetime.fromtimestamp(timestamp).astimezone().strftime("%H:%M")
+        local = datetime.fromtimestamp(timestamp).astimezone()
+        return local.strftime("%H:%M") + f" · {local.day} {_MONTHS_SV[local.month - 1]}"
     except (OverflowError, OSError, ValueError):
         return "—"
 
@@ -159,98 +184,166 @@ def clear_session_id(path: Path = CODEX_SESSION_STATE) -> bool:
 def snapshot(
     session: Path | None = None,
     sessions_root: Path = CODEX_SESSIONS,
+    *,
+    allow_latest: bool = True,
 ) -> dict[str, Any]:
-    path = session or _latest_session(sessions_root)
-    stamp: tuple[int, int] | None = None
-    if path is not None:
+    """Read provider records; unchanged polls do no JSONL reads.
+
+    The first scan is streamed. Subsequent polls read only appended complete
+    lines. An unfinished final line is retried after append; replacing or
+    truncating the file discards the previous session's accumulated values.
+    This function belongs in the host's background telemetry lane.
+    """
+    path = session or (_latest_session(sessions_root) if allow_latest else None)
+    if path is None:
+        return _result(None, _UsageRecord((0, 0)))
+    with _SNAPSHOT_LOCK:
         try:
             stat = path.stat()
-            stamp = (int(stat.st_mtime_ns), int(stat.st_size))
         except OSError:
-            path = None
-        if stamp is not None:
-            cached = _SNAPSHOT_CACHE.get(str(path))
-            if cached is not None and cached[:2] == stamp:
-                return dict(cached[2])
-    latest_tokens: dict[str, Any] = {}
-    latest_turn: dict[str, Any] = {}
-    latest_limits: dict[str, Any] = {}
-    if path is not None:
+            return _result(None, _UsageRecord((0, 0)))
+        stamp = (int(stat.st_mtime_ns), int(stat.st_size))
+        identity = (int(stat.st_dev), int(stat.st_ino))
+        key = str(path)
+        record = _SNAPSHOT_CACHE.get(key)
+        if record is not None and record.identity == identity and record.stamp == stamp:
+            _SNAPSHOT_CACHE.move_to_end(key)
+            return dict(record.result)
         try:
-            with path.open(encoding="utf-8", errors="replace") as stream:
-                for line in stream:
+            with path.open("rb") as stream:
+                opened = os.fstat(stream.fileno())
+                opened_identity = (int(opened.st_dev), int(opened.st_ino))
+                opened_stamp = (int(opened.st_mtime_ns), int(opened.st_size))
+                append = (record is not None and record.identity == opened_identity
+                          and opened_stamp[1] > record.stamp[1] and opened_stamp[1] >= record.offset)
+                if append and record.anchor:
+                    stream.seek(record.offset - len(record.anchor))
+                    append = stream.read(len(record.anchor)) == record.anchor
+                if not append:
+                    record = _UsageRecord(opened_identity)
+                stream.seek(record.offset)
+                while True:
+                    line = stream.readline()
+                    if not line or not line.endswith(b"\n"):
+                        break
+                    record.offset = stream.tell()
                     try:
                         row = json.loads(line)
-                    except (json.JSONDecodeError, TypeError):
+                    except (ValueError, TypeError, UnicodeError, RecursionError):
                         continue
                     payload = row.get("payload") if isinstance(row, dict) else None
-                    if not isinstance(payload, dict):
-                        continue
-                    if payload.get("type") == "token_count":
-                        info = payload.get("info") or {}
-                        usage = info.get("total_token_usage")
-                        if isinstance(usage, dict):
-                            latest_tokens = usage
-                        turn_usage = info.get("last_token_usage")
-                        if isinstance(turn_usage, dict):
-                            latest_turn = turn_usage
-                        window = info.get("model_context_window")
-                        if window is not None:
-                            latest_tokens["model_context_window"] = window
-                    limits = payload.get("rate_limits")
-                    if isinstance(limits, dict):
-                        latest_limits = limits
+                    if isinstance(payload, dict):
+                        _consume(record, payload)
+                stream.seek(max(0, record.offset - 128))
+                record.anchor = stream.read(min(128, record.offset))
+                record.stamp = opened_stamp
         except OSError:
-            pass
+            return dict(record.result) if record is not None and record.result else _result(path, _UsageRecord(identity))
+        record.result = _result(path, record)
+        _SNAPSHOT_CACHE[key] = record
+        _SNAPSHOT_CACHE.move_to_end(key)
+        while len(_SNAPSHOT_CACHE) > 8:
+            _SNAPSHOT_CACHE.popitem(last=False)
+        return dict(record.result)
 
-    total = latest_tokens.get("total_tokens")
-    context_used = latest_turn.get("input_tokens")
-    context_window = latest_tokens.get("model_context_window")
-    turn = latest_turn.get("total_tokens")
-    primary = latest_limits.get("primary") or {}
-    secondary = latest_limits.get("secondary") or {}
+
+def _integer(value: Any, *, positive: bool = False) -> int | None:
+    if isinstance(value, bool):
+        return None
     try:
-        total_n = int(total) if total is not None else None
-    except (TypeError, ValueError):
-        total_n = None
+        number = int(value)
+        if float(value) != number or number < (1 if positive else 0):
+            return None
+        return number
+    except (TypeError, ValueError, OverflowError):
+        return None
+
+
+def _percent(value: Any) -> float | None:
+    if isinstance(value, bool):
+        return None
     try:
-        context_n = int(context_used) if context_used is not None else None
-    except (TypeError, ValueError):
-        context_n = None
-    try:
-        window_n = int(context_window) if context_window is not None else None
-    except (TypeError, ValueError):
-        window_n = None
-    try:
-        turn_n = int(turn) if turn is not None else None
-    except (TypeError, ValueError):
-        turn_n = None
-    try:
-        weekly = float(secondary.get("used_percent"))
-        weekly_n = int(round(weekly)) if 0 <= weekly <= 100 else None
-    except (TypeError, ValueError):
-        weekly_n = None
-    try:
-        live = float(primary.get("used_percent"))
-        live_n = int(round(live)) if 0 <= live <= 100 else 0
-    except (TypeError, ValueError):
-        live_n = 0
+        number = float(value)
+        return number if 0 <= number <= 100 else None
+    except (TypeError, ValueError, OverflowError):
+        return None
+
+
+def _consume(record: _UsageRecord, payload: dict[str, Any]) -> None:
+    if payload.get("type") == "token_count":
+        info = payload.get("info")
+        if isinstance(info, dict):
+            for source, target, fields in ((info.get("total_token_usage"), record.tokens, ("total_tokens",)),
+                                           (info.get("last_token_usage"), record.turn, ("input_tokens", "total_tokens"))):
+                if isinstance(source, dict):
+                    for name in fields:
+                        value = _integer(source.get(name))
+                        if value is not None:
+                            target[name] = value
+            window = _integer(info.get("model_context_window"), positive=True)
+            if window is not None:
+                record.tokens["model_context_window"] = window
+    limits = payload.get("rate_limits")
+    if not isinstance(limits, dict):
+        return
+    limit_id = limits.get("limit_id")
+    if isinstance(limit_id, str) and 0 < len(limit_id) <= 128:
+        if record.limit_id is not None and record.limit_id != limit_id:
+            record.primary.clear()
+            record.secondary.clear()
+        record.limit_id = limit_id
+    for name in ("primary", "secondary"):
+        incoming = limits.get(name)
+        if not isinstance(incoming, dict):
+            continue
+        current = getattr(record, name)
+        window = _integer(incoming.get("window_minutes"), positive=True)
+        if window is not None:
+            if current.get("window_minutes") is not None and current["window_minutes"] != window:
+                current.clear()
+            current["window_minutes"] = window
+        percentage = _percent(incoming.get("used_percent"))
+        reset_at = _integer(incoming.get("resets_at"), positive=True)
+        if reset_at is not None and _reset_label(reset_at) != "—":
+            if current.get("resets_at") is not None and current["resets_at"] != reset_at and percentage is None:
+                # An explicitly different period cannot borrow the previous
+                # period's percent when this provider update omits usage.
+                current.pop("used_percent", None)
+            current["resets_at"] = reset_at
+        if percentage is not None:
+            current["used_percent"] = percentage
+
+
+def _result(path: Path | None, record: _UsageRecord) -> dict[str, Any]:
+    total_n = record.tokens.get("total_tokens")
+    context_n = record.turn.get("input_tokens")
+    window_n = record.tokens.get("model_context_window")
+    turn_n = record.turn.get("total_tokens")
+    primary = record.primary
+    secondary = record.secondary
+    live = primary.get("used_percent")
+    live_n = int(round(live)) if live is not None else None
+    weekly = secondary.get("used_percent")
+    weekly_n = int(round(weekly)) if weekly is not None else None
     live_reset_at = primary.get("resets_at")
-    result = {
-        "session": str(path) if path else "",
+    label = str(live_n) + "%" if live_n is not None else "—"
+    return {
+        "session": str(path) if path is not None else "",
         "context_label": _fmt(context_n) + "/" + _fmt(window_n) if context_n is not None and window_n is not None else "—",
         "session_total_label": _fmt(total_n),
         "turn_label": _fmt(turn_n),
         "live_tokens": live_n,
-        "live_label": str(live_n) + "%",
+        "live_label": label,
         "live_reset_at": live_reset_at,
         "live_reset_label": _reset_label(live_reset_at),
         "weekly_percent": weekly_n,
+        "limit_percent": live,
+        "limit_label": label,
+        "limit_reset_at": live_reset_at,
+        "limit_reset_label": _reset_label(live_reset_at),
+        "limit_window_minutes": primary.get("window_minutes"),
         "context_used": context_n,
         "context_window": window_n,
         "session_total": total_n,
         "turn_tokens": turn_n,
     }
-    if path is not None and stamp is not None:
-        _SNAPSHOT_CACHE[str(path)] = (stamp[0], stamp[1], result)
-    return result

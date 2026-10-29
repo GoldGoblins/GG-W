@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
@@ -83,12 +85,12 @@ Item {
         anchors.top: parent.top
         anchors.topMargin: 54
 
-        GgFrame {
+        GgFrame { property string uiColorScope: "ui.widget.CommandPalette.GgFrame.1";
             anchors.fill: parent
             leftLegend: root.title
             rightLegend: "ESC"
-            backgroundColor: "#161616"
-            borderColor: "#6a6a6a"
+            backgroundColor: RuntimeTheme.GGTheme.panel
+            borderColor: RuntimeTheme.GGTheme.edge
 
             Column {
                 anchors.fill: parent
@@ -98,7 +100,7 @@ Item {
                 anchors.bottomMargin: 10
                 spacing: 8
 
-                GgField {
+                GgField { property string uiColorScope: "ui.widget.CommandPalette.GgField.2";
                     id: commandField
                     objectName: "commandPaletteField"
                     width: parent.width
@@ -131,10 +133,10 @@ Item {
                     }
                 }
 
-                Text {
+                GGText { colorKey: "ui.CommandPalette.1";
                     width: parent.width
                     text: root.filteredCommands().length + " results · ↑ ↓ navigate · Enter open"
-                    color: "#77818b"
+                    color: RuntimeTheme.GGTheme.dim
                     font.family: "monospace"
                     font.pixelSize: 10
                 }
@@ -148,7 +150,7 @@ Item {
                     currentIndex: 0
                     model: root.filteredCommands()
                     boundsBehavior: Flickable.StopAtBounds
-                    ScrollBar.vertical: GgScrollBar {}
+                    ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.CommandPalette.GgScrollBar.3";}
 
                     delegate: Rectangle {
                         required property var modelData
@@ -156,38 +158,38 @@ Item {
                         width: resultList.width - 8
                         height: 42
                         color: index === resultList.currentIndex
-                            ? "#34383d"
+                            ? RuntimeTheme.GGTheme.line
                             : commandHit.containsMouse
-                                ? "#24292e"
-                                : "#181818"
+                                ? RuntimeTheme.GGTheme.raised
+                                : RuntimeTheme.GGTheme.panel
                         border.width: 1
                         border.color: index === resultList.currentIndex
-                            ? "#8a8a8a"
-                            : "#343a40"
+                            ? RuntimeTheme.GGTheme.dim
+                            : RuntimeTheme.GGTheme.line
                         radius: 2
 
-                        Text {
+                        GGText { colorKey: "ui.CommandPalette.2";
                             anchors.left: parent.left
                             anchors.leftMargin: 9
                             anchors.verticalCenter: parent.verticalCenter
                             text: String(modelData.label || modelData.id || "COMMAND")
-                            color: "#e6edf3"
+                            color: RuntimeTheme.GGTheme.bright
                             font.family: "monospace"
                             font.pixelSize: 11
                             font.bold: index === resultList.currentIndex
                         }
 
-                        Text {
+                        GGText { colorKey: "ui.CommandPalette.3";
                             anchors.right: parent.right
                             anchors.rightMargin: 10
                             anchors.verticalCenter: parent.verticalCenter
                             text: String(modelData.keybinding || modelData.category || "")
-                            color: "#c7a873"
+                            color: RuntimeTheme.GGTheme.accent
                             font.family: "monospace"
                             font.pixelSize: 10
                         }
 
-                        Text {
+                        GGText { colorKey: "ui.CommandPalette.4";
                             anchors.left: parent.left
                             anchors.leftMargin: 9
                             anchors.right: parent.right
@@ -195,7 +197,7 @@ Item {
                             anchors.bottom: parent.bottom
                             anchors.bottomMargin: 4
                             text: String(modelData.description || "")
-                            color: "#8b949e"
+                            color: RuntimeTheme.GGTheme.dim
                             font.family: "monospace"
                             font.pixelSize: 8
                             elide: Text.ElideRight
@@ -216,12 +218,12 @@ Item {
                     width: parent.width
                     spacing: 8
 
-                    GgButton {
+                    GgButton { property string uiColorScope: "ui.control.CommandPalette.1";
                         text: "CLOSE"
                         onClicked: root.dismissed()
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.CommandPalette.5";
                         anchors.verticalCenter: parent.verticalCenter
                         text: root.footerHint
                         color: "#6f7882"

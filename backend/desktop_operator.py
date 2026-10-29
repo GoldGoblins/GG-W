@@ -234,8 +234,12 @@ def make_result(
     observation_seq: int = 0,
     stable_frames: int = 0,
 ) -> dict[str, Any]:
+    from backend import sensitive_ui_guard
+    blocked=command.get('action') in {'SNAPSHOT','FIND'} and sensitive_ui_guard.active()
+    if blocked:
+        ok=False;reason_code='SENSITIVE_UI_ACTIVE';text='';names=[];image=''
     view = ROOT / VIEW_NAME
-    if not image and view.is_file():
+    if not blocked and not image and view.is_file():
         image = str(view)
     authority = _authority_fields(command)
     return {
@@ -306,6 +310,9 @@ def write_result(result: dict[str, Any]) -> None:
 
 def submit(command: dict[str, Any], *, timeout: float = 25.0) -> dict[str, Any]:
     validated = validate_command(command)
+    from backend import sensitive_ui_guard
+    try:guard_token=sensitive_ui_guard.capture_token() if validated['action'] in {'SNAPSHOT','FIND'} else None
+    except RuntimeError:raise DesktopOperatorError('SENSITIVE_UI_ACTIVE') from None
     ensure_root()
     command_path = ROOT / COMMAND_NAME
     result_path = ROOT / RESULT_NAME
@@ -323,6 +330,9 @@ def submit(command: dict[str, Any], *, timeout: float = 25.0) -> dict[str, Any]:
                 time.sleep(0.05)
                 continue
             if value.get("command_id") == validated["command_id"]:
+                if guard_token is not None:
+                    try:sensitive_ui_guard.require_capture_allowed(guard_token)
+                    except RuntimeError:raise DesktopOperatorError('SENSITIVE_UI_ACTIVE') from None
                 return value
         time.sleep(0.05)
     raise DesktopOperatorError("OPERATOR_TIMEOUT")

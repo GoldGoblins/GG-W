@@ -1,4 +1,6 @@
 pragma ComponentBehavior: Bound
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
@@ -80,20 +82,20 @@ Column {
     Component.onCompleted: Qt.callLater(refreshImage)
     Timer {interval:500;repeat:true;running:!!panel.uvJob.busy;onTriggered:panel.command({op:"UV_STATUS"})}
 
-    Text {
+    GGText { colorKey: "ui.GameAssetInspector.1";
         text: "ASSETREDIGERARE"+(panel.state.dirty ? "  • ej sparat" : "")
         color: panel.controller.ledgerGold; font.bold:true; font.pixelSize:13
     }
-    Text {
+    GGText { colorKey: "ui.GameAssetInspector.2";
         visible:panel.browserOpen;width:parent.width; wrapMode:Text.WordWrap; color:panel.controller.muted; font.pixelSize:11
         text:"Klicka på ett objekt i världen. Dra med Flytta eller ändra värden nedan. Biblioteket innehåller modellfilerna."
     }
     Row {
         spacing:5
-        GgButton {text:"SCEN";checked:panel.browserTab==="SCENE";onClicked:panel.browserTab="SCENE"}
-        GgButton {text:"BIBLIOTEK";checked:panel.browserTab==="LIBRARY";onClicked:panel.browserTab="LIBRARY"}
-        GgButton {text:"↻";implicitWidth:30;onClicked:panel.command({op:"REFRESH"})}
-        GgButton {text:panel.browserOpen ? "DÖLJ LISTA" : "VÄLJ ASSET";onClicked:panel.browserOpen=!panel.browserOpen}
+        GgButton { property string uiColorScope: "ui.control.GameAssetInspector.1";text:"SCEN";checked:panel.browserTab==="SCENE";onClicked:panel.browserTab="SCENE"}
+        GgButton { property string uiColorScope: "ui.control.GameAssetInspector.2";text:"BIBLIOTEK";checked:panel.browserTab==="LIBRARY";onClicked:panel.browserTab="LIBRARY"}
+        GgButton { property string uiColorScope: "ui.control.GameAssetInspector.3";text:"↻";implicitWidth:30;onClicked:panel.command({op:"REFRESH"})}
+        GgButton { property string uiColorScope: "ui.control.GameAssetInspector.4";text:panel.browserOpen ? "DÖLJ LISTA" : "VÄLJ ASSET";onClicked:panel.browserOpen=!panel.browserOpen}
     }
     TextField {id:assetSearch;visible:panel.browserOpen;objectName:"gameAssetSearch";width:parent.width;placeholderText:"Sök assets…";font.pixelSize:12}
     ListView {
@@ -106,7 +108,7 @@ Column {
             color: (panel.selected.identity && panel.selected.identity===modelData.identity)
                 || (!panel.selected.identity && panel.selected.source===modelData.source)
                 ? panel.controller.selectedPanel : index%2 ? "#202729" : "#192022"
-            Text {anchors.left:parent.left;anchors.right:parent.right;anchors.margins:6;anchors.verticalCenter:parent.verticalCenter
+            GGText { colorKey: "ui.GameAssetInspector.3";anchors.left:parent.left;anchors.right:parent.right;anchors.margins:6;anchors.verticalCenter:parent.verticalCenter
                 elide:Text.ElideRight;font.pixelSize:11;color:panel.controller.text
                 text:String(assetRow.modelData.name || "Asset")+"\n"+String(assetRow.modelData.path || assetRow.modelData.kind || "")}
             MouseArea {anchors.fill:parent;cursorShape:Qt.PointingHandCursor
@@ -117,23 +119,23 @@ Column {
     }
     Row {
         spacing:5
-        GgButton {text:"SPARA";objectName:"gameAssetSave";enabled:panel.state.dirty;onClicked:panel.command({op:"SAVE"})}
-        GgButton {text:"ÅNGRA";objectName:"gameAssetUndo";enabled:panel.state.undo>0;onClicked:panel.command({op:"UNDO"})}
-        GgButton {text:"GÖR OM";enabled:panel.state.redo>0;onClicked:panel.command({op:"REDO"})}
-        GgButton {text:"ÖPPNA";onClicked:panel.command({op:"LOAD"})}
+        GgButton { property string uiColorScope: "ui.control.GameAssetInspector.5";text:"SPARA";objectName:"gameAssetSave";enabled:panel.state.dirty;onClicked:panel.command({op:"SAVE"})}
+        GgButton { property string uiColorScope: "ui.control.GameAssetInspector.6";text:"ÅNGRA";objectName:"gameAssetUndo";enabled:panel.state.undo>0;onClicked:panel.command({op:"UNDO"})}
+        GgButton { property string uiColorScope: "ui.control.GameAssetInspector.7";text:"GÖR OM";enabled:panel.state.redo>0;onClicked:panel.command({op:"REDO"})}
+        GgButton { property string uiColorScope: "ui.control.GameAssetInspector.8";text:"ÖPPNA";onClicked:panel.command({op:"LOAD"})}
     }
-    Text {width:parent.width;wrapMode:Text.WordWrap;font.pixelSize:11
+    GGText { colorKey: "ui.GameAssetInspector.4";width:parent.width;wrapMode:Text.WordWrap;font.pixelSize:11
         color:panel.controller.assetEditorError ? panel.controller.signalRed : panel.controller.ledgerGreen
         text:panel.controller.assetEditorError || panel.state.notice || ""}
     Rectangle {width:parent.width;height:1;color:panel.controller.frameBorder}
-    Text {visible:!panel.selected.key;width:parent.width;wrapMode:Text.WordWrap;color:panel.controller.muted;font.pixelSize:12
+    GGText { colorKey: "ui.GameAssetInspector.5";visible:!panel.selected.key;width:parent.width;wrapMode:Text.WordWrap;color:panel.controller.muted;font.pixelSize:12
         text:"Välj en asset för information, UV, material och redigering."}
 
     Column {
         width:parent.width;spacing:8;visible:!!panel.selected.key
-        Text {width:parent.width;wrapMode:Text.Wrap;color:panel.controller.ledgerGold;font.bold:true;font.pixelSize:13
+        GGText { colorKey: "ui.GameAssetInspector.6";width:parent.width;wrapMode:Text.Wrap;color:panel.controller.ledgerGold;font.bold:true;font.pixelSize:13
             text:panel.selected.name || "Asset"}
-        Text {width:parent.width;wrapMode:Text.Wrap;color:panel.controller.muted;font.pixelSize:11
+        GGText { colorKey: "ui.GameAssetInspector.7";width:parent.width;wrapMode:Text.Wrap;color:panel.controller.muted;font.pixelSize:11
             text:(panel.selected.scope==="INSTANCE" ? "Detta objekt" : "Asset i biblioteket — alla objekt som använder den")
                 +"\n"+String(panel.detail.format || "")+" · "+String(panel.detail.vertices || "–")+" vertices · "
                 +String(panel.detail.triangles || "–")+" trianglar"
@@ -141,24 +143,24 @@ Column {
                 +(panel.detail.message ? "\n"+panel.detail.message : "")}
         Row {
             spacing:4
-            GgButton {text:"INFO";checked:panel.section==="INFO";onClicked:panel.section="INFO"}
-            GgButton {text:"FLYTTA";visible:panel.selected.scope==="INSTANCE";checked:panel.section==="TRANSFORM";onClicked:panel.section="TRANSFORM"}
-            GgButton {text:"UV / MÅLA";checked:panel.section==="UV";onClicked:panel.section="UV"}
-            GgButton {text:"GEAR";visible:panel.detail.joints>0 || ["PLAYER","NPC","ACTOR"].indexOf(String((panel.selected.entity || {}).kind))>=0
+            GgButton { property string uiColorScope: "ui.control.GameAssetInspector.9";text:"INFO";checked:panel.section==="INFO";onClicked:panel.section="INFO"}
+            GgButton { property string uiColorScope: "ui.control.GameAssetInspector.10";text:"FLYTTA";visible:panel.selected.scope==="INSTANCE";checked:panel.section==="TRANSFORM";onClicked:panel.section="TRANSFORM"}
+            GgButton { property string uiColorScope: "ui.control.GameAssetInspector.11";text:"UV / MÅLA";checked:panel.section==="UV";onClicked:panel.section="UV"}
+            GgButton { property string uiColorScope: "ui.control.GameAssetInspector.12";text:"GEAR";visible:panel.detail.joints>0 || ["PLAYER","NPC","ACTOR"].indexOf(String((panel.selected.entity || {}).kind))>=0
                 checked:panel.section==="GEAR";onClicked:panel.section="GEAR"}
         }
-        GgButton {text:"PLACERA I SCENEN";visible:panel.selected.scope==="ASSET" && panel.detail.format!=="GGMESH";onClicked:panel.command({op:"PLACE"})}
+        GgButton { property string uiColorScope: "ui.control.GameAssetInspector.13";text:"PLACERA I SCENEN";visible:panel.selected.scope==="ASSET" && panel.detail.format!=="GGMESH";onClicked:panel.command({op:"PLACE"})}
 
         Column {
             width:parent.width;spacing:6;visible:panel.section==="TRANSFORM" && panel.selected.scope==="INSTANCE"
-            Text {text:"TRANSFORM";color:panel.controller.ledgerGold;font.bold:true;font.pixelSize:11}
+            GGText { colorKey: "ui.GameAssetInspector.8";text:"TRANSFORM";color:panel.controller.ledgerGold;font.bold:true;font.pixelSize:11}
             Row {
                 spacing:5
-                GgButton {text:"VÄLJ";checked:panel.controller.assetTool==="SELECT";onClicked:panel.controller.assetTool="SELECT"}
-                GgButton {text:"FLYTTA";checked:panel.controller.assetTool==="MOVE";onClicked:panel.controller.assetTool="MOVE"}
-                GgButton {text:"DUPLICERA";onClicked:panel.command({op:"DUPLICATE"})}
+                GgButton { property string uiColorScope: "ui.control.GameAssetInspector.14";text:"VÄLJ";checked:panel.controller.assetTool==="SELECT";onClicked:panel.controller.assetTool="SELECT"}
+                GgButton { property string uiColorScope: "ui.control.GameAssetInspector.15";text:"FLYTTA";checked:panel.controller.assetTool==="MOVE";onClicked:panel.controller.assetTool="MOVE"}
+                GgButton { property string uiColorScope: "ui.control.GameAssetInspector.16";text:"DUPLICERA";onClicked:panel.command({op:"DUPLICATE"})}
             }
-            Text {width:parent.width;wrapMode:Text.WordWrap;color:panel.controller.muted;font.pixelSize:11
+            GGText { colorKey: "ui.GameAssetInspector.9";width:parent.width;wrapMode:Text.WordWrap;color:panel.controller.muted;font.pixelSize:11
                 text:"Flytta: dra objektet på markplanet. Position anges i meter och rotation i grader."}
             Repeater {
                 model:[{label:"POSITION",keys:["x","y","z"],defaults:[0,0,0]},
@@ -166,7 +168,7 @@ Column {
                        {label:"SKALA",keys:["sx","sy","sz"],defaults:[1,1,1]}]
                 delegate:Column {
                     id:transformGroup;required property var modelData;width:panel.width;spacing:3
-                    Text {text:transformGroup.modelData.label;color:panel.controller.muted;font.pixelSize:10}
+                    GGText { colorKey: "ui.GameAssetInspector.10";text:transformGroup.modelData.label;color:panel.controller.muted;font.pixelSize:10}
                     Row {
                         spacing:4;width:parent.width
                         Repeater {
@@ -191,29 +193,31 @@ Column {
             }
             Row {
                 spacing:5
-                GgButton {text:"DÖLJ";onClicked:panel.command({op:"VISIBILITY",hidden:!panel.ownEdit.hidden})}
-                GgButton {text:"ÅTERSTÄLL";onClicked:panel.command({op:"RESET_SELECTED"})}
+                GgButton { property string uiColorScope: "ui.control.GameAssetInspector.17";text:"DÖLJ";onClicked:panel.command({op:"VISIBILITY",hidden:!panel.ownEdit.hidden})}
+                GgButton { property string uiColorScope: "ui.control.GameAssetInspector.18";text:"ÅTERSTÄLL";onClicked:panel.command({op:"RESET_SELECTED"})}
             }
         }
 
         Column {
             width:parent.width;spacing:7;visible:panel.section==="UV"
-            Text {text:"MATERIAL / FÄRG";color:panel.controller.ledgerGold;font.bold:true;font.pixelSize:11}
-            ComboBox {id:materialPicker;objectName:"gameAssetMaterial";width:parent.width;textRole:"name";model:panel.detail.materials || []}
+            GGText { colorKey: "ui.GameAssetInspector.11";text:"MATERIAL / FÄRG";color:panel.controller.ledgerGold;font.bold:true;font.pixelSize:11}
+            ComboBox { property string uiColorScope: "ui.control.GameAssetInspector.19";id:materialPicker;objectName:"gameAssetMaterial";width:parent.width;textRole:"name";model:panel.detail.materials || []
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignLeft }
+}
             Row {
                 spacing:5;width:parent.width
-                TextField {id:tintInput;width:parent.width-86;placeholderText:"#ffffff";text:panel.materialEdit.color || panel.ownEdit.color || panel.material.color || "#ffffff"}
-                GgButton {text:"FÄRG";implicitWidth:80;onClicked:panel.command({op:"MATERIAL",material:panel.materialIndex,color:tintInput.text})}
+                TextField {id:tintInput;width:parent.width-86;placeholderText:RuntimeTheme.GGTheme.bright;text:panel.materialEdit.color || panel.ownEdit.color || panel.material.color || RuntimeTheme.GGTheme.bright}
+                GgButton { property string uiColorScope: "ui.control.GameAssetInspector.20";text:"FÄRG";implicitWidth:80;onClicked:panel.command({op:"MATERIAL",material:panel.materialIndex,color:tintInput.text})}
             }
             Row {
                 width:parent.width;spacing:5;visible:panel.materialIndex>=0
-                Text {width:72;text:"Roughness";color:panel.controller.text;font.pixelSize:11;anchors.verticalCenter:parent.verticalCenter}
+                GGText { colorKey: "ui.GameAssetInspector.12";width:72;text:"Roughness";color:panel.controller.text;font.pixelSize:11;anchors.verticalCenter:parent.verticalCenter}
                 Slider {width:parent.width-110;from:0;to:1;value:panel.materialEdit.roughness!==undefined ? panel.materialEdit.roughness : panel.material.roughness || 0
                     onPressedChanged:if(!pressed)panel.command({op:"MATERIAL",material:panel.materialIndex,roughness:value})}
             }
             Row {
                 width:parent.width;spacing:5;visible:panel.materialIndex>=0
-                Text {width:72;text:"Metalness";color:panel.controller.text;font.pixelSize:11;anchors.verticalCenter:parent.verticalCenter}
+                GGText { colorKey: "ui.GameAssetInspector.13";width:72;text:"Metalness";color:panel.controller.text;font.pixelSize:11;anchors.verticalCenter:parent.verticalCenter}
                 Slider {width:parent.width-110;from:0;to:1;value:panel.materialEdit.metalness!==undefined ? panel.materialEdit.metalness : panel.material.metalness || 0
                     onPressedChanged:if(!pressed)panel.command({op:"MATERIAL",material:panel.materialIndex,metalness:value})}
             }
@@ -221,40 +225,56 @@ Column {
 
         Column {
             width:parent.width;spacing:5;visible:panel.section==="UV" && (panel.detail.format==="GLB" || panel.detail.format==="GLTF")
-            GgButton {text:"FÖRBERED UV FÖR MÅLNING";objectName:"gameAssetPrepareUv"
+            GgButton { property string uiColorScope: "ui.control.GameAssetInspector.21";text:"FÖRBERED UV FÖR MÅLNING";objectName:"gameAssetPrepareUv"
                 visible:!panel.detail.joints && !(panel.detail.clips || []).length
                 enabled:!panel.uvJob.busy
                 onClicked:{panel.paintEnabled=false;panel.uvView=[0,0,1,1];panel.command({op:"PREPARE_UV"})}}
-            Text {width:parent.width;wrapMode:Text.WordWrap;color:panel.controller.muted;font.pixelSize:11
+            GGText { colorKey: "ui.GameAssetInspector.14";width:parent.width;wrapMode:Text.WordWrap;color:panel.controller.muted;font.pixelSize:11
                 text:panel.uvJob.stage || "Packar separata UV-öar och överför befintliga färger. Modellens ytor behålls."}
-            ProgressBar {width:parent.width;visible:!!panel.uvJob.busy;from:0;to:100;value:panel.uvJob.percent || 0}
-            Text {visible:!!panel.uvJob.error;width:parent.width;wrapMode:Text.WordWrap;color:panel.controller.signalRed;font.pixelSize:11;text:panel.uvJob.error || ""}
+            ProgressBar {
+                id:uvProgress;objectName:"gameAssetUvProgress";width:parent.width;visible:!!panel.uvJob.busy;from:0;to:100;value:panel.uvJob.percent || 0
+                contentItem:Item {
+                    implicitHeight:6
+                    Rectangle {
+                        id:uvProgressFill;objectName:"gameAssetUvProgressFill";width:parent.width*uvProgress.visualPosition;height:parent.height;color:RuntimeTheme.GGTheme.accent
+                    }
+                    GGColorTarget {
+                        target:uvProgressFill;colorKey:"ui.progress.asset.uv";percentageCapable:true
+                        fraction:typeof panel.uvJob.percent==="number"&&isFinite(panel.uvJob.percent)&&uvProgress.to>uvProgress.from?(uvProgress.value-uvProgress.from)/(uvProgress.to-uvProgress.from):NaN
+                    }
+                }
+            }
+            GGText { colorKey: "ui.GameAssetInspector.15";visible:!!panel.uvJob.error;width:parent.width;wrapMode:Text.WordWrap;color:panel.controller.signalRed;font.pixelSize:11;text:panel.uvJob.error || ""}
         }
 
         Column {
             width:parent.width;spacing:7;visible:panel.section==="UV" && panel.materialIndex>=0 && (panel.detail.uv_sets || []).length>0
-            Text {text:"UV / TEXTUR";color:panel.controller.ledgerGold;font.bold:true;font.pixelSize:11}
+            GGText { colorKey: "ui.GameAssetInspector.16";text:"UV / TEXTUR";color:panel.controller.ledgerGold;font.bold:true;font.pixelSize:11}
             Row {
                 width:parent.width;spacing:5
-                ComboBox {id:uvPicker;width:parent.width*.48;textRole:"name";model:panel.detail.uv_sets || []}
-                ComboBox {width:parent.width*.50;model:["baseColor","normal","ORM","occlusion","emissive"]
-                    onActivated:panel.imageRole=currentText}
+                ComboBox { property string uiColorScope: "ui.control.GameAssetInspector.22";id:uvPicker;width:parent.width*.48;textRole:"name";model:panel.detail.uv_sets || []
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignLeft }
+}
+                ComboBox { property string uiColorScope: "ui.control.GameAssetInspector.23";width:parent.width*.50;model:["baseColor","normal","ORM","occlusion","emissive"]
+                    onActivated:panel.imageRole=currentText
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignLeft }
+}
             }
             Row {
                 spacing:5
-                GgButton {text:"UV";checked:panel.showUv;onClicked:panel.showUv=!panel.showUv}
-                GgButton {text:"MÅLA";objectName:"gameAssetPaintToggle";checked:panel.paintEnabled
+                GgButton { property string uiColorScope: "ui.control.GameAssetInspector.24";text:"UV";checked:panel.showUv;onClicked:panel.showUv=!panel.showUv}
+                GgButton { property string uiColorScope: "ui.control.GameAssetInspector.25";text:"MÅLA";objectName:"gameAssetPaintToggle";checked:panel.paintEnabled
                     enabled:panel.imageRole==="baseColor" && !!panel.imageInfo.url;onClicked:panel.paintEnabled=!panel.paintEnabled}
-                Text {text:panel.imageInfo.width ? panel.imageInfo.width+" × "+panel.imageInfo.height : ""
+                GGText { colorKey: "ui.GameAssetInspector.17";text:panel.imageInfo.width ? panel.imageInfo.width+" × "+panel.imageInfo.height : ""
                     color:panel.controller.muted;font.pixelSize:10;anchors.verticalCenter:parent.verticalCenter}
             }
             Row {
                 spacing:4
-                GgButton {text:"PASSA UV";onClicked:panel.fitUv()}
-                GgButton {text:"HELA KARTAN";onClicked:panel.uvView=[0,0,1,1]}
-                GgButton {text:"ALLA";checked:panel.showAllUv;onClicked:panel.showAllUv=!panel.showAllUv}
+                GgButton { property string uiColorScope: "ui.control.GameAssetInspector.26";text:"PASSA UV";onClicked:panel.fitUv()}
+                GgButton { property string uiColorScope: "ui.control.GameAssetInspector.27";text:"HELA KARTAN";onClicked:panel.uvView=[0,0,1,1]}
+                GgButton { property string uiColorScope: "ui.control.GameAssetInspector.28";text:"ALLA";checked:panel.showAllUv;onClicked:panel.showAllUv=!panel.showAllUv}
             }
-            Text {width:parent.width;wrapMode:Text.WordWrap;color:panel.controller.muted;font.pixelSize:11
+            GGText { colorKey: "ui.GameAssetInspector.18";width:parent.width;wrapMode:Text.WordWrap;color:panel.controller.muted;font.pixelSize:11
                 text:"Gult: valt material. Blått: övriga ytor."
                     +(panel.uvSet.outside ? "\nUV går utanför kartan. Förbered UV för separata målningsytor." : "")
                     +(panel.uvSet.collapsed ? "\n"+panel.uvSet.collapsed+" trianglar saknar UV-yta." : "")}
@@ -302,7 +322,7 @@ Column {
                     }
                 }
             }
-            Text {width:parent.width;wrapMode:Text.WordWrap;text:panel.imageError;color:panel.controller.muted;font.pixelSize:11;visible:text.length>0}
+            GGText { colorKey: "ui.GameAssetInspector.19";width:parent.width;wrapMode:Text.WordWrap;text:panel.imageError;color:panel.controller.muted;font.pixelSize:11;visible:text.length>0}
             Row {
                 spacing:4;width:parent.width
                 Repeater {
@@ -322,36 +342,40 @@ Column {
                 TextField {width:parent.width;text:panel.brushColor;placeholderText:"Penselfärg #rrggbb";onEditingFinished:panel.brushColor=text}
                 Row {
                     spacing:4
-                    Repeater {model:["#f4d9a4","#c57626","#6d361d","#ffffff","#151719","#75945b","#487dad"]
+                    Repeater {model:["#f4d9a4","#c57626","#6d361d",RuntimeTheme.GGTheme.bright,"#151719","#75945b","#487dad"]
                         delegate:Rectangle {id:swatch;required property string modelData;width:26;height:24;color:modelData;border.color:"#b7b4a8"
                             MouseArea {anchors.fill:parent;onClicked:panel.brushColor=swatch.modelData}}}
                 }
-                Text {text:"Penselstorlek";color:panel.controller.muted;font.pixelSize:10}
+                GGText { colorKey: "ui.GameAssetInspector.20";text:"Penselstorlek";color:panel.controller.muted;font.pixelSize:10}
                 Slider {id:brushSize;width:parent.width;from:.001;to:.12;value:.025}
-                Text {text:"Opacitet";color:panel.controller.muted;font.pixelSize:10}
+                GGText { colorKey: "ui.GameAssetInspector.21";text:"Opacitet";color:panel.controller.muted;font.pixelSize:10}
                 Slider {id:brushOpacity;width:parent.width;from:.05;to:1;value:1}
-                Text {width:parent.width;wrapMode:Text.WordWrap;text:"Måla på texturbilden. UV-linjerna visar vilka delar av modellen som påverkas.";color:panel.controller.muted;font.pixelSize:11}
+                GGText { colorKey: "ui.GameAssetInspector.22";width:parent.width;wrapMode:Text.WordWrap;text:"Måla på texturbilden. UV-linjerna visar vilka delar av modellen som påverkas.";color:panel.controller.muted;font.pixelSize:11}
             }
         }
 
         Column {
             width:parent.width;spacing:6;visible:panel.section==="INFO" && (panel.detail.clips || []).length>0
-            Text {text:"ANIMATIONER";color:panel.controller.ledgerGold;font.bold:true;font.pixelSize:11}
+            GGText { colorKey: "ui.GameAssetInspector.23";text:"ANIMATIONER";color:panel.controller.ledgerGold;font.bold:true;font.pixelSize:11}
             Repeater {model:panel.detail.clips || []
-                delegate:Text {required property string modelData;width:panel.width;elide:Text.ElideRight;text:modelData;color:panel.controller.text;font.pixelSize:11}}
+                delegate:GGText { colorKey: "ui.GameAssetInspector.24";required property string modelData;width:panel.width;elide:Text.ElideRight;text:modelData;color:panel.controller.text;font.pixelSize:11}}
         }
         Column {
             width:parent.width;spacing:6;visible:panel.section==="GEAR"
-            Text {text:"GEAR / SOCKETS";color:panel.controller.ledgerGold;font.bold:true;font.pixelSize:11}
-            Text {width:parent.width;wrapMode:Text.WordWrap;text:"Visuell utrustning på den valda karaktären. Spelinventariet hanteras separat.";color:panel.controller.muted;font.pixelSize:11}
-            ComboBox {id:gearSlot;width:parent.width;model:["MAIN_HAND","OFF_HAND","HEAD","CHEST","BACK","FEET"]}
-            ComboBox {id:gearChoice;width:parent.width;textRole:"name"
-                model:(panel.state.gear || []).filter(function(row){return row.slots.indexOf(gearSlot.currentText)>=0})}
+            GGText { colorKey: "ui.GameAssetInspector.25";text:"GEAR / SOCKETS";color:panel.controller.ledgerGold;font.bold:true;font.pixelSize:11}
+            GGText { colorKey: "ui.GameAssetInspector.26";width:parent.width;wrapMode:Text.WordWrap;text:"Visuell utrustning på den valda karaktären. Spelinventariet hanteras separat.";color:panel.controller.muted;font.pixelSize:11}
+            ComboBox { property string uiColorScope: "ui.control.GameAssetInspector.29";id:gearSlot;width:parent.width;model:["MAIN_HAND","OFF_HAND","HEAD","CHEST","BACK","FEET"]
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignLeft }
+}
+            ComboBox { property string uiColorScope: "ui.control.GameAssetInspector.30";id:gearChoice;width:parent.width;textRole:"name"
+                model:(panel.state.gear || []).filter(function(row){return row.slots.indexOf(gearSlot.currentText)>=0})
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignLeft }
+}
             Row {
                 spacing:5
-                GgButton {text:"UTRUSTA";enabled:gearChoice.count>0
+                GgButton { property string uiColorScope: "ui.control.GameAssetInspector.31";text:"UTRUSTA";enabled:gearChoice.count>0
                     onClicked:panel.command({op:"GEAR",slot:gearSlot.currentText,definition:gearChoice.model[gearChoice.currentIndex].id})}
-                GgButton {text:"TA AV";onClicked:panel.command({op:"GEAR",slot:gearSlot.currentText,definition:""})}
+                GgButton { property string uiColorScope: "ui.control.GameAssetInspector.32";text:"TA AV";onClicked:panel.command({op:"GEAR",slot:gearSlot.currentText,definition:""})}
             }
         }
     }

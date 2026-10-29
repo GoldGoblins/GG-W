@@ -1,32 +1,32 @@
-# GG AI Desktop
+# GG-W — GG AI Desktop for Windows
 
 ![GG AI Desktop](docs/gg-ai-desktop.png)
 
-Public repo: [github.com/GoldGoblins/GG](https://github.com/GoldGoblins/GG)
+Windows repo: [github.com/GoldGoblins/GG-W](https://github.com/GoldGoblins/GG-W)
 
 ## Choose a platform
 
-| Version | Branch | Start here |
+| Version | Repository | Start here |
 |---|---|---|
-| Original Linux version | [`main`](https://github.com/GoldGoblins/GG/tree/main) | `run-gg-ai-desktop.sh` |
-| Windows version | [`windows`](https://github.com/GoldGoblins/GG/tree/windows) | `setup-windows.cmd`, then `run-gg-ai-desktop.cmd` |
+| Original Linux version | [GG](https://github.com/GoldGoblins/GG) | `run-gg-ai-desktop.sh` |
+| Windows version | [GG-W](https://github.com/GoldGoblins/GG-W) | `setup-windows.cmd`, then `run-gg-ai-desktop.cmd` |
 
-This `windows` branch contains the Windows port, including ConPTY chat,
+GG-W contains the Windows port, including ConPTY chat,
 native WebView2 video, optional original uBlock Origin filtering, Windows
 screen observation, TMoG meters and Qt audio. The original Linux version
-remains available on `main`. The Windows desktop core is verified; optional
+remains available in the separate GG repository. The Windows desktop core is verified; optional
 features and remaining limitations are recorded in [WINDOWS-PORT.json](WINDOWS-PORT.json).
 
 To get this version on Windows:
 
 ```powershell
-git clone --branch windows --single-branch https://github.com/GoldGoblins/GG.git
-cd GG
+git clone https://github.com/GoldGoblins/GG-W.git
+cd GG-W
 .\setup-windows.cmd
 .\run-gg-ai-desktop.cmd
 ```
 
-Updates on this branch use `git pull`, followed by restarting the desktop.
+Updates use `git pull` in GG-W, followed by restarting the desktop.
 Each installation uses its own local state and requires its own provider
 sign-ins. Sessions, credentials, model weights and installed third-party tools
 are not included in the repository.
@@ -280,6 +280,27 @@ zoom and navigation use no model calls. A raster is not a physical simulation;
 alternate object angles require additional authored images.
 
 Restart the desktop after installing the backend update.
+
+## Patch notes · 2026-10-29 · complete desktop, network and CLI update
+
+This update includes the complete distributable source delta since the latest
+published GG-W patch of October 26. It retains the released MEDIA/KNOWLEDGE work
+alongside the shared CRYPTO/wallet/marketplace,
+local EVM and certified-ledger labs, real DAG history and priority Stop, shared
+64-colour controls, the MODEL LIMIT/reset meter, and Windows/Linux/Termux headless
+installation sources. Read the [complete patch notes](docs/PATCH-NOTES-2026-10-29.txt)
+for behavior, verification boundaries and the three-device LAN procedure.
+
+Private LAN pairing exchanges signed public invitations and uses two own producer
+keys per peer. Optional GG-LAN(TEST) transfers use each peer's own signer and
+coordinator-ordered receipts, with a bounded ring test and shared-state checks.
+Physical Windows/Linux/Termux token-circle validation remains
+pending; local test processes are not reported as physical devices. Public/mainnet
+readiness, canonical DAG finality, PQC and a guaranteed universal frame rate are
+not claimed. A source update contains no credentials, private sessions or wallets.
+
+Use `git pull` in the Windows checkout, then restart the whole application.
+RELOAD alone does not load the changed Python backend.
 
 ## Patch notes · 2026-10-26 · MEDIA languages, source controls and next episode
 

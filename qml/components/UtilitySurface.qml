@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Window
 
@@ -8,8 +10,8 @@ Item {
 
     objectName: "utilitySurface"
 
-    property color accentColor: "#8a8a8a"
-    property color frameBorder: "#6a6a6a"
+    property color accentColor: RuntimeTheme.GGTheme.accent
+    property color frameBorder: RuntimeTheme.GGTheme.edge
     property int frameRadius: 4
     property int surfaceHeight: 112
     property var surfaceHost: null
@@ -391,10 +393,10 @@ Item {
         if (frac < 0.52)
             return "#7cc86a"
         if (frac < 0.72)
-            return "#d4c84a"
+            return RuntimeTheme.GGTheme.warning
         if (frac < 0.88)
             return "#e09040"
-        return "#e05050"
+        return RuntimeTheme.GGTheme.negative
     }
 
     function eqAt(index) {
@@ -445,33 +447,51 @@ Item {
     Component.onCompleted: root.refresh()
 
     Item {
+        id: utilityFrame
         anchors.fill: parent
+        readonly property real legendInset: Math.min(12, width / 2)
+        readonly property real legendAvailable: Math.max(0, width - 2 * legendInset)
+        readonly property real rightCaptionWidth: root.frameRightLegend.length > 0
+            ? Math.min(utilRightLegend.implicitWidth + 12, Math.max(0, legendAvailable
+                - Math.min(utilLeftLegend.implicitWidth + 12, legendAvailable / 2) - 6)) : 0
 
         Rectangle {
             anchors.fill: parent
-            color: "#161616"
-            border.color: root.frameBorder
-            border.width: 1
-            radius: root.frameRadius
-            antialiasing: true
+            anchors.margins: 1
+            color: RuntimeTheme.GGTheme.panel
+            radius: Math.max(0, root.frameRadius - 1)
         }
 
-        Rectangle {
+        LedgerBorder { property string uiColorScope: "ui.widget.UtilitySurface.LedgerBorder.1";
+            anchors.fill: parent
+            color: root.frameBorder
+            radius: root.frameRadius
+            topGaps: [
+                {start: leftLegend.x, end: leftLegend.x + leftLegend.width},
+                {start: rightLegend.x, end: rightLegend.x + rightLegend.width}
+            ]
+        }
+
+        Item {
+            id: leftLegend
+            objectName: "utilityLeftCaption"
             anchors.left: parent.left
-            anchors.leftMargin: 12
+            anchors.leftMargin: utilityFrame.legendInset
             anchors.top: parent.top
             anchors.topMargin: -8
             height: 18
-            width: utilLeftLegend.implicitWidth + 12
-            color: "#161616"
-            radius: 3
+            width: Math.min(utilLeftLegend.implicitWidth + 12, Math.max(0, utilityFrame.legendAvailable
+                - (utilityFrame.rightCaptionWidth > 0 ? utilityFrame.rightCaptionWidth + 6 : 0)))
             z: 2
 
-            Text {
+            GGText { colorKey: "ui.UtilitySurface.1";
                 id: utilLeftLegend
                 anchors.centerIn: parent
+                width: Math.max(0, parent.width - 12)
                 text: "MEDIA / UTILITIES"
-                color: "#e6edf3"
+                textFormat: Text.PlainText
+                elide: Text.ElideRight
+                color: RuntimeTheme.GGTheme.bright
                 font.family: "monospace"
                 font.pixelSize: 12
                 font.bold: true
@@ -479,22 +499,25 @@ Item {
             }
         }
 
-        Rectangle {
+        Item {
+            id: rightLegend
+            objectName: "utilityRightCaption"
             anchors.right: parent.right
-            anchors.rightMargin: 12
+            anchors.rightMargin: utilityFrame.legendInset
             anchors.top: parent.top
             anchors.topMargin: -8
             height: 18
-            width: utilRightLegend.implicitWidth + 12
-            color: "#161616"
-            radius: 3
+            width: utilityFrame.rightCaptionWidth
             z: 2
 
-            Text {
+            GGText { colorKey: "ui.UtilitySurface.2";
                 id: utilRightLegend
                 anchors.centerIn: parent
+                width: Math.max(0, parent.width - 12)
                 text: root.frameRightLegend
-                color: "#c8cdd4"
+                textFormat: Text.PlainText
+                elide: Text.ElideRight
+                color: RuntimeTheme.GGTheme.text
                 font.family: "monospace"
                 font.pixelSize: 12
                 font.bold: true
@@ -530,10 +553,10 @@ Item {
 
                         Repeater {
                             model: ["MUSIC", "RADIO", "TV", "GAME", "FETCH"]
-                            delegate: Text {
+                            delegate: GGText { colorKey: "ui.UtilitySurface.3";
                                 required property string modelData
                                 text: modelData
-                                color: root.mode === modelData ? "#d8dee9" : "#a8b0b8"
+                                color: root.mode === modelData ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.muted
                                 font.family: "monospace"
                                 font.pixelSize: 12
                                 font.bold: root.mode === modelData
@@ -550,9 +573,9 @@ Item {
                         objectName: "utilityTransport"
                         spacing: 10
 
-                        Text {
+                        GGText { colorKey: "ui.UtilitySurface.4";
                             text: "|<"
-                            color: "#c8a97e"
+                            color: RuntimeTheme.GGTheme.accent
                             font.family: "monospace"
                             font.pixelSize: 12
                             MouseArea {
@@ -561,9 +584,9 @@ Item {
                                 onClicked: root.skip(-1)
                             }
                         }
-                        Text {
+                        GGText { colorKey: "ui.UtilitySurface.5";
                             text: root.playing ? "PAUSE" : "PLAY"
-                            color: "#d8dee9"
+                            color: RuntimeTheme.GGTheme.text
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: true
@@ -573,9 +596,9 @@ Item {
                                 onClicked: root.playPause()
                             }
                         }
-                        Text {
+                        GGText { colorKey: "ui.UtilitySurface.6";
                             text: ">|"
-                            color: "#c8a97e"
+                            color: RuntimeTheme.GGTheme.accent
                             font.family: "monospace"
                             font.pixelSize: 12
                             MouseArea {
@@ -584,9 +607,9 @@ Item {
                                 onClicked: root.skip(1)
                             }
                         }
-                        Text {
+                        GGText { colorKey: "ui.UtilitySurface.7";
                             text: "STOP"
-                            color: "#c8cdd4"
+                            color: RuntimeTheme.GGTheme.text
                             font.family: "monospace"
                             font.pixelSize: 12
                             MouseArea {
@@ -601,7 +624,7 @@ Item {
                         width: parent.width
                         spacing: 6
 
-                        Text {
+                        GGText { colorKey: "ui.UtilitySurface.8";
                             objectName: "utilityNow"
                             width: Math.max(
                                 40,
@@ -625,15 +648,15 @@ Item {
                                         : (root.appAudioActive ? "GG AUDIO" : "NOW · idle")
                                 )
                             color: root.playing || root.buffering
-                                ? "#d8dee9"
-                                : "#c8cdd4"
+                                ? RuntimeTheme.GGTheme.text
+                                : RuntimeTheme.GGTheme.text
                             font.family: "monospace"
                             font.pixelSize: 12
                             font.bold: root.playing || root.buffering
                             elide: Text.ElideRight
                         }
 
-                        BufferMark {
+                        BufferMark { property string uiColorScope: "ui.widget.UtilitySurface.BufferMark.2";
                             id: nowMark
                             objectName: "utilityNowBuffer"
                             anchors.verticalCenter: parent.verticalCenter
@@ -642,7 +665,7 @@ Item {
                         }
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.UtilitySurface.9";
                         width: parent.width
                         text: {
                             var who = root.nowArtist.length > 0
@@ -650,7 +673,7 @@ Item {
                                 : ""
                             return who + root.meterClock + " / " + root.meterLength
                         }
-                        color: "#c8cdd4"
+                        color: RuntimeTheme.GGTheme.text
                         font.family: "monospace"
                         font.pixelSize: 12
                         elide: Text.ElideRight
@@ -827,9 +850,9 @@ Item {
                             function xAt(mhz) {
                                 return (Number(mhz) - lo) / span * w
                             }
-                            ctx.fillStyle = "#141414"
+                            ctx.fillStyle = RuntimeTheme.GGTheme.panel
                             ctx.fillRect(0, 0, w, h)
-                            ctx.strokeStyle = "#2a2a2a"
+                            ctx.strokeStyle = RuntimeTheme.GGTheme.hover
                             ctx.lineWidth = 1
                             ctx.beginPath()
                             ctx.moveTo(0, h - 1)
@@ -839,7 +862,7 @@ Item {
                             for (mhz = Math.ceil(lo); mhz <= hi; mhz++) {
                                 var tx = xAt(mhz)
                                 var major = mhz % 5 === 0
-                                ctx.strokeStyle = major ? "#6a6a6a" : "#2a2a2a"
+                                ctx.strokeStyle = major ? RuntimeTheme.GGTheme.edge : RuntimeTheme.GGTheme.hover
                                 ctx.beginPath()
                                 ctx.moveTo(tx, major ? 1 : h - 5)
                                 ctx.lineTo(tx, h - 1)
@@ -850,12 +873,12 @@ Item {
                             for (i = 0; i < marks.length; i++) {
                                 var mark = marks[i] || {}
                                 var mx = xAt(mark.mhz)
-                                ctx.fillStyle = "#8db89a"
+                                ctx.fillStyle = RuntimeTheme.GGTheme.positive
                                 ctx.fillRect(mx - 1, 2, 2, h - 3)
                             }
                             if (root.liveFreq > 0) {
                                 var nx = xAt(root.liveFreq)
-                                ctx.strokeStyle = "#c8a97e"
+                                ctx.strokeStyle = RuntimeTheme.GGTheme.accent
                                 ctx.lineWidth = 1.4
                                 ctx.beginPath()
                                 ctx.moveTo(nx, 0)
@@ -879,11 +902,11 @@ Item {
                     height: parent.height
                     spacing: 4
 
-                    Text {
+                    GGText { colorKey: "ui.UtilitySurface.10";
                         id: eqPresetLabel
                         width: parent.width
                         text: "EQ · " + String(root.status.eq_preset || "Flat")
-                        color: "#c8a97e"
+                        color: RuntimeTheme.GGTheme.accent
                         font.family: "monospace"
                         font.pixelSize: 12
                         elide: Text.ElideRight
@@ -917,17 +940,17 @@ Item {
 
                                 Rectangle {
                                     anchors.fill: parent
-                                    color: "#141414"
+                                    color: RuntimeTheme.GGTheme.panel
                                 }
 
                                 Rectangle {
                                     width: parent.width
                                     height: 1
                                     y: parent.height / 2
-                                    color: "#2a2a2a"
+                                    color: RuntimeTheme.GGTheme.hover
                                 }
 
-                                Rectangle {
+                                Rectangle { GGColorTarget { colorKey: "ui.fill.UtilitySurface.1"; }
                                     width: parent.width - 2
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     height: Math.max(
@@ -937,7 +960,7 @@ Item {
                                     y: root.eqAt(eqBand.index) >= 0
                                         ? parent.height / 2 - height
                                         : parent.height / 2
-                                    color: root.eqAt(eqBand.index) >= 0 ? "#8db89a" : "#c8a97e"
+                                    color: root.eqAt(eqBand.index) >= 0 ? RuntimeTheme.GGTheme.positive : RuntimeTheme.GGTheme.accent
                                 }
 
                                 MouseArea {
@@ -975,7 +998,7 @@ Item {
                         height: 18
                         spacing: 4
 
-                        GgSlider {
+                        GgSlider { property string uiColorScope: "ui.widget.UtilitySurface.GgSlider.3";
                             objectName: "utilityMasterVolumeSlider"
                             width: 96
                             height: parent.height
@@ -992,13 +1015,13 @@ Item {
                             }
                         }
 
-                        Text {
+                        GGText { colorKey: "ui.UtilitySurface.11";
                             objectName: "utilityMasterVolumeValue"
                             width: 32
                             anchors.verticalCenter: parent.verticalCenter
                             text: root.volume + "%"
                             horizontalAlignment: Text.AlignRight
-                            color: "#c8cdd4"
+                            color: RuntimeTheme.GGTheme.text
                             font.family: "monospace"
                             font.pixelSize: 11
                         }
@@ -1039,12 +1062,12 @@ Item {
                     width: parent.width
                     height: 4
                     radius: 2
-                    color: "#1a1a1a"
-                    border.color: "#2a2a2a"
+                    color: RuntimeTheme.GGTheme.raised
+                    border.color: RuntimeTheme.GGTheme.hover
                     border.width: 1
                 }
 
-                Rectangle {
+                Rectangle { GGColorTarget { colorKey: "ui.fill.UtilitySurface.2"; }
                     objectName: "utilityTimelineFill"
                     anchors.verticalCenter: parent.verticalCenter
                     width: root.seekable
@@ -1052,11 +1075,11 @@ Item {
                         : 0
                     height: 4
                     radius: 2
-                    color: "#c8a97e"
+                    color: RuntimeTheme.GGTheme.accent
                     visible: root.seekable
                 }
 
-                Rectangle {
+                Rectangle { GGColorTarget { colorKey: "ui.fill.UtilitySurface.3"; }
                     objectName: "utilityTimelineHandle"
                     anchors.verticalCenter: parent.verticalCenter
                     x: Math.max(
@@ -1066,7 +1089,7 @@ Item {
                     width: 8
                     height: 8
                     radius: 4
-                    color: timeline.activeFocus || root.timelineDragging ? "#e8c58f" : "#d8dee9"
+                    color: timeline.activeFocus || root.timelineDragging ? RuntimeTheme.GGTheme.warning : RuntimeTheme.GGTheme.text
                     visible: root.seekable
                 }
 
@@ -1101,13 +1124,13 @@ Item {
                     }
                 }
 
-                Text {
+                GGText { colorKey: "ui.UtilitySurface.12";
                     visible: root.timelineDragging
                     anchors.bottom: parent.top
                     anchors.bottomMargin: 2
                     x: Math.max(0, Math.min(parent.width - width, parent.width * root.progress - width / 2))
                     text: root.timelineClock(root.position)
-                    color: "#e8c58f"
+                    color: RuntimeTheme.GGTheme.warning
                     font.family: "monospace"
                     font.pixelSize: 10
                 }

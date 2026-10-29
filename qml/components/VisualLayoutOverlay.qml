@@ -1,7 +1,10 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Shapes
 
 // One editor overlay is shared by every top-level presentation surface.  It
 // does not reimplement the surface: it only supplies handles and a source
@@ -16,8 +19,8 @@ Item {
     property string sourceText: ""
     property string sourcePath: ""
     property string sourceStatus: ""
-    property color frameBorder: "#6a6a6a"
-    property color accentColor: "#8a8a8a"
+    property color frameBorder: RuntimeTheme.GGTheme.edge
+    property color accentColor: RuntimeTheme.GGTheme.accent
 
     signal surfaceResizeRequested(
         string surfaceId,
@@ -71,35 +74,27 @@ Item {
                     && surfaceId !== "wallet"
                     && surfaceId !== "settings"
 
-                Canvas {
+                Shape {
                     id: triangle
+                    objectName: "visualResizeGlyph_" + surfaceId + "_" + handleRoot.corner
                     anchors.fill: parent
-                    antialiasing: true
-
-                    onPaint: {
-                        var ctx = getContext("2d")
-                        ctx.clearRect(0, 0, width, height)
-                        ctx.fillStyle = String(root.accentColor)
-                        ctx.beginPath()
+        preferredRendererType: Shape.GeometryRenderer
+                    readonly property string glyphPath: {
                         if (handleRoot.corner === "TOP_LEFT") {
-                            ctx.moveTo(0, 0)
-                            ctx.lineTo(width, 0)
-                            ctx.lineTo(0, height)
+                            return "M0 0 H" + width + " L0 " + height + " Z"
                         } else if (handleRoot.corner === "TOP_RIGHT") {
-                            ctx.moveTo(width, 0)
-                            ctx.lineTo(0, 0)
-                            ctx.lineTo(width, height)
+                            return "M" + width + " 0 H0 L" + width + " " + height + " Z"
                         } else if (handleRoot.corner === "BOTTOM_LEFT") {
-                            ctx.moveTo(0, height)
-                            ctx.lineTo(0, 0)
-                            ctx.lineTo(width, height)
+                            return "M0 " + height + " V0 L" + width + " " + height + " Z"
                         } else {
-                            ctx.moveTo(width, height)
-                            ctx.lineTo(0, height)
-                            ctx.lineTo(width, 0)
+                            return "M" + width + " " + height + " H0 L" + width + " 0 Z"
                         }
-                        ctx.closePath()
-                        ctx.fill()
+                    }
+                    ShapePath {
+                        fillColor: root.accentColor
+                        strokeColor: "transparent"
+                        strokeWidth: 0
+                        PathSvg { path: triangle.glyphPath }
                     }
                 }
 
@@ -195,28 +190,28 @@ Item {
                 }
             }
 
-            ResizeHandle {
+            ResizeHandle { property string uiColorScope: "ui.widget.VisualLayoutOverlay.ResizeHandle.1";
                 corner: "TOP_LEFT"
                 anchors.left: parent.left
                 anchors.top: parent.top
                 anchors.leftMargin: -6
                 anchors.topMargin: -6
             }
-            ResizeHandle {
+            ResizeHandle { property string uiColorScope: "ui.widget.VisualLayoutOverlay.ResizeHandle.2";
                 corner: "TOP_RIGHT"
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.rightMargin: -6
                 anchors.topMargin: -6
             }
-            ResizeHandle {
+            ResizeHandle { property string uiColorScope: "ui.widget.VisualLayoutOverlay.ResizeHandle.3";
                 corner: "BOTTOM_LEFT"
                 anchors.left: parent.left
                 anchors.bottom: parent.bottom
                 anchors.leftMargin: -6
                 anchors.bottomMargin: -6
             }
-            ResizeHandle {
+            ResizeHandle { property string uiColorScope: "ui.widget.VisualLayoutOverlay.ResizeHandle.4";
                 corner: "BOTTOM_RIGHT"
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
@@ -245,9 +240,9 @@ Item {
                         height: 22
                         spacing: 8
 
-                        Text {
+                        GGText { colorKey: "ui.VisualLayoutOverlay.1";
                             text: "SOURCE · " + surfaceTitle
-                            color: "#e6edf3"
+                            color: RuntimeTheme.GGTheme.bright
                             font.family: "monospace"
                             font.pixelSize: 10
                             font.bold: true
@@ -256,7 +251,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                         }
 
-                        Text {
+                        GGText { colorKey: "ui.VisualLayoutOverlay.2";
                             text: root.sourceStatus.length
                                 ? root.sourceStatus
                                 : root.sourcePath
@@ -270,7 +265,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                         }
 
-                        GgButton {
+                        GgButton { property string uiColorScope: "ui.control.VisualLayoutOverlay.1";
                             text: "SAVE BUFFER"
                             width: 76
                             height: 22
@@ -286,7 +281,7 @@ Item {
                         width: parent.width
                         height: Math.max(20, parent.height - 27)
                         clip: true
-                        ScrollBar.vertical: GgScrollBar {}
+                        ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.VisualLayoutOverlay.GgScrollBar.6";}
 
                         TextArea {
                             id: sourceEdit
@@ -297,8 +292,8 @@ Item {
                             )
                             text: root.sourceText
                             color: "#d9e0e7"
-                            selectedTextColor: "#f2f2f2"
-                            selectionColor: "#343a40"
+                            selectedTextColor: RuntimeTheme.GGTheme.bright
+                            selectionColor: RuntimeTheme.GGTheme.line
                             placeholderTextColor: "#68727c"
                             font.family: "monospace"
                             font.pixelSize: 10
@@ -306,7 +301,7 @@ Item {
                             selectByMouse: true
                             background: Rectangle {
                                 color: "#0d0f10"
-                                border.color: "#343a40"
+                                border.color: RuntimeTheme.GGTheme.line
                                 border.width: 1
                             }
                         }
@@ -317,9 +312,9 @@ Item {
                         height: 22
                         spacing: 8
 
-                        Text {
+                        GGText { colorKey: "ui.VisualLayoutOverlay.3";
                             text: "Editable profile buffer · canonical disk write: NONE"
-                            color: "#8b949e"
+                            color: RuntimeTheme.GGTheme.dim
                             font.family: "monospace"
                             font.pixelSize: 9
                             anchors.verticalCenter: parent.verticalCenter
@@ -327,7 +322,7 @@ Item {
                             width: Math.max(40, parent.width - 92)
                         }
 
-                        GgButton {
+                        GgButton { property string uiColorScope: "ui.control.VisualLayoutOverlay.2";
                             text: "CLOSE"
                             width: 70
                             height: 22

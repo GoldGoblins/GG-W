@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
@@ -8,7 +10,7 @@ Item {
     objectName: "workspaceNodePane"
 
     property var surfaceHost: null
-    property color frameBorder: "#6a6a6a"
+    property color frameBorder: RuntimeTheme.GGTheme.edge
     property int frameRadius: 4
     property string statusJson: "{}"
     property string pendingFromNode: ""
@@ -153,26 +155,26 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: "#101010"
+        color: RuntimeTheme.GGTheme.canvas
         border.width: 1
         border.color: root.frameBorder
         radius: root.frameRadius
     }
 
-    Text {
+    GGText { colorKey: "ui.NodeSurface.1";
         anchors.left: parent.left
         anchors.leftMargin: 12
         anchors.top: parent.top
         anchors.topMargin: 8
         text: "NODES"
-        color: "#d8dee9"
+        color: RuntimeTheme.GGTheme.text
         font.family: "monospace"
         font.pixelSize: 12
         font.bold: true
         z: 8
     }
 
-    Text {
+    GGText { colorKey: "ui.NodeSurface.2";
         anchors.right: parent.right
         anchors.rightMargin: 12
         anchors.top: parent.top
@@ -180,7 +182,7 @@ Item {
         text: "STREAM " + String(root.evalRow.stream || 0)
             + "  ·  CONTRAST " + String(root.evalRow.contrast || 0)
             + "  ·  RESET"
-        color: "#c8a97e"
+        color: RuntimeTheme.GGTheme.accent
         font.family: "monospace"
         font.pixelSize: 12
         z: 8
@@ -224,7 +226,7 @@ Item {
                     var x2 = root.portX(dst, "INPUT")
                     var y2 = root.portY(dst, "INPUT", wire.to_port_id)
                     var mid = (x1 + x2) / 2
-                    ctx.strokeStyle = "#c8a97e"
+                    ctx.strokeStyle = RuntimeTheme.GGTheme.accent
                     ctx.lineWidth = 1.5
                     ctx.beginPath()
                     ctx.moveTo(x1, y1)
@@ -236,7 +238,7 @@ Item {
                     if (pend.node_id) {
                         var px = root.portX(pend, "OUTPUT")
                         var py = root.portY(pend, "OUTPUT", root.pendingFromPort)
-                        ctx.strokeStyle = "#8db89a"
+                        ctx.strokeStyle = RuntimeTheme.GGTheme.positive
                         ctx.beginPath()
                         ctx.moveTo(px, py)
                         ctx.lineTo(root.pendingX, root.pendingY)
@@ -285,31 +287,31 @@ Item {
                 width: root.blockW
                 height: root.blockHeight(blockCard.block)
                 z: 2
-                color: "#181818"
+                color: RuntimeTheme.GGTheme.panel
                 border.width: 1
-                border.color: blockCard.block.enabled === false ? "#4c4c4c" : "#6a6a6a"
+                border.color: blockCard.block.enabled === false ? "#4c4c4c" : RuntimeTheme.GGTheme.edge
                 radius: 2
 
-                Text {
+                GGText { colorKey: "ui.NodeSurface.3";
                     anchors.left: parent.left
                     anchors.leftMargin: 10
                     anchors.top: parent.top
                     anchors.topMargin: 8
                     text: String(blockCard.block.node_id || "BLOCK")
-                    color: "#d8dee9"
+                    color: RuntimeTheme.GGTheme.text
                     font.family: "monospace"
                     font.pixelSize: 12
                     font.bold: true
                 }
 
-                Text {
+                GGText { colorKey: "ui.NodeSurface.4";
                     anchors.right: parent.right
                     anchors.rightMargin: 10
                     anchors.top: parent.top
                     anchors.topMargin: 8
                     text: String((root.values[blockCard.block.node_id] !== undefined)
                                  ? root.values[blockCard.block.node_id] : "—")
-                    color: "#8db89a"
+                    color: RuntimeTheme.GGTheme.positive
                     font.family: "monospace"
                     font.pixelSize: 12
                 }
@@ -345,9 +347,9 @@ Item {
                         radius: 4
                         x: -4
                         y: root.portTop + index * root.portPitch - 4
-                        color: "#8db89a"
+                        color: RuntimeTheme.GGTheme.positive
                         border.width: 1
-                        border.color: "#101010"
+                        border.color: RuntimeTheme.GGTheme.canvas
                     }
                 }
 
@@ -360,9 +362,9 @@ Item {
                         radius: 4
                         x: blockCard.width - 4
                         y: root.portTop + index * root.portPitch - 4
-                        color: "#c8a97e"
+                        color: RuntimeTheme.GGTheme.accent
                         border.width: 1
-                        border.color: "#101010"
+                        border.color: RuntimeTheme.GGTheme.canvas
                         MouseArea {
                             anchors.fill: parent
                             anchors.margins: -6
@@ -396,29 +398,29 @@ Item {
                     anchors.margins: 8
                     spacing: 2
 
-                    GgSlider {
+                    GgSlider { property string uiColorScope: "ui.widget.NodeSurface.GgSlider.1";
                         width: parent.width
                         from: 0
                         to: 2
                         value: Number((blockCard.block.params || {}).gain || 1)
                         onMoved: root.setParam(blockCard.block.node_id, "gain", value)
                     }
-                    Text {
+                    GGText { colorKey: "ui.NodeSurface.5";
                         text: "GAIN " + Number((blockCard.block.params || {}).gain || 1).toFixed(2)
-                        color: "#7f8993"
+                        color: RuntimeTheme.GGTheme.dim
                         font.family: "monospace"
                         font.pixelSize: 10
                     }
-                    GgSlider {
+                    GgSlider { property string uiColorScope: "ui.widget.NodeSurface.GgSlider.2";
                         width: parent.width
                         from: 0
                         to: 1
                         value: Number((blockCard.block.params || {}).mix || 1)
                         onMoved: root.setParam(blockCard.block.node_id, "mix", value)
                     }
-                    Text {
+                    GGText { colorKey: "ui.NodeSurface.6";
                         text: "MIX " + Number((blockCard.block.params || {}).mix || 1).toFixed(2)
-                        color: "#7f8993"
+                        color: RuntimeTheme.GGTheme.dim
                         font.family: "monospace"
                         font.pixelSize: 10
                     }
@@ -427,14 +429,14 @@ Item {
         }
     }
 
-    Text {
+    GGText { colorKey: "ui.NodeSurface.7";
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         anchors.margins: 10
         width: parent.width - 20
         text: "Drag a gold output to a green input. Right-click a wire midpoint to cut it. "
             + "GAIN/MIX retune the stream. Same machine-graph as the workbench, not a second brain."
-        color: "#7f8993"
+        color: RuntimeTheme.GGTheme.dim
         font.family: "monospace"
         font.pixelSize: 11
         wrapMode: Text.WordWrap

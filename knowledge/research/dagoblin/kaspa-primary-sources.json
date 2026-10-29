@@ -1,0 +1,1285 @@
+{
+  "schema": "gg.dagoblin.primary-source-catalog.v1",
+  "scope": "Kaspa PHANTOM/GHOSTDAG/DAGKnight lane",
+  "as_of": "2026-10-29",
+  "report": "knowledge/research/dagoblin/kaspa-ghostdag-dagknight.md",
+  "source_pins": {
+    "release": {
+      "tag": "v2.1.0",
+      "commit": "01b532e8b553523216471682649693af92f0fd16",
+      "published_at": "2026-09-22T13:55:36Z"
+    },
+    "dagknight": {
+      "commit": "ad45e241e6688a14901fd24dd8dc33c5c9a33f40",
+      "published_at": "2026-09-08T04:08:18Z"
+    },
+    "research": {
+      "commit": "c923faca11a49148fa7d912d27ce00197a5c5a4a"
+    },
+    "kips": {
+      "commit": "e4ae2332117b5cb68bd6188e065ef885b6d17939"
+    }
+  },
+  "acquisition": {
+    "root": ".runtime/dagoblin-research/kaspa/",
+    "source_files_extracted": 1201,
+    "selected_source_bytes": 9270739,
+    "archive_bytes": 5867360,
+    "upstream_executed": false,
+    "public_node_started": false,
+    "user_keys_accessed": false,
+    "notes": [
+      "Source acquisition is not full source review",
+      "Read extents and gaps are per-source",
+      "Public source commit identities are provenance, not task authorization tokens",
+      "Parent/root owns GG RESEARCH journal ingestion"
+    ]
+  },
+  "sources": [
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-GHOSTDAG-ORIGINAL",
+      "title": "PHANTOM GHOSTDAG: A Scalable Generalization of Nakamoto Consensus",
+      "url": "https://raw.githubusercontent.com/kaspanet/research/c923faca11a49148fa7d912d27ce00197a5c5a4a/ghostdag/Ghostdag.pdf",
+      "metadata_url": "https://eprint.iacr.org/2018/104",
+      "kind": "ORIGINAL_PAPER",
+      "published_at": "2021-11-10",
+      "commit": "c923faca11a49148fa7d912d27ce00197a5c5a4a",
+      "status": "READ",
+      "read_extent": [
+        "All14 pages text-extracted and read, including assumptions, Algorithm1, Theorem4, proof appendix structure/lemmas and historical measurement section",
+        "Pages3 and7 visually inspected over white background for figures/formulas"
+      ],
+      "not_reviewed": [
+        "Not an independent machine-checked proof",
+        "No reproduction of original experiment",
+        "No implied current production performance"
+      ],
+      "license": "IACR metadata states CC BY; original attribution retained",
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/ghostdag.pdf",
+        ".runtime/dagoblin-research/kaspa/ghostdag.txt",
+        ".runtime/dagoblin-research/kaspa/ghostdag-page-3-white.png",
+        ".runtime/dagoblin-research/kaspa/ghostdag-page-7-white.png"
+      ],
+      "sha256": "296e87afcb923b8069ed59353a2ed2440f0f42be5ac9c8623d2ffbe6c3db1a65",
+      "bytes": 1041410,
+      "claims": [
+        "Maximum k-cluster versus greedy GHOSTDAG",
+        "Delay/hashpower model and probabilistic ordering convergence",
+        "Physical capacity and confirmation-time qualification"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-PRUNALITY-ORIGINAL",
+      "title": "Prunality of the GHOSTDAG Protocol",
+      "url": "https://raw.githubusercontent.com/kaspanet/research/c923faca11a49148fa7d912d27ce00197a5c5a4a/prunality/Prunality.pdf",
+      "kind": "ORIGINAL_RESEARCH_NOTE",
+      "published_at": "2020-07",
+      "commit": "c923faca11a49148fa7d912d27ce00197a5c5a4a",
+      "status": "READ",
+      "read_extent": [
+        "All5 pages text-extracted and read",
+        "Page1 visually inspected for pruning formula and notation"
+      ],
+      "not_reviewed": [
+        "Not independent proof formalization",
+        "Not a complete equivalence audit of later merge-depth decomposition"
+      ],
+      "license": "Public official research artifact; no redistribution license inferred from access alone",
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/prunality.pdf",
+        ".runtime/dagoblin-research/kaspa/prunality.txt",
+        ".runtime/dagoblin-research/kaspa/prunality-page-1-white.png"
+      ],
+      "sha256": "e7a7a35ab0c5dc95f55b28ef6e5cbf347d7b7630104be4eb7005e214e9d1336e",
+      "bytes": 201464,
+      "claims": [
+        "Pruning needs explicit finality/merge/inherited-invalidity assumptions",
+        "2020 formula differs from current decomposed code formula"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-DK-ORIGINAL",
+      "title": "The DAG KNIGHT Protocol: A Parameterless Generalization of Nakamoto Consensus",
+      "url": "https://eprint.iacr.org/2022/1494",
+      "pdf_url": "https://eprint.iacr.org/2022/1494.pdf",
+      "kind": "ORIGINAL_PAPER_METADATA_AND_ABSTRACT",
+      "published_at": "2022-10-31",
+      "revision_at": "2023-02-24",
+      "paper_title_page_date": "2023-02-23",
+      "status": "PARTIAL_READ_PDF_BLOCKED",
+      "read_extent": [
+        "IACR metadata and complete abstract",
+        "Original PDF retrieval attempted; HTTP403",
+        "Search-discovered unauthenticated HTML reprint was not promoted to proof evidence"
+      ],
+      "not_reviewed": [
+        "Full original PDF bytes",
+        "Full algorithms and security proof",
+        "Independent proof-to-branch equivalence"
+      ],
+      "license": "IACR metadata states CC BY",
+      "provenance_gap": "Original PDF inaccessible; do not label full paper as READ or prove theorem from this record",
+      "local_evidence": [],
+      "claims": [
+        "No a priori in-protocol latency bound",
+        "Client-local adversarial-latency bound remains",
+        "Nodes/network backbone capacity still limits throughput"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-DK-HARVARD",
+      "title": "Harvard Applied Cryptography and Society publication record for DAG KNIGHT",
+      "url": "https://appliedcryptographysociety.hsites.harvard.edu/publications/he-dag-knight-protocol-parameterless-generalization",
+      "kind": "AUTHOR_INSTITUTION_PUBLICATION_RECORD",
+      "published_at": "2022",
+      "status": "READ",
+      "read_extent": [
+        "Full short publication record and abstract; publisher link points to IACR"
+      ],
+      "not_reviewed": [
+        "No alternative authenticated PDF on this record"
+      ],
+      "local_evidence": [],
+      "claims": [
+        "Author/institution provenance and abstract cross-check"
+      ],
+      "provenance_gap": "Institutional abstract has apparent much smaller versus much longer interval wording mismatch; derive timing assumptions from IACR original abstract, not this typo"
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-KIP2",
+      "title": "KIP-0002: Upgrade consensus to follow DAGKNIGHT",
+      "url": "https://github.com/kaspanet/kips/blob/e4ae2332117b5cb68bd6188e065ef885b6d17939/kip-0002.md",
+      "kind": "OFFICIAL_PROTOCOL_PROPOSAL",
+      "commit": "e4ae2332117b5cb68bd6188e065ef885b6d17939",
+      "status": "READ",
+      "read_extent": [
+        "Entire KIP: Status, Motivation, Goals, Deliverables, Backwards compatibility"
+      ],
+      "not_reviewed": [
+        "No activation inferred from Proposed status alone"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/kip-0002.md"
+      ],
+      "claims": [
+        "Proposed status",
+        "Efficient algorithm and wallet confirmation-policy work",
+        "Hardfork/RPC changes and separate global latency safeguard"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-RELEASE210",
+      "title": "Rusty Kaspa v2.1.0 official release and API metadata",
+      "url": "https://github.com/kaspanet/rusty-kaspa/releases/tag/v2.1.0",
+      "metadata_url": "https://api.github.com/repos/kaspanet/rusty-kaspa/releases/latest",
+      "kind": "OFFICIAL_RELEASE",
+      "published_at": "2026-09-22T13:55:36Z",
+      "commit": "01b532e8b553523216471682649693af92f0fd16",
+      "status": "READ",
+      "read_extent": [
+        "Release metadata with latest tag, release publication date and tag commit",
+        "Release notes: protocol11, bounded IBD, P2P hardening, arithmetic/signature-cache-related changes"
+      ],
+      "not_reviewed": [
+        "Not proof every public node runs this release",
+        "No upstream binaries built or executed",
+        "No independent audit of all release fixes"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/source-provenance.json"
+      ],
+      "claims": [
+        "Current official latest release at access date",
+        "Separate release implementation from development branch"
+      ],
+      "license": "Release prose; source tree ISC"
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-LORE",
+      "title": "Kaspa LORE: current mainnet and roadmap status",
+      "url": "https://kaspa.org/lore",
+      "kind": "OFFICIAL_PROJECT_STATUS_AND_ROADMAP",
+      "status": "READ",
+      "read_extent": [
+        "Whole short page; Shipped and next, Toccata, DAGKnight and2027 sections"
+      ],
+      "not_reviewed": [
+        "No independent confirmation of all marketing/security claims",
+        "No live mainnet throughput measurement"
+      ],
+      "local_evidence": [],
+      "claims": [
+        "Project states mainnet10BPS",
+        "DAGKnight described as next;25–40ms and100BPS are targets"
+      ],
+      "provenance_gap": "Mutable status page; revalidate dates and activation before future use"
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-BPS",
+      "title": "Rusty Kaspa source: consensus/core/src/config/bps.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/01b532e8b553523216471682649693af92f0fd16/consensus/core/src/config/bps.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "01b532e8b553523216471682649693af92f0fd16",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Lines1–145, k table/Poisson helper, target time, parent/mergeset and depth formulas"
+      ],
+      "functions": [
+        "calculate_ghostdag_k",
+        "Bps::ghostdag_k",
+        "Bps::target_time_per_block",
+        "Bps::max_block_parents",
+        "Bps::mergeset_size_limit",
+        "Bps::pruning_depth"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/rusty-kaspa-01b532e8b553523216471682649693af92f0fd16/consensus/core/src/config/bps.rs"
+      ],
+      "claims": [
+        "10BPS→k124,parent16,mergeset248",
+        "Code comments identify parent-reference and storage costs",
+        "Poisson helper not automatically equivalent to every paper security term"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-CONSTANTS",
+      "title": "Rusty Kaspa source: consensus/core/src/config/constants.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/01b532e8b553523216471682649693af92f0fd16/consensus/core/src/config/constants.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "01b532e8b553523216471682649693af92f0fd16",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Relevant constant declarations around lines65–85"
+      ],
+      "functions": [
+        "FINALITY_DURATION",
+        "PRUNING_DURATION",
+        "MERGE_DEPTH_DURATION"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/rusty-kaspa-01b532e8b553523216471682649693af92f0fd16/consensus/core/src/config/constants.rs"
+      ],
+      "claims": [
+        "12h finality,30h pruning,1h merge-depth parameters"
+      ],
+      "derived_values": {
+        "finality_depth_10bps": 432000,
+        "pruning_depth_10bps": 1080000,
+        "merge_depth_10bps": 36000,
+        "pruning_lower_bound_10bps": 627258
+      }
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-GHOSTDAG-CODE",
+      "title": "Rusty Kaspa source: consensus/src/processes/ghostdag/protocol.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/01b532e8b553523216471682649693af92f0fd16/consensus/src/processes/ghostdag/protocol.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "01b532e8b553523216471682649693af92f0fd16",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Lines94–278: selected-parent, coloring, anticone restrictions and ancestor/cache handling"
+      ],
+      "functions": [
+        "find_selected_parent",
+        "ghostdag",
+        "check_blue_candidate_with_chain_block",
+        "blue_anticone_size",
+        "check_blue_candidate"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/rusty-kaspa-01b532e8b553523216471682649693af92f0fd16/consensus/src/processes/ghostdag/protocol.rs"
+      ],
+      "claims": [
+        "Both candidate and affected existing-blue anticone restrictions",
+        "Blue work and score computed from context"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-ORDERING",
+      "title": "Rusty Kaspa source: consensus/src/processes/ghostdag/ordering.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/01b532e8b553523216471682649693af92f0fd16/consensus/src/processes/ghostdag/ordering.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "01b532e8b553523216471682649693af92f0fd16",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Whole short implementation around lines1–52"
+      ],
+      "functions": [
+        "SortableBlock::cmp",
+        "sort_blocks"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/rusty-kaspa-01b532e8b553523216471682649693af92f0fd16/consensus/src/processes/ghostdag/ordering.rs"
+      ],
+      "claims": [
+        "Blue-work then hash ordering"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-MERGESET",
+      "title": "Rusty Kaspa source: consensus/src/processes/ghostdag/mergeset.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/01b532e8b553523216471682649693af92f0fd16/consensus/src/processes/ghostdag/mergeset.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "01b532e8b553523216471682649693af92f0fd16",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Whole short implementation around lines1–60"
+      ],
+      "functions": [
+        "unordered_mergeset_without_selected_parent",
+        "ordered_mergeset_without_selected_parent"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/rusty-kaspa-01b532e8b553523216471682649693af92f0fd16/consensus/src/processes/ghostdag/mergeset.rs"
+      ],
+      "claims": [
+        "Traversal/visited sets and ordered mergeset cost"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-PARENTS",
+      "title": "Rusty Kaspa source: consensus/src/processes/parents_builder.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/01b532e8b553523216471682649693af92f0fd16/consensus/src/processes/parents_builder.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "01b532e8b553523216471682649693af92f0fd16",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Lines1–190; parent antichain, pruning-point reference and multilevel reconstruction"
+      ],
+      "functions": [
+        "calc_block_parents"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/rusty-kaspa-01b532e8b553523216471682649693af92f0fd16/consensus/src/processes/parents_builder.rs"
+      ],
+      "claims": [
+        "Direct parents versus compressed hierarchical parent levels"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-VIRTUAL",
+      "title": "Rusty Kaspa source: consensus/src/pipeline/virtual_processor/processor.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/01b532e8b553523216471682649693af92f0fd16/consensus/src/pipeline/virtual_processor/processor.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "01b532e8b553523216471682649693af92f0fd16",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Lines450–590: commit/virtual UTXO-state path",
+        "Lines975–1195: candidate bound, pick_virtual_parents, mergeset_increase and bounded-merge filtering"
+      ],
+      "functions": [
+        "max_virtual_parent_candidates",
+        "pick_virtual_parents",
+        "mergeset_increase",
+        "remove_bounded_merge_breaking_parents",
+        "commit_utxo_state"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/rusty-kaspa-01b532e8b553523216471682649693af92f0fd16/consensus/src/pipeline/virtual_processor/processor.rs"
+      ],
+      "claims": [
+        "48 candidate/16 parent/248 mergeset bounds at10BPS",
+        "Diversity-aware parent choice and repeated coloring",
+        "UTXO state and storage distinct from header admission"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-UTXO",
+      "title": "Rusty Kaspa source: consensus/src/pipeline/virtual_processor/utxo_validation.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/01b532e8b553523216471682649693af92f0fd16/consensus/src/pipeline/virtual_processor/utxo_validation.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "01b532e8b553523216471682649693af92f0fd16",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Lines1–195: context and calculate_utxo_state",
+        "Lines295–395: parallel validation and missing-input path"
+      ],
+      "functions": [
+        "calculate_utxo_state",
+        "validate_transactions_in_parallel",
+        "validate_transactions_with_muhash_in_parallel",
+        "validate_transaction_in_utxo_context"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/rusty-kaspa-01b532e8b553523216471682649693af92f0fd16/consensus/src/pipeline/virtual_processor/utxo_validation.rs"
+      ],
+      "claims": [
+        "Consensus-ordered mergeset composes spent-state changes",
+        "Existing real parallel independent transaction verification"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-HEADER-PIPELINE",
+      "title": "Rusty Kaspa source: consensus/src/pipeline/header_processor/processor.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/01b532e8b553523216471682649693af92f0fd16/consensus/src/pipeline/header_processor/processor.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "01b532e8b553523216471682649693af92f0fd16",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Lines205–305: task dispatch/process_header/validate_header"
+      ],
+      "functions": [
+        "queue_block",
+        "process_header",
+        "validate_header"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/rusty-kaspa-01b532e8b553523216471682649693af92f0fd16/consensus/src/pipeline/header_processor/processor.rs"
+      ],
+      "claims": [
+        "Actual validation stage order and existing dependency-aware workers"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-HEADER-ISOLATION",
+      "title": "Rusty Kaspa source: consensus/src/pipeline/header_processor/pre_ghostdag_validation.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/01b532e8b553523216471682649693af92f0fd16/consensus/src/pipeline/header_processor/pre_ghostdag_validation.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "01b532e8b553523216471682649693af92f0fd16",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Whole short implementation around lines1–120"
+      ],
+      "functions": [
+        "validate_header_in_isolation",
+        "validate_parent_relations"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/rusty-kaspa-01b532e8b553523216471682649693af92f0fd16/consensus/src/pipeline/header_processor/pre_ghostdag_validation.rs"
+      ],
+      "claims": [
+        "Version/timestamp/PoW and known-parent/antichain validation"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-HEADER-PREPOW",
+      "title": "Rusty Kaspa source: consensus/src/pipeline/header_processor/pre_pow_validation.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/01b532e8b553523216471682649693af92f0fd16/consensus/src/pipeline/header_processor/pre_pow_validation.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "01b532e8b553523216471682649693af92f0fd16",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Whole short implementation around lines1–65"
+      ],
+      "functions": [
+        "pre_pow_validation"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/rusty-kaspa-01b532e8b553523216471682649693af92f0fd16/consensus/src/pipeline/header_processor/pre_pow_validation.rs"
+      ],
+      "claims": [
+        "Pruning relation, expected DAA/difficulty checks"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-HEADER-POSTPOW",
+      "title": "Rusty Kaspa source: consensus/src/pipeline/header_processor/post_pow_validation.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/01b532e8b553523216471682649693af92f0fd16/consensus/src/pipeline/header_processor/post_pow_validation.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "01b532e8b553523216471682649693af92f0fd16",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Whole short implementation around lines1–110"
+      ],
+      "functions": [
+        "post_pow_validation",
+        "check_blue_score",
+        "check_blue_work",
+        "check_mergeset_size_limit",
+        "check_bounded_merge_depth",
+        "check_indirect_parents"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/rusty-kaspa-01b532e8b553523216471682649693af92f0fd16/consensus/src/pipeline/header_processor/post_pow_validation.rs"
+      ],
+      "claims": [
+        "Computed-work equality and bounded merges/pruning context"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-REACHABILITY",
+      "title": "Rusty Kaspa source: consensus/src/processes/reachability/inquirer.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/01b532e8b553523216471682649693af92f0fd16/consensus/src/processes/reachability/inquirer.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "01b532e8b553523216471682649693af92f0fd16",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Lines1–240: add/delete and interval/FCS ancestor queries"
+      ],
+      "functions": [
+        "add_block",
+        "delete_block",
+        "is_chain_ancestor_of",
+        "is_dag_ancestor_of",
+        "binary_search_descendant"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/rusty-kaspa-01b532e8b553523216471682649693af92f0fd16/consensus/src/processes/reachability/inquirer.rs"
+      ],
+      "claims": [
+        "Chain intervals and logarithmic FCS lookup are not constant total update cost"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-REACHABILITY-INTERVAL",
+      "title": "Rusty Kaspa source: consensus/src/processes/reachability/interval.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/01b532e8b553523216471682649693af92f0fd16/consensus/src/processes/reachability/interval.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "01b532e8b553523216471682649693af92f0fd16",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Lines1–85: u64 interval representation/capacity operations"
+      ],
+      "functions": [
+        "Interval"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/rusty-kaspa-01b532e8b553523216471682649693af92f0fd16/consensus/src/processes/reachability/interval.rs"
+      ],
+      "claims": [
+        "Finite index representation; no quantum-security conclusion"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-PRUNING",
+      "title": "Rusty Kaspa source: consensus/src/processes/pruning.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/01b532e8b553523216471682649693af92f0fd16/consensus/src/processes/pruning.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "01b532e8b553523216471682649693af92f0fd16",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Lines100–228: expected pruning sample/point, finality score, next points and validity"
+      ],
+      "functions": [
+        "expected_header_pruning_point",
+        "is_pruning_sample",
+        "next_pruning_points",
+        "finality_score",
+        "is_valid_pruning_point"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/rusty-kaspa-01b532e8b553523216471682649693af92f0fd16/consensus/src/processes/pruning.rs"
+      ],
+      "claims": [
+        "Sampled blue-score pruning policy distinct from wallet settlement"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-PRUNING-PROOF",
+      "title": "Rusty Kaspa source: consensus/src/processes/pruning_proof/validate.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/01b532e8b553523216471682649693af92f0fd16/consensus/src/processes/pruning_proof/validate.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "01b532e8b553523216471682649693af92f0fd16",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Lines60–200: proof context/stores, level and PoW checks",
+        "Lines300–480: proof validation and defender/challenger blue-work comparison"
+      ],
+      "functions": [
+        "ProofContext::from_proof",
+        "validate_pruning_point_proof",
+        "compare_proofs_inner"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/rusty-kaspa-01b532e8b553523216471682649693af92f0fd16/consensus/src/processes/pruning_proof/validate.rs"
+      ],
+      "claims": [
+        "Temporary proof stores and actual work validation",
+        "Non-genesis parentless header rejection",
+        "Strict superiority and defender preference on equality"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-WIRE-TRANSPORT",
+      "title": "Rusty Kaspa source: protocol/p2p/src/core/connection_handler.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/01b532e8b553523216471682649693af92f0fd16/protocol/p2p/src/core/connection_handler.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "01b532e8b553523216471682649693af92f0fd16",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "P2P_MAX_MESSAGE_SIZE declaration line47 and its decoding-bound usages"
+      ],
+      "functions": [
+        "P2P_MAX_MESSAGE_SIZE"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/rusty-kaspa-01b532e8b553523216471682649693af92f0fd16/protocol/p2p/src/core/connection_handler.rs"
+      ],
+      "claims": [
+        "256MiB transport decoding cap; not full-process RSS cap"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-WIRE-TX",
+      "title": "Rusty Kaspa source: protocol/p2p/src/convert/tx.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/01b532e8b553523216471682649693af92f0fd16/protocol/p2p/src/convert/tx.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "01b532e8b553523216471682649693af92f0fd16",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "MAX_TRANSACTION_SIZE declaration/check around lines188–205; targeted search of bound tests"
+      ],
+      "functions": [
+        "MAX_TRANSACTION_SIZE"
+      ],
+      "not_reviewed": [
+        "Remainder of conversion code and tests not audited",
+        "No execution"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/rusty-kaspa-01b532e8b553523216471682649693af92f0fd16/protocol/p2p/src/convert/tx.rs"
+      ],
+      "claims": [
+        "1MiB transaction message bound"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-WIRE-BLOCK",
+      "title": "Rusty Kaspa source: protocol/p2p/src/convert/block.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/01b532e8b553523216471682649693af92f0fd16/protocol/p2p/src/convert/block.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "01b532e8b553523216471682649693af92f0fd16",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Lines1–65 including actual encoded length/body-bound check"
+      ],
+      "functions": [
+        "MAX_BLOCK_BODY_SIZE",
+        "TryFrom<BlockMessage>",
+        "TryFrom<BlockBodyMessage>"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/rusty-kaspa-01b532e8b553523216471682649693af92f0fd16/protocol/p2p/src/convert/block.rs"
+      ],
+      "claims": [
+        "2MiB body cap; header subtracted in BlockMessage conversion"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-WIRE-PARENTS",
+      "title": "Rusty Kaspa source: consensus/core/src/header.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/01b532e8b553523216471682649693af92f0fd16/consensus/core/src/header.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "01b532e8b553523216471682649693af92f0fd16",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Lines87–135 expanded-parent bounds and cumulative checks; targeted search of tests"
+      ],
+      "functions": [
+        "MAX_UNCOMPRESSED_PARENTS",
+        "CompressedParents"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/rusty-kaspa-01b532e8b553523216471682649693af92f0fd16/consensus/core/src/header.rs"
+      ],
+      "claims": [
+        "Cumulative parent-decompression bound separate from direct parent cap"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-SIGNATURES",
+      "title": "Rusty Kaspa source: crypto/txscript/src/lib.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/01b532e8b553523216471682649693af92f0fd16/crypto/txscript/src/lib.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "01b532e8b553523216471682649693af92f0fd16",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Lines847–911: Schnorr and ECDSA library parsing/hash/cache/verify"
+      ],
+      "functions": [
+        "check_schnorr_signature",
+        "check_schnorr_signature_with_msg_hash",
+        "check_ecdsa_signature_with_msg_hash"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/rusty-kaspa-01b532e8b553523216471682649693af92f0fd16/crypto/txscript/src/lib.rs"
+      ],
+      "claims": [
+        "secp256k1 classical signature verification present",
+        "Hash DAG does not establish PQ signature security"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-DK-PARAMS",
+      "title": "Rusty Kaspa source: consensus/core/src/config/params.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/ad45e241e6688a14901fd24dd8dc33c5c9a33f40/consensus/core/src/config/params.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "ad45e241e6688a14901fd24dd8dc33c5c9a33f40",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Mainnet and testnet definitions around lines592–735; targeted activation search"
+      ],
+      "functions": [
+        "MAINNET_PARAMS",
+        "TESTNET_PARAMS",
+        "TESTNET13_PARAMS"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/dagknight-selected/consensus/core/src/config/params.rs"
+      ],
+      "claims": [
+        "Mainnet DK never activated in inspected branch",
+        "TN13 always activated with empty seeders; no live-network claim"
+      ],
+      "published_at": "2026-09-08T04:08:18Z"
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-DK-PROTOCOL",
+      "title": "Rusty Kaspa source: consensus/src/processes/dagknight/protocol.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/ad45e241e6688a14901fd24dd8dc33c5c9a33f40/consensus/src/processes/dagknight/protocol.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "ad45e241e6688a14901fd24dd8dc33c5c9a33f40",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Lines1–410: conflict hierarchy, parent grouping/ranking, UMC call and acceptance/counters"
+      ],
+      "functions": [
+        "dagknight",
+        "common_chain_ancestor",
+        "rank",
+        "select_parent_from_k_colouring",
+        "umc_cascade_voting",
+        "tie_breaking"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/dagknight-selected/consensus/src/processes/dagknight/protocol.rs"
+      ],
+      "claims": [
+        "Actual UMC cascade call exists despite stale TODO",
+        "Work-weighted parent selection and rank evaluation",
+        "Feature-gated baseline comparison not proof of equivalence"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-DK-RANK",
+      "title": "Rusty Kaspa source: consensus/src/processes/dagknight/rank_search.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/ad45e241e6688a14901fd24dd8dc33c5c9a33f40/consensus/src/processes/dagknight/rank_search.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "ad45e241e6688a14901fd24dd8dc33c5c9a33f40",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Whole short file including tests read statically"
+      ],
+      "functions": [
+        "RankSearcher::search"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/dagknight-selected/consensus/src/processes/dagknight/rank_search.rs"
+      ],
+      "claims": [
+        "Exponential upper-bound search then binary search; evaluation cost remains"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-DK-TIE",
+      "title": "Rusty Kaspa source: consensus/src/processes/dagknight/tie_breaking.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/ad45e241e6688a14901fd24dd8dc33c5c9a33f40/consensus/src/processes/dagknight/tie_breaking.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "ad45e241e6688a14901fd24dd8dc33c5c9a33f40",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Lines1–290: reference cluster, subgroup chain, witnesses and tie_break",
+        "Lines300–365 fixture setup viewed; rest of tests not reviewed"
+      ],
+      "functions": [
+        "compute_reference_cluster",
+        "compute_subgroup_chain_blocks",
+        "count_anticone_with_chain",
+        "compute_high_rank_witnesses",
+        "tie_break"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/dagknight-selected/consensus/src/processes/dagknight/tie_breaking.rs"
+      ],
+      "claims": [
+        "Observed documentation/body difference for k-prime witness evaluation",
+        "Unresolved proof-to-code question, not vulnerability finding"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-DK-CASCADE",
+      "title": "Rusty Kaspa source: consensus/src/processes/dagknight/umc_cascade.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/ad45e241e6688a14901fd24dd8dc33c5c9a33f40/consensus/src/processes/dagknight/umc_cascade.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "ad45e241e6688a14901fd24dd8dc33c5c9a33f40",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Lines1–170: representation,work deficit,blue/red events,score,checkpoint serialization",
+        "Targeted symbol search of event/cascade/checkpoint paths; remaining bodies not fully read"
+      ],
+      "functions": [
+        "CascadeMaintainer::new",
+        "add_blue",
+        "add_red",
+        "virtual_score",
+        "virtual_accepts",
+        "to_persisted_state",
+        "from_persisted_state"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/dagknight-selected/consensus/src/processes/dagknight/umc_cascade.rs"
+      ],
+      "claims": [
+        "Work-weighted cascade with segment trees and checkpoints",
+        "Cannot infer full worst-case complexity or measured speed from scoped read"
+      ]
+    },
+    {
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "STATIC_READ_ONLY",
+      "revalidate_on": [
+        "new release",
+        "paper revision",
+        "activation change"
+      ],
+      "id": "KASPA-DK-UMC-API",
+      "title": "Rusty Kaspa source: consensus/src/processes/dagknight/umc_voting.rs",
+      "url": "https://github.com/kaspanet/rusty-kaspa/blob/ad45e241e6688a14901fd24dd8dc33c5c9a33f40/consensus/src/processes/dagknight/umc_voting.rs",
+      "kind": "OFFICIAL_PINNED_SOURCE",
+      "commit": "ad45e241e6688a14901fd24dd8dc33c5c9a33f40",
+      "status": "READ_SCOPED",
+      "license": "ISC at release root; no upstream code copied into product",
+      "read_extent": [
+        "Lines1–77: public voter context/result and counters"
+      ],
+      "functions": [
+        "UmcVotingContext",
+        "UmcVoter",
+        "CascadeResult"
+      ],
+      "not_reviewed": [
+        "Unlisted functions and tests not audited",
+        "No compile, execution or benchmark"
+      ],
+      "local_evidence": [
+        ".runtime/dagoblin-research/kaspa/dagknight-selected/consensus/src/processes/dagknight/umc_voting.rs"
+      ],
+      "claims": [
+        "Explicit vote/flip/estimated-checkpoint-saving metrics"
+      ]
+    }
+  ],
+  "own_inferences": {
+    "not_protocol_measurements": true,
+    "payload_assumption_bytes_per_tx": 250,
+    "examples": [
+      {
+        "bps": 30,
+        "transactions_per_block": 1000,
+        "tx_per_second": 30000,
+        "payload_bytes_per_second": 7500000
+      },
+      {
+        "bps": 300,
+        "transactions_per_block": 1000,
+        "tx_per_second": 300000,
+        "payload_bytes_per_second": 75000000
+      },
+      {
+        "bps": 300,
+        "transactions_per_block": 3000,
+        "tx_per_second": 900000,
+        "payload_bytes_per_second": 225000000
+      }
+    ],
+    "no_claims": [
+      "No production DAGoblin consensus",
+      "No Kaspa superiority proved",
+      "No complete DAGKnight security-proof review",
+      "No WAN or phone benchmark",
+      "No universal200–300MB full-application RAM guarantee"
+    ]
+  }
+}

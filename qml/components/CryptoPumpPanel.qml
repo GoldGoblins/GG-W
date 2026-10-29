@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
@@ -34,9 +36,9 @@ ScrollView {
         && root.quote.stale !== true && root.quote.valid !== false
         && !root.quote.error && String(root.quote.amount_out || root.quote.amount_out_atoms || "").length > 0
     readonly property string quoteSymbol: String(root.market.quote_symbol || root.paper.quote_symbol || "SOL")
-    readonly property color ink: "#e6edf3"
-    readonly property color muted: "#9aa3ad"
-    readonly property color gold: "#c8a97e"
+    readonly property color ink: RuntimeTheme.GGTheme.bright
+    readonly property color muted: RuntimeTheme.GGTheme.muted
+    readonly property color gold: RuntimeTheme.GGTheme.accent
     readonly property color red: "#d99a9a"
     signal statusReturned(string raw)
 
@@ -109,7 +111,7 @@ ScrollView {
     property bool technicalDetailsOpen: false
     property bool simulationLogsOpen: false
 
-    component Note: Text {
+    component Note: GGText {
         width: parent.width
         color: root.muted
         font.family: "monospace"
@@ -132,11 +134,11 @@ ScrollView {
         default property alias contents: cardContent.data
         width: parent.width
         height: cardContent.implicitHeight + 32
-        GgFrame {
+        GgFrame { property string uiColorScope: "ui.widget.CryptoPumpPanel.GgFrame.1";
             anchors.fill: parent
             leftLegend: card.kicker
-            backgroundColor: "#161616"
-            borderColor: "#6a6a6a"
+            backgroundColor: RuntimeTheme.GGTheme.panel
+            borderColor: RuntimeTheme.GGTheme.edge
             radius: 4
         }
         Column {
@@ -144,7 +146,7 @@ ScrollView {
             x: 14; y: 20
             width: parent.width - 28
             spacing: 10
-            Note { visible: card.title.length > 0; text: card.title; font.pixelSize: 12; font.bold: true; color: root.ink }
+            Note { colorKey: "ui.CryptoPumpPanel.1"; visible: card.title.length > 0; text: card.title; font.pixelSize: 12; font.bold: true; color: root.ink }
         }
     }
 
@@ -156,12 +158,12 @@ ScrollView {
         wrapMode: TextEdit.WrapAnywhere
         textFormat: TextEdit.PlainText
         color: root.ink
-        selectionColor: "#3a3a3a"
+        selectionColor: RuntimeTheme.GGTheme.selected
         selectedTextColor: root.ink
         font.family: "monospace"
         font.pixelSize: 11
         padding: 10
-        background: Rectangle { color: "#121212"; border.color: parent.activeFocus ? "#8a8a8a" : "#6a6a6a"; radius: 2 }
+        background: Rectangle { color: RuntimeTheme.GGTheme.canvas; border.color: parent.activeFocus ? RuntimeTheme.GGTheme.dim : RuntimeTheme.GGTheme.edge; radius: 2 }
     }
 
     component Action: CryptoButton {
@@ -177,15 +179,15 @@ ScrollView {
         Row {
             width: parent.width
             spacing: 8
-            Rectangle { width: 1; height: 34; color: "#6a6a6a" }
+            Rectangle { width: 1; height: 34; color: RuntimeTheme.GGTheme.edge }
             Column {
                 width: parent.width - 12
                 spacing: 4
-                Note { text: "ON-CHAIN RESEARCH"; font.pixelSize: 12; font.bold: true; color: root.ink }
-                Label { text: "INSPECT  /  COMPARE  /  SIMULATE" }
+                Note { colorKey: "ui.CryptoPumpPanel.2"; text: "ON-CHAIN RESEARCH"; font.pixelSize: 12; font.bold: true; color: root.ink }
+                Label { colorKey: "ui.CryptoPumpPanel.3"; text: "INSPECT  /  COMPARE  /  SIMULATE" }
             }
         }
-        Note {
+        Note { colorKey: "ui.CryptoPumpPanel.4";
             objectName: "cryptoPumpProvenance"
             text: root.value(root.data, "network", "Solana mainnet").toUpperCase()
                 + " · WATCH ONLY · PAPER TRADING"
@@ -194,12 +196,12 @@ ScrollView {
             color: root.data.stale === true ? root.gold : root.muted
         }
 
-        Card {
+        Card { property string uiColorScope: "ui.widget.CryptoPumpPanel.Card.2";
             kicker: "01 / DISCOVER"
             title: "Inspect a token"
-            Note { text: "Read the token, pool and authorities before comparing a swap. Risk flags describe observations, not token safety." }
-            Label { text: "TOKEN MINT" }
-            CryptoField {
+            Note { colorKey: "ui.CryptoPumpPanel.5"; text: "Read the token, pool and authorities before comparing a swap. Risk flags describe observations, not token safety." }
+            Label { colorKey: "ui.CryptoPumpPanel.6"; text: "TOKEN MINT" }
+            CryptoField { property string uiColorScope: "ui.widget.CryptoPumpPanel.CryptoField.3";
                 id: mintInput
                 objectName: "cryptoPumpMint"
                 width: parent.width
@@ -211,8 +213,8 @@ ScrollView {
                 KeyNavigation.tab: poolInput
                 onAccepted: if (inspectButton.enabled) root.run("inspect")
             }
-            Label { text: "POOL ADDRESS · OPTIONAL" }
-            CryptoField {
+            Label { colorKey: "ui.CryptoPumpPanel.7"; text: "POOL ADDRESS · OPTIONAL" }
+            CryptoField { property string uiColorScope: "ui.widget.CryptoPumpPanel.CryptoField.4";
                 id: poolInput
                 objectName: "cryptoPumpPool"
                 width: parent.width
@@ -227,7 +229,7 @@ ScrollView {
             Flow {
                 width: parent.width
                 spacing: 10
-                Action {
+                Action { property string uiColorScope: "ui.control.CryptoPumpPanel.1";
                     id: inspectButton
                     objectName: "cryptoPumpInspect"
                     text: root.busy && !root.inspected ? "Inspecting…" : "Inspect token"
@@ -236,28 +238,28 @@ ScrollView {
                     KeyNavigation.tab: sideInput
                     onClicked: root.run("inspect")
                 }
-                Note {
+                Note { colorKey: "ui.CryptoPumpPanel.8";
                     width: Math.min(220, parent.width)
                     topPadding: 8
                     text: root.busy ? "Working…" : root.value(root.data, "state", "Ready for a mint").toUpperCase()
-                    color: root.data.stale === true ? root.gold : root.inspected ? "#8db89a" : root.muted
+                    color: root.data.stale === true ? root.gold : root.inspected ? RuntimeTheme.GGTheme.positive : root.muted
                 }
             }
-            Note {
+            Note { colorKey: "ui.CryptoPumpPanel.9";
                 objectName: "cryptoPumpError"
                 visible: text.length > 0
                 color: root.red
                 text: root.requestError || String(root.data.error || "") || String((root.operation || {}).error || "")
             }
-            Note { visible: (root.data.warnings || []).length > 0; color: root.gold; text: (root.data.warnings || []).slice(0, 12).join("\n") }
+            Note { colorKey: "ui.CryptoPumpPanel.10"; visible: (root.data.warnings || []).length > 0; color: root.gold; text: (root.data.warnings || []).slice(0, 12).join("\n") }
         }
 
-        Card {
+        Card { property string uiColorScope: "ui.widget.CryptoPumpPanel.Card.6";
             visible: root.inspected || String(root.token.mint || "").length > 0
             kicker: "TOKEN & MARKET"
             title: root.value(root.token, "symbol", "Selected token")
-            Note { visible: !root.inspected; text: "PREVIOUS SELECTION · Inspect the edited mint to replace these details."; color: root.gold; font.pixelSize: 11 }
-            Note { text: root.value(root.market, "kind", "Market unavailable") + " · " + root.value(root.market, "lifecycle", "Lifecycle unavailable"); color: root.ink }
+            Note { colorKey: "ui.CryptoPumpPanel.11"; visible: !root.inspected; text: "PREVIOUS SELECTION · Inspect the edited mint to replace these details."; color: root.gold; font.pixelSize: 11 }
+            Note { colorKey: "ui.CryptoPumpPanel.12"; text: root.value(root.market, "kind", "Market unavailable") + " · " + root.value(root.market, "lifecycle", "Lifecycle unavailable"); color: root.ink }
             Grid {
                 width: parent.width
                 columns: width < 400 ? 1 : 2
@@ -266,14 +268,14 @@ ScrollView {
                 Column {
                     width: parent.columns === 1 ? parent.width : (parent.width - 12) / 2
                     spacing: 4
-                    Label { text: "BASE LIQUIDITY" }
-                    Note { text: root.quantity(root.market, "base_reserves", "TOKEN"); color: root.ink }
+                    Label { colorKey: "ui.CryptoPumpPanel.13"; text: "BASE LIQUIDITY" }
+                    Note { colorKey: "ui.CryptoPumpPanel.14"; text: root.quantity(root.market, "base_reserves", "TOKEN"); color: root.ink }
                 }
                 Column {
                     width: parent.columns === 1 ? parent.width : (parent.width - 12) / 2
                     spacing: 4
-                    Label { text: "QUOTE LIQUIDITY" }
-                    Note { text: root.quantity(root.market, "quote_reserves", root.quoteSymbol); color: root.ink }
+                    Label { colorKey: "ui.CryptoPumpPanel.15"; text: "QUOTE LIQUIDITY" }
+                    Note { colorKey: "ui.CryptoPumpPanel.16"; text: root.quantity(root.market, "quote_reserves", root.quoteSymbol); color: root.ink }
                 }
             }
             Repeater {
@@ -284,10 +286,10 @@ ScrollView {
                     width: parent.width
                     height: riskText.implicitHeight + 16
                     readonly property bool high: ["high", "critical", "error"].indexOf(String(modelData.severity || "").toLowerCase()) >= 0
-                    color: "#181818"
-                    border.color: "#6a6a6a"
+                    color: RuntimeTheme.GGTheme.panel
+                    border.color: RuntimeTheme.GGTheme.edge
                     radius: 2
-                    Note {
+                    Note { colorKey: "ui.CryptoPumpPanel.17";
                         id: riskText
                         x: 8; y: 8; width: parent.width - 16
                         text: root.value(riskRow.modelData, "severity", "unknown").toUpperCase() + " · "
@@ -296,9 +298,9 @@ ScrollView {
                     }
                 }
             }
-            Note { visible: (root.data.risks || []).length === 0; text: "No risk flags supplied. Coverage may be incomplete." }
-            Action { text: (root.technicalDetailsOpen ? "▾ " : "▸ ") + "Addresses & authorities"; onClicked: root.technicalDetailsOpen = !root.technicalDetailsOpen }
-            CopyValue {
+            Note { colorKey: "ui.CryptoPumpPanel.18"; visible: (root.data.risks || []).length === 0; text: "No risk flags supplied. Coverage may be incomplete." }
+            Action { property string uiColorScope: "ui.control.CryptoPumpPanel.2"; text: (root.technicalDetailsOpen ? "▾ " : "▸ ") + "Addresses & authorities"; onClicked: root.technicalDetailsOpen = !root.technicalDetailsOpen }
+            CopyValue { property string uiColorScope: "ui.widget.CryptoPumpPanel.CopyValue.8";
                 objectName: "cryptoPumpTokenState"
                 visible: root.technicalDetailsOpen
                 Accessible.name: "Token and market details"
@@ -316,7 +318,7 @@ ScrollView {
             }
         }
 
-        Card {
+        Card { property string uiColorScope: "ui.widget.CryptoPumpPanel.Card.9";
             kicker: "02 / COMPARE"
             title: "Build a swap estimate"
             Flow {
@@ -325,8 +327,8 @@ ScrollView {
                 Column {
                     width: Math.min(100, parent.width)
                     spacing: 5
-                    Label { text: "SIDE" }
-                    ComboBox {
+                    Label { colorKey: "ui.CryptoPumpPanel.19"; text: "SIDE" }
+                    ComboBox { property string uiColorScope: "ui.control.CryptoPumpPanel.3";
                         id: sideInput
                         objectName: "cryptoPumpSide"
                         width: parent.width
@@ -337,25 +339,25 @@ ScrollView {
                         KeyNavigation.tab: amountInput
                         font.family: "monospace"
                         font.pixelSize: 12
-                        contentItem: Text { text: sideInput.currentText; color: sideInput.currentText === "BUY" ? "#8db89a" : root.red; font: sideInput.font; verticalAlignment: Text.AlignVCenter; leftPadding: 10 }
-                        background: Rectangle { color: "#121212"; border.color: sideInput.activeFocus ? "#8a8a8a" : "#6a6a6a"; radius: 2 }
-                        indicator: Text { x: sideInput.width - width - 10; anchors.verticalCenter: parent.verticalCenter; text: "▾"; color: root.muted; font.family: "monospace"; font.pixelSize: 12 }
-                        delegate: ItemDelegate {
+                        contentItem: GGText { colorKey: "ui.CryptoPumpPanel.20"; text: sideInput.currentText; color: sideInput.currentText === "BUY" ? RuntimeTheme.GGTheme.positive : root.red; font: sideInput.font; verticalAlignment: Text.AlignVCenter; leftPadding: 10 }
+                        background: Rectangle { color: RuntimeTheme.GGTheme.canvas; border.color: sideInput.activeFocus ? RuntimeTheme.GGTheme.dim : RuntimeTheme.GGTheme.edge; radius: 2 }
+                        indicator: GGText { colorKey: "ui.CryptoPumpPanel.21"; x: sideInput.width - width - 10; anchors.verticalCenter: parent.verticalCenter; text: "▾"; color: root.muted; font.family: "monospace"; font.pixelSize: 12 }
+                        delegate: ItemDelegate { property string uiColorScope: "ui.control.CryptoPumpPanel.4";
                             id: sideChoice
                             required property string modelData
                             required property int index
                             width: sideInput.width
                             height: 34
                             highlighted: sideInput.highlightedIndex === index
-                            contentItem: Text { text: sideChoice.modelData; color: sideChoice.modelData === "BUY" ? "#8db89a" : root.red; font: sideInput.font; verticalAlignment: Text.AlignVCenter }
-                            background: Rectangle { color: sideChoice.highlighted ? "#34383d" : "#161616" }
+                            contentItem: GGText { colorKey: "ui.CryptoPumpPanel.22"; text: sideChoice.modelData; color: sideChoice.modelData === "BUY" ? RuntimeTheme.GGTheme.positive : root.red; font: sideInput.font; verticalAlignment: Text.AlignVCenter }
+                            background: Rectangle { color: sideChoice.highlighted ? RuntimeTheme.GGTheme.line : RuntimeTheme.GGTheme.panel }
                         }
                         popup: Popup {
                             y: sideInput.height + 3
                             width: sideInput.width
                             padding: 1
                             implicitHeight: sideList.implicitHeight + 2
-                            background: Rectangle { color: "#161616"; border.color: "#6a6a6a"; radius: 2 }
+                            background: Rectangle { color: RuntimeTheme.GGTheme.panel; border.color: RuntimeTheme.GGTheme.edge; radius: 2 }
                             contentItem: ListView {
                                 id: sideList
                                 clip: true
@@ -370,8 +372,8 @@ ScrollView {
                 Column {
                     width: Math.min(220, parent.width)
                     spacing: 5
-                    Label { text: sideInput.currentText === "BUY" ? "SPEND · " + root.quoteSymbol : "SELL · TOKEN" }
-                    CryptoField {
+                    Label { colorKey: "ui.CryptoPumpPanel.23"; text: sideInput.currentText === "BUY" ? "SPEND · " + root.quoteSymbol : "SELL · TOKEN" }
+                    CryptoField { property string uiColorScope: "ui.widget.CryptoPumpPanel.CryptoField.10";
                         id: amountInput
                         objectName: "cryptoPumpAmount"
                         width: parent.width
@@ -389,8 +391,8 @@ ScrollView {
                 Column {
                     width: Math.min(140, parent.width)
                     spacing: 5
-                    Label { text: "SLIPPAGE · BPS" }
-                    CryptoField {
+                    Label { colorKey: "ui.CryptoPumpPanel.24"; text: "SLIPPAGE · BPS" }
+                    CryptoField { property string uiColorScope: "ui.widget.CryptoPumpPanel.CryptoField.11";
                         id: slippageInput
                         objectName: "cryptoPumpSlippage"
                         width: parent.width
@@ -403,8 +405,8 @@ ScrollView {
                     }
                 }
             }
-            Note { text: "100 bps = 1%. A fresh estimate is required after editing any input."; font.pixelSize: 11 }
-            Note {
+            Note { colorKey: "ui.CryptoPumpPanel.25"; text: "100 bps = 1%. A fresh estimate is required after editing any input."; font.pixelSize: 11 }
+            Note { colorKey: "ui.CryptoPumpPanel.26";
                 visible: root.data.stale === true || (root.inspected && !root.currentQuote)
                 text: root.data.stale === true ? "Snapshot is stale. Inspect again before quoting." : "Request a quote to unlock simulation and a paper fill."
                 color: root.gold
@@ -412,7 +414,7 @@ ScrollView {
             Flow {
                 width: parent.width
                 spacing: 8
-                Action {
+                Action { property string uiColorScope: "ui.control.CryptoPumpPanel.5";
                     id: quoteButton
                     objectName: "cryptoPumpQuote"
                     text: "Get estimate"
@@ -421,7 +423,7 @@ ScrollView {
                     KeyNavigation.tab: simulateButton
                     onClicked: root.run("quote")
                 }
-                Action {
+                Action { property string uiColorScope: "ui.control.CryptoPumpPanel.6";
                     id: simulateButton
                     objectName: "cryptoPumpSimulate"
                     text: "Simulate unsigned"
@@ -429,7 +431,7 @@ ScrollView {
                     KeyNavigation.tab: paperButton
                     onClicked: root.run("simulate")
                 }
-                Action {
+                Action { property string uiColorScope: "ui.control.CryptoPumpPanel.7";
                     id: paperButton
                     objectName: "cryptoPumpPaperTrade"
                     text: "Record paper fill"
@@ -438,16 +440,16 @@ ScrollView {
                     onClicked: root.run("paper")
                 }
             }
-            Note { text: "Paper uses simulated cash. Unsigned simulation does not submit a transaction."; font.pixelSize: 11 }
-            Note { visible: !!root.quote.error; color: root.red; text: String(root.quote.error || "") }
+            Note { colorKey: "ui.CryptoPumpPanel.27"; text: "Paper uses simulated cash. Unsigned simulation does not submit a transaction."; font.pixelSize: 11 }
+            Note { colorKey: "ui.CryptoPumpPanel.28"; visible: !!root.quote.error; color: root.red; text: String(root.quote.error || "") }
             Column {
                 width: parent.width
                 spacing: 5
                 visible: String(root.quote.amount_out || root.quote.amount_out_atoms || "").length > 0
-                Label { text: root.currentQuote ? "ESTIMATED RECEIVE" : "PREVIOUS ESTIMATE · REFRESH REQUIRED" }
-                Note { text: root.quantity(root.quote, "amount_out", sideInput.currentText === "BUY" ? "TOKEN" : root.quoteSymbol); font.pixelSize: 22; font.bold: true; color: root.currentQuote ? root.ink : root.muted }
+                Label { colorKey: "ui.CryptoPumpPanel.29"; text: root.currentQuote ? "ESTIMATED RECEIVE" : "PREVIOUS ESTIMATE · REFRESH REQUIRED" }
+                Note { colorKey: "ui.CryptoPumpPanel.30"; text: root.quantity(root.quote, "amount_out", sideInput.currentText === "BUY" ? "TOKEN" : root.quoteSymbol); font.pixelSize: 22; font.bold: true; color: root.currentQuote ? root.ink : root.muted }
             }
-            CopyValue {
+            CopyValue { property string uiColorScope: "ui.widget.CryptoPumpPanel.CopyValue.15";
                 objectName: "cryptoPumpQuoteDetails"
                 visible: String(root.quote.amount_out || root.quote.amount_out_atoms || "").length > 0
                 Accessible.name: "Quote and total wallet costs"
@@ -462,7 +464,7 @@ ScrollView {
             }
             Repeater {
                 model: (root.quote.fees || []).slice(0, 20)
-                delegate: Note {
+                delegate: Note { colorKey: "ui.CryptoPumpPanel.31";
                     required property var modelData
                     text: root.value(modelData, "label", "Fee") + ": "
                         + root.quantity(modelData, "amount", root.value(modelData, "symbol", root.quoteSymbol))
@@ -471,12 +473,12 @@ ScrollView {
             }
         }
 
-        Card {
+        Card { property string uiColorScope: "ui.widget.CryptoPumpPanel.Card.16";
             objectName: "cryptoPumpStressCard"
             visible: root.currentQuote && !root.busy && (root.stress.rows || []).length > 0
             kicker: "COST & LIQUIDITY"
             title: "Stress the estimate"
-            Note { text: "Independent hypothetical scenarios against the original slippage bounds. These are assumptions, not forecast probabilities." }
+            Note { colorKey: "ui.CryptoPumpPanel.32"; text: "Independent hypothetical scenarios against the original slippage bounds. These are assumptions, not forecast probabilities." }
             Repeater {
                 model: (root.stress.rows || []).slice(0, 10)
                 delegate: Rectangle {
@@ -486,30 +488,30 @@ ScrollView {
                     width: parent.width
                     height: stressRow.implicitHeight + 18
                     color: "#151515"
-                    border.color: "#6a6a6a"
+                    border.color: RuntimeTheme.GGTheme.edge
                     radius: 2
                     Column {
                         id: stressRow
                         x: 9; y: 9
                         width: parent.width - 18
                         spacing: 4
-                        Note { text: root.value(stressItem.modelData, "label", "Scenario"); font.bold: true; color: root.ink }
-                        Note { visible: stressItem.modelData.supported === true; text: "Debit " + root.value(stressItem.modelData, "debit_display") + " → Receive " + root.value(stressItem.modelData, "received_display"); font.pixelSize: 11 }
-                        Label {
+                        Note { colorKey: "ui.CryptoPumpPanel.33"; text: root.value(stressItem.modelData, "label", "Scenario"); font.bold: true; color: root.ink }
+                        Note { colorKey: "ui.CryptoPumpPanel.34"; visible: stressItem.modelData.supported === true; text: "Debit " + root.value(stressItem.modelData, "debit_display") + " → Receive " + root.value(stressItem.modelData, "received_display"); font.pixelSize: 11 }
+                        Label { colorKey: "ui.CryptoPumpPanel.35";
                             text: stressItem.modelData.supported !== true ? "UNSUPPORTED · " + root.value(stressItem.modelData, "error")
                                 : stressItem.modelData.within_slippage === true ? "WITHIN ORIGINAL BOUNDS" : "BREACHES ORIGINAL BOUNDS"
-                            color: stressItem.modelData.supported !== true ? root.red : stressItem.modelData.within_slippage === true ? "#8db89a" : root.gold
+                            color: stressItem.modelData.supported !== true ? root.red : stressItem.modelData.within_slippage === true ? RuntimeTheme.GGTheme.positive : root.gold
                         }
                     }
                 }
             }
-            Note { text: "Swap costs only. Network fees, rent, MEV and inclusion are outside these estimates."; font.pixelSize: 11 }
+            Note { colorKey: "ui.CryptoPumpPanel.36"; text: "Swap costs only. Network fees, rent, MEV and inclusion are outside these estimates."; font.pixelSize: 11 }
         }
 
-        Card {
+        Card { property string uiColorScope: "ui.widget.CryptoPumpPanel.Card.17";
             kicker: "03 / VERIFY"
             title: "Unsigned simulation"
-            Note {
+            Note { colorKey: "ui.CryptoPumpPanel.37";
                 objectName: "cryptoPumpSimulationWallet"
                 visible: root.value(root.simulation, "wallet", "").length > 0
                 text: {
@@ -517,7 +519,7 @@ ScrollView {
                     return "Public payer · " + (address.length > 16 ? address.slice(0, 6) + "…" + address.slice(-6) : address)
                 }
             }
-            Note {
+            Note { colorKey: "ui.CryptoPumpPanel.38";
                 objectName: "cryptoPumpSimulationState"
                 text: root.value(root.simulation, "state", "Not run").toUpperCase()
                     + " · Units: " + root.value(root.simulation, "units")
@@ -527,7 +529,7 @@ ScrollView {
             }
             Repeater {
                 model: (root.simulation.balance_changes || []).slice(0, 32)
-                delegate: Note {
+                delegate: Note { colorKey: "ui.CryptoPumpPanel.39";
                     required property var modelData
                     font.pixelSize: 11
                     wrapMode: Text.WrapAnywhere
@@ -535,7 +537,7 @@ ScrollView {
                         + " · " + root.quantity(modelData, "delta", root.value(modelData, "symbol", ""))
                 }
             }
-            Action { visible: (root.simulation.logs || []).length > 0; text: (root.simulationLogsOpen ? "▾ " : "▸ ") + "Program logs"; onClicked: root.simulationLogsOpen = !root.simulationLogsOpen }
+            Action { property string uiColorScope: "ui.control.CryptoPumpPanel.8"; visible: (root.simulation.logs || []).length > 0; text: (root.simulationLogsOpen ? "▾ " : "▸ ") + "Program logs"; onClicked: root.simulationLogsOpen = !root.simulationLogsOpen }
             ScrollView {
                 id: logScroll
                 width: parent.width
@@ -544,7 +546,7 @@ ScrollView {
                 clip: true
                 contentWidth: availableWidth
                 ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                CopyValue {
+                CopyValue { property string uiColorScope: "ui.widget.CryptoPumpPanel.CopyValue.19";
                     id: logText
                     objectName: "cryptoPumpSimulationLogs"
                     width: logScroll.availableWidth
@@ -554,10 +556,10 @@ ScrollView {
             }
         }
 
-        Card {
+        Card { property string uiColorScope: "ui.widget.CryptoPumpPanel.Card.20";
             kicker: "PAPER / SEPARATE LEDGER"
             title: "Simulated account"
-            Note {
+            Note { colorKey: "ui.CryptoPumpPanel.40";
                 objectName: "cryptoPumpPaperSummary"
                 text: "Cash: " + root.quantity(root.paper, "cash", root.value(root.paper, "quote_symbol", root.quoteSymbol))
                     + "\nEquity: " + root.quantity(root.paper, "equity", root.value(root.paper, "quote_symbol", root.quoteSymbol))
@@ -565,10 +567,10 @@ ScrollView {
                 color: root.paper.error ? root.red : root.ink
                 font.pixelSize: 14
             }
-            Note { visible: (root.paper.positions || []).length === 0; text: "No positions yet. An executed paper estimate appears here." }
+            Note { colorKey: "ui.CryptoPumpPanel.41"; visible: (root.paper.positions || []).length === 0; text: "No positions yet. An executed paper estimate appears here." }
             Repeater {
                 model: (root.paper.positions || []).slice(0, 40)
-                delegate: CopyValue {
+                delegate: CopyValue { property string uiColorScope: "ui.widget.CryptoPumpPanel.CopyValue.21";
                     required property var modelData
                     Accessible.name: "Paper position"
                     text: root.value(modelData, "symbol", "TOKEN") + " · " + root.value(modelData, "mint")
@@ -576,10 +578,10 @@ ScrollView {
                         + " · Value: " + root.quantity(modelData, "value", root.quoteSymbol)
                 }
             }
-            Label { visible: (root.paper.fills || []).length > 0; text: "RECENT PAPER FILLS" }
+            Label { colorKey: "ui.CryptoPumpPanel.42"; visible: (root.paper.fills || []).length > 0; text: "RECENT PAPER FILLS" }
             Repeater {
                 model: (root.paper.fills || []).slice(-40).reverse()
-                delegate: Note {
+                delegate: Note { colorKey: "ui.CryptoPumpPanel.43";
                     required property var modelData
                     font.pixelSize: 11
                     wrapMode: Text.WrapAnywhere
@@ -588,7 +590,7 @@ ScrollView {
                         + " · Input " + root.quantity(modelData, "amount_in") + " · Output " + root.quantity(modelData, "amount_out")
                 }
             }
-            Action {
+            Action { property string uiColorScope: "ui.control.CryptoPumpPanel.9";
                 id: resetButton
                 objectName: "cryptoPumpPaperReset"
                 text: "Reset paper account"

@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 
 Item {
@@ -15,23 +17,23 @@ Item {
     Rectangle {
         anchors.fill: parent
         color: pressArea.pressed
-            ? "#1c1c1c"
-            : (root.checked ? "#1a1a1a" : "#161616")
+            ? RuntimeTheme.GGTheme.raised
+            : (root.checked ? RuntimeTheme.GGTheme.raised : RuntimeTheme.GGTheme.panel)
         border.width: 1
         border.color: (
             pressArea.containsMouse || root.checked
-        ) ? "#8a8a8a" : "#6a6a6a"
+        ) ? RuntimeTheme.GGTheme.dim : RuntimeTheme.GGTheme.edge
         radius: 2
         antialiasing: false
     }
 
-    Text {
+    GGText { colorKey: "ui.GgButton.1";
         id: label
         anchors.centerIn: parent
         text: root.text
         color: (
             root.checked || pressArea.containsMouse
-        ) ? "#e6e6e6" : "#c8cdd4"
+        ) ? RuntimeTheme.GGTheme.bright : RuntimeTheme.GGTheme.text
         font.family: "monospace"
         font.pixelSize: 12
         font.bold: root.checked

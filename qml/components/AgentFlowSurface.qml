@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
@@ -6,7 +8,7 @@ Item {
     objectName: "workspaceAgentFlowPane"
 
     property var surfaceHost: null
-    property color frameBorder: "#6a6a6a"
+    property color frameBorder: RuntimeTheme.GGTheme.edge
     property int frameRadius: 4
     property string statusJson: "{}"
     property string askText: ""
@@ -57,23 +59,23 @@ Item {
     function stageColor(id) {
         var kind = String(id || "")
         if (kind === "GATE")
-            return root.light === "GO" ? "#8db89a" : (root.light === "HOLD" ? "#c98989" : "#c8a97e")
+            return root.light === "GO" ? RuntimeTheme.GGTheme.positive : (root.light === "HOLD" ? RuntimeTheme.GGTheme.negative : RuntimeTheme.GGTheme.accent)
         if (kind === "REFLECT")
-            return "#b6a6c8"
+            return RuntimeTheme.GGTheme.purple
         if (kind === "BUILD")
-            return "#8db89a"
+            return RuntimeTheme.GGTheme.positive
         if (kind === "TOOLS")
-            return "#8fa8a0"
+            return RuntimeTheme.GGTheme.cyan
         if (kind === "PLAN")
-            return "#c8a97e"
-        return "#c8cdd4"
+            return RuntimeTheme.GGTheme.accent
+        return RuntimeTheme.GGTheme.text
     }
 
     Component.onCompleted: root.refresh()
 
     Rectangle {
         anchors.fill: parent
-        color: "#161616"
+        color: RuntimeTheme.GGTheme.panel
     }
 
     Column {
@@ -84,16 +86,16 @@ Item {
         anchors.bottomMargin: 8
         spacing: 8
 
-        Text {
+        GGText { colorKey: "ui.AgentFlowSurface.1";
             text: "FLOW  ·  FOUR PATTERNS, ONE GRAPH"
-            color: "#d8dee9"
+            color: RuntimeTheme.GGTheme.text
             font.family: "monospace"
             font.pixelSize: 16
         }
-        Text {
+        GGText { colorKey: "ui.AgentFlowSurface.2";
             width: parent.width
             text: String(root.status.hint || "Planning, tools, build, reflect. Critic is not the author. No extra brain.")
-            color: "#a8b0b8"
+            color: RuntimeTheme.GGTheme.muted
             font.family: "monospace"
             font.pixelSize: 12
             wrapMode: Text.WordWrap
@@ -102,16 +104,16 @@ Item {
         Row {
             spacing: 10
             width: parent.width
-            GgField {
+            GgField { property string uiColorScope: "ui.widget.AgentFlowSurface.GgField.1";
                 id: askField
                 width: Math.max(120, parent.width - 140)
                 text: root.askText
                 onTextChanged: root.askText = text
                 Keys.onReturnPressed: root.runFlow()
             }
-            Text {
+            GGText { colorKey: "ui.AgentFlowSurface.3";
                 text: "RUN"
-                color: "#8db89a"
+                color: RuntimeTheme.GGTheme.positive
                 font.family: "monospace"
                 font.pixelSize: 12
                 font.bold: true
@@ -122,9 +124,9 @@ Item {
                     onClicked: root.runFlow()
                 }
             }
-            Text {
+            GGText { colorKey: "ui.AgentFlowSurface.4";
                 text: "RESET"
-                color: "#c8a97e"
+                color: RuntimeTheme.GGTheme.accent
                 font.family: "monospace"
                 font.pixelSize: 12
                 font.bold: true
@@ -147,7 +149,7 @@ Item {
                     required property var modelData
                     width: Math.max(72, (graphRow.width - 30) / 6)
                     height: 72
-                    color: "#161616"
+                    color: RuntimeTheme.GGTheme.panel
                     border.color: root.stageColor(modelData.id)
                     border.width: 1
                     radius: 3
@@ -155,22 +157,22 @@ Item {
                         anchors.fill: parent
                         anchors.margins: 6
                         spacing: 2
-                        Text {
+                        GGText { colorKey: "ui.AgentFlowSurface.5";
                             text: String(modelData.id || "")
                             color: root.stageColor(modelData.id)
                             font.family: "monospace"
                             font.pixelSize: 11
                             font.bold: true
                         }
-                        Text {
+                        GGText { colorKey: "ui.AgentFlowSurface.6";
                             text: String(modelData.role || "")
-                            color: "#c8cdd4"
+                            color: RuntimeTheme.GGTheme.text
                             font.family: "monospace"
                             font.pixelSize: 10
                         }
-                        Text {
+                        GGText { colorKey: "ui.AgentFlowSurface.7";
                             text: "→ " + String(modelData.handoff_to || "")
-                            color: "#7f8994"
+                            color: RuntimeTheme.GGTheme.dim
                             font.family: "monospace"
                             font.pixelSize: 10
                         }
@@ -179,13 +181,13 @@ Item {
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.AgentFlowSurface.8";
             text: "FRONT MAN  " + root.light
                 + "  ·  critic≠dev  ·  brain=" + String(root.status.parallel_agent_brain || "FORBIDDEN")
                 + "  ·  " + String(root.status.parallel_execution || "BOUNDED_ADAPTIVE_DAG")
                 + "  ·  lanes=" + String((root.status.execution || {}).lanes || "—")
                 + "  ·  loops=" + String((root.status.execution || {}).loops || root.status.loops || "—")
-            color: root.light === "GO" ? "#8db89a" : (root.light === "HOLD" ? "#c98989" : "#c8a97e")
+            color: root.light === "GO" ? RuntimeTheme.GGTheme.positive : (root.light === "HOLD" ? RuntimeTheme.GGTheme.negative : RuntimeTheme.GGTheme.accent)
             font.family: "monospace"
             font.pixelSize: 12
             font.bold: true
@@ -197,16 +199,16 @@ Item {
             clip: true
             boundsBehavior: Flickable.StopAtBounds
             contentHeight: packCol.height
-            ScrollBar.vertical: GgScrollBar {}
+            ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.AgentFlowSurface.GgScrollBar.2";}
 
             Column {
                 id: packCol
                 width: parent.width
                 spacing: 6
-                Text {
+                GGText { colorKey: "ui.AgentFlowSurface.9";
                     visible: root.packets.length === 0
                     text: "Type a task and RUN. Packets will hand off ASK → PLAN → TOOLS → BUILD → REFLECT → GATE."
-                    color: "#a8b0b8"
+                    color: RuntimeTheme.GGTheme.muted
                     font.family: "monospace"
                     font.pixelSize: 12
                     wrapMode: Text.WordWrap
@@ -218,7 +220,7 @@ Item {
                         required property var modelData
                         width: packCol.width
                         spacing: 2
-                        Text {
+                        GGText { colorKey: "ui.AgentFlowSurface.10";
                             text: String(modelData.kind || "")
                                 + "  " + String(modelData.from || "")
                                 + " → " + String(modelData.to || "")
@@ -227,10 +229,10 @@ Item {
                             font.pixelSize: 12
                             font.bold: true
                         }
-                        Text {
+                        GGText { colorKey: "ui.AgentFlowSurface.11";
                             width: packCol.width
                             text: String(modelData.body || "")
-                            color: "#c8cdd4"
+                            color: RuntimeTheme.GGTheme.text
                             font.family: "monospace"
                             font.pixelSize: 11
                             wrapMode: Text.WordWrap

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from backend.application_paths import STATE_ROOT
+from backend.application_paths import STATE_ROOT, PROJECT_ROOT
 from backend.platform_files import secure_open, NOFOLLOW, CLOEXEC, NONBLOCK, sync_directory
 
 import json
@@ -14,6 +14,9 @@ STATE = Path(str(STATE_ROOT))
 SETTINGS_PATH = STATE / "settings-v1.json"
 SCHEMA = "gg.ai-desktop.settings.v1"
 _COLOR = re.compile(r"^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
+PALETTE_ROLE_KEYS = ('accent','info','positive','warning','negative','blue','cyan','purple','orange','pink')
+_PALETTE_DATA = json.loads((PROJECT_ROOT/'config/gg-palette.json').read_text(encoding='utf-8'))
+_ROLE_SWATCHES = frozenset(_PALETTE_DATA['colors'] + _PALETTE_DATA.get('legacy_colors', []))
 
 DEFAULTS = {
     "schema": SCHEMA,
@@ -21,7 +24,8 @@ DEFAULTS = {
     "chatWidthRatio": 0.31,
     "telemetryWidth": 168,
     "utilityHeight": 112,
-    "accentColor": "#8a8a8a",
+    "accentColor": "#87afd7",
+    "paletteRoles": {},
     "frameBorder": "#6a6a6a",
     "frameRadius": 4,
     "showOpenTabInInput": False,
@@ -41,6 +45,7 @@ _ROOT_KEYS = {
     "telemetryWidth": "alphaTelemetryWidth",
     "utilityHeight": "alphaUtilityHeight",
     "accentColor": "cyan",
+    "paletteRoles": "paletteRoles",
     "frameBorder": "frameBorder",
     "frameRadius": "frameRadius",
     "showOpenTabInInput": "showOpenTabInInput",
@@ -96,6 +101,9 @@ def normalize_settings(raw: object) -> dict[str, object]:
         radius = DEFAULTS["frameRadius"]
     out["frameRadius"] = min(8, max(0, radius))
     out["accentColor"] = _color(data.get("accentColor"), str(DEFAULTS["accentColor"]))
+    roles = data.get('paletteRoles')
+    out['paletteRoles'] = {key: roles[key].lower() for key in PALETTE_ROLE_KEYS
+        if isinstance(roles,dict) and isinstance(roles.get(key),str) and roles[key].lower() in _ROLE_SWATCHES}
     out["frameBorder"] = _color(data.get("frameBorder"), str(DEFAULTS["frameBorder"]))
     for key in (
         "showOpenTabInInput",
@@ -127,11 +135,11 @@ def normalize_settings(raw: object) -> dict[str, object]:
 def load_settings(path: Path | None = None) -> dict[str, object]:
     target = path or SETTINGS_PATH
     if not target.is_file():
-        return dict(DEFAULTS)
+        return normalize_settings({})
     try:
         raw = json.loads(target.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
-        return dict(DEFAULTS)
+        return normalize_settings({})
     return normalize_settings(raw)
 
 
@@ -153,7 +161,7 @@ def save_settings(
 
 
 def apply_to_root(root: object, settings: dict[str, object] | None = None) -> None:
-    data = settings or load_settings()
+    data = normalize_settings(settings) if settings is not None else load_settings()
     setter = getattr(root, "setProperty", None)
     if not callable(setter):
         return

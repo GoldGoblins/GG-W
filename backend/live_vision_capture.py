@@ -12,6 +12,7 @@ import struct
 import threading
 import time
 import uuid
+from backend import sensitive_ui_guard
 
 from backend.live_vision import (FrameRing, IDLE_SECONDS, SESSION_SECONDS,
                                 MAX_DETAIL_BYTES, MAX_RING_BYTES, MAX_REPLY_BYTES,
@@ -132,6 +133,7 @@ class Capture:
             raise RuntimeError("Portal returned an unexpected request path")
 
     def start(self):
+        sensitive_ui_guard.require_capture_allowed()
         if self.state in {"selecting", "starting", "live"}:
             self.last_use = time.monotonic()
             return False
@@ -216,6 +218,11 @@ class Capture:
             raise RuntimeError("Screen pipeline refused playback")
 
     def _sample(self, sink):
+        if sensitive_ui_guard.active():
+            self.ring.clear()
+            with self.detail_lock:self.detail=None
+            self.GLib.idle_add(self.stop,'SENSITIVE_UI_ACTIVE')
+            return self.Gst.FlowReturn.FLUSHING
         sample = sink.emit("pull-sample")
         if sample is None:
             return self.Gst.FlowReturn.EOS
@@ -230,6 +237,11 @@ class Capture:
         return self.Gst.FlowReturn.OK
 
     def _detail_sample(self, sink):
+        if sensitive_ui_guard.active():
+            self.ring.clear()
+            with self.detail_lock:self.detail=None
+            self.GLib.idle_add(self.stop,'SENSITIVE_UI_ACTIVE')
+            return self.Gst.FlowReturn.FLUSHING
         sample = sink.emit("pull-sample")
         if sample is None:
             return self.Gst.FlowReturn.EOS
@@ -251,6 +263,7 @@ class Capture:
         return self.Gst.FlowReturn.OK
 
     def _detail_observation(self):
+        guard_token=sensitive_ui_guard.capture_token()
         from PIL import Image
         with self.detail_lock:
             detail = self.detail
@@ -268,6 +281,7 @@ class Capture:
         if len(encoded) > MAX_DETAIL_BYTES:
             raise RuntimeError("Detaljbilden överskred transportens bildgräns")
         now = time.monotonic()
+        sensitive_ui_guard.require_capture_allowed(guard_token)
         with self.ring.lock:
             self.ring.delivered_at = now
             self.ring.delivered_seq = seq
@@ -322,6 +336,7 @@ class Capture:
         if not isinstance(command, dict):
             raise ValueError("Screen command must be an object")
         op = command.get("op")
+        guard_token=sensitive_ui_guard.capture_token() if op not in {'status','stop'} else None
         if op == "status":
             return self.status()
         if op == "start":
@@ -365,6 +380,7 @@ class Capture:
             result.update(source_size=self.source_size, source_position=self.source_position)
             if hasattr(self,"native_stop"):
                 result.update(provider="kde-native",timestamp_kind="capture_completed_monotonic")
+            sensitive_ui_guard.require_capture_allowed(guard_token)
             return result
         raise ValueError("Unknown screen operation")
 

@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 import "engine/WorldFx.js" as WorldFx
@@ -13,16 +15,16 @@ Column {
         implicitHeight: 30
         font.family: "monospace"
         font.pixelSize: 11
-        palette.text: "#ead4a0"
-        palette.buttonText: "#ead4a0"
+        palette.text: RuntimeTheme.GGTheme.text
+        palette.buttonText: RuntimeTheme.GGTheme.text
         palette.base: "#172126"
         palette.button: "#28383b"
         palette.highlight: "#75613b"
         palette.highlightedText: "#fff1c7"
         background: Rectangle { color: "#28383b"; border.color: "#88724c"; radius: 2 }
-        contentItem: Text {
+        contentItem: GGText { colorKey: "ui.GameEnchantingControls.1";
             text: picker.displayText
-            color: "#ead4a0"
+            color: RuntimeTheme.GGTheme.text
             font: picker.font
             leftPadding: 8
             rightPadding: 26
@@ -30,21 +32,21 @@ Column {
             elide: Text.ElideRight
         }
     }
-    Text {
+    GGText { colorKey: "ui.GameEnchantingControls.2";
         width: parent.width
         text: "ENCHANTING · SKAPA EGNA SCROLLS"
-        color: "#e5c785"
+        color: RuntimeTheme.GGTheme.orange
         font.family: "monospace"
         font.bold: true
     }
-    EnchantPicker {
+    EnchantPicker { property string uiColorScope: "ui.control.GameEnchantingControls.1";
         objectName: "gameEnchantRecipeMode"
         width: parent.width
         model: ["Vapen: offensiv / försvar / återhämtning", "Gear: stat boosts"]
         currentIndex: panel.game.enchantRecipeMode
         onActivated: panel.game.enchantRecipeMode = currentIndex
     }
-    EnchantPicker {
+    EnchantPicker { property string uiColorScope: "ui.control.GameEnchantingControls.2";
         objectName: "gameEnchantPrimaryPicker"
         width: parent.width
         visible: panel.game.enchantRecipeMode === 0
@@ -54,7 +56,7 @@ Column {
         currentIndex: panel.game.enchantPrimaryIndex
         onActivated: panel.game.enchantPrimaryIndex = currentIndex
     }
-    EnchantPicker {
+    EnchantPicker { property string uiColorScope: "ui.control.GameEnchantingControls.3";
         objectName: "gameEnchantSecondPicker"
         width: parent.width
         visible: panel.game.enchantRecipeMode === 0
@@ -64,7 +66,7 @@ Column {
         currentIndex: panel.game.enchantSecondIndex
         onActivated: panel.game.enchantSecondIndex = currentIndex
     }
-    EnchantPicker {
+    EnchantPicker { property string uiColorScope: "ui.control.GameEnchantingControls.4";
         objectName: "gameEnchantThirdPicker"
         width: parent.width
         visible: panel.game.enchantRecipeMode === 0
@@ -74,7 +76,7 @@ Column {
         currentIndex: panel.game.enchantThirdIndex
         onActivated: panel.game.enchantThirdIndex = currentIndex
     }
-    EnchantPicker {
+    EnchantPicker { property string uiColorScope: "ui.control.GameEnchantingControls.5";
         objectName: "gameEnchantGearPicker"
         width: parent.width
         visible: panel.game.enchantRecipeMode === 1
@@ -82,7 +84,7 @@ Column {
         currentIndex: panel.game.enchantGearIndex
         onActivated: panel.game.enchantGearIndex = currentIndex
     }
-    Text {
+    GGText { colorKey: "ui.GameEnchantingControls.3";
         width: parent.width
         text: String(panel.game.enchantRecipe.description || "")
             + (panel.game.enchantRecipe.tier === 3 ? " · Requires level 60" : "")
@@ -90,7 +92,7 @@ Column {
         font.pixelSize: 11
         wrapMode: Text.WordWrap
     }
-    Text {
+    GGText { colorKey: "ui.GameEnchantingControls.4";
         width: parent.width
         text: "Cost: " + String(panel.game.enchantRecipe.tier || 1) + " fiber + "
             + String(panel.game.enchantRecipe.tier || 1) + " runic oil + "
@@ -100,7 +102,7 @@ Column {
         font.pixelSize: 10
         wrapMode: Text.WordWrap
     }
-    GgButton {
+    GgButton { property string uiColorScope: "ui.control.GameEnchantingControls.6";
         objectName: "gameCraftEnchantScroll"
         text: "SKAPA SCROLL VID ENCHANTING-BORDET"
         width: parent.width
@@ -108,7 +110,7 @@ Column {
         onClicked: panel.game.craftGear("recipe.enchant_scroll." + panel.game.enchantRecipe.id,
                                  "station.enchanting_altar")
     }
-    EnchantPicker {
+    EnchantPicker { property string uiColorScope: "ui.control.GameEnchantingControls.7";
         id: scrollInventoryPicker
         currentIndex: panel.game.ownedEnchantScrolls.length > 0
             ? Math.min(panel.game.enchantOwnedScrollIndex, panel.game.ownedEnchantScrolls.length-1) : -1
@@ -119,14 +121,14 @@ Column {
         textRole: "name"
         displayText: currentIndex >= 0 ? currentText : "Inga enchanting-scrolls i väskan"
     }
-    GgButton {
+    GgButton { property string uiColorScope: "ui.control.GameEnchantingControls.8";
         objectName: "gameApplyEnchantScroll"
         width: parent.width
         text: "APPLICERA SCROLL PÅ VALT FÖREMÅL"
         enabled: !!panel.targetItem && !!panel.targetItem.gear && panel.game.selectedEnchantScrollId !== ""
         onClicked: panel.game.enchantGear(panel.game.selectedItemId, panel.game.selectedEnchantScrollId)
     }
-    Text {
+    GGText { colorKey: "ui.GameEnchantingControls.5";
         width: parent.width
         text: WorldFx.scrollError(String(panel.game.status.error || ""))
         color: "#e69286"

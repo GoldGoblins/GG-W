@@ -1,5 +1,8 @@
 pragma ComponentBehavior: Bound
 
+
+import "components/GGPalette.js" as BasePalette
+import "components" as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Window
@@ -30,6 +33,18 @@ ApplicationWindow {
     property bool alphaShowDemoFixtures: false
     property bool showProductSourceTabs: false
     property var surfaceHost: null
+    property var paletteRoles: ({})
+    onPaletteRolesChanged: RuntimeTheme.GGTheme.setOverrides(root.paletteRoles)
+    property var uiColorHost: null
+    onUiColorHostChanged: {
+        RuntimeTheme.GGColorContext.backend = root.uiColorHost
+        RuntimeTheme.GGColorContext.hostOverlay = Overlay.overlay
+    }
+    Binding {
+        target: RuntimeTheme.GGColorContext
+        property: "applicationVisible"
+        value: root.visible && root.visibility !== Window.Minimized
+    }
     property var liveAidBackend: null
     readonly property var workspace: workspaceLoader.item
     property string grokWalletJson: "{}"
@@ -148,6 +163,12 @@ ApplicationWindow {
 
     function grabDesk(path) {
         root.deskGrabReady = false
+        var host = root.surfaceHost
+        if (!host || !host.walletCaptureToken || !host.walletCaptureAllowed)
+            return false
+        var captureToken = host.walletCaptureToken()
+        if (captureToken < 0)
+            return false
         var item = root.contentItem
         if (!item || !item.grabToImage) {
             root.deskGrabReady = false
@@ -156,7 +177,8 @@ ApplicationWindow {
         item.grabToImage(function(result) {
             var ok = false
             try {
-                ok = result.saveToFile(path)
+                if (host.walletCaptureAllowed(captureToken))
+                    ok = result.saveToFile(path)
             } catch (err) {
                 ok = false
             }
@@ -336,7 +358,7 @@ ApplicationWindow {
             return root.surfaceHost
         })
         item.accentColor = Qt.binding(function() {
-            return root.cyan
+            return RuntimeTheme.GGTheme.accent
         })
         item.frameBorder = Qt.binding(function() {
             return root.frameBorder
@@ -373,8 +395,9 @@ ApplicationWindow {
             return root.alphaTelemetryWidth
         })
         item.accentColor = Qt.binding(function() {
-            return root.cyan
+            return RuntimeTheme.GGTheme.accent
         })
+        item.paletteRoles = Qt.binding(function() {return root.paletteRoles})
         item.frameBorder = Qt.binding(function() {
             return root.frameBorder
         })
@@ -415,6 +438,10 @@ ApplicationWindow {
         })
         item.accentColorRequested.connect(function(value) {
             root.cyan = value
+            root.persistDesktopSettings()
+        })
+        item.paletteRolesRequested.connect(function(value) {
+            root.paletteRoles = RuntimeTheme.GGTheme.normalizeOverrides(value)
             root.persistDesktopSettings()
         })
         item.frameBorderRequested.connect(function(value) {
@@ -587,21 +614,22 @@ ApplicationWindow {
     readonly property bool narrowLayout: width < 1050
     readonly property bool compactTelemetry: width < 1450
 
-    property color canvas: "#121212"
-    property color surface: "#161616"
-    readonly property color line: "#6a6a6a"
-    readonly property color textMain: "#e6e6e6"
-    readonly property color textMuted: "#8a8a8a"
-    property color cyan: "#8a8a8a"
-    property color frameBorder: "#4a4a4a"
+    property color canvas: RuntimeTheme.GGTheme.canvas
+    property color surface: RuntimeTheme.GGTheme.panel
+    readonly property color line: RuntimeTheme.GGTheme.edge
+    readonly property color textMain: RuntimeTheme.GGTheme.bright
+    readonly property color textMuted: RuntimeTheme.GGTheme.dim
+    property color cyan: BasePalette.accent
+    onCyanChanged: RuntimeTheme.GGTheme.legacyAccent=root.cyan
+    property color frameBorder: RuntimeTheme.GGTheme.edge
     property int frameRadius: 4
     property bool showOpenTabInInput: false
     property bool showInnerEditorChrome: true
     property bool desktopShell: false
     property bool appFullscreen: false
-    readonly property color violet: "#b6a6c8"
-    readonly property color green: "#8db89a"
-    readonly property color amber: "#c8a97e"
+    readonly property color violet: RuntimeTheme.GGTheme.purple
+    readonly property color green: RuntimeTheme.GGTheme.positive
+    readonly property color amber: RuntimeTheme.GGTheme.warning
 
     signal bridgeSubmit(
         string text,
@@ -1156,6 +1184,7 @@ ApplicationWindow {
             "telemetryWidth": root.alphaTelemetryWidth,
             "utilityHeight": root.alphaUtilityHeight,
             "accentColor": root.colorHex(root.cyan),
+            "paletteRoles": RuntimeTheme.GGTheme.normalizeOverrides(root.paletteRoles),
             "frameBorder": root.colorHex(root.frameBorder),
             "frameRadius": root.frameRadius,
             "showOpenTabInInput": root.showOpenTabInInput,
@@ -2489,7 +2518,7 @@ ApplicationWindow {
         }
     }
 
-    GgFrame {
+    GgFrame { property string uiColorScope: "ui.widget.Main.GgFrame.1";
         id: topBar
         anchors.left: parent.left
         anchors.right: parent.right
@@ -2497,41 +2526,46 @@ ApplicationWindow {
         anchors.leftMargin: 12
         anchors.rightMargin: 12
         anchors.topMargin: 12
-        height: 54
+        height: root.narrowLayout ? 82 : 54
         leftLegend: "GG AI DESKTOP · ALPHA"
+        topGaps: [{start: windowChrome.controlsStart,
+                   end: windowChrome.controlsStart + windowChrome.controlsWidth}]
+        topRightReserved: width - windowChrome.controlsStart
         backgroundColor: root.surface
         borderColor: root.frameBorder
         radius: root.frameRadius
         padding: 12
-        leftLegendColor: "#e6edf3"
+        leftLegendColor: RuntimeTheme.GGTheme.bright
 
         Item {
             width: parent.width
-            height: 22
+            height: root.narrowLayout ? 54 : 22
 
             Row {
+                objectName: "topBarActionsRow"
                 anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
+                anchors.top: root.narrowLayout ? parent.top : undefined
+                anchors.verticalCenter: root.narrowLayout ? undefined : parent.verticalCenter
                 spacing: 14
 
-                Text {
+                GGText { colorKey: "ui.Main.1";
                     text: "OBSIDIAN / LEDGER"
-                    color: "#c8cdd4"
+                    color: RuntimeTheme.GGTheme.text
                     font.family: "monospace"
                     font.pixelSize: 13
                 }
 
-                Text {
+                GGText { colorKey: "ui.Main.2";
                     text: "·"
-                    color: "#a8b0b8"
+                    color: RuntimeTheme.GGTheme.muted
                     font.family: "monospace"
                     font.pixelSize: 13
                 }
 
-                Text {
+                GGText { colorKey: "ui.Main.3";
                     visible: root.desktopShell
                     text: "DESKTOP"
-                    color: "#c8a97e"
+                    color: RuntimeTheme.GGTheme.accent
                     font.family: "monospace"
                     font.pixelSize: 13
                     font.bold: true
@@ -2542,19 +2576,19 @@ ApplicationWindow {
                     }
                 }
 
-                Text {
+                GGText { colorKey: "ui.Main.4";
                     visible: root.desktopShell
                     text: "·"
-                    color: "#a8b0b8"
+                    color: RuntimeTheme.GGTheme.muted
                     font.family: "monospace"
                     font.pixelSize: 13
                 }
 
-                Text {
+                GGText { colorKey: "ui.Main.5";
                     id: settingsButton
                     objectName: "topBarSettingsButton"
                     text: "SETTINGS"
-                    color: root.settingsOpen ? "#e6edf3" : "#c8cdd4"
+                    color: root.settingsOpen ? RuntimeTheme.GGTheme.bright : RuntimeTheme.GGTheme.text
                     font.family: "monospace"
                     font.pixelSize: 13
                     font.bold: root.settingsOpen
@@ -2566,18 +2600,18 @@ ApplicationWindow {
                     }
                 }
 
-                Text {
+                GGText { colorKey: "ui.Main.6";
                     text: "·"
-                    color: "#a8b0b8"
+                    color: RuntimeTheme.GGTheme.muted
                     font.family: "monospace"
                     font.pixelSize: 13
                 }
 
-                Text {
+                GGText { colorKey: "ui.Main.7";
                     id: commandPaletteButton
                     objectName: "topBarCommandPaletteButton"
                     text: "COMMANDS"
-                    color: root.commandPaletteOpen ? "#e6edf3" : "#c8cdd4"
+                    color: root.commandPaletteOpen ? RuntimeTheme.GGTheme.bright : RuntimeTheme.GGTheme.text
                     font.family: "monospace"
                     font.pixelSize: 13
                     font.bold: root.commandPaletteOpen
@@ -2589,18 +2623,18 @@ ApplicationWindow {
                     }
                 }
 
-                Text {
+                GGText { colorKey: "ui.Main.8";
                     text: "·"
-                    color: "#a8b0b8"
+                    color: RuntimeTheme.GGTheme.muted
                     font.family: "monospace"
                     font.pixelSize: 13
                 }
 
-                Text {
+                GGText { colorKey: "ui.Main.9";
                     id: reloadButton
                     objectName: "topBarReloadButton"
                     text: "RELOAD"
-                    color: "#c8cdd4"
+                    color: RuntimeTheme.GGTheme.text
                     font.family: "monospace"
                     font.pixelSize: 13
 
@@ -2621,18 +2655,18 @@ ApplicationWindow {
                     }
                 }
 
-                Text {
+                GGText { colorKey: "ui.Main.10";
                     text: "·"
-                    color: "#a8b0b8"
+                    color: RuntimeTheme.GGTheme.muted
                     font.family: "monospace"
                     font.pixelSize: 13
                 }
 
-                Text {
+                GGText { colorKey: "ui.Main.11";
                     id: fullscreenButton
                     objectName: "topBarFullscreenButton"
                     text: root.appFullscreen ? "EXIT FULLSCREEN" : "FULLSCREEN"
-                    color: root.appFullscreen ? root.amber : "#c8cdd4"
+                    color: root.appFullscreen ? root.amber : RuntimeTheme.GGTheme.text
                     font.family: "monospace"
                     font.pixelSize: 13
                     font.bold: root.appFullscreen
@@ -2646,18 +2680,20 @@ ApplicationWindow {
             }
 
             Row {
+                objectName: "topBarPaneRow"
                 visible: root.narrowLayout
-                anchors.centerIn: parent
+                anchors.left: parent.left
+                anchors.bottom: parent.bottom
                 spacing: 6
 
-                GgButton {
+                GgButton { property string uiColorScope: "ui.control.Main.1";
                     text: "CHAT"
                     checkable: true
                     checked: root.narrowPane === "CHAT"
                     onClicked: root.narrowPane = "CHAT"
                 }
 
-                GgButton {
+                GgButton { property string uiColorScope: "ui.control.Main.2";
                     text: "WORKSPACE"
                     checkable: true
                     checked: root.narrowPane === "WORKSPACE"
@@ -2666,11 +2702,13 @@ ApplicationWindow {
             }
 
             Row {
+                objectName: "topBarStatusRow"
                 anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
+                anchors.bottom: root.narrowLayout ? parent.bottom : undefined
+                anchors.verticalCenter: root.narrowLayout ? undefined : parent.verticalCenter
                 spacing: 16
 
-                Text {
+                GGText { colorKey: "ui.Main.12";
                     objectName: "liveEyesIndicator"
                     visible: root.liveEyes.state !== "off"
                     text: EyesStatus.title(root.liveEyes)
@@ -2692,9 +2730,9 @@ ApplicationWindow {
                     }
                 }
 
-                Text {
+                GGText { colorKey: "ui.Main.13";
                     text: "LOCAL · ALPHA"
-                    color: root.cyan
+                    color: RuntimeTheme.GGTheme.accent
                     font.family: "monospace"
                     font.pixelSize: 13
                 }
@@ -2720,24 +2758,24 @@ ApplicationWindow {
                     Row {
                         id: walletChipRow
                         spacing: 0
-                        Text {
+                        GGText { colorKey: "ui.Main.14";
                             text: "WALLET"
-                            color: walletChipRow.parent.walletOn ? root.green : "#c8cdd4"
+                            color: walletChipRow.parent.walletOn ? root.green : RuntimeTheme.GGTheme.text
                             font.family: "monospace"
                             font.pixelSize: 13
                             font.bold: walletChipRow.parent.walletOn
                         }
-                        Text {
+                        GGText { colorKey: "ui.Main.15";
                             text: walletChipRow.parent.walletOn
                                 ? (" · " + walletChipRow.parent.walletShort)
                                 : " · DISCONNECTED"
-                            color: walletChipRow.parent.walletOn ? "#e6edf3" : "#c8cdd4"
+                            color: walletChipRow.parent.walletOn ? RuntimeTheme.GGTheme.bright : RuntimeTheme.GGTheme.text
                             font.family: "monospace"
                             font.pixelSize: 13
                         }
-                        Text {
+                        GGText { colorKey: "ui.Main.16";
                             text: root.walletOpen ? "  ▴" : "  ▾"
-                            color: walletChipRow.parent.walletOn ? root.green : "#c8cdd4"
+                            color: walletChipRow.parent.walletOn ? root.green : RuntimeTheme.GGTheme.text
                             font.family: "monospace"
                             font.pixelSize: 13
                         }
@@ -2765,7 +2803,8 @@ ApplicationWindow {
         }
     }
 
-    GgWindowChrome {
+    GgWindowChrome { property string uiColorScope: "ui.widget.Main.GgWindowChrome.4";
+        id: windowChrome
         anchors.fill: parent
         z: 20000
         targetWindow: root
@@ -2821,7 +2860,7 @@ ApplicationWindow {
                       )
                 height: body.height
                 // A1.2.1.1: GgFrame is visual chrome only.
-                GgFrame {
+                GgFrame { property string uiColorScope: "ui.widget.Main.GgFrame.5";
                     id: chatChrome
                     anchors.fill: parent
                     leftLegend: "CHAT · UNIVERSAL OPERATIONAL STREAM"
@@ -2832,7 +2871,7 @@ ApplicationWindow {
                     radius: root.frameRadius
                 }
 
-                GrokTuiHole {
+                GrokTuiHole { property string uiColorScope: "ui.widget.Main.GrokTuiHole.6";
                     id: grokTuiHost
                     objectName: "grokTuiHost"
                     terminalId: "ws.tui.grok"
@@ -2848,7 +2887,7 @@ ApplicationWindow {
                     surfaceHost: root.surfaceHost
                 }
 
-                GrokTuiHole {
+                GrokTuiHole { property string uiColorScope: "ui.widget.Main.GrokTuiHole.7";
                     id: gptTuiHost
                     objectName: "gptTuiHost"
                     terminalId: "ws.tui.gpt"
@@ -2864,7 +2903,7 @@ ApplicationWindow {
                     surfaceHost: root.surfaceHost
                 }
 
-                FlowTuiHole {
+                FlowTuiHole { property string uiColorScope: "ui.widget.Main.FlowTuiHole.8";
                     id: flowTuiHost
                     objectName: "flowTuiHost"
                     visible: root.engineTarget === "FLOW_TUI"
@@ -2900,7 +2939,7 @@ ApplicationWindow {
                     enabled: visible
                     flickableDirection: Flickable.VerticalFlick
                     boundsBehavior: Flickable.StopAtBounds
-                    ScrollBar.vertical: GgScrollBar {
+                    ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.Main.GgScrollBar.9";
                         objectName: "chatScrollBar"
                         keepVisible: true
                         policy: chatFlick.visible
@@ -2988,7 +3027,7 @@ ApplicationWindow {
                                         streamDelegate.model.nodeKind
                                     )
                                     sourceComponent: Component {
-                                        GrokWorkStream {
+                                        GrokWorkStream { property string uiColorScope: "ui.widget.Main.GrokWorkStream.10";
                                             width: grokLoader.width
                                             authorLabel: streamDelegate.model.authorLabel
                                             nodeKind: streamDelegate.model.nodeKind
@@ -3017,7 +3056,7 @@ ApplicationWindow {
                                         streamDelegate.model.nodeKind
                                     )
                                     sourceComponent: Component {
-                                        ChatActivityEvent {
+                                        ChatActivityEvent { property string uiColorScope: "ui.widget.Main.ChatActivityEvent.11";
                                             width: activityLoader.width
                                             authorLabel: streamDelegate.model.authorLabel
                                             nodeKind: streamDelegate.model.nodeKind
@@ -3043,7 +3082,7 @@ ApplicationWindow {
                                         streamDelegate.model.nodeKind
                                     )
                                     sourceComponent: Component {
-                                        WorkObject {
+                                        WorkObject { property string uiColorScope: "ui.widget.Main.WorkObject.12";
                                             width: toolLoader.width
                                             objectType: {
                                                 var body = String(
@@ -3088,7 +3127,7 @@ ApplicationWindow {
                                             streamDelegate.model.nodeKind
                                         )
                                     sourceComponent: Component {
-                                        ChatNode {
+                                        ChatNode { property string uiColorScope: "ui.widget.Main.ChatNode.13";
                                             authorLabel: streamDelegate.model.authorLabel
                                             nodeKind: streamDelegate.model.nodeKind
                                             bodyText: streamDelegate.model.bodyText
@@ -3137,7 +3176,7 @@ ApplicationWindow {
                                 anchors.leftMargin: 16
                                 spacing: 6
 
-                                GgFrame {
+                                GgFrame { property string uiColorScope: "ui.widget.Main.GgFrame.14";
                                     id: chatCodeblock
                                     width: parent.width
                                         - liveAidColumn.width
@@ -3153,8 +3192,8 @@ ApplicationWindow {
                                     rightLegend: workspace && workspace.editorDirty
                                         ? "BUFFER · UNSAVED"
                                         : "BUFFER · DISK BASE"
-                                    backgroundColor: "#070a0e"
-                                    borderColor: "#6a6a6a"
+                                    backgroundColor: RuntimeTheme.GGTheme.canvas
+                                    borderColor: RuntimeTheme.GGTheme.edge
 
                                     Flickable {
                                         id: codeblockFlick
@@ -3182,7 +3221,7 @@ ApplicationWindow {
                                             text: workspace && workspace.editorLoaded
                                                 ? workspace.editorText
                                                 : ""
-                                            color: "#d8dee9"
+                                            color: RuntimeTheme.GGTheme.text
                                             readOnly: true
                                             selectByMouse: true
                                             selectByKeyboard: true
@@ -3191,16 +3230,16 @@ ApplicationWindow {
                                             wrapMode: TextEdit.NoWrap
                                             font.family: "monospace"
                                             font.pixelSize: 12
-                                            selectionColor: "#3a3a3a"
-                                            selectedTextColor: "#f2f2f2"
+                                            selectionColor: RuntimeTheme.GGTheme.selected
+                                            selectedTextColor: RuntimeTheme.GGTheme.bright
 
-                                            SelectionGuard {
+                                            SelectionGuard { property string uiColorScope: "ui.widget.Main.SelectionGuard.15";
                                                 editor: codeblockView
                                             }
                                         }
 
-                                        ScrollBar.vertical: GgScrollBar {}
-                                        ScrollBar.horizontal: GgScrollBar {}
+                                        ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.Main.GgScrollBar.16";}
+                                        ScrollBar.horizontal: GgScrollBar { property string uiColorScope: "ui.widget.Main.GgScrollBar.17";}
                                     }
                                 }
 
@@ -3212,7 +3251,7 @@ ApplicationWindow {
                                     )
                                     height: parent.height
 
-                                    ChatLiveAidWork {
+                                    ChatLiveAidWork { property string uiColorScope: "ui.widget.Main.ChatLiveAidWork.18";
                                         id: chatLiveAidWork
                                         width: parent.width
                                         height: parent.height
@@ -3271,7 +3310,7 @@ ApplicationWindow {
                             }
                         }
 
-                        WorkObject {
+                        WorkObject { property string uiColorScope: "ui.widget.Main.WorkObject.19";
                             visible: root.alphaShowDemoFixtures
                             width: parent.width
                             objectType: "TERMINAL"
@@ -3284,7 +3323,7 @@ ApplicationWindow {
                                 + "No exit status claimed."
                         }
 
-                        WorkObject {
+                        WorkObject { property string uiColorScope: "ui.widget.Main.WorkObject.20";
                             visible: root.alphaShowDemoFixtures
                             width: parent.width
                             objectType: "CODE"
@@ -3310,7 +3349,7 @@ ApplicationWindow {
                     anchors.rightMargin: 10
                     height: root.bridgeBusy ? chatStatusStrip.implicitHeight : 0
 
-                    ActivityStrip {
+                    ActivityStrip { property string uiColorScope: "ui.widget.Main.ActivityStrip.21";
                         id: chatStatusStrip
                         anchors.left: parent.left
                         anchors.right: parent.right
@@ -3324,7 +3363,7 @@ ApplicationWindow {
                 }
 
                 // A1.2.1.1: ordinary chatSurface owns composer geometry.
-                ContextComposer {
+                ContextComposer { property string uiColorScope: "ui.widget.Main.ContextComposer.22";
                     id: composer
                     anchors.left: parent.left
                     anchors.right: parent.right
@@ -3523,7 +3562,7 @@ ApplicationWindow {
                 }
             }
 
-            TelemetryRail {
+            TelemetryRail { property string uiColorScope: "ui.widget.Main.TelemetryRail.23";
                 id: telemetry
                 property real visualOffsetX: 0
                 property real visualOffsetY: 0
@@ -3603,20 +3642,20 @@ ApplicationWindow {
             width: Math.min(parent.width - 36, 640)
             spacing: 4
 
-            Text {
+            GGText { colorKey: "ui.Main.17";
                 width: parent.width
                 text: root.shellLoadLog
-                color: "#a8b0b8"
+                color: RuntimeTheme.GGTheme.muted
                 font.family: "monospace"
                 font.pixelSize: 12
                 wrapMode: Text.NoWrap
             }
 
-            Text {
+            GGText { colorKey: "ui.Main.18";
                 width: parent.width
                 visible: root.shellLoadCurrent.length > 0
                 text: root.shellLoadCurrent
-                color: "#c8a97e"
+                color: RuntimeTheme.GGTheme.accent
                 font.family: "monospace"
                 font.pixelSize: 12
                 wrapMode: Text.NoWrap
@@ -3629,11 +3668,11 @@ ApplicationWindow {
             spacing: 14
             width: 280
 
-            Text {
+            GGText { colorKey: "ui.Main.19";
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
                 text: root.shellLoadLabel
-                color: "#c8a97e"
+                color: RuntimeTheme.GGTheme.accent
                 font.family: "monospace"
                 font.pixelSize: 14
                 font.bold: true
@@ -3643,7 +3682,7 @@ ApplicationWindow {
                 id: shellLoadTrack
                 width: parent.width
                 height: 8
-                color: "#161616"
+                color: RuntimeTheme.GGTheme.panel
                 border.color: root.line
                 border.width: 1
 
@@ -3656,7 +3695,7 @@ ApplicationWindow {
                         0,
                         (parent.width - 2) * root.shellLoadPercent / 100
                     )
-                    color: "#c8a97e"
+                    color: RuntimeTheme.GGTheme.accent
                 }
 
                 Rectangle {
@@ -3665,7 +3704,7 @@ ApplicationWindow {
                     width: 24
                     height: parent.height - 2
                     y: 1
-                    color: "#f0d6ad"
+                    color: RuntimeTheme.GGTheme.warning
 
                     XAnimator {
                         target: startupActivity
@@ -3681,7 +3720,7 @@ ApplicationWindow {
                 }
             }
 
-            Text {
+            GGText { colorKey: "ui.Main.20";
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
                 text: String(Math.round(root.shellLoadPercent)) + "%"
@@ -3690,7 +3729,7 @@ ApplicationWindow {
                 font.pixelSize: 12
             }
 
-            Text {
+            GGText { colorKey: "ui.Main.21";
                 width: parent.width
                 visible: root.startupStepNumber > 0
                 horizontalAlignment: Text.AlignHCenter
@@ -3706,7 +3745,7 @@ ApplicationWindow {
                 font.pixelSize: 10
             }
 
-            BufferMark {
+            BufferMark { property string uiColorScope: "ui.widget.Main.BufferMark.24";
                 objectName: "shellLoadBuffer"
                 anchors.horizontalCenter: parent.horizontalCenter
                 active: root.shellLoading
@@ -3715,7 +3754,7 @@ ApplicationWindow {
         }
     }
 
-    WalletPopup {
+    WalletPopup { property string uiColorScope: "ui.widget.Main.WalletPopup.25";
         id: walletPopup
         objectName: "walletPopup"
         z: 9999
@@ -3737,8 +3776,10 @@ ApplicationWindow {
             root.applyCryptoWalletLabel()
         }
         onOpenDesk: {
-            if (workspace)
-                workspace.setHostKind("CRYPTO")
+            if (workspace) {
+                workspace.openCrypto("WALLET")
+                root.narrowPane = "WORKSPACE"
+            }
         }
         onXChanged: {
             if (visible)
@@ -3754,7 +3795,7 @@ ApplicationWindow {
         }
     }
 
-    SettingsPopup {
+    SettingsPopup { property string uiColorScope: "ui.widget.Main.SettingsPopup.26";
         id: settingsPopup
         objectName: "settingsPopup"
         z: 9999
@@ -3765,7 +3806,8 @@ ApplicationWindow {
         y: root.settingsY < 0 ? 60 : root.settingsY
         chatWidthRatio: root.alphaChatWidthRatio
         telemetryWidth: root.alphaTelemetryWidth
-        accentColor: root.cyan
+        accentColor: RuntimeTheme.GGTheme.accent
+        paletteRoles: root.paletteRoles
         frameBorder: root.frameBorder
         frameRadius: root.frameRadius
         layoutLocked: root.visualLayoutLocked
@@ -3804,6 +3846,10 @@ ApplicationWindow {
         }
         onAccentColorChangedByUser: function(value) {
             root.cyan = value
+            root.persistDesktopSettings()
+        }
+        onPaletteRolesChangedByUser: function(value) {
+            root.paletteRoles=RuntimeTheme.GGTheme.normalizeOverrides(value)
             root.persistDesktopSettings()
         }
         onFrameBorderChangedByUser: function(value) {
@@ -3914,7 +3960,7 @@ ApplicationWindow {
         }
     }
 
-    CommandPalette {
+    CommandPalette { property string uiColorScope: "ui.widget.Main.CommandPalette.27";
         id: commandPalette
         objectName: "commandPalette"
         parent: root.contentItem
@@ -3938,7 +3984,7 @@ ApplicationWindow {
         onDismissed: root.commandPaletteOpen = false
     }
 
-    VisualLayoutOverlay {
+    VisualLayoutOverlay { property string uiColorScope: "ui.widget.Main.VisualLayoutOverlay.28";
         id: visualLayoutOverlay
         objectName: "visualLayoutOverlay"
         parent: root.contentItem
@@ -3952,7 +3998,7 @@ ApplicationWindow {
         sourcePath: root.visualSourcePath
         sourceStatus: root.visualSourceStatus
         frameBorder: root.frameBorder
-        accentColor: root.cyan
+        accentColor: RuntimeTheme.GGTheme.accent
 
         onSurfaceResizeRequested: function(surfaceId, corner, dx, dy) {
             root.resizeVisualSurface(surfaceId, corner, dx, dy)
@@ -3968,7 +4014,7 @@ ApplicationWindow {
         onSourceCloseRequested: root.closeVisualSource()
     }
 
-    WebAgentCursor {
+    WebAgentCursor { property string uiColorScope: "ui.widget.Main.WebAgentCursor.29";
         id: deskAgentCursor
         objectName: "deskAgentCursor"
         parent: root.contentItem

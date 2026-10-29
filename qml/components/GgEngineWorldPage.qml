@@ -40,7 +40,7 @@ Node {
             depthBias: 500000-s.order
             castsShadows: false
             receivesShadows: false
-            materials: GgEngineModelMaterial {
+            materials: GgEngineModelMaterial { property string uiColorScope: "ui.widget.GgEngineWorldPage.GgEngineModelMaterial.1";
                 authoredMips: skyboxPart.s.mip_levels || []
                 uTrilinear: world.textureTrilinear
                 uWrapU: !!skyboxPart.s.wrap_u
@@ -78,7 +78,7 @@ Node {
             depthBias: -10000
             castsShadows: false
             receivesShadows: false
-            materials: GgEngineWeatherMaterial {
+            materials: GgEngineWeatherMaterial { property string uiColorScope: "ui.widget.GgEngineWorldPage.GgEngineWeatherMaterial.2";
                 uLayer: modelData.state.layer
                 uMipCount: (modelData.state.mip_counts || [0])[0]
                 uTrilinear: world.textureTrilinear
@@ -101,7 +101,7 @@ Node {
             visible: modelData.state.visible !== false && !!world.sceneCamera
             castsShadows: false
             receivesShadows: false
-            materials: GgEngineHorizonMaterial {
+            materials: GgEngineHorizonMaterial { property string uiColorScope: "ui.widget.GgEngineWorldPage.GgEngineHorizonMaterial.3";
                 uFarClip: world.detailedFar
                 uFogEnabled: !!(world.originalLight && world.lighting.fog)
                 uFogColor: world.originalLight ? world.color3(world.lighting.fog.color) : Qt.vector3d(0,0,0)
@@ -121,7 +121,7 @@ Node {
             depthBias: 1000000
             castsShadows: false
             receivesShadows: false
-            materials: GgEngineStarMaterial {
+            materials: GgEngineStarMaterial { property string uiColorScope: "ui.widget.GgEngineWorldPage.GgEngineStarMaterial.4";
                 uAlpha: world.starAlpha(modelData.state.weight)
                 uTexture: TextureInput { texture: Texture { textureData:modelData.textureData;minFilter:Texture.Linear;magFilter:Texture.Linear } }
             }
@@ -141,7 +141,7 @@ Node {
             depthBias: s.glare ? -20000 : s.name==="sun" ? 820000 : s.name==="moon" ? 810000 : 800000
             castsShadows: false
             receivesShadows: false
-            materials: GgEngineCelestialMaterial {
+            materials: GgEngineCelestialMaterial { property string uiColorScope: "ui.widget.GgEngineWorldPage.GgEngineCelestialMaterial.5";
                 uTexture: TextureInput { texture: Texture { textureData:modelData.textureData;minFilter:Texture.Linear;magFilter:Texture.Linear } }
                 uDirection: world.color3(s.direction)
                 uRight: world.color3(s.right)
@@ -162,7 +162,7 @@ Node {
         scale: Qt.vector3d(20,20,20)
         castsShadows: false
         receivesShadows: false
-        materials: GgEngineSkyMaterial {
+        materials: GgEngineSkyMaterial { property string uiColorScope: "ui.widget.GgEngineWorldPage.GgEngineSkyMaterial.6";
             uSky0: world.originalLight ? world.color3(world.lighting.sky[0]) : Qt.vector3d(0,0,0)
             uSky1: world.originalLight ? world.color3(world.lighting.sky[1]) : Qt.vector3d(0,0,0)
             uSky2: world.originalLight ? world.color3(world.lighting.sky[2]) : Qt.vector3d(0,0,0)
@@ -183,7 +183,7 @@ Node {
         scale: Qt.vector3d(1,1,1).times(world.sceneCamera ? world.sceneCamera.clipFar*.87 : 87)
         castsShadows: false
         receivesShadows: false
-        materials: GgEngineCloudMaterial {
+        materials: GgEngineCloudMaterial { property string uiColorScope: "ui.widget.GgEngineWorldPage.GgEngineCloudMaterial.7";
             uTexture: TextureInput { texture: Texture { textureData: world.stream ? world.stream.cloudTexture : null; minFilter:Texture.Linear; magFilter:Texture.Linear } }
         }
     }
@@ -241,7 +241,7 @@ Node {
             }
             materials: materialObject ? [materialObject] : []
             Component { id: terrainComponent
-            GgEngineTerrainMaterial {
+            GgEngineTerrainMaterial { property string uiColorScope: "ui.widget.GgEngineWorldPage.GgEngineTerrainMaterial.8";
                 id: terrainMaterial
                 uMipCounts: Qt.vector4d(page.s.mip_counts[0],page.s.mip_counts[1],page.s.mip_counts[2],page.s.mip_counts[3])
                 uTrilinear: world.textureTrilinear
@@ -263,7 +263,7 @@ Node {
             }
             }
             Component { id: liquidComponent
-            GgEngineLiquidMaterial {
+            GgEngineLiquidMaterial { property string uiColorScope: "ui.widget.GgEngineWorldPage.GgEngineLiquidMaterial.9";
                 uFarClip: world.detailedFar
                 uMipCount: (page.s.mip_counts || [0])[0]
                 uTrilinear: world.textureTrilinear
@@ -286,7 +286,7 @@ Node {
             }
             }
             Component { id: wmoComponent
-            GgEngineModelMaterial {
+            GgEngineModelMaterial { property string uiColorScope: "ui.widget.GgEngineWorldPage.GgEngineModelMaterial.10";
                 id: wmoMaterial
                 uFarClip: world.detailedFar
                 uModelKind: page.m2 ? 1 : 0

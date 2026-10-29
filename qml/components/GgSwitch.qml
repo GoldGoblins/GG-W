@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 
 Item {
@@ -15,29 +17,29 @@ Item {
         width: 28
         height: 14
         anchors.verticalCenter: parent.verticalCenter
-        color: root.checked ? "#1c2a22" : "#121212"
+        color: root.checked ? "#1c2a22" : RuntimeTheme.GGTheme.canvas
         border.width: 1
-        border.color: root.checked ? "#8db89a" : "#6a6a6a"
+        border.color: root.checked ? RuntimeTheme.GGTheme.positive : RuntimeTheme.GGTheme.edge
         radius: 2
         antialiasing: false
 
-        Rectangle {
+        Rectangle { GGColorTarget { colorKey: "ui.fill.GgSwitch.1"; }
             width: 8
             height: 8
             y: 3
             x: root.checked ? track.width - 11 : 3
-            color: root.checked ? "#8db89a" : "#8a8a8a"
+            color: root.checked ? RuntimeTheme.GGTheme.positive : RuntimeTheme.GGTheme.dim
             antialiasing: false
         }
     }
 
-    Text {
+    GGText { colorKey: "ui.GgSwitch.1";
         id: label
         anchors.left: track.right
         anchors.leftMargin: 8
         anchors.verticalCenter: parent.verticalCenter
         text: root.text
-        color: "#e6e6e6"
+        color: RuntimeTheme.GGTheme.bright
         font.family: "monospace"
         font.pixelSize: 12
     }

@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
@@ -258,29 +260,29 @@ Item {
                 GradientStop { position: 0.45; color: "#263431" }
                 GradientStop { position: 1; color: "#1b2628" }
             }
-            border.color: "#8e794e"
+            border.color: RuntimeTheme.GGTheme.edge
             border.width: 1
-            Text {
+            GGText { colorKey: "ui.GameInventoryPanel.1";
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.leftMargin: 13
                 text: window.width < 470 ? "◆  VÄSKA" : "◆  KARAKTÄR   ·   VÄSKA"
-                color: "#f4d99e"
+                color: RuntimeTheme.GGTheme.orange
                 font.family: "serif"
                 font.pixelSize: 17
                 font.bold: true
             }
-            Text {
+            GGText { colorKey: "ui.GameInventoryPanel.2";
                 anchors.right: craftButton.left
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.rightMargin: 12
                 text: "LV " + String(panel.game.progression.level || 1)
                 visible: window.width >= 500
-                color: "#d1bd8f"
+                color: RuntimeTheme.GGTheme.text
                 font.family: "monospace"
                 font.pixelSize: 10
             }
-            GameInventoryAction {
+            GameInventoryAction { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventoryAction.1";
                 id: craftButton
                 objectName: "ggInventoryCraftingOpen"
                 anchors.right: closeButton.left
@@ -289,7 +291,7 @@ Item {
                 text: "TILLVERKA"
                 onClicked: panel.game.openCrafting("")
             }
-            GameInventoryAction {
+            GameInventoryAction { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventoryAction.2";
                 id: closeButton
                 objectName: "ggInventoryClose"
                 anchors.right: parent.right
@@ -327,14 +329,14 @@ Item {
                         width: parent.width
                         height: 284
                         color: "#172126"
-                        border.color: "#8e794e"
+                        border.color: RuntimeTheme.GGTheme.edge
                         border.width: 1
-                        Text {
+                        GGText { colorKey: "ui.GameInventoryPanel.3";
                             anchors.top: parent.top
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.topMargin: 4
                             text: "❖  UTRUSTNING  ❖"
-                            color: "#e5c785"
+                            color: RuntimeTheme.GGTheme.orange
                             font.family: "serif"
                             font.pixelSize: 12
                             font.bold: true
@@ -358,7 +360,7 @@ Item {
                                         required property var modelData
                                         property var dropSlot: leftGearSlot
                                         width: 91; height: 28; spacing: 3
-                                        Text {
+                                        GGText { colorKey: "ui.GameInventoryPanel.4";
                                             width: 53
                                             anchors.verticalCenter: parent.verticalCenter
                                             text: panel.slotName(String(modelData))
@@ -368,7 +370,7 @@ Item {
                                             elide: Text.ElideRight
                                             horizontalAlignment: Text.AlignRight
                                         }
-                                        GameInventorySlot {
+                                        GameInventorySlot { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventorySlot.3";
                                             id: leftGearSlot
                                             width: 27; height: 27
                                             gearCode: String(modelData)
@@ -394,7 +396,7 @@ Item {
                                 color: "#303b3d"
                                 border.color: "#746744"
                                 border.width: 1
-                                GameCharacterPreview {
+                                GameCharacterPreview { property string uiColorScope: "ui.widget.GameInventoryPanel.GameCharacterPreview.4";
                                     anchors.fill: parent
                                     anchors.margins: 2
                                     game: panel.game
@@ -411,7 +413,7 @@ Item {
                                         required property var modelData
                                         property var dropSlot: rightGearSlot
                                         width: 91; height: 28; spacing: 3
-                                        GameInventorySlot {
+                                        GameInventorySlot { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventorySlot.5";
                                             id: rightGearSlot
                                             width: 27; height: 27
                                             gearCode: String(modelData)
@@ -427,7 +429,7 @@ Item {
                                             onItemDragFinished: function(id, x, y) { panel.finishDrag(id, x, y) }
                                             onItemDragCanceled: { panel.dragId = ""; panel.hoveredTarget = null; panel.game.cancelActionDrag() }
                                         }
-                                        Text {
+                                        GGText { colorKey: "ui.GameInventoryPanel.5";
                                             width: 53
                                             anchors.verticalCenter: parent.verticalCenter
                                             text: panel.slotName(String(modelData))
@@ -452,7 +454,7 @@ Item {
                                     required property var modelData
                                     property var dropSlot: lowerGearSlot
                                     spacing: 3
-                                    GameInventorySlot {
+                                    GameInventorySlot { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventorySlot.6";
                                         id: lowerGearSlot
                                         width: 25; height: 25
                                         gearCode: String(modelData)
@@ -468,7 +470,7 @@ Item {
                                         onItemDragFinished: function(id, x, y) { panel.finishDrag(id, x, y) }
                                         onItemDragCanceled: { panel.dragId = ""; panel.hoveredTarget = null; panel.game.cancelActionDrag() }
                                     }
-                                    Text {
+                                    GGText { colorKey: "ui.GameInventoryPanel.6";
                                         anchors.verticalCenter: parent.verticalCenter
                                         text: panel.slotName(String(modelData))
                                         color: "#9fa69a"
@@ -485,14 +487,14 @@ Item {
                         width: parent.width
                         height: 192
                         color: "#172126"
-                        border.color: "#8e794e"
+                        border.color: RuntimeTheme.GGTheme.edge
                         border.width: 1
-                        Text {
+                        GGText { colorKey: "ui.GameInventoryPanel.7";
                             anchors.top: parent.top
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.topMargin: 4
                             text: "❖  FÖREMÅL & HANDLINGAR  ❖"
-                            color: "#e5c785"
+                            color: RuntimeTheme.GGTheme.orange
                             font.family: "serif"
                             font.pixelSize: 12
                             font.bold: true
@@ -525,7 +527,7 @@ Item {
                             anchors.rightMargin: 9
                             anchors.topMargin: 39
                             spacing: 5
-                            Text {
+                            GGText { colorKey: "ui.GameInventoryPanel.8";
                                 width: parent.width
                                 text: panel.selectedRow
                                     ? String(panel.selectedRow.name || "Föremål")
@@ -538,7 +540,7 @@ Item {
                                 font.bold: true
                                 elide: Text.ElideRight
                             }
-                            Text {
+                            GGText { colorKey: "ui.GameInventoryPanel.9";
                                 width: parent.width
                                 text: panel.selectedRow
                                     ? String(panel.selectedRow.kind || "ITEM") + " · "
@@ -551,7 +553,7 @@ Item {
                                 font.pixelSize: 10
                                 wrapMode: Text.WordWrap
                             }
-                            Text {
+                            GGText { colorKey: "ui.GameInventoryPanel.10";
                                 width: parent.width
                                 text: panel.selectedRow && panel.selectedRow.firearm
                                     ? panel.selectedRow.firearm.ammo_name+"\n"
@@ -575,7 +577,7 @@ Item {
                             anchors.rightMargin: 11
                             anchors.topMargin: 116
                             spacing: 5
-                            GameInventoryAction {
+                            GameInventoryAction { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventoryAction.7";
                                 objectName:"inventoryTryOn";text:"PROVA UTSEENDET"
                                 enabled:!!panel.selectedRow && !!panel.selectedRow.equip_slot
                                 onClicked:{
@@ -584,65 +586,65 @@ Item {
                                     if(template)panel.service({op:"DressupTryOn",id:template.item_id})
                                 }
                             }
-                            GameInventoryAction {
+                            GameInventoryAction { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventoryAction.8";
                                 objectName:"inventoryEnchantScroll"
                                 text:"ANVÄND ENCHANT-SCROLL";visible:!!panel.selectedRow && !!panel.selectedRow.scroll_enchant_id
                                 enabled:visible && panel.selectedRow.location==="INVENTORY"
                                 onClicked:panel.useItem(panel.selectedRow)
                             }
-                            GameInventoryAction {
+                            GameInventoryAction { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventoryAction.9";
                                 objectName:"inventoryEnchantTarget"
                                 text:"APPLICERA ENCHANT";visible:panel.enchantCursor.active===true
                                 enabled:visible && !!panel.selectedRow && !!panel.selectedRow.gear && ["INVENTORY","EQUIPPED"].indexOf(panel.selectedRow.location)>=0
                                 onClicked:panel.enchantItem(panel.selectedRow.instance_id)
                             }
-                            GameInventoryAction {
+                            GameInventoryAction { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventoryAction.10";
                                 text:"AVBRYT ENCHANTING";visible:panel.enchantCursor.active===true
                                 onClicked:panel.service({op:"EnchantCancel",target_generation:panel.enchantCursor.generation})
                             }
-                            GameInventoryAction {
+                            GameInventoryAction { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventoryAction.11";
                                 objectName:"inventoryWrapPaper"
                                 text:panel.selectedRow && panel.selectedRow.wrapped ? "ÖPPNA PAKET" : "ANVÄND PAPPER"
                                 visible:!!panel.selectedRow && (panel.selectedRow.wrapped || panel.selectedRow.definition_id==="item.gg_wrapping_paper")
                                 enabled:visible && panel.selectedRow.location==="INVENTORY"
                                 onClicked:panel.useItem(panel.selectedRow)
                             }
-                            GameInventoryAction {
+                            GameInventoryAction { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventoryAction.12";
                                 objectName:"inventoryWrapTarget"
                                 text:"SLÅ IN VALT FÖREMÅL";visible:!!panel.wrapping
                                 enabled:!!panel.wrapping && !!panel.selectedRow && panel.selectedRow.location==="INVENTORY" && panel.selectedRow.instance_id!==panel.wrapping.paper
                                 onClicked:panel.wrapItem(panel.selectedRow.instance_id)
                             }
-                            GameInventoryAction {
+                            GameInventoryAction { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventoryAction.13";
                                 text:"AVBRYT INSLAGNING";visible:!!panel.wrapping
                                 onClicked:panel.service({op:"InventoryWrapCancel",wrap_generation:panel.wrapping.generation})
                             }
-                            GameInventoryAction {
+                            GameInventoryAction { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventoryAction.14";
                                 text: "TA PÅ"
                                 enabled: Boolean(panel.selectedRow)
                                     && panel.selectedRow.location === "INVENTORY"
                                     && Boolean(panel.selectedRow.equip_slot)
                                 onClicked: panel.game.equipItem(String(panel.selectedRow.instance_id))
                             }
-                            GameInventoryAction {
+                            GameInventoryAction { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventoryAction.15";
                                 text: "HUVUDHAND"
                                 visible: panel.fitsSlot(panel.selectedRow, "MAIN_HAND") && panel.fitsSlot(panel.selectedRow, "OFF_HAND")
                                 enabled: visible && panel.selectedRow.location === "INVENTORY"
                                 onClicked: panel.game.equipItem(String(panel.selectedRow.instance_id), "MAIN_HAND")
                             }
-                            GameInventoryAction {
+                            GameInventoryAction { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventoryAction.16";
                                 text: "ANDRA HANDEN"
                                 visible: panel.fitsSlot(panel.selectedRow, "MAIN_HAND") && panel.fitsSlot(panel.selectedRow, "OFF_HAND")
                                 enabled: visible && panel.selectedRow.location === "INVENTORY"
                                 onClicked: panel.game.equipItem(String(panel.selectedRow.instance_id), "OFF_HAND")
                             }
-                            GameInventoryAction {
+                            GameInventoryAction { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventoryAction.17";
                                 text: "TA AV"
                                 enabled: Boolean(panel.selectedRow)
                                     && panel.selectedRow.location === "EQUIPPED"
                                 onClicked: panel.game.unequipItem(String(panel.selectedRow.instance_id))
                             }
-                            GameInventoryAction {
+                            GameInventoryAction { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventoryAction.18";
                                 text: "LÄGG I KISTAN"
                                 enabled: Boolean(panel.selectedRow)
                                     && (panel.selectedRow.location === "INVENTORY"
@@ -650,7 +652,7 @@ Item {
                                     && (panel.nearBank || panel.bankAccessible)
                                 onClicked: panel.storeSelected()
                             }
-                            GameInventoryAction {
+                            GameInventoryAction { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventoryAction.19";
                                 text: "TA UR KISTAN"
                                 enabled: Boolean(panel.selectedRow)
                                     && panel.selectedRow.location === "BANK"
@@ -661,7 +663,7 @@ Item {
                                         panel.game.selectedItemId = ""
                                 }
                             }
-                            GameInventoryAction {
+                            GameInventoryAction { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventoryAction.20";
                                 text: "SLÄPP PÅ MARKEN"
                                 enabled: Boolean(panel.selectedRow)
                                     && panel.selectedRow.location !== "BANK"
@@ -670,24 +672,24 @@ Item {
                                         panel.game.selectedItemId = ""
                                 }
                             }
-                            GameInventoryAction {
+                            GameInventoryAction { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventoryAction.21";
                                 text: "SOCKET"
                                 enabled: Boolean(panel.selectedRow)
                                     && panel.selectedRow.location !== "BANK"
                                 onClicked: panel.game.socketItem(String(panel.selectedRow.instance_id), "")
                             }
-                            GameInventoryAction {
+                            GameInventoryAction { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventoryAction.22";
                                 text: "ENCHANTING"
                                 enabled: Boolean(panel.game)
                                 onClicked: panel.enchantingExpanded = !panel.enchantingExpanded
                             }
-                            GameInventoryAction {
+                            GameInventoryAction { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventoryAction.23";
                                 text: "AMMUNITION"
                                 enabled: Boolean(panel.game)
                                 onClicked: panel.ammunitionExpanded = !panel.ammunitionExpanded
                             }
                         }
-                        Text {
+                        GGText { colorKey: "ui.GameInventoryPanel.11";
                             anchors.left: parent.left
                             anchors.right: parent.right
                             anchors.bottom: parent.bottom
@@ -702,13 +704,13 @@ Item {
                     }
                 }
 
-                GameEnchantingControls {
+                GameEnchantingControls { property string uiColorScope: "ui.widget.GameInventoryPanel.GameEnchantingControls.24";
                     objectName: "gameStandaloneEnchantControls"
                     width: parent.width
                     visible: panel.enchantingExpanded
                     game: panel.game
                 }
-                GameAmmunitionControls {
+                GameAmmunitionControls { property string uiColorScope: "ui.widget.GameInventoryPanel.GameAmmunitionControls.25";
                     objectName: "gameAmmunitionControls"
                     width: parent.width
                     visible: panel.ammunitionExpanded
@@ -723,9 +725,9 @@ Item {
                         width: Math.round((parent.width - 8) * 0.51)
                         height: 289
                         color: "#172126"
-                        border.color: "#8e794e"
+                        border.color: RuntimeTheme.GGTheme.edge
                         border.width: 1
-                        Text {
+                        GGText { colorKey: "ui.GameInventoryPanel.12";
                             anchors.left: parent.left
                             anchors.top: parent.top
                             anchors.leftMargin: 10
@@ -736,7 +738,7 @@ Item {
                             font.pixelSize: 13
                             font.bold: true
                         }
-                        Text {
+                        GGText { colorKey: "ui.GameInventoryPanel.13";
                             anchors.right: parent.right
                             anchors.top: parent.top
                             anchors.rightMargin: 10
@@ -756,7 +758,7 @@ Item {
                             Repeater {
                                 id: bagRepeater
                                 model: 64
-                                delegate: GameInventorySlot {
+                                delegate: GameInventorySlot { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventorySlot.26";
                                     required property int index
                                     width: 29; height: 29
                                     slotIndex: index
@@ -780,9 +782,9 @@ Item {
                         width: parent.width - bagPanel.width - 8
                         height: 289
                         color: "#172126"
-                        border.color: "#8e794e"
+                        border.color: RuntimeTheme.GGTheme.edge
                         border.width: 1
-                        Text {
+                        GGText { colorKey: "ui.GameInventoryPanel.14";
                             anchors.left: parent.left
                             anchors.top: parent.top
                             anchors.leftMargin: 10
@@ -794,7 +796,7 @@ Item {
                             font.pixelSize: 13
                             font.bold: true
                         }
-                        Text {
+                        GGText { colorKey: "ui.GameInventoryPanel.15";
                             anchors.right: parent.right
                             anchors.top: parent.top
                             anchors.rightMargin: 10
@@ -815,7 +817,7 @@ Item {
                             Repeater {
                                 id: bankRepeater
                                 model: 48
-                                delegate: GameInventorySlot {
+                                delegate: GameInventorySlot { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventorySlot.27";
                                     required property int index
                                     width: 29; height: 29
                                     slotIndex: index
@@ -843,15 +845,15 @@ Item {
                                 source: "../assets/authored/items/icons/container-supply_crate.png"
                                 fillMode: Image.PreserveAspectFit
                             }
-                            Text {
+                            GGText { colorKey: "ui.GameInventoryPanel.16";
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: "Gå fram till kistan på startön"
-                                color: "#d1bd8f"
+                                color: RuntimeTheme.GGTheme.text
                                 font.family: "serif"
                                 font.pixelSize: 13
                             }
                         }
-                        GameInventoryAction {
+                        GameInventoryAction { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventoryAction.28";
                             visible: panel.nearBank && !panel.bankAccessible
                             anchors.right: parent.right
                             anchors.bottom: parent.bottom
@@ -859,7 +861,7 @@ Item {
                             text: "ÖPPNA KISTAN"
                             onClicked: panel.ensureBankOpen()
                         }
-                        GameInventoryAction {
+                        GameInventoryAction { property string uiColorScope: "ui.widget.GameInventoryPanel.GameInventoryAction.29";
                             visible: panel.bankAccessible
                                 && Number(panel.game.bank.loot_count || 0) > 0
                             anchors.right: parent.right
@@ -877,7 +879,7 @@ Item {
                     color: "#25332f"
                     border.color: "#6c623f"
                     border.width: 1
-                    Text {
+                    GGText { colorKey: "ui.GameInventoryPanel.17";
                         anchors.centerIn: parent
                         text: "DRA EN IKON TILL EN NY PLATS   ·   DUBBELKLICKA FÖR ATT TA PÅ / AV   ·   B ELLER I STÄNGER"
                         color: "#dcc694"

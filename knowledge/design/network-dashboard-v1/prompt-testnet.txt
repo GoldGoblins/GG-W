@@ -1,0 +1,20 @@
+Use case: ui-mockup
+Asset type: implementation concept for GG AI DESKTOP NÄTVERK, local Hardhat EVM testnet.
+Create one flat pixel-sharp 1536x1024 desktop app workspace design. Elegant restrained Obsidian/Ledger TUI styling: nearblack #101110, thin gray separators, white Consolas-like monospace, mutedgray secondary labels, gold active underline, mint confirmed status, amber waiting. No shadows/gradients/neon/glow or large rounded cards. Airy but compact, sensible28px controls. All content directly in workspace; no nested fake window.
+Top existing navigation 'ÖVERSIKT   MARKNAD   MARKETPLACE   BOTAR   NÄTVERK', NÄTVERK gold underline; tiny 'KONCEPT · EXEMPELDATA'.
+Toolbar 'GG NÄTVERK', mode tabs 'GG TESTNÄT' selected, 'SIGNERAT LABB'. Right buttons 'Uppdatera', 'Starta', 'Stoppa'. Subtitle 'Hardhat · lokal EVM · testmedel · ny session vid omstart'.
+Split main72% right28% by a single vertical hairline.
+Main top metric strip four small columns: BLOCKHÖJD5, CHAIN ID31337, NOD1 · lokalt, TRANSAKTIONER5 /256. No TPS/ping promises.
+Below modest real measurement history plot120px titled 'RPC & TRANSAKTIONSTID · ms', thin gray/gold lines with tiny dots. Caption 'Uppmätta lokala anrop · 16 prover'. This is actual operation latency not blockthroughput.
+Section 'TESTKONTON' table4rows with columns KONTO, DEV · GAS, GG-TEST. Account1..4 with shortened0xaddress secondary, copy icon, balances9999.998000/9999.999800/10000/10000, token999990/10/0/0. No private keys or seeds shown.
+Section 'TESTTOKEN': compact 'GG-TEST · ERC-20 · 6 decimaler · fast utbud1 000 000' row with small 'Deploya testtoken' button and truncated publiccontractreference. Honest no mainnetGGHB connection.
+Section 'ÖVERFÖRING': tidy one-line senderselect 'Konto1', recipientselect 'Konto2', assetselect'GG-TEST', amountfield'10.00', button'Förhandsgranska'. Optional small disclosure 'Annan offentlig mottagaradress'.
+Below subtle inset review area, heading 'GRANSKA TESTÖVERFÖRING', aligned keyvalue rows 'Från Konto1', 'Till Konto2', 'Belopp10 GG-TEST', 'Nätverk Lokal EVM ·31337', 'Högsta gasavgift0.00012 DEV'. Small 'Skicka på testnätet' goldoutlinedbutton and 'Avbryt'. Every operation must require real review, no production transfer.
+Section 'SENASTE TRANSAKTIONER': four slim rows hashshort, from→to, amount, gasactual, blockheight, green'Bekräftad'; all align.
+Right rail:
+'MIN TESTNOD': status'Igång' green, motor'Hardhat3', bindning'127.0.0.1', peers'0 · inget P2P', RPCshortlocalhostURL withcopy, tiny 'Tillfälliga testkonton. Ingen produktionsnod.'.
+'KONTRAKT & SKYDD': ERC20bytekod'Kontrollerad', fastsupply'1 000 000', signerare'Endast testkonton', nycklar'Endast RAM', networkbound'Chain + genesis'. Show simplehairlinerows nofakehardwaresecurity.
+'BLOCK & AVGIFTER': actual gasused/gaslimit thin goldbar, basefee inwei, sessiontransactionquota5/256graybar.
+'FUNKTIONSTEST': outlined 'Kör fram och tillbaka', list4greenchecks 'GG-TEST1→2', 'GG-TEST2→1', 'DEV1→2', 'DEV2→1'; text'Kvitton och saldon kontrollerade', no generic fullsecuritycertificate.
+'HÄNDELSER':6compacttimestampedevents start/deploy/receipt/roundtrip, 'Visa alla' textaction.
+No screenshots in app, no decorative networkplanet/3D, no fakeAPY, CPU, RAM or coinprices. Swedish readable consistent typography. Visual should look like careful real useful desktopnetworktool, matching an understated terminal wallet/marketplace.

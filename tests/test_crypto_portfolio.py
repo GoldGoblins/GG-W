@@ -102,7 +102,7 @@ class PortfolioTest(unittest.TestCase):
                 kas_chart_snapshot=lambda: {"price":0.1,"source":"fixture"},
                 portfolio_asset=lambda: "KAS",
                 read_ledger=lambda *args: []), \
-             patch.object(host.kaspa_covenant,"snapshot",return_value={"value_kas":"4"}), \
+             patch.object(host.kaspa_covenant,"snapshot",return_value={"value_kas":"4", "network":"paper"}), \
              patch.object(host.crypto_trader,"read_lots",return_value=[]):
             result=host.status_payload()["portfolio"]
         self.assertEqual(result["asset"],"KAS")

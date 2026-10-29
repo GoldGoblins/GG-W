@@ -5,6 +5,11 @@ PySide6==6.11.2; sys_platform == "win32"
 Pillow>=10
 numpy
 duckdb
+solders==0.29.0
+websocket-client==1.9.0
+pycryptodome==3.23.0
+bech32==1.2.0
+mnemonic==0.21
 
 # Windows desktop terminal and telemetry.
 psutil>=7.0,<8

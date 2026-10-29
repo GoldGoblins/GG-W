@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 
 Row {
@@ -7,16 +9,16 @@ Row {
     property int unresolvedCount: 0
     spacing: 8
 
-    Text {
+    GGText { colorKey: "ui.AuthoringStatus.1";
         text: "LIVE AID · " + root.status
-        color: "#c8cdd4"
+        color: RuntimeTheme.GGTheme.text
         font.family: "monospace"
         font.pixelSize: 12
         font.bold: true
     }
-    Text {
+    GGText { colorKey: "ui.AuthoringStatus.2";
         text: "diagnostics " + root.diagnosticCount + " · unresolved " + root.unresolvedCount
-        color: "#7d8590"
+        color: RuntimeTheme.GGTheme.dim
         font.family: "monospace"
         font.pixelSize: 12
     }

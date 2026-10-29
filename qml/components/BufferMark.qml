@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 
 Item {
@@ -8,7 +10,7 @@ Item {
     property int cells: 4
     property int cell: 5
     property int gap: 2
-    property color markColor: "#c8a97e"
+    property color markColor: RuntimeTheme.GGTheme.accent
     property int _on: 0
 
     visible: root.active

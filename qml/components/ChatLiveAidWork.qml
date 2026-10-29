@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
@@ -27,12 +29,12 @@ Item {
 
     implicitHeight: 322
 
-    GgFrame {
+    GgFrame { property string uiColorScope: "ui.widget.ChatLiveAidWork.GgFrame.1";
         anchors.fill: parent
         leftLegend: "LIVE AID · CONTEXTUAL WORK"
         rightLegend: root.liveAidState
         backgroundColor: "#090d12"
-        borderColor: "#6a6a6a"
+        borderColor: RuntimeTheme.GGTheme.edge
     }
 
     Column {
@@ -43,7 +45,7 @@ Item {
         anchors.bottomMargin: 12
         spacing: 6
 
-        LiveAidObject {
+        LiveAidObject { property string uiColorScope: "ui.widget.ChatLiveAidWork.LiveAidObject.2";
             width: parent.width
             height: 132
             title: root.objectTitle
@@ -52,7 +54,7 @@ Item {
             evidenceSummary: root.evidenceSummary
         }
 
-        GgButton {
+        GgButton { property string uiColorScope: "ui.control.ChatLiveAidWork.1";
             objectName: "workspacePostDraftAutoRepairButton"
             width: parent.width
             height: 30
@@ -68,7 +70,7 @@ Item {
             onClicked: root.postDraftRequested()
         }
 
-        GgButton {
+        GgButton { property string uiColorScope: "ui.control.ChatLiveAidWork.2";
             objectName: "workspacePreflightButton"
             width: parent.width
             height: 30
@@ -83,7 +85,7 @@ Item {
             onClicked: root.preflightRequested()
         }
 
-        GgButton {
+        GgButton { property string uiColorScope: "ui.control.ChatLiveAidWork.3";
             objectName: "workspaceRepairButton"
             width: parent.width
             height: 30
@@ -99,7 +101,7 @@ Item {
             onClicked: root.repairRequested()
         }
 
-        GgButton {
+        GgButton { property string uiColorScope: "ui.control.ChatLiveAidWork.4";
             objectName: "workspaceApplyRepairButton"
             width: parent.width
             height: 30

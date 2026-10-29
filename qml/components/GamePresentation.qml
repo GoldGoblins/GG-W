@@ -1,4 +1,6 @@
 pragma ComponentBehavior: Bound
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Window
@@ -40,14 +42,14 @@ Item {
             root.runtime.updateNameplates(rows,root.worldSurface.mouseRightHeld,false)
         }
     }
-    GameAddonsPanel {
+    GameAddonsPanel { property string uiColorScope: "ui.widget.GamePresentation.GameAddonsPanel.1";
         z: 15
         anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 14
         anchors.topMargin: 66
         runtime: root.runtime
         paneLive: root.paneLive
     }
-    GameWorldFeedback {
+    GameWorldFeedback { property string uiColorScope: "ui.widget.GamePresentation.GameWorldFeedback.2";
         anchors.fill:parent
         z:0
         runtime:root.runtime
@@ -66,7 +68,7 @@ Item {
             z: frameData.level
             radius: 4; color: frameData.background
             border.color: frameData.color; border.width: 1
-            Text { anchors.fill: parent; anchors.margins: 8; text: frame.frameData.text
+            GGText { colorKey: "ui.GamePresentation.1"; anchors.fill: parent; anchors.margins: 8; text: frame.frameData.text
                 color: "#f0e2c6"; font.pixelSize: 11; wrapMode: Text.WordWrap }
             Rectangle { visible: frame.frameData.kind === "StatusBar"
                 width: parent.width*frame.frameData.value; height: 3;anchors.bottom: parent.bottom;color: frame.frameData.color }
@@ -81,22 +83,26 @@ Item {
         visible: root.paneLive && root.runtime
         anchors.right: parent.right;anchors.bottom: parent.bottom;anchors.margins: 14
         width: expanded ? 220 : 54; height: expanded ? 202 : 30
-        radius: 4;color: "#ee19232b";border.color: "#806d47"
-        Button { objectName: "gameAudioToggle";x: 4;y: 2;width: 46;height: 26;text: "Ljud"
-            onClicked: volume.expanded=!volume.expanded }
+        radius: 4;color: "#ee19232b";border.color: RuntimeTheme.GGTheme.edge
+        Button { property string uiColorScope: "ui.control.GamePresentation.1"; objectName: "gameAudioToggle";x: 4;y: 2;width: 46;height: 26;text: "Ljud"
+            onClicked: volume.expanded=!volume.expanded 
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignHCenter }
+}
         Column { visible: volume.expanded;x: 10;y: 35;spacing: 2
             Repeater { model: [{id:"master",name:"Volym"},{id:"sfx",name:"Effekter"},{id:"music",name:"Musik"},{id:"ambience",name:"Omgivning"}]
                 delegate: Row {
                     required property var modelData
-                    Text { width: 78;height: 28;verticalAlignment: Text.AlignVCenter
-                        color: "#e9d6af";text: parent.modelData.name;font.pixelSize: 11 }
+                    GGText { colorKey: "ui.GamePresentation.2"; width: 78;height: 28;verticalAlignment: Text.AlignVCenter
+                        color: RuntimeTheme.GGTheme.text;text: parent.modelData.name;font.pixelSize: 11 }
                     Slider { objectName: "gameAudioSlider_"+parent.modelData.id
                         width: 118;height: 28;from: 0;to: 1;value: root.audio[parent.modelData.id] || 0
                         onMoved: if(root.runtime) root.runtime.setVolume(parent.modelData.id,value) }
                 }
             }
-            CheckBox { text: "Tyst";checked: Boolean(root.audio.muted);palette.windowText: "#e9d6af"
-                onToggled: if(root.runtime) root.runtime.setMuted(checked) }
+            CheckBox { property string uiColorScope: "ui.control.GamePresentation.2"; text: "Tyst";checked: Boolean(root.audio.muted);palette.windowText: RuntimeTheme.GGTheme.text
+                onToggled: if(root.runtime) root.runtime.setMuted(checked) 
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignLeft;withIndicator:true }
+}
         }
     }
 }

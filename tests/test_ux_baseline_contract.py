@@ -258,7 +258,7 @@ def main() -> int:
         'Window.FullScreen',
         'objectName: "shellLoadOverlay"',
         'objectName: "shellLoadFileLog"',
-        'shellLoadLabel: "LOADING..."',
+        'shellLoadLabel: "STARTING DESKTOP..."',
         "function beginShellLoad(",
         "function unloadDesktopShell(",
         "function loadDesktopShell(",
@@ -406,7 +406,9 @@ def main() -> int:
     for marker in (
         "function openSettings()",
         "function closeSettings()",
-        "SettingsSurface {",
+        'objectName: "workspaceSettingsLoader"',
+        'surfaceUrl: Qt.resolvedUrl("SettingsSurface.qml")',
+        "active: root.keepSettings || root.settingsOpen",
         "root.showDemoFixtures",
         "root.settingsOpen",
         'objectName: "workspaceObjectNodeRail"',
@@ -474,7 +476,6 @@ def main() -> int:
         'text: "EXT"',
         'text: "SITE"',
         'text: "CRYPTO"',
-        'text: "MP"',
         'text: "TMOG"',
         'text: "OSINT"',
         'text: "RESEARCH"',
@@ -501,11 +502,11 @@ def main() -> int:
         'objectName: "workspaceGameEnginePane"',
         'objectName: "workspaceNodePane"',
         'objectName: "workspaceAgentFlowPane"',
-        "MarketplaceSurface {",
-        "MediaSurface {",
-        "DrawSurface {",
-        "GameEngineSurface {",
-        "NodeSurface {",
+        'surfaceUrl: Qt.resolvedUrl("MarketplaceSurface.qml")',
+        'surfaceUrl: Qt.resolvedUrl("MediaSurface.qml")',
+        'surfaceUrl: Qt.resolvedUrl("DrawSurface.qml")',
+        'surfaceUrl: Qt.resolvedUrl("GameEngineSurface.qml")',
+        'surfaceUrl: Qt.resolvedUrl("NodeSurface.qml")',
         "function applyLiveReload()",
         "liveEpoch",
         'objectName: "workspaceWebHost"',
@@ -538,8 +539,8 @@ def main() -> int:
         'objectName: "workspaceSiteImportStatus"',
         "onSiteImportProgress(",
         'objectType: "SITE_PROJECT"',
-        "anchors.bottom: workspaceFrame.bottom",
-        "anchors.bottomMargin: -7",
+        "parent: workspaceFrame.contentItem",
+        'objectName: "workspaceTabContent"',
         'objectName: "workspaceCodeScroll"',
     ):
         require(
@@ -768,7 +769,7 @@ def main() -> int:
         'leftLegend: "WORKSPACE"',
         "signal hostKindChangedByUser(string value)",
         'text: "New tab +"',
-        'model: ["CODE", "TERMINAL", "WEB", "EXTERNAL", "SITE", "CRYPTO", "MARKETPLACE", "TMOG", "OSINT", "KNOWLEDGE", "RESEARCH", "MEDIA", "DRAW", "GAME_ENGINE", "NODES", "FLOW"]',
+        'model: ["CODE", "TERMINAL", "WEB", "EXTERNAL", "SITE", "CRYPTO", "TMOG", "OSINT", "KNOWLEDGE", "RESEARCH", "MEDIA", "DRAW", "GAME_ENGINE", "NODES", "FLOW"]',
     ):
         require(
             marker in settings_workspace,
@@ -1500,7 +1501,12 @@ def main() -> int:
     )
     ws_qml = text("qml/components/WorkspaceSurface.qml")
     require(
-        "Loader {" in ws_qml
+        'text: "MP"' not in ws_qml
+        and 'root.pendingCryptoSection = "MARKETPLACE"' in ws_qml,
+        "Marketplace must remain in CRYPTO, with legacy navigation redirected and no duplicate MP bottom tab.",
+    )
+    require(
+        "DeferredSurface {" in ws_qml
         and "active: !root.settingsOpen && root.hostKind === \"CRYPTO\"" in ws_qml
         and "active: !root.settingsOpen && root.hostKind === \"MARKETPLACE\"" in ws_qml
         and "active: !root.settingsOpen && root.hostKind === \"TMOG\"" in ws_qml
@@ -1511,7 +1517,7 @@ def main() -> int:
         and "active: !root.settingsOpen && root.hostKind === \"NODES\"" in ws_qml
         and "id: gameEnginePane" in ws_qml
         and "keepGameEngine" in ws_qml
-        and "paneLive: gameEnginePane.visible" in ws_qml
+        and "paneLive: Qt.binding(function() { return gameEnginePane.visible })" in ws_qml
         and "active: !root.settingsOpen && root.hostKind === \"GAME_ENGINE\"" not in ws_qml,
         "Unused workspace function panes are still kept alive.",
     )

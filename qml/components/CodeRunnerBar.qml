@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 
 Item {
@@ -46,7 +48,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: "#101010"
+        color: RuntimeTheme.GGTheme.canvas
         border.width: 1
         border.color: "#454545"
         radius: 2
@@ -66,7 +68,7 @@ Item {
             height: 28
             spacing: 6
 
-            Text {
+            GGText { colorKey: "ui.CodeRunnerBar.1";
                 width: Math.max(96, parent.width * 0.23)
                 height: parent.height
                 verticalAlignment: Text.AlignVCenter
@@ -74,14 +76,14 @@ Item {
                     + (root.language.length > 0
                         ? root.language.toUpperCase()
                         : "CODE")
-                color: "#c8a97e"
+                color: RuntimeTheme.GGTheme.accent
                 font.family: "monospace"
                 font.pixelSize: 11
                 font.bold: true
                 elide: Text.ElideRight
             }
 
-            GgButton {
+            GgButton { property string uiColorScope: "ui.control.CodeRunnerBar.1";
                 objectName: "workspaceCodeRunButton"
                 width: 92
                 height: 27
@@ -92,7 +94,7 @@ Item {
                 onClicked: root.runRequested()
             }
 
-            GgButton {
+            GgButton { property string uiColorScope: "ui.control.CodeRunnerBar.2";
                 objectName: "workspaceCodeLiveButton"
                 width: 74
                 height: 27
@@ -104,7 +106,7 @@ Item {
                 )
             }
 
-            GgButton {
+            GgButton { property string uiColorScope: "ui.control.CodeRunnerBar.3";
                 objectName: "workspaceCodeSaveButton"
                 width: 58
                 height: 27
@@ -113,7 +115,7 @@ Item {
                 onClicked: root.saveRequested()
             }
 
-            GgButton {
+            GgButton { property string uiColorScope: "ui.control.CodeRunnerBar.4";
                 objectName: "workspaceCodeRepairButton"
                 width: 68
                 height: 27
@@ -126,7 +128,7 @@ Item {
                 onClicked: root.repairRequested()
             }
 
-            GgButton {
+            GgButton { property string uiColorScope: "ui.control.CodeRunnerBar.5";
                 objectName: "workspaceCodeApplyButton"
                 width: 68
                 height: 27
@@ -135,7 +137,7 @@ Item {
                 onClicked: root.applyRepairRequested()
             }
 
-            Text {
+            GGText { colorKey: "ui.CodeRunnerBar.2";
                 width: Math.max(80, parent.width - 96 - 92 - 74 - 58 - 68 - 68 - 30)
                 height: parent.height
                 verticalAlignment: Text.AlignVCenter
@@ -146,7 +148,7 @@ Item {
                     + " · L" + root.cursorLine
                     + ":" + root.cursorColumn
                 color: root.diagnostics.length > 0
-                    ? "#d69a9a"
+                    ? RuntimeTheme.GGTheme.negative
                     : "#8fbba8"
                 font.family: "monospace"
                 font.pixelSize: 10
@@ -154,7 +156,7 @@ Item {
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.CodeRunnerBar.3";
             width: parent.width
             height: visible ? 18 : 0
             visible: (root.evidenceSummary.length > 0
@@ -163,7 +165,7 @@ Item {
             text: root.diagnostics.length > 0
                 ? "PROBLEM · " + root.firstDiagnosticText()
                 : root.evidenceSummary
-            color: root.diagnostics.length > 0 ? "#d69a9a" : "#7d8590"
+            color: root.diagnostics.length > 0 ? RuntimeTheme.GGTheme.negative : RuntimeTheme.GGTheme.dim
             font.family: "monospace"
             font.pixelSize: 10
             elide: Text.ElideRight
@@ -175,7 +177,7 @@ Item {
             visible: root.externalChangePending
             spacing: 6
 
-            Text {
+            GGText { colorKey: "ui.CodeRunnerBar.4";
                 width: Math.max(100, parent.width - 146)
                 height: parent.height
                 verticalAlignment: Text.AlignVCenter
@@ -184,13 +186,13 @@ Item {
                         ? "SITE"
                         : "FILE")
                     + " · BUFFER UNSAVED"
-                color: "#d69a9a"
+                color: RuntimeTheme.GGTheme.negative
                 font.family: "monospace"
                 font.pixelSize: 10
                 elide: Text.ElideRight
             }
 
-            GgButton {
+            GgButton { property string uiColorScope: "ui.control.CodeRunnerBar.6";
                 objectName: "workspaceCodeSyncExternalButton"
                 width: 66
                 height: 27
@@ -199,7 +201,7 @@ Item {
                 onClicked: root.syncExternalRequested()
             }
 
-            GgButton {
+            GgButton { property string uiColorScope: "ui.control.CodeRunnerBar.7";
                 objectName: "workspaceCodeKeepBufferButton"
                 width: 70
                 height: 27

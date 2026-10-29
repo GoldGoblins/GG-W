@@ -1,0 +1,307 @@
+{
+  "schema": "gg.dagoblin.broader-primary-sources.v1",
+  "as_of": "2026-10-29",
+  "scope": "Scoped primary-source study; not full proof or client audits",
+  "sources": [
+    {
+      "title": "Narwhal and Tusk",
+      "url": "https://arxiv.org/abs/2105.11827",
+      "read_extent": "Original abstract plus security/dissemination sections in security lane; no WAN reproduction",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "Bullshark",
+      "url": "https://arxiv.org/abs/2201.05677",
+      "read_extent": "Original abstract/protocol overview only; no full proof audit",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "DAG-Rider",
+      "url": "https://arxiv.org/html/2102.08325v2",
+      "read_extent": "Sections1-2 model, RBC/coin, postquantum conditions and batching complexity; no machine-checked proof",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "Mysticeti",
+      "url": "https://arxiv.org/html/2310.14821v6",
+      "read_extent": "ModelII-A and direct/indirect decisionIII-B/C read; no complete client/proof audit",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "Starfish",
+      "url": "https://eprint.iacr.org/2025/567",
+      "read_extent": "Original revised abstract/metadata2026-04-08; full proof not audited",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "IOTA current consensus",
+      "url": "https://docs.iota.org/about-iota/iota-architecture/consensus",
+      "read_extent": "Current page read; all networks Starfish is official docs statement, not independent chain measurement",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "IOTA architecture",
+      "url": "https://docs.iota.org/about-iota/iota-architecture",
+      "read_extent": "Current architecture page read; scoped to shared objects, sequencing and consensus",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "HotStuff",
+      "url": "https://arxiv.org/abs/1803.05069",
+      "read_extent": "Original abstract and model overview; no complete proof implementation review",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "Gasper original",
+      "url": "https://arxiv.org/abs/2003.03052",
+      "read_extent": "Original abstract; idealized protocol distinguished from client",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "Gasper docs",
+      "url": "https://ethereum.org/developers/docs/consensus-mechanisms/pos/gasper/",
+      "read_extent": "Finality, forkchoice, assumptions sections read; historical economics not reused",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "Hashgraph docs",
+      "url": "https://docs.hedera.com/learn/core-concepts/hashgraph",
+      "read_extent": "Virtual voting and weighted assumptions description; marketing absolutes not adopted",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "Avalanche architecture",
+      "url": "https://build.avax.network/docs/nodes/architecture/consensus",
+      "read_extent": "Current Snowman and historical Xchain linearization, sampling parameters; not a client audit",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "Alpenglow current",
+      "url": "https://solana.com/upgrades/alpenglow",
+      "read_extent": "UpdatedOct2026 sections mainnet activation, Votor/Rotor and slot/finality distinction; no independent RPC observation",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "Alpenglow SIMD0326",
+      "url": "https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0326-alpenglow.md",
+      "read_extent": "Review metadata and proposal scope read; stale status discrepancy preserved",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "Alpenglow implementation map",
+      "url": "https://github.com/anza-xyz/alpenglow/blob/master/README.md",
+      "read_extent": "README core-crate mapping read; no Agave binary audit or vulnerability execution",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "Bitcoin original",
+      "url": "https://bitcoin.org/bitcoin.pdf",
+      "read_extent": "Abstract and sections4-6,11 scoped chain/work explanation; no reproduction of paper probability model",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "Lightning intro",
+      "url": "https://github.com/lightning/bolts/blob/master/00-introduction.md",
+      "read_extent": "Introduction and channel/onchain role description",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "Lightning peer protocol",
+      "url": "https://github.com/lightning/bolts/blob/master/02-peer-protocol.md",
+      "read_extent": "Channel identification, revocation/reconnect/data-loss warning passages; not entire BOLT corpus",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "Ethereum scaling",
+      "url": "https://ethereum.org/developers/docs/scaling/",
+      "read_extent": "Offchain scaling distinctions rollup/channel/sidechain/validium",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "ZK rollup availability",
+      "url": "https://ethereum.org/developers/docs/scaling/zk-rollups/",
+      "read_extent": "Data availability and settlement sections read; data needed for recovery/withdrawal",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "Layer3 author article",
+      "url": "https://vitalik.eth.limo/general/2022/09/17/layer_3.html",
+      "read_extent": "Author discussion of data limits, different layer purposes, bridge/fixed batchcost; 2022 numbers not current performance",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "FIPS203",
+      "url": "https://csrc.nist.gov/pubs/fips/203/final",
+      "read_extent": "Final standard page and2025-11-17errata notice; KEM not signature",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "FIPS204",
+      "url": "https://csrc.nist.gov/pubs/fips/204/final",
+      "read_extent": "Final standard page and2026-07-31minor errata notice",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "FIPS205",
+      "url": "https://csrc.nist.gov/pubs/fips/205/final",
+      "read_extent": "Final standard page; stateless hash signature, no GG implementation",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "FIPS204 parameters",
+      "url": "https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.204.pdf",
+      "read_extent": "Sections3.6 and4, printedpp15-16 tables1-2; bytes/securitycategories checked, not full standard implementation",
+      "accessed_at": "2026-10-29",
+      "authority": "PRIMARY",
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "RFC 9162: Certificate Transparency Version 2.0",
+      "url": "https://www.rfc-editor.org/rfc/rfc9162.html",
+      "sections": [
+        "2.1.3",
+        "2.1.4",
+        "11.3"
+      ],
+      "supports": "Medlemskap, konsistens och motstridiga loggvyer",
+      "accessed_at": "2026-10-29",
+      "read_extent": [
+        "2.1.3",
+        "2.1.4",
+        "11.3"
+      ],
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "Eclipse Attacks on Bitcoin's Peer-to-Peer Network",
+      "url": "https://www.usenix.org/system/files/conference/usenixsecurity15/sec15-paper-heilman.pdf",
+      "published": "2015",
+      "supports": "Peerisolering utan brott mot hashfunktion; inte en aktuell Bitcoin- eller DAGoblin-attackmätning",
+      "accessed_at": "2026-10-29",
+      "read_extent": [
+        "Peerisolering utan brott mot hashfunktion; inte en aktuell Bitcoin- eller DAGoblin-attackmätning"
+      ],
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "The Sybil Attack",
+      "url": "https://www.microsoft.com/en-us/research/wp-content/uploads/2002/01/IPTPS2002.pdf",
+      "published": "2002",
+      "supports": "Flera identiteter kan tillhöra en aktör; redundans kräver identitets-/resursantaganden",
+      "accessed_at": "2026-10-29",
+      "read_extent": [
+        "Flera identiteter kan tillhöra en aktör; redundans kräver identitets-/resursantaganden"
+      ],
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "Fraud and Data Availability Proofs",
+      "url": "https://arxiv.org/pdf/1809.09044",
+      "version": "v5, 2019",
+      "sections": [
+        "5.3",
+        "5.4",
+        "5.6",
+        "5.7"
+      ],
+      "supports": "Provtagning, kollektiv återhämtning och selektiv utlämning",
+      "accessed_at": "2026-10-29",
+      "read_extent": [
+        "5.3",
+        "5.4",
+        "5.6",
+        "5.7"
+      ],
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "Narwhal and Tusk",
+      "url": "https://arxiv.org/pdf/2105.11827",
+      "version": "v4, 2022",
+      "sections": [
+        "2.1",
+        "3.1",
+        "3.2"
+      ],
+      "supports": "Separata distributions-/ordningslager, mindre än en tredjedel felaktiga parter, kvorumcertifikat",
+      "accessed_at": "2026-10-29",
+      "read_extent": [
+        "2.1",
+        "3.1",
+        "3.2"
+      ],
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "EIP-7594: PeerDAS",
+      "url": "https://eips.ethereum.org/EIPS/eip-7594",
+      "supports": "Avsändargenererade cellbevis; återstående mottagarverifiering, custody, gossip och provtagning",
+      "accessed_at": "2026-10-29",
+      "read_extent": [
+        "Avsändargenererade cellbevis; återstående mottagarverifiering, custody, gossip och provtagning"
+      ],
+      "execution": "READ_ONLY"
+    },
+    {
+      "title": "libp2p Gossipsub v1.1",
+      "url": "https://github.com/libp2p/specs/blob/master/pubsub/gossipsub/gossipsub-v1.1.md",
+      "revision_on_page": "r8, 2021-12-14",
+      "supports": "Utgående kvoter, scoring, återanslutningshistorik och begränsade upprepade svar",
+      "accessed_at": "2026-10-29",
+      "read_extent": [
+        "Utgående kvoter, scoring, återanslutningshistorik och begränsade upprepade svar"
+      ],
+      "execution": "READ_ONLY"
+    }
+  ],
+  "kaspa_catalog": "kaspa-primary-sources.json",
+  "journal": "Actual GG RESEARCH Workbench records scoped annotations and acquired source text where indicated; private runtime record identities are not required by users"
+}

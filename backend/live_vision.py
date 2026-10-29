@@ -21,6 +21,7 @@ import threading
 import time
 from urllib.parse import urlparse
 from backend.platform_support import find_executable
+from backend import sensitive_ui_guard
 
 PROJECT = Path(__file__).resolve().parents[1]
 TARGET_FPS = 25
@@ -59,6 +60,7 @@ def ram_root() -> Path:
 
 
 def atomic_ram_file(name: str, data: bytes) -> Path:
+    if name.endswith('.jpg'):sensitive_ui_guard.require_capture_allowed()
     if Path(name).name != name or not name.endswith((".json", ".jpg")):
         raise ValueError("Invalid observation filename")
     root = ram_root()
@@ -105,6 +107,8 @@ class FrameRing:
 
     def append(self, data: bytes, width: int, height: int, pts: float | None,
                *, captured: float | None = None) -> None:
+        try:sensitive_ui_guard.require_capture_allowed()
+        except RuntimeError:self.clear();raise
         now = time.monotonic() if captured is None else captured
         with self.lock:
             if len(data) > MAX_FRAME_BYTES:
@@ -135,6 +139,8 @@ class FrameRing:
                     "storage": "RAM", "model_analysis_fps": None}
 
     def observation(self, *, seconds: float = 0, fps: float = 25, age: float = 0) -> dict:
+        try:sensitive_ui_guard.require_capture_allowed()
+        except RuntimeError:self.clear();raise
         now = time.monotonic()
         seconds, fps, age = float(seconds), float(fps), float(age)
         if not all(math.isfinite(v) for v in (seconds, fps, age)):
@@ -185,6 +191,7 @@ def _recv_exact(sock: socket.socket, length: int) -> bytes:
 
 
 def request(op: str, *, timeout: float = 8, **parameters) -> dict:
+    guard_token=sensitive_ui_guard.capture_token() if op not in {'status','stop'} else None
     if os.name == "nt":
         from backend.windows_vision import request as windows_request
         return windows_request(op, timeout=timeout, **parameters)
@@ -199,10 +206,12 @@ def request(op: str, *, timeout: float = 8, **parameters) -> dict:
         result = json.loads(_recv_exact(sock, size))
     if not result.get("ok"):
         raise RuntimeError(result.get("error", "Screen request failed"))
+    if guard_token is not None:sensitive_ui_guard.require_capture_allowed(guard_token)
     return result["result"]
 
 
 def ensure_service() -> None:
+    sensitive_ui_guard.require_capture_allowed()
     if os.name == "nt":
         # Windows observations use short-lived, bounded child processes.
         return
@@ -254,6 +263,7 @@ def stop_if_running() -> None:
 
 def image_parts(observation: dict, *, sequence: bool = False, crop: list[int] | None = None) -> list[dict]:
     """Return images directly to MCP; contact sheets preserve every selected frame."""
+    guard_token=sensitive_ui_guard.capture_token()
     from PIL import Image, ImageDraw
     frames = observation["frames"]
     meta = {k: v for k, v in observation.items() if k != "frames"}
@@ -285,6 +295,7 @@ def image_parts(observation: dict, *, sequence: bool = False, crop: list[int] | 
                 "offset": [position[0] + crop_x * scale_x, position[1] + crop_y * scale_y]}
         parts[0]["text"] = json.dumps(meta, ensure_ascii=False)
         parts.append({"type": "image", "mimeType": "image/jpeg", "data": base64.b64encode(data).decode()})
+        sensitive_ui_guard.require_capture_allowed(guard_token)
         return parts
     for first in range(0, len(frames), 25):
         group = frames[first:first + 25]
@@ -301,11 +312,13 @@ def image_parts(observation: dict, *, sequence: bool = False, crop: list[int] | 
         stream = io.BytesIO()
         board.save(stream, "JPEG", quality=90)
         parts.append({"type": "image", "mimeType": "image/jpeg", "data": base64.b64encode(stream.getvalue()).decode()})
+    sensitive_ui_guard.require_capture_allowed(guard_token)
     return parts
 
 
 def export_parts(parts: list[dict]) -> dict:
     """Fixed RAM filenames for this session's file-based image tool."""
+    guard_token=sensitive_ui_guard.capture_token()
     paths = []
     for index, part in enumerate(p for p in parts if p["type"] == "image"):
         path = atomic_ram_file(f"view-{index}.jpg", base64.b64decode(part["data"]))
@@ -313,6 +326,7 @@ def export_parts(parts: list[dict]) -> dict:
     for path in ram_root().glob("view-*.jpg"):
         if str(path) not in paths:
             path.unlink(missing_ok=True)
+    sensitive_ui_guard.require_capture_allowed(guard_token)
     return {"images": paths, "metadata": [json.loads(p["text"]) for p in parts if p["type"] == "text"]}
 
 
@@ -324,6 +338,7 @@ def video_observation(source: str, *, start: float = 0, seconds: float = 2, fps:
     weights or paid service are needed. This supplies visual evidence, not
     an automatic claim that an entire video has been watched or understood.
     """
+    guard_token=sensitive_ui_guard.capture_token()
     import re
     import shutil
     cancellation = threading.Event()
@@ -341,6 +356,7 @@ def video_observation(source: str, *, start: float = 0, seconds: float = 2, fps:
         return requested
 
     def check_cancelled():
+        sensitive_ui_guard.require_capture_allowed(guard_token)
         if cancellation_requested():
             raise RuntimeError("Video observation stopped: CANCELLED")
 

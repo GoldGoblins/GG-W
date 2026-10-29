@@ -24,6 +24,8 @@ from backend import crypto_data, crypto_market, crypto_paper
 from backend import crypto_portfolio
 from backend import polymarket_research
 from backend import kaspa_covenant
+from backend import crypto_svm
+from backend import crypto_connections, kaspa_node
 from backend.crypto_lab import (
     current_slot,
     has_blockhash,
@@ -142,6 +144,9 @@ def _rpc_url(network: str) -> str:
 
 
 def fetch_balance(pubkey: str, network: str = NETWORK_DEFAULT) -> int | None:
+    if network == 'testnet' and crypto_svm.active():
+        response = crypto_svm.rpc('getBalance', [pubkey])
+        return (response.get('result') or {}).get('value')
     if network not in RPC_ALLOWLIST:
         return None
     url = _rpc_url(network)
@@ -358,6 +363,8 @@ def rpc_call(method: str, params: list[Any], network: str | None = None) -> dict
         return {"error": {"code": -32001, "message": "MAINNET_OBSERVE_ONLY"}}
     if method not in read_methods | {"requestAirdrop", "sendTransaction"}:
         return {"error": {"code": -32601, "message": "CRYPTO_RPC_METHOD"}}
+    if chain == 'testnet' and crypto_svm.active():
+        return crypto_svm.rpc(method, params)
     url = _rpc_url(chain)
     host = urlparse(url).hostname or ""
     allowed = {urlparse(item).hostname for item in RPC_ALLOWLIST.values()}
@@ -917,12 +924,14 @@ def status_payload(rail: bool = False) -> dict[str, Any]:
     holdings = pump_service().enrich_holdings(holdings, chart.get("price") or ((chart.get("closes") or [None])[-1]), wallet_network=chain)
     tokens = [row for row in holdings if row.get("mint") != "native"]
     wallet["tokens"] = tokens
+    kas_connection = kaspa.get('connection') or {}
+    kas_quantity = kaspa.get('value_kas') if kaspa.get('network') == 'paper' else kas_connection.get('balance_kas')
     portfolio = {
         "asset": portfolio_asset(),
         "sol": crypto_portfolio.summarize(holdings, chart, usd_sek=quote.get("usd_sek")),
         # This is the covenant's simulation balance, not an imported live wallet.
         "kas": crypto_portfolio.summarize([
-            {"symbol": "KAS", "mint": "native", "display": kaspa.get("value_kas")}
+            {"symbol": "KAS", "mint": "native", "display": kas_quantity}
         ], kas_chart, native_symbol="KAS", usd_sek=quote.get("usd_sek")),
     }
     return {
@@ -954,6 +963,7 @@ def status_payload(rail: bool = False) -> dict[str, Any]:
         "desk": desk_status().get("result", crypto_desk.empty_snapshot()),
         "desk_job": desk_status(),
         "kaspa": kaspa,
+        "connections": {'SOL': crypto_connections.snapshot('SOL', chain), 'KAS': kas_connection},
         "kas_chart": kas_chart,
         "portfolio": portfolio,
         "pump": pump,
@@ -994,6 +1004,30 @@ def kaspa_set_network(network: str) -> dict[str, Any]:
     return kaspa_covenant.set_network(network)
 
 
+def connection_refresh(asset: str) -> dict[str, Any]:
+    chain = load_network() if asset == 'SOL' else kaspa_covenant.snapshot()['network']
+    crypto_connections.snapshot(asset, chain, force=True)
+    return status_payload()
+
+
+def kaspa_lab_on() -> dict[str, Any]:
+    kaspa_node.start()
+    crypto_connections.invalidate('KAS','testnet')
+    kaspa_covenant.set_network('testnet')
+    return status_payload()
+
+
+def kaspa_lab_off() -> dict[str, Any]:
+    kaspa_node.stop()
+    crypto_connections.invalidate('KAS','testnet')
+    return status_payload()
+
+
+def kaspa_watch(address: str) -> dict[str, Any]:
+    crypto_connections.set_watch(address)
+    return status_payload()
+
+
 def import_keypair_file(path: str) -> dict[str, Any]:
     pubkey = import_solana_keypair(path)
     chain = load_network()
@@ -1020,14 +1054,15 @@ def select_account(pubkey: str) -> dict[str, Any]:
 def lab_on() -> dict[str, Any]:
     invalidate_rpc_cache()
     status = start_lab()
+    crypto_connections.invalidate('SOL','testnet')
     if status.get("healthy"):
         mark_proven("lab")
-        crypto_trader.set_armed(True)
     return status_payload()
 
 
 def lab_off() -> dict[str, Any]:
     stop_lab()
+    crypto_connections.invalidate('SOL','testnet')
     invalidate_rpc_cache()
     return status_payload()
 

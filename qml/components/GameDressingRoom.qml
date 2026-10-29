@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -12,8 +14,8 @@ Dialog {
     title:"GG · Provrum"
     width:Math.min(540,game.width-24);height:Math.min(590,game.height-24)
     x:(game.width-width)/2;y:(game.height-height)/2
-    palette.windowText:"#e9e3d6";palette.text:"#e9e3d6";palette.button:"#303137";palette.buttonText:"#e9e3d6"
-    background:Rectangle { color:"#202126";border.color:"#92794b";radius:5 }
+    palette.windowText:RuntimeTheme.GGTheme.bright;palette.text:RuntimeTheme.GGTheme.bright;palette.button:RuntimeTheme.GGTheme.selected;palette.buttonText:RuntimeTheme.GGTheme.bright
+    background:Rectangle { color:RuntimeTheme.GGTheme.raised;border.color:RuntimeTheme.GGTheme.edge;radius:5 }
     onOpened:Qt.callLater(function(){if(room.visible)game.clearMovementInput()})
     onClosed:Qt.callLater(function(){if(!room.visible && room.state.open)room.command("DressupClose")})
     function command(op,fields) {
@@ -25,18 +27,26 @@ Dialog {
         spacing:8
         Loader {
             Layout.fillWidth:true;Layout.fillHeight:true;active:room.visible
-            sourceComponent:GameCharacterPreview {
+            sourceComponent:GameCharacterPreview { property string uiColorScope: "ui.widget.GameDressingRoom.GameCharacterPreview.1";
                 objectName:"gameDressingPreview";game:room.game
                 equipment:room.state.equipment || [];avatarYaw:room.state.angle || 0
             }
         }
-        Label { text:"Du provar utseendet. Din utrustning och ryggsäck påverkas inte.";wrapMode:Text.WordWrap;Layout.fillWidth:true }
+        GGLabel { colorKey: "ui.GameDressingRoom.1"; text:"Du provar utseendet. Din utrustning och ryggsäck påverkas inte.";wrapMode:Text.WordWrap;Layout.fillWidth:true }
         RowLayout {
             Layout.alignment:Qt.AlignHCenter
-            Button { objectName:"gameDressingLeft";text:"↶";onClicked:room.command("DressupRotate",{angle:(room.state.angle || 0)-30}) }
-            Button { objectName:"gameDressingUndress";text:"Ta av kläder";onClicked:room.command("DressupUndress") }
-            Button { objectName:"gameDressingReset";text:"Återställ";onClicked:room.command("DressupDress") }
-            Button { objectName:"gameDressingRight";text:"↷";onClicked:room.command("DressupRotate",{angle:(room.state.angle || 0)+30}) }
+            Button { property string uiColorScope: "ui.control.GameDressingRoom.1"; objectName:"gameDressingLeft";text:"↶";onClicked:room.command("DressupRotate",{angle:(room.state.angle || 0)-30}) 
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignHCenter }
+}
+            Button { property string uiColorScope: "ui.control.GameDressingRoom.2"; objectName:"gameDressingUndress";text:"Ta av kläder";onClicked:room.command("DressupUndress") 
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignHCenter }
+}
+            Button { property string uiColorScope: "ui.control.GameDressingRoom.3"; objectName:"gameDressingReset";text:"Återställ";onClicked:room.command("DressupDress") 
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignHCenter }
+}
+            Button { property string uiColorScope: "ui.control.GameDressingRoom.4"; objectName:"gameDressingRight";text:"↷";onClicked:room.command("DressupRotate",{angle:(room.state.angle || 0)+30}) 
+        contentItem: GGControlCaption { horizontalAlignment:Text.AlignHCenter }
+}
         }
     }
     footer:DialogButtonBox { standardButtons:DialogButtonBox.Close;onRejected:room.command("DressupClose") }

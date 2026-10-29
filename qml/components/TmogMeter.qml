@@ -1,11 +1,18 @@
+
+import "." as RuntimeTheme
 import QtQuick
 
 Item {
     id: root
     property real ratio: 0
     property int segments: 28
-    property color onColor: "#8db89a"
-    property color offColor: "#2a2a2a"
+    property color onColor: RuntimeTheme.GGTheme.positive
+    property color offColor: RuntimeTheme.GGTheme.hover
+    property string seriesColorKey: ""
+    readonly property string resolvedSeriesKey: seriesColorKey || RuntimeTheme.GGColorContext.keyFor(root)
+    readonly property bool percentageCapable: true
+    readonly property real fraction: isFinite(ratio) ? Math.max(0,Math.min(1,ratio)) : NaN
+    readonly property color seriesOnColor: RuntimeTheme.GGColorContext.colorForValue(resolvedSeriesKey,onColor,fraction)
     height: 14
 
     Row {
@@ -23,9 +30,18 @@ Item {
                 height: root.height
                 radius: 1
                 color: index < Math.round(root.ratio * root.segments)
-                    ? root.onColor
+                    ? root.seriesOnColor
                     : root.offColor
             }
+        }
+    }
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.RightButton
+        onPressed: function(mouse) {
+            var p=RuntimeTheme.GGColorContext.hostOverlay ? root.mapToItem(RuntimeTheme.GGColorContext.hostOverlay,mouse.x,mouse.y) : root.mapToItem(null,mouse.x,mouse.y)
+            RuntimeTheme.GGColorContext.openWhole(root,root.resolvedSeriesKey,root.seriesOnColor,p.x,p.y)
+            mouse.accepted=true
         }
     }
 }

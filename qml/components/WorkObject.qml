@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Window
@@ -99,7 +101,7 @@ Item {
     onSurfaceHostChanged: root.attachTerminal()
     onTerminalIdChanged: root.attachTerminal()
 
-    GgFrame {
+    GgFrame { property string uiColorScope: "ui.widget.WorkObject.GgFrame.1";
         id: frame
         anchors.fill: root.fillHost ? parent : undefined
         width: root.fillHost ? undefined : root.width
@@ -111,9 +113,9 @@ Item {
                     ? "DEMO · SAMPLE · NO EXECUTION"
                     : root.activityState
             )
-        backgroundColor: "#1c1c1c"
-        borderColor: root.fillHost ? "#1c1c1c" : "#6a6a6a"
-        rightLegendColor: root.syntheticFixture ? "#d2b48c" : "#8b949e"
+        backgroundColor: RuntimeTheme.GGTheme.raised
+        borderColor: root.fillHost ? RuntimeTheme.GGTheme.raised : RuntimeTheme.GGTheme.edge
+        rightLegendColor: root.syntheticFixture ? "#d2b48c" : RuntimeTheme.GGTheme.dim
 
         Flickable {
             id: bodyFlick
@@ -168,14 +170,14 @@ Item {
                 selectByMouse: true
                 selectByKeyboard: true
                 persistentSelection: true
-                selectionColor: "#3a3a3a"
-                selectedTextColor: "#f2f2f2"
+                selectionColor: RuntimeTheme.GGTheme.selected
+                selectedTextColor: RuntimeTheme.GGTheme.bright
 
-                SelectionGuard {
+                SelectionGuard { property string uiColorScope: "ui.widget.WorkObject.SelectionGuard.2";
                     editor: bodyView
                 }
                 color: root.objectType === "CODE" || root.objectType === "TERMINAL"
-                    ? "#d8dee9" : "#e6edf3"
+                    ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.bright
                 font.family: "monospace"
                 font.pixelSize: 12
                 wrapMode: root.grokTui
@@ -198,7 +200,7 @@ Item {
                 }
             }
 
-            ScrollBar.vertical: GgScrollBar {
+            ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.WorkObject.GgScrollBar.3";
                 keepVisible: root.objectType === "TERMINAL"
             }
         }
@@ -214,16 +216,16 @@ Item {
             width: parent.width
             spacing: 6
 
-            Text {
+            GGText { colorKey: "ui.WorkObject.1";
                 text: "$"
-                color: "#8a8a8a"
+                color: RuntimeTheme.GGTheme.dim
                 font.family: "monospace"
                 font.pixelSize: 12
                 height: commandInput.height
                 verticalAlignment: Text.AlignVCenter
             }
 
-            GgField {
+            GgField { property string uiColorScope: "ui.widget.WorkObject.GgField.4";
                 id: commandInput
                 objectName: "terminalCommandInput"
                 width: parent.width - 18
@@ -248,7 +250,7 @@ Item {
             }
         }
 
-        ActivityStrip {
+        ActivityStrip { property string uiColorScope: "ui.widget.WorkObject.ActivityStrip.5";
             id: activityStrip
             visible: root.activityState === "RUNNING"
                 || root.activityState === "STREAMING"
@@ -273,7 +275,7 @@ Item {
             lastActivity: root.lastActivity
         }
 
-        Text {
+        GGText { colorKey: "ui.WorkObject.2";
             visible: root.syntheticFixture
             width: parent.width
             text: "fixture provenance: SYNTHETIC_UI_FIXTURE"

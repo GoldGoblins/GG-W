@@ -230,6 +230,47 @@ def _db(root: Path | None = None) -> Iterator[sqlite3.Connection]:
             content_sha256 TEXT NOT NULL, content_json TEXT NOT NULL,
             created_at TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS wb_batches (
+            id TEXT PRIMARY KEY, title TEXT NOT NULL, state TEXT NOT NULL,
+            created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS wb_items (
+            id TEXT PRIMARY KEY, batch_id TEXT NOT NULL REFERENCES wb_batches(id),
+            position INTEGER NOT NULL, url TEXT NOT NULL, state TEXT NOT NULL,
+            lease TEXT NOT NULL DEFAULT '', lease_until REAL NOT NULL DEFAULT 0,
+            note TEXT NOT NULL DEFAULT '', observation_id TEXT NOT NULL DEFAULT '',
+            UNIQUE(batch_id,url)
+        );
+        CREATE INDEX IF NOT EXISTS wb_items_queue ON wb_items(batch_id,state,position);
+        CREATE TABLE IF NOT EXISTS wb_observations (
+            id TEXT PRIMARY KEY, session TEXT NOT NULL, source TEXT NOT NULL,
+            version TEXT NOT NULL, title TEXT NOT NULL, body TEXT NOT NULL,
+            exit_code INTEGER, redacted INTEGER NOT NULL, created_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS wb_observations_session ON wb_observations(session,created_at);
+        CREATE TABLE IF NOT EXISTS wb_requirements (
+            id TEXT PRIMARY KEY, task TEXT NOT NULL, title TEXT NOT NULL,
+            paths_json TEXT NOT NULL, test_module TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS wb_receipts (
+            id TEXT PRIMARY KEY, requirement_id TEXT NOT NULL REFERENCES wb_requirements(id),
+            version TEXT NOT NULL, status TEXT NOT NULL, observation_id TEXT NOT NULL,
+            duration_ms INTEGER NOT NULL, created_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS wb_receipts_requirement ON wb_receipts(requirement_id,created_at);
+        CREATE TABLE IF NOT EXISTS wb_usage (
+            id TEXT PRIMARY KEY, task TEXT NOT NULL, model TEXT NOT NULL,
+            outcome TEXT NOT NULL, basis TEXT NOT NULL, input_tokens INTEGER,
+            output_tokens INTEGER, cost REAL, currency TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS wb_source_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, source_id TEXT NOT NULL REFERENCES sources(id),
+            state TEXT NOT NULL, note TEXT NOT NULL, valid_at TEXT NOT NULL,
+            valid_until TEXT NOT NULL, observed_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS wb_source_history ON wb_source_events(source_id,id);
         """
     )
     _TRANSACTION.connection = connection
@@ -304,6 +345,8 @@ def method_test(method_id: str) -> dict | None:
         test = db.execute('SELECT * FROM method_tests WHERE method_id=?', (method_id,)).fetchone()
     if row is None or test is None or row['status'] != 'VERIFIED' or _method_digest(row) != test['method_digest']:
         return None
+    if source_freshness(row['source_id']) not in {'CURRENT', 'UNREVIEWED'}:
+        return None
     try:
         proof = json.loads(test['proof_json'])
     except (ValueError, TypeError):
@@ -314,6 +357,18 @@ def method_test(method_id: str) -> dict | None:
     if proof.get('test_schema') != 'gg.research-known-answer.v1' or not isinstance(checks, dict) or not checks or not all(v is True for v in checks.values()):
         return None
     return proof
+
+
+def source_freshness(source_id: str) -> str:
+    with _LOCK, _db() as db:
+        event = db.execute('SELECT * FROM wb_source_events WHERE source_id=? ORDER BY id DESC LIMIT 1', (source_id,)).fetchone()
+    if not event:
+        return 'UNREVIEWED'
+    if event['state'] != 'CURRENT':
+        return event['state']
+    if event['valid_at'] and event['valid_at'] > _now():
+        return 'NOT_YET_VALID'
+    return 'STALE' if event['valid_until'] and event['valid_until'] <= _now() else 'CURRENT'
 
 
 def _ensure_default_project(connection: sqlite3.Connection) -> str:
@@ -365,6 +420,11 @@ def snapshot() -> dict[str, Any]:
         saved_findings = {row[0] for row in connection.execute('SELECT finding_id FROM finding_snapshots')}
         for card in evidence:
             card['has_snapshot'] = card['id'] in saved_findings
+            try:
+                source_id = json.loads(card['details_json']).get('source_id', '')
+            except (ValueError, TypeError, AttributeError):
+                source_id = ''
+            card['source_freshness'] = source_freshness(source_id)
         sources = _rows(connection, "sources", 96)
         methods = _rows(connection, "methods", 96)
         skills = _rows(connection, "skills", 64)

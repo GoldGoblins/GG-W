@@ -1,12 +1,22 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Dialogs
+import "MarketplaceBrowse.js" as Browse
 
 Item {
     id: root
     objectName: "workspaceMarketplacePane"
 
     property var surfaceHost: null
-    property color frameBorder: "#6a6a6a"
+    property bool embedded:false
+    property string catalogScope:"LOCAL"
+    property bool discoveryRequested:false
+    property bool stopPreviewsPending:false
+    readonly property bool showPublic:catalogScope==="PUBLIC" || (catalogScope==="AUTO" && !Number(status.listing_count || 0))
+    signal cryptoRequested(string section)
+    property color frameBorder: RuntimeTheme.GGTheme.dim
     property int frameRadius: 4
     property string statusJson: "{}"
     property string page: "CATALOG"
@@ -17,13 +27,41 @@ Item {
     property var draftLives: []
     property string searchQuery: ""
     property string formError: ""
+    property string settlementAssetId: ""
+    readonly property var settlementAssets: root.status.settlement_assets || []
+    readonly property var operation: root.status.ui_operation || ({})
+    readonly property bool operationBusy: operation.state === "running"
+    property bool awaitingList: false
+    property bool awaitingImage: false
+    property var draftImage: ({})
+    property string collectionFilter:""
+    property string networkFilter:""
+    property string currencyFilter:""
+    property string kindFilter:""
+    property string categoryFilter:""
+    property string materialFilter:""
+    property string facetKindFilter:""
+    property string facetCollectionFilter:""
+    property string facetOriginFilter:""
+    property string facetMakerFilter:""
+    property string saleFilter:""
+    property string sortChoice:"recent"
+    property bool imagesOnly:false
+    property bool catalogFiltersOpen:false
+    property string catalogMode:"ATLAS"
+    property string catalogFocusId:""
+    property string requestedReceiptId:""
+    property bool linkNft:false
+    property bool legacyMintOpen:false
     readonly property var nav: [
         "CATALOG",
         "REGISTER",
         "RECEIPT",
         "ELEMENTS",
         "LIVES",
-        "ACTIVITY"
+        "ACTIVITY",
+        "OMNI",
+        "NFT"
     ]
 
     readonly property var status: {
@@ -34,24 +72,11 @@ Item {
         }
     }
 
-    readonly property var listings: {
-        var rows = root.status.listings
-        if (!rows || rows.length === undefined)
-            return []
-        var q = String(root.searchQuery || "").toLowerCase()
-        if (!q)
-            return rows
-        var out = []
-        var i
-        for (i = 0; i < rows.length; i++) {
-            var row = rows[i] || {}
-            var hay = String(row.title || "") + " " + String(row.material || "")
-                + " " + String(row.kind || "") + " " + String(row.maker || "")
-            if (hay.toLowerCase().indexOf(q) >= 0)
-                out.push(row)
-        }
-        return out
+    readonly property var browseRows: {
+        return Browse.apply(root.status.listings || [],{query:root.searchQuery,collection:root.collectionFilter,network:root.networkFilter,currency:root.currencyFilter,kind:root.kindFilter,status:root.saleFilter,sort:root.sortChoice,imagesOnly:root.imagesOnly})
     }
+    readonly property var listings:browseRows.filter(function(row){return (!root.categoryFilter || row.category===root.categoryFilter) && (!root.materialFilter || row.material===root.materialFilter || (row.composition || []).some(function(part){return part.symbol===root.materialFilter})) && (!root.facetKindFilter || (root.facetKindFilter==="OBJECTS" ? row.kind!=="SERVICE" : row.kind===root.facetKindFilter)) && (!root.facetCollectionFilter || row.collection_name===root.facetCollectionFilter) && (!root.facetOriginFilter || row.origin===root.facetOriginFilter) && (!root.facetMakerFilter || row.maker===root.facetMakerFilter)})
+    function choiceIndex(choices,value){for(var i=0;i<choices.length;i++)if(choices[i].id===value)return i;return 0}
     readonly property var categories: root.status.categories || []
     readonly property var elements: root.status.elements || []
     readonly property var lives: root.status.lives || []
@@ -67,27 +92,52 @@ Item {
         : ["ELEMENT", "SUBSTANCE", "OBJECT"]
     readonly property var wallet: root.status.wallet || {}
     readonly property var merkle: root.status.merkle || {}
-    readonly property var selected: root.status.selected || null
+    readonly property var selected: root.status.selected && (!root.requestedReceiptId || root.status.selected.id===root.requestedReceiptId) ? root.status.selected : null
     readonly property var proof: root.status.proof || null
     readonly property var selectedParts: (root.selected && root.selected.composition) || []
     readonly property var selectedLife: (root.selected && root.selected.lifecycle) || []
     readonly property string legend: String(root.status.legend || "TESTNET")
+    readonly property string workspaceNetworkLabel:root.page==="CATALOG" && root.showPublic ? "PUBLIK LÄSNING" : root.page==="NFT" ? "NFT · LÄSLÄGE" : "LOKALA OBJEKTPASS"
     readonly property string activeFilter: String(root.status.filter || "ALL")
     readonly property bool connected: root.wallet.connected === true
 
+    function discover(args){if(!operationBusy && surfaceHost && surfaceHost.marketplaceDiscover)applyRaw(surfaceHost.marketplaceDiscover(JSON.stringify(args)))}
+    function requestPreviewStop(){stopPreviewsPending=true;Qt.callLater(flushPreviewStop)}
+    function flushPreviewStop(){if(stopPreviewsPending && !operationBusy && surfaceHost && surfaceHost.marketplaceDiscover){stopPreviewsPending=false;discover({action:"stop_previews"})}}
+    onOperationBusyChanged:if(!operationBusy)Qt.callLater(flushPreviewStop)
+    function maybeDiscover(){if(visible && page==="CATALOG" && showPublic && !discoveryRequested && !operationBusy && surfaceHost && surfaceHost.marketplaceDiscover && (status.public_catalog || {}).source_state==="NOT_FETCHED"){discoveryRequested=true;discover({action:"refresh",provider:"coingecko",page:1})}}
     function refresh() {
         if (!root.surfaceHost || !root.surfaceHost.marketplaceStatus)
             return
         var raw = root.surfaceHost.marketplaceStatus()
         if (raw === root.statusJson)
             return
-        root.statusJson = raw
-        root.formError = String(root.status.error || "")
+        root.applyRaw(raw)
+    }
+
+    function importImage(source) {
+        if(root.operationBusy || !root.surfaceHost || !root.surfaceHost.marketplaceImportImage)return
+        root.awaitingImage=true
+        root.applyRaw(root.surfaceHost.marketplaceImportImage(String(source)))
     }
 
     function applyRaw(raw) {
-        root.statusJson = String(raw || "{}")
-        root.formError = String(root.status.error || "")
+        try {
+            var previousMediaId=(root.status.draft_media || {}).id || ""
+            var next=JSON.parse(String(raw || "{}"))
+            if(!root.settlementAssetId && next.default_settlement_asset)root.settlementAssetId=next.default_settlement_asset
+            root.formError=String(next.error || (next.ui_operation || {}).error || "")
+            if (next.listings) {root.statusJson=raw;Qt.callLater(root.maybeDiscover)}
+            else if ((next.ui_operation || {}).state === "running") root.statusJson=raw
+            if((next.ui_operation || {}).name === "market_image" && (next.ui_operation || {}).state !== "running") {
+                if((next.ui_operation || {}).state === "done" && next.draft_media && (root.awaitingImage || previousMediaId!==next.draft_media.id))root.draftImage=next.draft_media
+                root.awaitingImage=false
+            }
+            if(root.awaitingList && !root.operationBusy) {
+                root.awaitingList=false
+                if(!root.formError && root.operation.state === "done" && root.operation.name === "market_list") root.finishList()
+            }
+        } catch(e) { root.formError="MARKETPLACE_INVALID_RESPONSE" }
     }
 
     function setFilter(name) {
@@ -96,9 +146,20 @@ Item {
         root.applyRaw(root.surfaceHost.marketplaceSetFilter(name))
     }
 
+    function focusCatalog(listingId) {
+        if(root.operationBusy)return
+        root.catalogFocusId=listingId
+        root.requestedReceiptId=""
+        if (!root.operationBusy && root.surfaceHost && root.surfaceHost.marketplaceSelect)
+            root.applyRaw(root.surfaceHost.marketplaceSelect(listingId))
+    }
+    function applyFacet(field,value,kind){if(operationBusy)return;if(field==="all"){facetKindFilter="";categoryFilter="";materialFilter="";facetCollectionFilter="";facetOriginFilter="";facetMakerFilter=""}else if(field==="category"){facetKindFilter=kind;categoryFilter=value}else if(field==="material")materialFilter=value;else if(field==="collection_name")facetCollectionFilter=value;else if(field==="origin")facetOriginFilter=value;else if(field==="maker")facetMakerFilter=value}
+    function clearCatalogFilters(){collectionFilter="";networkFilter="";currencyFilter="";kindFilter="";applyFacet("all","","");saleFilter="";imagesOnly=false;sortChoice="recent";if(activeFilter!=="ALL")setFilter("ALL")}
+    readonly property int filterCount:(collectionFilter?1:0)+(networkFilter?1:0)+(currencyFilter?1:0)+(kindFilter?1:0)+(categoryFilter?1:0)+(materialFilter?1:0)+(facetKindFilter?1:0)+(facetCollectionFilter?1:0)+(facetOriginFilter?1:0)+(facetMakerFilter?1:0)+(saleFilter?1:0)+(imagesOnly?1:0)+(activeFilter!=="ALL"?1:0)
     function selectRow(listingId) {
-        if (!root.surfaceHost || !root.surfaceHost.marketplaceSelect)
+        if (root.operationBusy || !root.surfaceHost || !root.surfaceHost.marketplaceSelect)
             return
+        root.requestedReceiptId=listingId
         root.applyRaw(root.surfaceHost.marketplaceSelect(listingId))
         root.page = "RECEIPT"
     }
@@ -147,7 +208,7 @@ Item {
     }
 
     function submitList() {
-        if (!root.surfaceHost || !root.surfaceHost.marketplaceList)
+        if (root.operationBusy || !root.surfaceHost || !root.surfaceHost.marketplaceList)
             return
         root.applyRaw(
             root.surfaceHost.marketplaceList(
@@ -156,8 +217,13 @@ Item {
                     "kind": root.draftKind,
                     "category": root.draftCategory,
                     "material": root.draftMaterial,
-                    "mint": mintField.text,
+                    "mint": root.legacyMintOpen ? mintField.text : "",
                     "price_sol": priceField.text,
+                    "price": priceField.text,
+                    "settlement_asset_id": root.settlementAssetId,
+                    "image_id": root.draftImage.id || "",
+                    "collection_name": collectionField.text,
+                    "nft_binding": root.linkNft && nftChainChoice.currentIndex>=0 ? {chain_id:nftChainChoice.model[nftChainChoice.currentIndex].id,standard:nftStandardChoice.currentText,collection:nftCollectionField.text.trim(),token_id:nftTokenField.text.trim()} : null,
                     "description": descField.text,
                     "maker": makerField.text,
                     "origin": originField.text,
@@ -167,7 +233,14 @@ Item {
                 })
             )
         )
-        if (!root.formError) {
+        if(root.operationBusy) root.awaitingList=true
+        else if (!root.formError) root.finishList()
+    }
+
+    function finishList() {
+            root.requestedReceiptId=(root.status.selected || {}).id || ""
+            root.linkNft=false;nftCollectionField.text="";nftTokenField.text=""
+            root.draftImage=({});collectionField.text=""
             titleField.text = ""
             mintField.text = ""
             priceField.text = "0"
@@ -178,7 +251,6 @@ Item {
             root.draftParts = []
             root.draftLives = []
             root.page = "RECEIPT"
-        }
     }
 
     function registerElement(symbol) {
@@ -241,229 +313,192 @@ Item {
     function statusColor(value) {
         var s = String(value || "")
         if (s === "LISTED")
-            return "#8db89a"
+            return RuntimeTheme.GGTheme.positive
         if (s === "SOLD")
-            return "#c8a97e"
+            return RuntimeTheme.GGTheme.accent
         if (s === "DELISTED")
-            return "#c98989"
-        return "#a8b0b8"
+            return RuntimeTheme.GGTheme.negative
+        return RuntimeTheme.GGTheme.muted
     }
 
     Timer {
-        interval: 4000
-        running: root.visible
+        interval: root.operationBusy || root.stopPreviewsPending || ((root.status.public_catalog || {}).preview_job || {}).worker_active || !root.status.listings ? 250 : 4000
+        running: root.visible || root.stopPreviewsPending
         repeat: true
-        onTriggered: root.refresh()
+        onTriggered: {root.refresh();root.flushPreviewStop()}
     }
 
     onVisibleChanged: {
         if (visible)
             root.refresh()
     }
+    FileDialog {
+        id:imageDialog;title:"Välj bild som beskriver varan eller tjänsten";fileMode:FileDialog.OpenFile;nameFilters:["Bilder (*.png *.jpg *.jpeg *.webp)"]
+        onAccepted:root.importImage(selectedFile)
+    }
 
+    CryptoSpaceFrame { property string uiColorScope: "ui.widget.MarketplaceSurface.CryptoSpaceFrame.1";
+        id:spaceFrame;objectName:"marketplacePrimarySpace";anchors.fill:parent;visible:!root.embedded;section:"MARKETPLACE";title:"Marketplace"
+        surfaceHost:root.surfaceHost;operation:root.operation
+        events:(root.status.public_catalog || {}).events || []
+        context:root.workspaceNetworkLabel
+        onNavigate:function(section){if(section==="MARKETPLACE")root.page="CATALOG";else root.cryptoRequested(section)}
+    }
     Item {
+        parent:root.embedded ? root : spaceFrame.contentItem
         anchors.fill: parent
-        anchors.leftMargin: 6
-        anchors.rightMargin: 6
-        anchors.topMargin: 4
-        anchors.bottomMargin: 6
+        anchors.leftMargin: 10
+        anchors.rightMargin: 10
+        anchors.topMargin: 0
+        anchors.bottomMargin: 0
 
         Item {
             id: topBar
             width: parent.width
-            height: 20
+            height: (root.page==="CATALOG" ? 0 : navFlow.height+4) + (marketError.visible ? marketError.implicitHeight+4 : 0)
 
-            Row {
-                spacing: 0
-                Repeater {
-                    model: root.nav
-                    Text {
-                        required property int index
-                        required property string modelData
-                        text: index > 0 ? ("  |  " + modelData) : modelData
-                        color: root.page === modelData ? "#d8dee9" : "#a8b0b8"
-                        font.family: "monospace"
-                        font.pixelSize: 12
-                        font.bold: root.page === modelData
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.page = modelData
+            Flow {
+                id: navFlow
+                visible:root.page!=="CATALOG"
+                width: parent.width
+                spacing: 4
+                GGText { colorKey: "ui.MarketplaceSurface.1";visible:false;text:"MARKETPLACE";width:root.width<500 ? parent.width : 175;height:30;verticalAlignment:Text.AlignVCenter;color:RuntimeTheme.GGTheme.bright;font.family:"monospace";font.pixelSize:15;font.letterSpacing:1.4}
+                CryptoButton { property string uiColorScope: "ui.control.MarketplaceSurface.1";objectName:"marketBrowseButton";text:root.page==="RECEIPT" ? "← Utforska" : "Utforska";checked:root.page==="CATALOG";onClicked:root.page="CATALOG"}
+                CryptoButton { property string uiColorScope: "ui.control.MarketplaceSurface.2";objectName:"marketRegisterButton";text:"+ Registrera";checked:root.page==="REGISTER";onClicked:root.page="REGISTER"}
+                CryptoButton { property string uiColorScope: "ui.control.MarketplaceSurface.3";id:toolsButton;objectName:"marketToolsSubpageButton";text:"Verktyg ⌄";quiet:true;onClicked:marketTools.open()}
+                Popup {
+                    id:marketTools;parent:root;objectName:"marketToolsMenu";x:Math.max(0,root.width-width-10);y:54;width:Math.min(300,root.width-24);padding:12;focus:true;closePolicy:Popup.CloseOnEscape | Popup.CloseOnPressOutside
+                    background:Rectangle {color:RuntimeTheme.GGTheme.panel;border.color:RuntimeTheme.GGTheme.edge;radius:4}
+                    contentItem:Column {spacing:5
+                        GGText { colorKey: "ui.MarketplaceSurface.2";text:"VERKTYG & DOKUMENTATION";color:RuntimeTheme.GGTheme.muted;font.family:"monospace";font.pixelSize:10}
+                        Repeater {model:[{id:"RECEIPT",name:"Valt objekt / kvitto"},{id:"ELEMENTS",name:"Materialbibliotek"},{id:"LIVES",name:"Tidigare liv & återbruk"},{id:"ACTIVITY",name:"Aktivitetslogg"},{id:"OMNI",name:"Wallet & nätverk"},{id:"NFT",name:"Inspektera NFT"}]
+                            CryptoButton { property string uiColorScope: "ui.control.MarketplaceSurface.4";required property var modelData;width:parent.width;text:modelData.name;flat:true;horizontalAlignment:Text.AlignLeft;checked:root.page===modelData.id;onClicked:{root.page=modelData.id;marketTools.close()}}
                         }
                     }
                 }
             }
 
-            Row {
-                anchors.right: parent.right
+            Flow {
+                id: marketSummary
+                visible:false
+                anchors.top: navFlow.bottom
+                anchors.topMargin: 6
+                width: parent.width
                 spacing: 12
-                Text {
-                    text: root.legend
-                    color: root.legend === "TESTNET" ? "#8db89a" : "#c8a97e"
+                BusyIndicator { width:18; height:18; running:root.operationBusy; visible:running }
+                GGText { colorKey: "ui.MarketplaceSurface.3";
+                    text: "PAPER / LOKALT"
+                    color: RuntimeTheme.GGTheme.accent
                     font.family: "monospace"
                     font.pixelSize: 12
                     font.bold: true
                 }
-                Text {
-                    text: root.connected
+                GGText { colorKey: "ui.MarketplaceSurface.4";
+                    text: Number(root.wallet.account_count || 0)>0 ? Number(root.wallet.account_count)+" konton"
+                        : root.connected
                         ? String(root.wallet.short || "")
-                        : "WALLET OFF"
-                    color: root.connected ? "#c8cdd4" : "#c8a97e"
+                        : "Inget bevakningskonto"
+                    color: root.connected ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.accent
                     font.family: "monospace"
                     font.pixelSize: 12
                 }
-                Text {
-                    text: "MERKLE " + String(root.merkle.root_short || "—")
-                    color: "#b6a6c8"
-                    font.family: "monospace"
-                    font.pixelSize: 12
-                }
+                GGText { colorKey: "ui.MarketplaceSurface.5";text:({CATALOG:"Objekt, innehåll och ursprung",REGISTER:"Registrera vara eller tjänst",RECEIPT:"Objektpass",ELEMENTS:"Materialbibliotek",LIVES:"Tidigare liv",ACTIVITY:"Aktivitet",OMNI:"Wallet & nätverk",NFT:"NFT-inspektör"})[root.page] || "Objektpass";color:RuntimeTheme.GGTheme.muted;font.family:"monospace";font.pixelSize:11}
+
+            }
+            GGText { colorKey: "ui.MarketplaceSurface.6";
+                id:marketError
+                anchors.top:root.page==="CATALOG" ? parent.top : navFlow.bottom
+                width:parent.width
+                visible:root.formError.length>0
+                text:root.formError;color:RuntimeTheme.GGTheme.negative;font.family:"monospace";font.pixelSize:11;wrapMode:Text.WordWrap
             }
         }
 
         Item {
             id: field
             anchors.top: topBar.bottom
-            anchors.topMargin: 8
+            anchors.topMargin: 4
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
 
+            OmniSurface { property string uiColorScope: "ui.widget.MarketplaceSurface.OmniSurface.6";
+                embedded:true
+                anchors.fill: parent
+                visible: root.page === "OMNI"
+                surfaceHost: root.surfaceHost
+            }
+            OmniSurface { property string uiColorScope: "ui.widget.MarketplaceSurface.OmniSurface.7";
+                id:nftInspector
+                embedded:true
+                objectName:"marketNftInspector"
+                anchors.fill: parent
+                visible: root.page === "NFT"
+                page: "NFT"
+                surfaceHost: root.surfaceHost
+            }
+
             Column {
                 id: catalogHead
                 width: parent.width
-                spacing: 6
+                spacing: 0
                 visible: root.page === "CATALOG"
 
-                GgField {
-                    id: searchField
-                    width: Math.min(parent.width, 420)
-                    placeholderText: "search title, maker, material"
-                    onTextChanged: root.searchQuery = text
-                }
-
-                Flow {
-                    width: parent.width
-                    spacing: 10
-                    Repeater {
-                        model: root.filters
-                        Text {
-                            required property string modelData
-                            text: modelData
-                            color: root.activeFilter === modelData ? "#d8dee9" : "#5d6670"
-                            font.family: "monospace"
-                            font.pixelSize: 12
-                            font.bold: root.activeFilter === modelData
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.setFilter(modelData)
-                            }
+                Flow {objectName:"marketSearchSourceRow";width:parent.width;spacing:6
+                    GgField { property string uiColorScope: "ui.widget.MarketplaceSurface.GgField.8";id:searchField;objectName:"marketCatalogSearch";width:parent.width<760 ? parent.width : parent.width-404;height:34;font.pixelSize:12;leftPadding:28;placeholderText:root.showPublic ? "Sök samling, nätverk eller kontrakt…" : "Sök föremål, tjänst, material…";onTextChanged:root.searchQuery=text
+                        GGText { colorKey: "ui.MarketplaceSurface.7";x:10;anchors.verticalCenter:parent.verticalCenter;text:"⌕";color:RuntimeTheme.GGTheme.muted;font.family:"monospace";font.pixelSize:21}
+                    }
+                    Row {objectName:"marketSourceSegment";width:228;height:34;spacing:0
+                        GGText { colorKey: "ui.MarketplaceSurface.8";width:42;height:34;text:"Källa:";verticalAlignment:Text.AlignVCenter;color:RuntimeTheme.GGTheme.muted;font.family:"monospace";font.pixelSize:10}
+                        CryptoButton { property string uiColorScope: "ui.control.MarketplaceSurface.5";id:localSourceButton;objectName:"marketLocalSource";width:64;height:34;font.pixelSize:11;text:"Lokalt";checked:!root.showPublic;color:!root.showPublic ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.text;enabled:!root.operationBusy;onClicked:root.catalogScope="LOCAL"
+                            background:Rectangle {color:RuntimeTheme.GGTheme.base;border.width:1;border.color:!root.showPublic ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.line}
+                        }
+                        CryptoButton { property string uiColorScope: "ui.control.MarketplaceSurface.6";id:publicSourceButton;objectName:"marketPublicSource";width:122;height:34;font.pixelSize:11;text:"Publika samlingar";checked:root.showPublic;color:root.showPublic ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.text;enabled:!root.operationBusy;onClicked:{root.catalogScope="PUBLIC";Qt.callLater(root.maybeDiscover)}
+                            background:Rectangle {color:RuntimeTheme.GGTheme.base;border.width:1;border.color:root.showPublic ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.line}
                         }
                     }
+                    CryptoButton { property string uiColorScope: "ui.control.MarketplaceSurface.7";objectName:"marketCatalogRegister";width:96;height:34;font.pixelSize:11;text:"Registrera  +";tip:"Registrera objekt eller tjänst";enabled:!root.operationBusy;onClicked:root.page="REGISTER"}
+                    CryptoButton { property string uiColorScope: "ui.control.MarketplaceSurface.8";objectName:"marketFiltersButton";width:28;implicitWidth:28;height:34;text:"☷";tip:root.showPublic ? "Filtrera samlingar efter nätverk" : "Filter"+(root.filterCount ? " · "+root.filterCount : "");quiet:true;checked:!root.showPublic && root.catalogFiltersOpen;onClicked:{if(root.showPublic)publicCatalog.openCategories();else root.catalogFiltersOpen=!root.catalogFiltersOpen}}
+                    CryptoButton { property string uiColorScope: "ui.control.MarketplaceSurface.9";objectName:"marketToolsButton";width:28;implicitWidth:28;height:34;text:"⋯";tip:"Material, tidigare liv och andra verktyg";onClicked:marketTools.open()}
+                }
+                Flow {
+                    width:parent.width;spacing:6;visible:!root.showPublic && root.catalogFiltersOpen
+                    CryptoPick { property string uiColorScope: "ui.control.MarketplaceSurface.10";width:Math.min(210,parent.width);model:[{id:"",name:"Alla samlingar"}].concat((root.status.collections || []).map(function(name){return {id:name,name:name}}));textRole:"name";Accessible.name:"Samling";currentIndex:root.choiceIndex(model,root.collectionFilter);onActivated:root.collectionFilter=model[currentIndex].id}
+                    CryptoPick { property string uiColorScope: "ui.control.MarketplaceSurface.11";width:160;model:[{id:"",name:"Alla typer"},{id:"OBJECT",name:"Varor / objekt"},{id:"SERVICE",name:"Tjänster"},{id:"ELEMENT",name:"Grundämnen"},{id:"SUBSTANCE",name:"Ämnen"}];textRole:"name";Accessible.name:"Objekttyp";currentIndex:root.choiceIndex(model,root.kindFilter);onActivated:root.kindFilter=model[currentIndex].id}
+                    CryptoPick { property string uiColorScope: "ui.control.MarketplaceSurface.12";width:Math.min(220,parent.width);model:[{id:"",name:"Alla ursprungsnätverk"}].concat((root.status.settlement_networks || []).map(function(n){return {id:n.id,name:n.name}})).concat([{id:"mainnet",name:"Solana · äldre mainnetkvitton"},{id:"testnet",name:"Solana · äldre labbkvitton"}]);textRole:"name";Accessible.name:"MP ursprungsnätverk";currentIndex:root.choiceIndex(model,root.networkFilter);onActivated:root.networkFilter=model[currentIndex].id}
+                    CryptoPick { property string uiColorScope: "ui.control.MarketplaceSurface.13";width:160;model:[{id:"",name:"Alla status"},{id:"LISTED",name:"Till salu"},{id:"SOLD",name:"Dokumenterade köp"},{id:"DELISTED",name:"Avpublicerade"}];textRole:"name";Accessible.name:"Försäljningsstatus";currentIndex:root.choiceIndex(model,root.saleFilter);onActivated:root.saleFilter=model[currentIndex].id}
+                    CryptoPick { property string uiColorScope: "ui.control.MarketplaceSurface.14";width:Math.min(220,parent.width);model:[{id:"",name:"Alla prisvalutor"}].concat(root.settlementAssets.map(function(a){return {id:a.id,name:a.symbol+" · "+a.chain_id}}));textRole:"name";Accessible.name:"Prisets valuta och nätverk";currentIndex:root.choiceIndex(model,root.currencyFilter);onActivated:{root.currencyFilter=model[currentIndex].id;if(!root.currencyFilter && root.sortChoice==="price")root.sortChoice="recent"}}
+                    CryptoPick { property string uiColorScope: "ui.control.MarketplaceSurface.15";width:170;model:[{id:"recent",name:"Senast registrerat"},{id:"name",name:"Namn"}].concat(root.currencyFilter ? [{id:"price",name:"Lägst begärt pris"}] : []);textRole:"name";Accessible.name:"Katalogsortering";currentIndex:root.choiceIndex(model,root.sortChoice);onActivated:root.sortChoice=model[currentIndex].id}
+                    CryptoPick { property string uiColorScope: "ui.control.MarketplaceSurface.16";width:170;model:root.filters;Accessible.name:"Materialkategori";currentIndex:Math.max(0,root.filters.indexOf(root.activeFilter));onActivated:root.setFilter(currentText)}
+                    CryptoToggle { property string uiColorScope: "ui.control.MarketplaceSurface.17";text:"Med bild";checked:root.imagesOnly;onClicked:root.imagesOnly=checked}
+                    CryptoButton { property string uiColorScope: "ui.control.MarketplaceSurface.18";visible:root.filterCount>0;text:"Rensa filter";quiet:true;onClicked:root.clearCatalogFilters()}
                 }
 
-                Text {
-                    text: String(root.listings.length)
-                        + " shown · "
-                        + String(root.status.listing_count || 0)
-                        + " receipts · NFT = kvitto, not pixels"
-                    color: "#a8b0b8"
-                    font.family: "monospace"
-                    font.pixelSize: 12
-                }
             }
 
-            Flickable {
-                anchors.fill: parent
-                anchors.topMargin: catalogHead.visible ? catalogHead.height + 6 : 0
-                visible: root.page === "CATALOG"
-                clip: true
-                boundsBehavior: Flickable.StopAtBounds
-                contentHeight: catalogFlow.height
-                ScrollBar.vertical: GgScrollBar {}
-
-                Flow {
-                    id: catalogFlow
-                    width: parent.width
-                    spacing: 8
-
-                    Text {
-                        visible: root.listings.length === 0
-                        width: catalogFlow.width
-                        text: "Inga kvitton ännu. REGISTER ett föremål eller ELEMENT ett grundämne. Ett kvitto är en paper-NFT på testnet."
-                        color: "#a8b0b8"
-                        font.family: "monospace"
-                        font.pixelSize: 12
-                        wrapMode: Text.WordWrap
-                    }
-
-                    Repeater {
-                        model: root.listings.length
-                        delegate: TmogCard {
-                            required property int index
-                            width: Math.max(240, (catalogFlow.width - 8) / 2)
-                            height: 92
-                            leftLegend: String((root.listings[index] || {}).kind || "OBJECT")
-                            rightLegend: String((root.listings[index] || {}).status || "")
-                            borderColor: root.selected && String(root.selected.id || "")
-                                         === String((root.listings[index] || {}).id || "")
-                                ? "#8b949e" : "#3a3a3a"
-
-                            Column {
-                                anchors.fill: parent
-                                spacing: 2
-                                Text {
-                                    width: parent.width
-                                    text: String((root.listings[index] || {}).title || "")
-                                    color: "#e6e6e6"
-                                    font.family: "monospace"
-                                    font.pixelSize: 13
-                                    font.bold: true
-                                    elide: Text.ElideRight
-                                }
-                                Text {
-                                    width: parent.width
-                                    text: String((root.listings[index] || {}).material || "")
-                                        + " · "
-                                        + String((root.listings[index] || {}).part_count || 0)
-                                        + " parts · "
-                                        + String((root.listings[index] || {}).life_count || 0)
-                                        + " lives · "
-                                        + String((root.listings[index] || {}).price_sol || "0")
-                                        + " SOL"
-                                    color: "#c8a97e"
-                                    font.family: "monospace"
-                                    font.pixelSize: 12
-                                    elide: Text.ElideRight
-                                }
-                                Text {
-                                    width: parent.width
-                                    text: String((root.listings[index] || {}).receipt || "")
-                                    color: "#b6a6c8"
-                                    font.family: "monospace"
-                                    font.pixelSize: 12
-                                    elide: Text.ElideRight
-                                }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: function(mouse) {
-                                    var row = root.listings[index] || {}
-                                    if (mouse.modifiers & Qt.ControlModifier)
-                                        root.togglePart(row)
-                                    else if (mouse.modifiers & Qt.ShiftModifier)
-                                        root.toggleLife(String(row.id || ""))
-                                    else
-                                        root.selectRow(String(row.id || ""))
-                                }
-                                onPressAndHold: root.toggleLife(String((root.listings[index] || {}).id || ""))
-                            }
-                        }
-                    }
-                }
+            MarketplaceDiscovery { property string uiColorScope: "ui.widget.MarketplaceSurface.MarketplaceDiscovery.23";
+                id:publicCatalog
+                anchors.fill:parent;anchors.topMargin:catalogHead.height+6;visible:root.page==="CATALOG" && root.showPublic
+                state:root.status.public_catalog || ({});busy:root.operationBusy;query:root.searchQuery
+                onRefreshRequested:function(provider,page){root.discover({action:"refresh",provider:provider,page:page})}
+                onPreviewsRequested:function(ids){root.discover({action:"previews",ids:ids})}
+                onStopPreviewsRequested:root.requestPreviewStop()
+                onSelectRequested:function(id){root.discover({action:"select",id:id})}
+                onInspectRequested:function(binding){root.page="NFT";nftInspector.inspectBinding(binding)}
+                onCopyRequested:function(ref){if(root.surfaceHost && root.surfaceHost.tmogCopy)root.surfaceHost.tmogCopy(ref)}
+            }
+            MarketplaceBrowser { property string uiColorScope: "ui.widget.MarketplaceSurface.MarketplaceBrowser.24";
+                anchors.fill:parent;anchors.topMargin:catalogHead.height+10
+                visible:root.page==="CATALOG" && !root.showPublic
+                rows:root.listings;sourceRows:root.browseRows;fullRows:root.status.listings || [];events:root.ledger;receipt:root.selected || ({});focusedId:root.catalogFocusId;busy:root.operationBusy;mode:root.catalogMode
+                category:root.categoryFilter;material:root.materialFilter;kind:root.facetKindFilter;collection:root.facetCollectionFilter;origin:root.facetOriginFilter;maker:root.facetMakerFilter;sort:root.sortChoice;priceSortAvailable:!!root.currencyFilter
+                onFacetRequested:function(field,value,kind){root.applyFacet(field,value,kind)}
+                onSortRequested:function(sort){root.sortChoice=sort}
+                onModeRequested:function(mode){root.catalogMode=mode}
+                onObjectFocused:function(id){root.focusCatalog(id)}
+                onObjectOpened:function(id){root.selectRow(id)}
+                onNftRequested:function(binding){root.page="NFT";nftInspector.inspectBinding(binding)}
+                onRegisterRequested:root.page="REGISTER"
             }
 
             Flickable {
@@ -472,25 +507,25 @@ Item {
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
                 contentHeight: listCol.height
-                ScrollBar.vertical: GgScrollBar {}
+                ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.MarketplaceSurface.GgScrollBar.25";}
 
                 Column {
                     id: listCol
                     width: parent.width
                     spacing: 8
 
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.9";
                         width: parent.width
                         text: "Blocket-enkelt: namnge föremålet, välj om det är grundämne, ämne eller sak. Kvittot mintas som paper-NFT. Sammansättning och tidigare liv kan fyllas i senare när fler producenter är med."
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.10";
                         text: "KIND"
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
@@ -499,10 +534,10 @@ Item {
                         spacing: 10
                         Repeater {
                             model: root.kinds
-                            Text {
+                            GGText { colorKey: "ui.MarketplaceSurface.11";
                                 required property string modelData
                                 text: modelData
-                                color: root.draftKind === modelData ? "#d8dee9" : "#5d6670"
+                                color: root.draftKind === modelData ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.dim
                                 font.family: "monospace"
                                 font.pixelSize: 12
                                 font.bold: root.draftKind === modelData
@@ -515,27 +550,36 @@ Item {
                                             root.draftCategory = "MATERIAL"
                                         else if (modelData === "OBJECT")
                                             root.draftCategory = "ITEM"
+                                        else if (modelData === "SERVICE")
+                                            root.draftCategory = "SERVICE"
                                     }
                                 }
                             }
                         }
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.12";
                         text: "TITLE"
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
-                    GgField {
+                    GgField { property string uiColorScope: "ui.widget.MarketplaceSurface.GgField.26";
                         id: titleField
+                        objectName: "marketTitleField"
                         width: Math.min(listCol.width, 520)
                         placeholderText: "cykel, guldörhänge, stålämne, Fe…"
                     }
+                    GgField { property string uiColorScope: "ui.widget.MarketplaceSurface.GgField.27"; id:collectionField;width:Math.min(listCol.width,520);placeholderText:"Samling / produktserie (valfritt)" }
+                    Flow { width:parent.width;spacing:8
+                        CryptoButton { property string uiColorScope: "ui.control.MarketplaceSurface.19"; text:"Lägg till bild";enabled:!root.operationBusy;onClicked:imageDialog.open() }
+                        CryptoButton { property string uiColorScope: "ui.control.MarketplaceSurface.20"; text:"Ta bort bild från utkast";enabled:!!root.draftImage.id && !root.operationBusy;quiet:true;onClicked:root.draftImage=({}) }
+                    }
+                    Image { width:Math.min(parent.width,260);height:root.draftImage.url ? 140 : 0;source:root.draftImage.url || "";fillMode:Image.PreserveAspectFit;asynchronous:true }
 
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.13";
                         text: "CATEGORY"
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
@@ -544,12 +588,12 @@ Item {
                         spacing: 10
                         Repeater {
                             model: root.categories.length
-                            Text {
+                            GGText { colorKey: "ui.MarketplaceSurface.14";
                                 required property int index
                                 text: String((root.categories[index] || {}).id || "")
                                 color: root.draftCategory
                                        === String((root.categories[index] || {}).id || "")
-                                    ? "#d8dee9" : "#5d6670"
+                                    ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.dim
                                 font.family: "monospace"
                                 font.pixelSize: 12
                                 font.bold: root.draftCategory
@@ -565,9 +609,9 @@ Item {
                         }
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.15";
                         text: root.draftKind === "ELEMENT" ? "ELEMENT" : "MATERIAL"
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
@@ -576,10 +620,10 @@ Item {
                         spacing: 10
                         Repeater {
                             model: root.draftKind === "ELEMENT" ? ["Fe", "Cu", "Au", "Ag", "C", "Al", "Si", "O", "H", "Pb", "Sn", "Zn", "Ti", "Ni", "Cr"] : root.materials
-                            Text {
+                            GGText { colorKey: "ui.MarketplaceSurface.16";
                                 required property string modelData
                                 text: modelData
-                                color: root.draftMaterial === modelData ? "#d8dee9" : "#5d6670"
+                                color: root.draftMaterial === modelData ? RuntimeTheme.GGTheme.text : RuntimeTheme.GGTheme.dim
                                 font.family: "monospace"
                                 font.pixelSize: 12
                                 font.bold: root.draftMaterial === modelData
@@ -592,17 +636,30 @@ Item {
                         }
                     }
 
+                    CryptoPick { property string uiColorScope: "ui.control.MarketplaceSurface.21";
+                        width: Math.min(listCol.width, 520)
+                        model: root.settlementAssets
+                        textRole: "id"
+                        displayText: root.settlementAssetId || "SOL · befintligt paper-format"
+                        Accessible.name: "Tillgång och nätverk för priset"
+                        onActivated: root.settlementAssetId = root.settlementAssets[currentIndex].id
+                    }
+                    GGText { colorKey: "ui.MarketplaceSurface.17";
+                        width: parent.width; wrapMode: Text.WordWrap
+                        text: "Vald valuta används i det lokala kvittot. Köp är paper: inga token skickas och inget saldo debiteras."
+                        color: RuntimeTheme.GGTheme.muted; font.family: "monospace"; font.pixelSize: 11
+                    }
                     Row {
                         spacing: 12
                         Column {
                             spacing: 4
-                            Text {
+                            GGText { colorKey: "ui.MarketplaceSurface.18";
                                 text: "MASS g"
-                                color: "#a8b0b8"
+                                color: RuntimeTheme.GGTheme.muted
                                 font.family: "monospace"
                                 font.pixelSize: 12
                             }
-                            GgField {
+                            GgField { property string uiColorScope: "ui.widget.MarketplaceSurface.GgField.31";
                                 id: massField
                                 width: 120
                                 text: "0"
@@ -610,77 +667,91 @@ Item {
                         }
                         Column {
                             spacing: 4
-                            Text {
-                                text: "PRICE SOL"
-                                color: "#a8b0b8"
+                            GGText { colorKey: "ui.MarketplaceSurface.19";
+                                text: root.settlementAssetId ? "PRICE · vald tillgång" : "PRICE SOL"
+                                color: RuntimeTheme.GGTheme.muted
                                 font.family: "monospace"
                                 font.pixelSize: 12
                             }
-                            GgField {
+                            GgField { property string uiColorScope: "ui.widget.MarketplaceSurface.GgField.32";
                                 id: priceField
+                                objectName: "marketPriceField"
                                 width: 120
                                 text: "0"
                             }
                         }
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.20";
                         text: "MAKER"
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
-                    GgField {
+                    GgField { property string uiColorScope: "ui.widget.MarketplaceSurface.GgField.33";
                         id: makerField
+                        objectName:"marketMakerField"
                         width: Math.min(listCol.width, 520)
                         placeholderText: "who made it"
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.21";
                         text: "ORIGIN"
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
-                    GgField {
+                    GgField { property string uiColorScope: "ui.widget.MarketplaceSurface.GgField.34";
                         id: originField
+                        objectName:"marketOriginField"
                         width: Math.min(listCol.width, 520)
                         placeholderText: "mine, mill, workshop, previous owner"
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.22";
                         text: "DESCRIPTION"
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
-                    GgField {
+                    GgField { property string uiColorScope: "ui.widget.MarketplaceSurface.GgField.35";
                         id: descField
                         width: Math.min(listCol.width, 520)
                         placeholderText: "what it is, what it is made of, where it came from"
                     }
 
-                    Text {
-                        text: "SOLANA MINT (optional · empty = paper receipt)"
-                        color: "#a8b0b8"
+                    CryptoToggle { property string uiColorScope: "ui.control.MarketplaceSurface.22";text:"Länka ett befintligt NFT (valfritt)";checked:root.linkNft;onClicked:root.linkNft=checked}
+                    Column {width:parent.width;spacing:6;visible:root.linkNft
+                        CryptoPick { property string uiColorScope: "ui.control.MarketplaceSurface.23";id:nftStandardChoice;width:Math.min(parent.width,320);model:["erc721","erc1155","krc721"];Accessible.name:"Länkat NFT-protokoll"}
+                        CryptoPick { property string uiColorScope: "ui.control.MarketplaceSurface.24";id:nftChainChoice;objectName:"marketNftSourceChain";width:Math.min(parent.width,420);model:(root.status.settlement_networks || []).filter(function(n){return nftStandardChoice.currentText==="krc721" ? n.family==="kaspa" : n.family==="evm"});textRole:"name";Accessible.name:"Länkad NFT:s ursprungsnätverk"}
+                        GgField { property string uiColorScope: "ui.widget.MarketplaceSurface.GgField.39";id:nftCollectionField;objectName:"marketNftCollection";width:Math.min(parent.width,520);placeholderText:"NFT-kontrakt eller samlingsticker";Accessible.name:placeholderText}
+                        GgField { property string uiColorScope: "ui.widget.MarketplaceSurface.GgField.40";id:nftTokenField;objectName:"marketNftTokenId";width:Math.min(parent.width,320);placeholderText:"Token-ID · heltal som text";Accessible.name:placeholderText}
+                        GGText { colorKey: "ui.MarketplaceSurface.23";width:parent.width;text:"Referensen kopplas till objektpasset. Ägande måste kontrolleras separat; inget NFT överförs vid registrering.";font.family:"monospace";font.pixelSize:11;color:RuntimeTheme.GGTheme.muted;wrapMode:Text.WordWrap}
+                    }
+                    CryptoToggle { property string uiColorScope: "ui.control.MarketplaceSurface.25";text:"Äldre Solanamint-format";checked:root.legacyMintOpen;onClicked:root.legacyMintOpen=checked}
+                    GGText { colorKey: "ui.MarketplaceSurface.24";
+                        visible:root.legacyMintOpen
+                        text: "Solanamint (valfritt i äldre kvittoformat)"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
-                    GgField {
+                    GgField { property string uiColorScope: "ui.widget.MarketplaceSurface.GgField.42";
                         id: mintField
+                        visible:root.legacyMintOpen
                         width: Math.min(listCol.width, 520)
                         placeholderText: "base58 mint or leave blank"
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.25";
                         width: parent.width
                         text: "COMPOSITION  " + String(root.draftParts.length) + " parts · click an ELEMENT receipt in CATALOG then here, or register elements first"
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.26";
                         visible: root.draftParts.length > 0
                         width: parent.width
                         text: {
@@ -690,23 +761,23 @@ Item {
                                 bits.push(String(root.draftParts[i].symbol || root.draftParts[i].title || ""))
                             return bits.join(" · ")
                         }
-                        color: "#8db89a"
+                        color: RuntimeTheme.GGTheme.positive
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.27";
                         visible: root.formError.length > 0
                         width: parent.width
                         text: root.formError
-                        color: "#c98989"
+                        color: RuntimeTheme.GGTheme.negative
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
 
-                    GgButton {
+                    GgButton { property string uiColorScope: "ui.control.MarketplaceSurface.26";
                         text: "MINT RECEIPT"
                         onClicked: root.submitList()
                     }
@@ -719,32 +790,44 @@ Item {
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
                 contentHeight: proofCol.height
-                ScrollBar.vertical: GgScrollBar {}
+                ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.MarketplaceSurface.GgScrollBar.44";}
 
                 Column {
                     id: proofCol
                     width: parent.width
                     spacing: 6
+                    MarketplacePassport { property string uiColorScope: "ui.widget.MarketplaceSurface.MarketplacePassport.45";
+                        id: passport
+                        visible:root.selected!==null
+                        receipt:root.selected || ({})
+                        width:parent.width
+                        onObjectRequested:function(id){root.selectRow(id)}
+                        onNftRequested:function(binding){root.page="NFT";nftInspector.inspectBinding(binding)}
+                    }
 
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.28";
                         visible: root.selected === null
                         width: parent.width
-                        text: "Välj ett kvitto i CATALOG. Identity-hashen är kvittot. State-hashen rör sig när ägare byts."
-                        color: "#a8b0b8"
+                        text: root.operationBusy ? "Öppnar valt objekt…" : root.requestedReceiptId ? "Det valda objektet kunde inte öppnas." : "Välj ett objekt i Utforska för att öppna dess pass."
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
 
-                    Text {
+                    Column {
+                        width:parent.width
+                        visible:passport.technical
+                        spacing:6
+                    GGText { colorKey: "ui.MarketplaceSurface.29";
                         visible: root.selected !== null
                         text: String((root.selected || {}).title || "")
-                        color: "#e6e6e6"
+                        color: RuntimeTheme.GGTheme.bright
                         font.family: "monospace"
                         font.pixelSize: 18
                         font.bold: true
                     }
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.30";
                         visible: root.selected !== null
                         text: String((root.selected || {}).kind || "")
                             + " · "
@@ -756,91 +839,90 @@ Item {
                             + " · "
                             + String((root.selected || {}).mass_g || 0)
                             + " g · "
-                            + String((root.selected || {}).price_sol || "0")
-                            + " SOL"
-                        color: "#c8cdd4"
+                            + String((root.selected || {}).price_label || "0 SOL")
+                        color: RuntimeTheme.GGTheme.text
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.31";
                         visible: root.selected !== null
                         width: parent.width
                         text: String((root.selected || {}).description || "")
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.32";
                         visible: root.selected !== null
                         width: parent.width
                         text: "receipt   " + String((root.selected || {}).receipt || "")
-                        color: "#c8a97e"
+                        color: RuntimeTheme.GGTheme.accent
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WrapAnywhere
                     }
-                    Text {
-                        visible: root.selected !== null
+                    GGText { colorKey: "ui.MarketplaceSurface.33";
+                        visible: root.selected !== null && passport.technical
                         width: parent.width
                         text: "identity  " + String((root.proof || {}).identity_sha256 || "")
-                        color: "#b6a6c8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WrapAnywhere
                     }
-                    Text {
-                        visible: root.selected !== null
+                    GGText { colorKey: "ui.MarketplaceSurface.34";
+                        visible: root.selected !== null && passport.technical
                         width: parent.width
                         text: "state     " + String((root.proof || {}).state_sha256 || "")
-                        color: "#b6a6c8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WrapAnywhere
                     }
-                    Text {
-                        visible: root.selected !== null
+                    GGText { colorKey: "ui.MarketplaceSurface.35";
+                        visible: root.selected !== null && passport.technical
                         width: parent.width
                         text: "catalog   " + String((root.proof || {}).catalog_root || "")
-                        color: "#b6a6c8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WrapAnywhere
                     }
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.36";
                         visible: root.selected !== null
                         width: parent.width
                         text: "maker     "
                             + (String((root.selected || {}).maker || "") || "—")
                             + "   origin "
                             + (String((root.selected || {}).origin || "") || "—")
-                        color: "#c8cdd4"
+                        color: RuntimeTheme.GGTheme.text
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.37";
                         visible: root.selected !== null
                         width: parent.width
                         text: "owner     "
                             + (String((root.selected || {}).owner || "") || "unowned")
-                        color: "#c8cdd4"
+                        color: RuntimeTheme.GGTheme.text
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WrapAnywhere
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.38";
                         visible: root.selectedParts.length > 0
                         text: "COMPOSITION"
-                        color: "#d8dee9"
+                        color: RuntimeTheme.GGTheme.text
                         font.family: "monospace"
                         font.pixelSize: 12
                         font.bold: true
                     }
                     Repeater {
                         model: root.selectedParts
-                        delegate: Text {
+                        delegate: GGText { colorKey: "ui.MarketplaceSurface.39";
                             required property var modelData
                             width: proofCol.width
                             text: String(modelData.symbol || "")
@@ -850,57 +932,59 @@ Item {
                                 + String(modelData.mass_g || 0)
                                 + " g  "
                                 + String(modelData.id || "")
-                            color: "#8db89a"
+                            color: RuntimeTheme.GGTheme.positive
                             font.family: "monospace"
                             font.pixelSize: 12
                             wrapMode: Text.WordWrap
                         }
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.40";
                         visible: root.selectedLife.length > 0
                         text: "LIFECYCLE"
-                        color: "#d8dee9"
+                        color: RuntimeTheme.GGTheme.text
                         font.family: "monospace"
                         font.pixelSize: 12
                         font.bold: true
                     }
                     Repeater {
                         model: root.selectedLife
-                        delegate: Text {
+                        delegate: GGText { colorKey: "ui.MarketplaceSurface.41";
                             required property var modelData
                             text: String(modelData.kind || "")
                                 + "  "
                                 + String(modelData.ts || "")
-                            color: "#c8a97e"
+                            color: RuntimeTheme.GGTheme.accent
                             font.family: "monospace"
                             font.pixelSize: 12
                         }
                     }
 
-                    Row {
+                    }
+                    Flow {
+                        width:parent.width
                         visible: root.selected !== null
                             && String((root.selected || {}).status || "") === "LISTED"
                         spacing: 10
-                        GgButton {
-                            text: "PAPER BUY"
+                        GgButton { property string uiColorScope: "ui.control.MarketplaceSurface.27";
+                            text: "Dokumentera paperköp"
                             onClicked: root.buySelected()
                         }
-                        GgButton {
-                            text: "DELIST"
+                        GgButton { property string uiColorScope: "ui.control.MarketplaceSurface.28";
+                            text: "Avpublicera"
                             onClicked: root.delistSelected()
                         }
-                        GgButton {
-                            text: "USE AS PREVIOUS LIFE"
+                        GgButton { property string uiColorScope: "ui.control.MarketplaceSurface.29";
+                            text: "Använd som tidigare liv"
                             onClicked: root.toggleLife(String((root.selected || {}).id || ""))
                         }
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.42";
                         visible: root.formError.length > 0 && (root.page === "RECEIPT" || root.page === "PROVENANCE")
                         width: parent.width
                         text: root.formError
-                        color: "#c98989"
+                        color: RuntimeTheme.GGTheme.negative
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
@@ -914,17 +998,17 @@ Item {
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
                 contentHeight: elCol.height
-                ScrollBar.vertical: GgScrollBar {}
+                ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.MarketplaceSurface.GgScrollBar.49";}
 
                 Column {
                     id: elCol
                     width: parent.width
                     spacing: 8
 
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.43";
                         width: parent.width
                         text: "Grundämnen är egna kvitton. Ett föremål är en sammansättning. Klicka för att minta paper-NFT för ämnet."
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
@@ -935,17 +1019,17 @@ Item {
                         spacing: 8
                         Repeater {
                             model: root.elements.length
-                            delegate: TmogCard {
+                            delegate: TmogCard { property string uiColorScope: "ui.widget.MarketplaceSurface.TmogCard.50";
                                 required property int index
                                 width: 92
                                 height: 56
                                 leftLegend: String((root.elements[index] || {}).symbol || "")
                                 rightLegend: (root.elements[index] || {}).listed ? "ON" : ""
-                                borderColor: (root.elements[index] || {}).listed ? "#8db89a" : "#3a3a3a"
-                                Text {
+                                borderColor: (root.elements[index] || {}).listed ? RuntimeTheme.GGTheme.positive : RuntimeTheme.GGTheme.line
+                                GGText { colorKey: "ui.MarketplaceSurface.44";
                                     anchors.centerIn: parent
                                     text: String((root.elements[index] || {}).name || "")
-                                    color: "#c8cdd4"
+                                    color: RuntimeTheme.GGTheme.text
                                     font.family: "monospace"
                                     font.pixelSize: 12
                                 }
@@ -966,33 +1050,33 @@ Item {
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
                 contentHeight: lifeCol.height
-                ScrollBar.vertical: GgScrollBar {}
+                ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.MarketplaceSurface.GgScrollBar.51";}
 
                 Column {
                     id: lifeCol
                     width: parent.width
                     spacing: 8
 
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.45";
                         width: parent.width
                         text: "Tidigare liv. Markera kvitton (hold i CATALOG eller USE AS PREVIOUS LIFE) och minta ett nytt föremål som bär deras material."
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.46";
                         text: "SELECTED OBJECT LIVES  "
                             + String(root.lives.length)
-                        color: "#d8dee9"
+                        color: RuntimeTheme.GGTheme.text
                         font.family: "monospace"
                         font.pixelSize: 12
                         font.bold: true
                     }
                     Repeater {
                         model: root.lives
-                        delegate: Text {
+                        delegate: GGText { colorKey: "ui.MarketplaceSurface.47";
                             required property var modelData
                             width: lifeCol.width
                             text: String(modelData.title || "")
@@ -1002,7 +1086,7 @@ Item {
                                 + String(modelData.status || "")
                                 + "  "
                                 + String(modelData.id || "")
-                            color: "#8db89a"
+                            color: RuntimeTheme.GGTheme.positive
                             font.family: "monospace"
                             font.pixelSize: 12
                             wrapMode: Text.WordWrap
@@ -1013,36 +1097,36 @@ Item {
                         }
                     }
 
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.48";
                         text: "REBIRTH SET  " + String(root.draftLives.length)
-                        color: "#c8a97e"
+                        color: RuntimeTheme.GGTheme.accent
                         font.family: "monospace"
                         font.pixelSize: 12
                         font.bold: true
                     }
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.49";
                         visible: root.draftLives.length > 0
                         width: parent.width
                         text: root.draftLives.join(" · ")
-                        color: "#c8cdd4"
+                        color: RuntimeTheme.GGTheme.text
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WrapAnywhere
                     }
-                    GgField {
+                    GgField { property string uiColorScope: "ui.widget.MarketplaceSurface.GgField.52";
                         id: rebirthField
                         width: Math.min(parent.width, 520)
                         placeholderText: "new object title"
                     }
-                    GgButton {
+                    GgButton { property string uiColorScope: "ui.control.MarketplaceSurface.30";
                         text: "MINT REBORN OBJECT"
                         onClicked: root.rebirthSelected()
                     }
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.50";
                         visible: root.formError.length > 0 && root.page === "LIVES"
                         width: parent.width
                         text: root.formError
-                        color: "#c98989"
+                        color: RuntimeTheme.GGTheme.negative
                         font.family: "monospace"
                         font.pixelSize: 12
                         wrapMode: Text.WordWrap
@@ -1056,17 +1140,17 @@ Item {
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
                 contentHeight: actCol.height
-                ScrollBar.vertical: GgScrollBar {}
+                ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.MarketplaceSurface.GgScrollBar.54";}
 
                 Column {
                     id: actCol
                     width: parent.width
                     spacing: 6
 
-                    Text {
+                    GGText { colorKey: "ui.MarketplaceSurface.51";
                         visible: root.ledger.length === 0
                         text: "No catalog events yet."
-                        color: "#a8b0b8"
+                        color: RuntimeTheme.GGTheme.muted
                         font.family: "monospace"
                         font.pixelSize: 12
                     }
@@ -1079,26 +1163,26 @@ Item {
                             spacing: 10
                             readonly property var row: root.ledger[root.ledger.length - 1 - index] || {}
 
-                            Text {
+                            GGText { colorKey: "ui.MarketplaceSurface.52";
                                 width: 72
                                 text: String(row.kind || "")
                                 color: String(row.kind || "") === "BUY"
-                                    ? "#8db89a"
+                                    ? RuntimeTheme.GGTheme.positive
                                     : (String(row.kind || "") === "DELIST"
-                                        ? "#c98989"
-                                        : "#c8a97e")
+                                        ? RuntimeTheme.GGTheme.negative
+                                        : RuntimeTheme.GGTheme.accent)
                                 font.family: "monospace"
                                 font.pixelSize: 12
                                 font.bold: true
                             }
-                            Text {
+                            GGText { colorKey: "ui.MarketplaceSurface.53";
                                 width: parent.width - 82
                                 text: String(row.listing_id || "")
                                     + "  "
                                     + String(row.txid || "PAPER")
                                     + "  "
                                     + root.shortHash(row.identity_sha256)
-                                color: "#c8cdd4"
+                                color: RuntimeTheme.GGTheme.text
                                 font.family: "monospace"
                                 font.pixelSize: 12
                                 wrapMode: Text.WordWrap

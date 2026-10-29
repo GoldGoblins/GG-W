@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
@@ -20,15 +22,15 @@ Item {
             diagnosticsFlick.contentY = 0
     }
 
-    GgFrame {
+    GgFrame { property string uiColorScope: "ui.widget.LiveAidObject.GgFrame.1";
         id: frame
         width: root.width
         height: root.height
         leftLegend: "LIVE AID · " + root.title
         rightLegend: root.activityState
         backgroundColor: "#0b1117"
-        borderColor: "#6a6a6a"
-        rightLegendColor: "#8b949e"
+        borderColor: RuntimeTheme.GGTheme.edge
+        rightLegendColor: RuntimeTheme.GGTheme.dim
 
         Flickable {
             id: diagnosticsFlick
@@ -53,7 +55,7 @@ Item {
 
                 Repeater {
                     model: root.diagnostics
-                    delegate: LiveAidLineAnnotation {
+                    delegate: LiveAidLineAnnotation { property string uiColorScope: "ui.widget.LiveAidObject.LiveAidLineAnnotation.2";
                         id: annotation
                         required property var modelData
                         width: annotation.parent.width
@@ -66,18 +68,18 @@ Item {
                     }
                 }
 
-                Text {
+                GGText { colorKey: "ui.LiveAidObject.1";
                     visible: root.evidenceSummary.length > 0
                     width: parent.width
                     text: root.evidenceSummary
-                    color: "#a8b0b8"
+                    color: RuntimeTheme.GGTheme.muted
                     wrapMode: Text.WordWrap
                     font.family: "monospace"
                     font.pixelSize: 12
                 }
             }
 
-            ScrollBar.vertical: GgScrollBar {
+            ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.LiveAidObject.GgScrollBar.3";
             }
         }
     }

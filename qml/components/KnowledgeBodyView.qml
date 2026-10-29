@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -25,9 +27,9 @@ Item {
     property var evaluation: ({})
     property var enlargedIllustration: null
     readonly property bool stacked: width < 740
-    readonly property color ink: "#e8edf1"
-    readonly property color muted: "#8f9eaa"
-    readonly property color gold: "#d7ba8b"
+    readonly property color ink: RuntimeTheme.GGTheme.bright
+    readonly property color muted: RuntimeTheme.GGTheme.muted
+    readonly property color gold: RuntimeTheme.GGTheme.accent
     readonly property var ages: bundle.age_groups || []
     readonly property var regions: bundle.regions || []
     readonly property var parameterDefinitions: {
@@ -96,7 +98,7 @@ Item {
         {id: "green", label: "Grön · vald i övningen"}
     ]
     readonly property color stateColor: manualSeverity === "red" ? "#e78480" : manualSeverity === "orange" ? "#e6aa6b"
-        : manualSeverity === "yellow" ? "#dacb8a" : manualSeverity === "green" ? "#93b9a3" : "#9cabb5"
+        : manualSeverity === "yellow" ? "#dacb8a" : manualSeverity === "green" ? "#93b9a3" : RuntimeTheme.GGTheme.muted
     readonly property var enteredValues: {
         var result = []
         for (var i = 0; i < parameterDefinitions.length; ++i) {
@@ -273,15 +275,15 @@ Item {
         hoverEnabled: true
         background: Rectangle {
             radius: 4
-            color: button.selected ? "#2a383c" : button.hovered ? "#24303a" : "#17212b"
-            border.color: button.selected ? "#9b9279" : "#35424b"
+            color: button.selected ? RuntimeTheme.GGTheme.line : button.hovered ? RuntimeTheme.GGTheme.hover : RuntimeTheme.GGTheme.raised
+            border.color: button.selected ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.edge
             opacity: button.enabled ? 1 : 0.45
         }
-        contentItem: Text {
+        contentItem: GGText { colorKey: "ui.KnowledgeBodyView.1";
             id: caption
             text: button.text
             textFormat: Text.PlainText
-            color: button.selected ? "#f0dfbd" : "#c4cdd4"
+            color: button.selected ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.text
             font.pixelSize: 12
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
@@ -292,12 +294,12 @@ Item {
         id: field
         implicitHeight: 34
         color: root.ink
-        placeholderTextColor: "#82909b"
+        placeholderTextColor: RuntimeTheme.GGTheme.muted
         selectByMouse: true
         font.pixelSize: 13
         background: Rectangle {
-            color: "#111a22"; radius: 4
-            border.color: field.activeFocus ? "#a89b79" : "#34414d"
+            color: RuntimeTheme.GGTheme.panel; radius: 4
+            border.color: field.activeFocus ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.edge
         }
     }
     component BodyCombo: ComboBox {
@@ -308,14 +310,14 @@ Item {
         rightPadding: 24
         palette.text: root.ink
         palette.buttonText: root.ink
-        palette.base: "#16222c"
-        palette.highlight: "#3a4e55"
-        palette.highlightedText: "#f2e4ca"
+        palette.base: RuntimeTheme.GGTheme.raised
+        palette.highlight: RuntimeTheme.GGTheme.edge
+        palette.highlightedText: RuntimeTheme.GGTheme.bright
         background: Rectangle {
-            color: "#111b24"; radius: 4
-            border.color: combo.activeFocus ? "#aa9c7a" : "#3a4854"
+            color: RuntimeTheme.GGTheme.panel; radius: 4
+            border.color: combo.activeFocus ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.edge
         }
-        contentItem: Text {
+        contentItem: GGText { colorKey: "ui.KnowledgeBodyView.2";
             text: combo.displayText
             textFormat: Text.PlainText
             color: root.ink
@@ -323,23 +325,23 @@ Item {
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
         }
-        indicator: Text {
+        indicator: GGText { colorKey: "ui.KnowledgeBodyView.3";
             x: combo.width - width - 9
             y: (combo.height - height) / 2
             text: "v"; color: root.gold; font.pixelSize: 11
         }
-        delegate: ItemDelegate {
+        delegate: ItemDelegate { property string uiColorScope: "ui.control.KnowledgeBodyView.1";
             required property int index
             width: combo.width
             implicitHeight: 36
             highlighted: combo.highlightedIndex === index
-            contentItem: Text {
+            contentItem: GGText { colorKey: "ui.KnowledgeBodyView.4";
                 text: combo.model && combo.model[index] ? String(combo.model[index][combo.textRole] || "") : ""
                 textFormat: Text.PlainText
-                color: "#e2e8eb"; font.pixelSize: 12; elide: Text.ElideRight
+                color: RuntimeTheme.GGTheme.bright; font.pixelSize: 12; elide: Text.ElideRight
                 verticalAlignment: Text.AlignVCenter
             }
-            background: Rectangle { color: parent.highlighted ? "#35474d" : "#15212b" }
+            background: Rectangle { color: parent.highlighted ? RuntimeTheme.GGTheme.edge : RuntimeTheme.GGTheme.panel }
         }
         popup: Popup {
             y: combo.height + 3
@@ -351,9 +353,9 @@ Item {
                 implicitHeight: contentHeight
                 model: combo.popup.visible ? combo.delegateModel : null
                 currentIndex: combo.highlightedIndex
-                ScrollBar.vertical: GgScrollBar {}
+                ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.KnowledgeBodyView.GgScrollBar.1";}
             }
-            background: Rectangle { color: "#15212b"; border.color: "#59626a"; radius: 4 }
+            background: Rectangle { color: RuntimeTheme.GGTheme.panel; border.color: RuntimeTheme.GGTheme.edge; radius: 4 }
         }
     }
     component BodyCheck: CheckBox {
@@ -364,20 +366,20 @@ Item {
         indicator: Rectangle {
             width: 20; height: 20
             y: (check.height - height) / 2
-            color: check.checked ? "#47665a" : "#111b24"
-            border.color: check.activeFocus ? root.gold : "#71847b"
+            color: check.checked ? RuntimeTheme.GGTheme.edge : RuntimeTheme.GGTheme.panel
+            border.color: check.activeFocus ? root.gold : RuntimeTheme.GGTheme.dim
             radius: 3
-            Text { anchors.centerIn: parent; text: check.checked ? "x" : ""; color: "#f1e3c9"; font.pixelSize: 16 }
+            GGText { colorKey: "ui.KnowledgeBodyView.5"; anchors.centerIn: parent; text: check.checked ? "x" : ""; color: RuntimeTheme.GGTheme.bright; font.pixelSize: 16 }
         }
-        contentItem: Text {
+        contentItem: GGText { colorKey: "ui.KnowledgeBodyView.6";
             text: check.text
             textFormat: Text.PlainText
-            color: "#d9e1e5"; font.pixelSize: 13; wrapMode: Text.WordWrap
+            color: RuntimeTheme.GGTheme.bright; font.pixelSize: 13; wrapMode: Text.WordWrap
             leftPadding: check.indicator.width + check.spacing
             verticalAlignment: Text.AlignVCenter
         }
     }
-    component SmallLabel: Text {
+    component SmallLabel: GGText {
         color: root.muted
         font.pixelSize: 11
         textFormat: Text.PlainText
@@ -393,17 +395,17 @@ Item {
                 required property var modelData
                 width: citationsColumn.width
                 spacing: 4
-                SmallLabel {
+                SmallLabel { colorKey: "ui.KnowledgeBodyView.7";
                     width: parent.width
-                    color: "#abc6b4"
+                    color: RuntimeTheme.GGTheme.text
                     text: String(modelData.source_title || modelData.title || "WEST") + " · PDF-sida " + Number(modelData.page || 1)
                 }
-                SmallLabel {
+                SmallLabel { colorKey: "ui.KnowledgeBodyView.8";
                     width: parent.width
                     visible: !!(modelData.quote || modelData.text)
                     text: String(modelData.quote || modelData.text || "")
                 }
-                BodyButton {
+                BodyButton { property string uiColorScope: "ui.control.KnowledgeBodyView.2";
                     objectName: "knowledgeBodySource" + String(modelData.page || 1)
                     text: "Öppna originalsidans tabell >"
                     width: Math.min(implicitWidth, parent.width)
@@ -414,7 +416,7 @@ Item {
         }
     }
 
-    Rectangle { anchors.fill: parent; color: "#10171e"; radius: 7 }
+    Rectangle { anchors.fill: parent; color: RuntimeTheme.GGTheme.panel; radius: 7 }
 
     ColumnLayout {
         anchors.fill: parent
@@ -426,10 +428,10 @@ Item {
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 3
-                Text { text: "MÄNNISKAN / WEST"; color: root.gold; font.pixelSize: 11; font.letterSpacing: 2 }
-                SmallLabel { Layout.fillWidth: true; text: "Övning · ej kliniskt beslutsstöd"; color: "#c5b99c" }
+                GGText { colorKey: "ui.KnowledgeBodyView.9"; text: "MÄNNISKAN / WEST"; color: root.gold; font.pixelSize: 11; font.letterSpacing: 2 }
+                SmallLabel { colorKey: "ui.KnowledgeBodyView.10"; Layout.fillWidth: true; text: "Övning · ej kliniskt beslutsstöd"; color: RuntimeTheme.GGTheme.accent }
             }
-            BodyButton { objectName: "knowledgeBodyReset"; text: "Nollställ"; onClicked: root.resetCase() }
+            BodyButton { property string uiColorScope: "ui.control.KnowledgeBodyView.3"; objectName: "knowledgeBodyReset"; text: "Nollställ"; onClicked: root.resetCase() }
         }
         Flow {
             Layout.fillWidth: true
@@ -438,7 +440,7 @@ Item {
             spacing: 6
             Repeater {
                 model: root.ages
-                delegate: BodyButton {
+                delegate: BodyButton { property string uiColorScope: "ui.control.KnowledgeBodyView.4";
                     required property var modelData
                     objectName: "knowledgeBodyAge_" + modelData.id
                     text: String(modelData.label || modelData.id)
@@ -446,7 +448,7 @@ Item {
                     onClicked: root.changeAge(modelData.id)
                 }
             }
-            BodyCombo {
+            BodyCombo { property string uiColorScope: "ui.control.KnowledgeBodyView.5";
                 id: figureChoice
                 objectName: "knowledgeBodyFigureChoice"
                 width: Math.min(190, Math.max(130, root.width - 12))
@@ -463,7 +465,7 @@ Item {
                 Accessible.name: "Illustrationslager"
             }
         }
-        SmallLabel {
+        SmallLabel { colorKey: "ui.KnowledgeBodyView.11";
             Layout.fillWidth: true
             text: "Åldersvalen styr illustration och källurval. Kliniska åldersgränser finns i originaltabellerna."
             font.pixelSize: 10
@@ -471,16 +473,16 @@ Item {
         RowLayout {
             Layout.fillWidth: true
             visible: root.stacked
-            BodyButton { objectName: "knowledgeBodyMobileBody"; text: "Kropp"; Layout.fillWidth: true; selected: !root.mobileDetails; onClicked: root.mobileDetails = false }
-            BodyButton { objectName: "knowledgeBodyMobileDetails"; text: "Läs / parametrar"; Layout.fillWidth: true; selected: root.mobileDetails; onClicked: root.mobileDetails = true }
+            BodyButton { property string uiColorScope: "ui.control.KnowledgeBodyView.6"; objectName: "knowledgeBodyMobileBody"; text: "Kropp"; Layout.fillWidth: true; selected: !root.mobileDetails; onClicked: root.mobileDetails = false }
+            BodyButton { property string uiColorScope: "ui.control.KnowledgeBodyView.7"; objectName: "knowledgeBodyMobileDetails"; text: "Läs / parametrar"; Layout.fillWidth: true; selected: root.mobileDetails; onClicked: root.mobileDetails = true }
         }
-        Text {
+        GGText { colorKey: "ui.KnowledgeBodyView.12";
             Layout.fillWidth: true
             visible: !!root.bundle.stale || root.loadStatus === "ERROR" || !root.figures.length
             text: root.bundle.stale ? "Källunderlaget har ändrats. Kontrollera originalet och granskningsmarkeringarna."
                 : (!root.figures.length ? String(root.bundle.notice || root.bundle.message || "Kroppsmaterialet är inte tillgängligt ännu.")
                     : String(root.bundle.notice || "Kroppsmaterialet kunde inte läsas."))
-            color: "#ddba80"; font.pixelSize: 12; wrapMode: Text.WordWrap; textFormat: Text.PlainText
+            color: RuntimeTheme.GGTheme.accent; font.pixelSize: 12; wrapMode: Text.WordWrap; textFormat: Text.PlainText
         }
 
         Item {
@@ -497,10 +499,10 @@ Item {
                 width: root.stacked ? parent.width : Math.max(150, parent.width - workspace.detailWidth - 12)
                 height: workspace.bodyHeight
                 visible: !root.stacked || !root.mobileDetails
-                color: "#0a1118"; radius: 7; border.color: "#34434b"
+                color: RuntimeTheme.GGTheme.canvas; radius: 7; border.color: RuntimeTheme.GGTheme.edge
                 clip: true
 
-                KnowledgeRasterView {
+                KnowledgeRasterView { property string uiColorScope: "ui.widget.KnowledgeBodyView.KnowledgeRasterView.8";
                     id: bodyRaster
                     objectName: "knowledgeBodyRaster"
                     anchors.fill: parent
@@ -519,18 +521,18 @@ Item {
                     anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
                     anchors.margins: 12; spacing: 7
                     Rectangle { width: 6; height: 6; radius: 3; color: root.stateColor; anchors.verticalCenter: parent.verticalCenter }
-                    SmallLabel { text: root.ageLabel() + " · " + String(root.currentFigure.label || "Illustration"); color: "#d5dee3"; width: Math.max(20, parent.width - 20); elide: Text.ElideRight; maximumLineCount: 1 }
+                    SmallLabel { colorKey: "ui.KnowledgeBodyView.13"; text: root.ageLabel() + " · " + String(root.currentFigure.label || "Illustration"); color: RuntimeTheme.GGTheme.text; width: Math.max(20, parent.width - 20); elide: Text.ElideRight; maximumLineCount: 1 }
                 }
                 Flow {
                     anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
                     anchors.leftMargin: 12; anchors.rightMargin: 12; anchors.bottomMargin: 48
                     height: childrenRect.height
                     spacing: 10
-                    SmallLabel {
+                    SmallLabel { colorKey: "ui.KnowledgeBodyView.14";
                         text: "Vald övningsnivå: " + (root.manualSeverity === "unassessed" ? "ej bedömd" : root.manualSeverity === "red" ? "röd" : root.manualSeverity === "orange" ? "orange" : root.manualSeverity === "yellow" ? "gul" : root.manualSeverity === "green" ? "grön" : root.manualSeverity)
                         color: root.stateColor
                     }
-                    SmallLabel {
+                    SmallLabel { colorKey: "ui.KnowledgeBodyView.15";
                         objectName: "knowledgeBodyInjuryLegend"
                         visible: root.injuries.length > 0
                         text: "× markerad skada"
@@ -541,20 +543,20 @@ Item {
                     anchors.left: parent.left; anchors.top: parent.top; anchors.topMargin: 49; anchors.leftMargin: 12
                     width: Math.min(172, Math.max(110, parent.width * 0.38))
                     height: valueColumn.implicitHeight + 14
-                    color: "#d9111b23"; radius: 5; border.color: "#34444e"
+                    color: "#d9181818"; radius: 5; border.color: RuntimeTheme.GGTheme.edge
                     visible: root.enteredValues.length > 0
                     Column {
                         id: valueColumn
                         anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 7
                         spacing: 4
-                        SmallLabel { text: "ANGIVNA ÖVNINGSVÄRDEN"; color: root.gold; font.pixelSize: 9; width: parent.width }
+                        SmallLabel { colorKey: "ui.KnowledgeBodyView.16"; text: "ANGIVNA ÖVNINGSVÄRDEN"; color: root.gold; font.pixelSize: 9; width: parent.width }
                         Repeater {
                             model: root.enteredValues
-                            delegate: Text {
+                            delegate: GGText { colorKey: "ui.KnowledgeBodyView.17";
                                 required property var modelData
                                 width: valueColumn.width
                                 text: modelData.label + "  " + modelData.value + (modelData.unit ? " " + modelData.unit : "")
-                                color: "#dee6e9"; font.pixelSize: 11; wrapMode: Text.WordWrap; textFormat: Text.PlainText
+                                color: RuntimeTheme.GGTheme.bright; font.pixelSize: 11; wrapMode: Text.WordWrap; textFormat: Text.PlainText
                             }
                         }
                     }
@@ -562,10 +564,10 @@ Item {
                 Row {
                     anchors.left: parent.left; anchors.bottom: parent.bottom; anchors.margins: 9
                     spacing: 4
-                    BodyButton { objectName: "knowledgeBodyZoomOut"; text: "−"; implicitWidth: 32; onClicked: bodyRaster.zoomAt(0.8, bodyRaster.width / 2, bodyRaster.height / 2) }
-                    BodyButton { objectName: "knowledgeBodyZoomReset"; text: bodyRaster.zoom > 1.05 ? "Visa hela" : "Helkropp"; onClicked: bodyRaster.resetView() }
-                    BodyButton { objectName: "knowledgeBodyZoomIn"; text: "+"; implicitWidth: 32; onClicked: bodyRaster.zoomAt(1.25, bodyRaster.width / 2, bodyRaster.height / 2) }
-                    BodyButton { objectName: "knowledgeBodyInjuryMode"; text: root.injuryMode ? "Markering på" : "Markera skada"; selected: root.injuryMode; onClicked: root.injuryMode = !root.injuryMode }
+                    BodyButton { property string uiColorScope: "ui.control.KnowledgeBodyView.8"; objectName: "knowledgeBodyZoomOut"; text: "−"; implicitWidth: 32; onClicked: bodyRaster.zoomAt(0.8, bodyRaster.width / 2, bodyRaster.height / 2) }
+                    BodyButton { property string uiColorScope: "ui.control.KnowledgeBodyView.9"; objectName: "knowledgeBodyZoomReset"; text: bodyRaster.zoom > 1.05 ? "Visa hela" : "Helkropp"; onClicked: bodyRaster.resetView() }
+                    BodyButton { property string uiColorScope: "ui.control.KnowledgeBodyView.10"; objectName: "knowledgeBodyZoomIn"; text: "+"; implicitWidth: 32; onClicked: bodyRaster.zoomAt(1.25, bodyRaster.width / 2, bodyRaster.height / 2) }
+                    BodyButton { property string uiColorScope: "ui.control.KnowledgeBodyView.11"; objectName: "knowledgeBodyInjuryMode"; text: root.injuryMode ? "Markering på" : "Markera skada"; selected: root.injuryMode; onClicked: root.injuryMode = !root.injuryMode }
                 }
             }
 
@@ -577,26 +579,26 @@ Item {
                 width: workspace.detailWidth
                 height: parent.height
                 visible: !root.stacked || root.mobileDetails
-                color: "#17212a"; radius: 7; border.color: "#34434b"
+                color: RuntimeTheme.GGTheme.panel; radius: 7; border.color: RuntimeTheme.GGTheme.edge
 
                 ColumnLayout {
                     anchors.fill: parent; anchors.margins: 12
                     spacing: 9
                     RowLayout {
                         Layout.fillWidth: true
-                        Text {
+                        GGText { colorKey: "ui.KnowledgeBodyView.18";
                             Layout.fillWidth: true
                             text: root.selectedRegionId ? root.regionLabel(root.selectedRegionId) : "Hela kroppen"
                             color: root.ink; font.pixelSize: 18; elide: Text.ElideRight; textFormat: Text.PlainText
                         }
-                        BodyButton { objectName: "knowledgeBodyAllRegions"; text: "Alla"; visible: !!root.selectedRegionId; onClicked: root.selectRegion("") }
+                        BodyButton { property string uiColorScope: "ui.control.KnowledgeBodyView.12"; objectName: "knowledgeBodyAllRegions"; text: "Alla"; visible: !!root.selectedRegionId; onClicked: root.selectRegion("") }
                     }
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 5
                         Repeater {
                             model: ["Ämnen", "Parametrar", "Moment"]
-                            delegate: BodyButton {
+                            delegate: BodyButton { property string uiColorScope: "ui.control.KnowledgeBodyView.13";
                                 required property string modelData
                                 objectName: "knowledgeBodyTab" + modelData
                                 text: modelData
@@ -615,7 +617,7 @@ Item {
                         clip: true
                         contentWidth: availableWidth
                         ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                        ScrollBar.vertical: GgScrollBar {}
+                        ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.KnowledgeBodyView.GgScrollBar.15";}
                         Column {
                             id: detailContent
                             width: detailsScroll.availableWidth
@@ -624,17 +626,17 @@ Item {
                             Column {
                                 width: parent.width; spacing: 9
                                 visible: root.activeSection === "Ämnen"
-                                BodyField {
+                                BodyField { property string uiColorScope: "ui.widget.KnowledgeBodyView.BodyField.16";
                                     objectName: "knowledgeBodySearch"
                                     width: parent.width; placeholderText: "Sök åkomma, skada eller sökorsak…"
                                     text: root.query
                                     onTextEdited: root.query = text
                                     Accessible.name: "Sök bland WEST-ämnen"
                                 }
-                                SmallLabel { width: parent.width; text: root.topics.length + " ämnen · " + root.ageLabel() }
+                                SmallLabel { colorKey: "ui.KnowledgeBodyView.19"; width: parent.width; text: root.topics.length + " ämnen · " + root.ageLabel() }
                                 Repeater {
                                     model: root.topics
-                                    delegate: Button {
+                                    delegate: Button { property string uiColorScope: "ui.control.KnowledgeBodyView.14";
                                         id: topicButton
                                         required property var modelData
                                         objectName: "knowledgeBodyTopic_" + modelData.id
@@ -642,11 +644,11 @@ Item {
                                         implicitHeight: topicLabel.implicitHeight + 22
                                         padding: 10
                                         background: Rectangle {
-                                            color: topicButton.hovered || root.selectedTopicId === String(topicButton.modelData.id) ? "#283842" : "#1b2933"
+                                            color: topicButton.hovered || root.selectedTopicId === String(topicButton.modelData.id) ? RuntimeTheme.GGTheme.line : RuntimeTheme.GGTheme.raised
                                             radius: 4
-                                            Rectangle { anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom; width: 2; color: topicButton.modelData.stale || (topicButton.modelData.review_notes || []).length ? "#d5a765" : "#739b8c" }
+                                            Rectangle { GGColorTarget { colorKey: "ui.fill.KnowledgeBodyView.1"; } anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom; width: 2; color: topicButton.modelData.stale || (topicButton.modelData.review_notes || []).length ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.muted }
                                         }
-                                        contentItem: Text {
+                                        contentItem: GGText { colorKey: "ui.KnowledgeBodyView.20";
                                             id: topicLabel
                                             text: String(topicButton.modelData.label || topicButton.modelData.title || "Ämne") + (topicButton.modelData.stale ? " · granska källa" : (topicButton.modelData.review_notes || []).length ? " · granskningspunkt" : "")
                                             color: root.ink; font.pixelSize: 13; wrapMode: Text.WordWrap; textFormat: Text.PlainText
@@ -654,14 +656,14 @@ Item {
                                         onClicked: root.selectTopic(modelData.id)
                                     }
                                 }
-                                SmallLabel { width: parent.width; visible: root.topics.length === 0; text: "Inga ämnen matchar. Välj Alla eller ändra sökningen." }
+                                SmallLabel { colorKey: "ui.KnowledgeBodyView.21"; width: parent.width; visible: root.topics.length === 0; text: "Inga ämnen matchar. Välj Alla eller ändra sökningen." }
                             }
 
                             Column {
                                 width: parent.width; spacing: 11
                                 visible: root.activeSection === "Parametrar"
-                                SmallLabel { width: parent.width; text: "Fiktivt övningsfall. Tomma fält betyder okänt. Värdena visas på bilden; de beskriver ingen simulerad fysiologi." }
-                                BodyCombo {
+                                SmallLabel { colorKey: "ui.KnowledgeBodyView.22"; width: parent.width; text: "Fiktivt övningsfall. Tomma fält betyder okänt. Värdena visas på bilden; de beskriver ingen simulerad fysiologi." }
+                                BodyCombo { property string uiColorScope: "ui.control.KnowledgeBodyView.15";
                                     id: scenarioChoice
                                     objectName: "knowledgeBodyScenario"
                                     width: parent.width
@@ -674,8 +676,8 @@ Item {
                                     onActivated: function(index) { if (index > 0) root.applyScenario(model[index].id) }
                                     Accessible.name: "Fiktivt övningsfall"
                                 }
-                                SmallLabel { width: parent.width; text: "Övningsnivå · väljs manuellt"; color: root.stateColor }
-                                BodyCombo {
+                                SmallLabel { colorKey: "ui.KnowledgeBodyView.23"; width: parent.width; text: "Övningsnivå · väljs manuellt"; color: root.stateColor }
+                                BodyCombo { property string uiColorScope: "ui.control.KnowledgeBodyView.16";
                                     objectName: "knowledgeBodySeverity"
                                     width: parent.width
                                     model: root.severityChoices
@@ -700,11 +702,11 @@ Item {
                                             Layout.fillWidth: true
                                             Layout.minimumWidth: 0
                                             spacing: 4
-                                            SmallLabel {
+                                            SmallLabel { colorKey: "ui.KnowledgeBodyView.24";
                                                 Layout.fillWidth: true
                                                 text: String(parameterRow.modelData.label || parameterRow.modelData.id) + (parameterRow.modelData.unit ? " · " + parameterRow.modelData.unit : "")
                                             }
-                                            BodyField {
+                                            BodyField { property string uiColorScope: "ui.widget.KnowledgeBodyView.BodyField.19";
                                                 objectName: "knowledgeBodyParameter_" + parameterRow.modelData.id
                                                 Layout.fillWidth: true
                                                 visible: (parameterRow.modelData.kind || parameterRow.modelData.type || "number") !== "enum"
@@ -715,7 +717,7 @@ Item {
                                                 onTextEdited: root.setParameter(parameterRow.modelData.id, text)
                                                 Accessible.name: String(parameterRow.modelData.label || parameterRow.modelData.id)
                                             }
-                                            BodyCombo {
+                                            BodyCombo { property string uiColorScope: "ui.control.KnowledgeBodyView.17";
                                                 id: optionChoice
                                                 objectName: "knowledgeBodyParameter_" + parameterRow.modelData.id
                                                 Layout.fillWidth: true
@@ -739,7 +741,7 @@ Item {
                                 }
                                 Repeater {
                                     model: root.evaluation.errors || []
-                                    delegate: Text {
+                                    delegate: GGText { colorKey: "ui.KnowledgeBodyView.25";
                                         required property var modelData
                                         width: detailContent.width
                                         text: String(modelData.message || modelData)
@@ -747,7 +749,7 @@ Item {
                                         Accessible.role: Accessible.AlertMessage
                                     }
                                 }
-                                BodyCheck {
+                                BodyCheck { property string uiColorScope: "ui.control.KnowledgeBodyView.18";
                                     id: newsChoice
                                     objectName: "knowledgeBodyNewsEnabled"
                                     width: parent.width
@@ -759,37 +761,37 @@ Item {
                                 Column {
                                     width: parent.width; spacing: 8
                                     visible: root.newsEnabled && !!root.evaluation.score
-                                    Text {
+                                    GGText { colorKey: "ui.KnowledgeBodyView.26";
                                         width: parent.width
                                         text: String((root.evaluation.score || {}).label || "NEWS2 skala 1 · övning") + ": "
                                             + ((root.evaluation.score || {}).complete && (root.evaluation.score || {}).total !== null
                                                 ? String(root.evaluation.score.total) + " poäng" : "ofullständigt underlag")
                                         color: root.gold; font.pixelSize: 14; wrapMode: Text.WordWrap; textFormat: Text.PlainText
                                     }
-                                    Text {
+                                    GGText { colorKey: "ui.KnowledgeBodyView.27";
                                         width: parent.width
                                         visible: !!(root.evaluation.score || {}).reason
                                         text: String((root.evaluation.score || {}).reason || "")
-                                        color: "#edc48b"; font.pixelSize: 12; wrapMode: Text.WordWrap; textFormat: Text.PlainText
+                                        color: RuntimeTheme.GGTheme.accent; font.pixelSize: 12; wrapMode: Text.WordWrap; textFormat: Text.PlainText
                                     }
                                     Repeater {
                                         model: (root.evaluation.score || {}).components || []
-                                        delegate: SmallLabel {
+                                        delegate: SmallLabel { colorKey: "ui.KnowledgeBodyView.28";
                                             required property var modelData
                                             width: detailContent.width
                                             text: String(modelData.label || modelData.id) + ": "
                                                 + (modelData.points === null || modelData.points === undefined ? "okänt / behöver kontrolleras" : String(modelData.points) + " poäng")
                                         }
                                     }
-                                    SmallLabel { width: parent.width; text: String((root.evaluation.score || {}).notice || "Övningspoängen är en del av bedömningsunderlaget; slutlig triage kräver hela rutinen.") }
-                                    CitationList { width: parent.width; citations: (root.evaluation.score || {}).citations || [] }
+                                    SmallLabel { colorKey: "ui.KnowledgeBodyView.29"; width: parent.width; text: String((root.evaluation.score || {}).notice || "Övningspoängen är en del av bedömningsunderlaget; slutlig triage kräver hela rutinen.") }
+                                    CitationList { property string uiColorScope: "ui.widget.KnowledgeBodyView.CitationList.22"; width: parent.width; citations: (root.evaluation.score || {}).citations || [] }
                                 }
-                                SmallLabel { width: parent.width; text: "Skador · klicka på kroppen med Markera skada aktiverat"; color: root.gold }
+                                SmallLabel { colorKey: "ui.KnowledgeBodyView.30"; width: parent.width; text: "Skador · klicka på kroppen med Markera skada aktiverat"; color: root.gold }
                                 Flow {
                                     width: parent.width; spacing: 5
                                     Repeater {
                                         model: root.injuries
-                                        delegate: BodyButton {
+                                        delegate: BodyButton { property string uiColorScope: "ui.control.KnowledgeBodyView.19";
                                             required property var modelData
                                             text: root.regionLabel(typeof modelData === "object" ? modelData.region_id : modelData) + " ×"
                                             selected: true
@@ -798,32 +800,32 @@ Item {
                                         }
                                     }
                                 }
-                                SmallLabel { width: parent.width; visible: root.injuries.length === 0; text: "Ingen skada markerad i övningen." }
-                                SmallLabel { width: parent.width; text: String(root.evaluation.notice || "") }
+                                SmallLabel { colorKey: "ui.KnowledgeBodyView.31"; width: parent.width; visible: root.injuries.length === 0; text: "Ingen skada markerad i övningen." }
+                                SmallLabel { colorKey: "ui.KnowledgeBodyView.32"; width: parent.width; text: String(root.evaluation.notice || "") }
                             }
 
                             Column {
                                 width: parent.width; spacing: 11
                                 visible: root.activeSection === "Moment"
-                                Text { width: parent.width; text: String(root.currentTopic.label || root.currentTopic.title || "Välj ett WEST-ämne"); color: root.ink; font.pixelSize: 20; wrapMode: Text.WordWrap; textFormat: Text.PlainText }
-                                SmallLabel { width: parent.width; text: String(root.currentTopic.summary || "Välj en kroppsdel och ett ämne för att läsa källorna och öva momenten.") }
+                                GGText { colorKey: "ui.KnowledgeBodyView.33"; width: parent.width; text: String(root.currentTopic.label || root.currentTopic.title || "Välj ett WEST-ämne"); color: root.ink; font.pixelSize: 20; wrapMode: Text.WordWrap; textFormat: Text.PlainText }
+                                SmallLabel { colorKey: "ui.KnowledgeBodyView.34"; width: parent.width; text: String(root.currentTopic.summary || "Välj en kroppsdel och ett ämne för att läsa källorna och öva momenten.") }
                                 Repeater {
                                     model: root.currentTopic.review_notes || []
-                                    delegate: Text {
+                                    delegate: GGText { colorKey: "ui.KnowledgeBodyView.35";
                                         required property var modelData
                                         objectName: "knowledgeBodyReviewNote"
                                         width: detailContent.width
                                         text: String(modelData.text || modelData)
                                         textFormat: Text.PlainText
-                                        color: "#efc98d"; font.pixelSize: 13; wrapMode: Text.WordWrap
+                                        color: RuntimeTheme.GGTheme.accent; font.pixelSize: 13; wrapMode: Text.WordWrap
                                     }
                                 }
-                                Text {
+                                GGText { colorKey: "ui.KnowledgeBodyView.36";
                                     width: parent.width; visible: !!root.currentTopic.stale
                                     text: "Granskningsmarkering: källan eller hänvisningen behöver kontrolleras."
-                                    color: "#dfb67a"; font.pixelSize: 12; wrapMode: Text.WordWrap
+                                    color: RuntimeTheme.GGTheme.accent; font.pixelSize: 12; wrapMode: Text.WordWrap
                                 }
-                                SmallLabel { width: parent.width; visible: (root.currentTopic.steps || []).length > 0; text: "ÖVNINGSANTECKNINGAR · avprickning sparas bara i denna vy"; color: root.gold; font.pixelSize: 10 }
+                                SmallLabel { colorKey: "ui.KnowledgeBodyView.37"; width: parent.width; visible: (root.currentTopic.steps || []).length > 0; text: "ÖVNINGSANTECKNINGAR · avprickning sparas bara i denna vy"; color: root.gold; font.pixelSize: 10 }
                                 Repeater {
                                     model: root.currentTopic.steps || []
                                     delegate: Column {
@@ -833,19 +835,19 @@ Item {
                                         width: detailContent.width
                                         spacing: 7
                                         readonly property string stepId: String(modelData.id || root.selectedTopicId + ":" + index)
-                                        BodyCheck {
+                                        BodyCheck { property string uiColorScope: "ui.control.KnowledgeBodyView.20";
                                             objectName: "knowledgeBodyStep" + stepRow.index
                                             width: parent.width
                                             checked: !!root.checkedSteps[stepRow.stepId]
                                             text: typeof stepRow.modelData === "string" ? stepRow.modelData : String(stepRow.modelData.text || stepRow.modelData.label || "")
                                             onToggled: root.setStep(stepRow.stepId, checked)
                                         }
-                                        CitationList { width: parent.width; citations: stepRow.modelData.citations || [] }
-                                        Rectangle { width: parent.width; height: 1; color: "#32414b" }
+                                        CitationList { property string uiColorScope: "ui.widget.KnowledgeBodyView.CitationList.25"; width: parent.width; citations: stepRow.modelData.citations || [] }
+                                        Rectangle { width: parent.width; height: 1; color: RuntimeTheme.GGTheme.line }
                                     }
                                 }
-                                SmallLabel { width: parent.width; text: "Originalets tabeller, varningssymtom och lokala rutiner behöver läsas tillsammans. Listan är ett övningsstöd och garanterar inte att alla kliniska åtgärder är täckta." }
-                                CitationList { width: parent.width; citations: root.currentTopic.citations || [] }
+                                SmallLabel { colorKey: "ui.KnowledgeBodyView.38"; width: parent.width; text: "Originalets tabeller, varningssymtom och lokala rutiner behöver läsas tillsammans. Listan är ett övningsstöd och garanterar inte att alla kliniska åtgärder är täckta." }
+                                CitationList { property string uiColorScope: "ui.widget.KnowledgeBodyView.CitationList.26"; width: parent.width; citations: root.currentTopic.citations || [] }
                                 Repeater {
                                     model: root.currentTopic.illustrations || []
                                     delegate: Column {
@@ -854,13 +856,13 @@ Item {
                                         required property int index
                                         width: detailContent.width
                                         spacing: 6
-                                        Text {
+                                        GGText { colorKey: "ui.KnowledgeBodyView.39";
                                             width: parent.width
                                             text: String(procedureIllustration.modelData.label || "Momentillustration")
                                             textFormat: Text.PlainText
                                             color: root.gold; font.pixelSize: 13; wrapMode: Text.WordWrap
                                         }
-                                        Button {
+                                        Button { property string uiColorScope: "ui.control.KnowledgeBodyView.21";
                                             objectName: "knowledgeBodyOpenIllustration" + procedureIllustration.index
                                             width: parent.width
                                             height: Math.min(240, width * 0.8)
@@ -876,24 +878,24 @@ Item {
                                             Accessible.name: "Förstora " + String(procedureIllustration.modelData.label || "momentillustrationen")
                                             onClicked: root.openIllustration(procedureIllustration.modelData)
                                         }
-                                        BodyButton {
+                                        BodyButton { property string uiColorScope: "ui.control.KnowledgeBodyView.22";
                                             text: "Förstora illustration"
                                             onClicked: root.openIllustration(procedureIllustration.modelData)
                                         }
-                                        SmallLabel {
+                                        SmallLabel { colorKey: "ui.KnowledgeBodyView.40";
                                             width: parent.width
                                             text: String(procedureIllustration.modelData.summary || "Förenklad pedagogisk illustration. Läs källan för fullständig rutin.")
                                         }
                                     }
                                 }
-                                BodyButton { text: "‹ Välj annat ämne"; onClicked: root.activeSection = "Ämnen" }
+                                BodyButton { property string uiColorScope: "ui.control.KnowledgeBodyView.23"; text: "‹ Välj annat ämne"; onClicked: root.activeSection = "Ämnen" }
                             }
                         }
                     }
                 }
             }
         }
-        SmallLabel {
+        SmallLabel { colorKey: "ui.KnowledgeBodyView.41";
             Layout.fillWidth: true
             text: "Illustrativ kropp · scrolla för zoom, dra för att flytta · källsidor visar originalets innehåll"
             font.pixelSize: 10
@@ -911,10 +913,10 @@ Item {
         padding: 12
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
         onClosed: root.enlargedIllustration = null
-        background: Rectangle { color: "#111b24"; border.color: "#69766f"; radius: 7 }
+        background: Rectangle { color: RuntimeTheme.GGTheme.panel; border.color: RuntimeTheme.GGTheme.dim; radius: 7 }
         header: Item {
             implicitHeight: 46
-            Text {
+            GGText { colorKey: "ui.KnowledgeBodyView.42";
                 anchors.fill: parent; anchors.margins: 14
                 text: String((root.enlargedIllustration || {}).label || "Momentillustration")
                 textFormat: Text.PlainText
@@ -924,7 +926,7 @@ Item {
         }
         contentItem: ColumnLayout {
             spacing: 10
-            KnowledgeRasterView {
+            KnowledgeRasterView { property string uiColorScope: "ui.widget.KnowledgeBodyView.KnowledgeRasterView.29";
                 id: illustrationRaster
                 objectName: "knowledgeBodyIllustrationRaster"
                 Layout.fillWidth: true
@@ -932,7 +934,7 @@ Item {
                 imageSource: String((root.enlargedIllustration || {}).image_url || "")
                 hotspots: []
             }
-            SmallLabel {
+            SmallLabel { colorKey: "ui.KnowledgeBodyView.43";
                 Layout.fillWidth: true
                 maximumLineCount: 3
                 elide: Text.ElideRight
@@ -941,15 +943,15 @@ Item {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 6
-                BodyButton { objectName: "knowledgeBodyIllustrationZoomOut"; text: "−"; implicitWidth: 32; onClicked: illustrationRaster.zoomAt(0.8, illustrationRaster.width / 2, illustrationRaster.height / 2) }
-                BodyButton { objectName: "knowledgeBodyIllustrationZoomReset"; text: "Visa hela"; onClicked: illustrationRaster.resetView() }
-                BodyButton { objectName: "knowledgeBodyIllustrationZoomIn"; text: "+"; implicitWidth: 32; onClicked: illustrationRaster.zoomAt(1.25, illustrationRaster.width / 2, illustrationRaster.height / 2) }
+                BodyButton { property string uiColorScope: "ui.control.KnowledgeBodyView.24"; objectName: "knowledgeBodyIllustrationZoomOut"; text: "−"; implicitWidth: 32; onClicked: illustrationRaster.zoomAt(0.8, illustrationRaster.width / 2, illustrationRaster.height / 2) }
+                BodyButton { property string uiColorScope: "ui.control.KnowledgeBodyView.25"; objectName: "knowledgeBodyIllustrationZoomReset"; text: "Visa hela"; onClicked: illustrationRaster.resetView() }
+                BodyButton { property string uiColorScope: "ui.control.KnowledgeBodyView.26"; objectName: "knowledgeBodyIllustrationZoomIn"; text: "+"; implicitWidth: 32; onClicked: illustrationRaster.zoomAt(1.25, illustrationRaster.width / 2, illustrationRaster.height / 2) }
                 Item { Layout.fillWidth: true }
             }
         }
         footer: Item {
             implicitHeight: 48
-            BodyButton {
+            BodyButton { property string uiColorScope: "ui.control.KnowledgeBodyView.27";
                 objectName: "knowledgeBodyIllustrationClose"
                 anchors.right: parent.right; anchors.top: parent.top
                 anchors.rightMargin: 12; anchors.topMargin: 5

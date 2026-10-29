@@ -1,0 +1,21 @@
+# User environments and runtime state never belong in the public source repo.
+.venv/
+.venv-*/
+venv/
+__pycache__/
+*.py[cod]
+.runtime/
+node_modules/
+build/
+dist/
+.env
+.env.*
+*.key
+*.pem
+*.secret
+*.ggwallet
+*.sqlite
+*.sqlite3
+credentials.json
+auth.json
+gg-lan-*.json

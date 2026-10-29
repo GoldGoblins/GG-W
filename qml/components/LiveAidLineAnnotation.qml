@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 
 Item {
@@ -28,23 +30,23 @@ Item {
             anchors.margins: 6
             spacing: 3
 
-            Text {
+            GGText { colorKey: "ui.LiveAidLineAnnotation.1";
                 width: parent.width
                 text: root.status + (root.sourceLine > 0 ? " · L" + root.sourceLine : "")
                     + (root.code.length > 0 ? " · " + root.code : "")
-                color: "#d8dee9"
+                color: RuntimeTheme.GGTheme.text
                 font.family: "monospace"
                 font.pixelSize: 12
                 font.bold: true
             }
-            Text {
+            GGText { colorKey: "ui.LiveAidLineAnnotation.2";
                 width: parent.width
                 text: root.message
                 color: "#c7d0d9"
                 wrapMode: Text.WordWrap
                 font.pixelSize: 12
             }
-            Text {
+            GGText { colorKey: "ui.LiveAidLineAnnotation.3";
                 visible: root.suggestion.length > 0
                 width: parent.width
                 text: "FIX · " + root.suggestion

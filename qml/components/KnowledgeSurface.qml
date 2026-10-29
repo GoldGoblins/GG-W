@@ -1,3 +1,5 @@
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -7,13 +9,13 @@ Item {
     id: root
     objectName: "workspaceKnowledgePane"
     property var surfaceHost: null
-    property color frameBorder: "#4a4a4a"
+    property color frameBorder: RuntimeTheme.GGTheme.edge
     property int frameRadius: 4
     signal requestToChat(string prompt)
 
-    readonly property color ink: "#e9edf1"
-    readonly property color muted: "#84909f"
-    readonly property color gold: "#c8a97e"
+    readonly property color ink: RuntimeTheme.GGTheme.bright
+    readonly property color muted: RuntimeTheme.GGTheme.muted
+    readonly property color gold: RuntimeTheme.GGTheme.accent
     readonly property bool compact: width < 1060
     readonly property bool narrow: width < 790
     property bool browserVisible: true
@@ -367,11 +369,11 @@ Item {
                 text: root.importSummary + "\n\n" + root.importMessages.join("\n\n")
                 readOnly: true; selectByMouse: true; wrapMode: TextArea.Wrap
                 textFormat: TextEdit.PlainText
-                color: "#d6dee7"; font.pixelSize: 13
-                background: Rectangle { color: "#151c25" }
+                color: RuntimeTheme.GGTheme.text; font.pixelSize: 13
+                background: Rectangle { color: RuntimeTheme.GGTheme.panel }
             }
         }
-        background: Rectangle { color: "#151c25"; border.color: "#4a5866"; radius: 7 }
+        background: Rectangle { color: RuntimeTheme.GGTheme.panel; border.color: RuntimeTheme.GGTheme.edge; radius: 7 }
     }
 
     component AtlasButton: Button {
@@ -382,25 +384,25 @@ Item {
         implicitWidth: label.implicitWidth + 26
         padding: 0
         hoverEnabled: true
-        background: Rectangle {
+        background: Rectangle { GGColorTarget { colorKey: "ui.fill.KnowledgeSurface.1"; }
             radius: 5
-            color: control.accent ? (control.hovered ? "#ddc199" : "#c8a97e")
-                : (control.active ? "#27333b" : (control.hovered ? "#222b34" : "#172029"))
-            border.color: control.active ? "#73877d" : "#2e3944"
+            color: control.accent ? (control.hovered ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.accent)
+                : (control.active ? RuntimeTheme.GGTheme.hover : (control.hovered ? RuntimeTheme.GGTheme.hover : RuntimeTheme.GGTheme.panel))
+            border.color: control.active ? RuntimeTheme.GGTheme.dim : RuntimeTheme.GGTheme.line
             border.width: control.accent ? 0 : 1
             opacity: control.enabled ? 1 : 0.4
         }
-        contentItem: Text {
+        contentItem: GGText { colorKey: "ui.KnowledgeSurface.1";
             id: label
             text: control.text
-            color: control.accent ? "#171819" : (control.active ? "#e4eae5" : "#bdc7d1")
+            color: control.accent ? RuntimeTheme.GGTheme.panel : (control.active ? RuntimeTheme.GGTheme.bright : RuntimeTheme.GGTheme.text)
             font.pixelSize: 12
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
         }
     }
 
-    Rectangle { anchors.fill: parent; color: "#10151c"; radius: root.frameRadius }
+    Rectangle { anchors.fill: parent; color: RuntimeTheme.GGTheme.canvas; radius: root.frameRadius }
 
     RowLayout {
         id: header
@@ -410,25 +412,25 @@ Item {
         Column {
             visible: root.width >= 650
             spacing: 3
-            Text { text: "ATLAS"; color: root.gold; font.pixelSize: 12; font.letterSpacing: 4 }
-            Text { text: "Kunskap att utforska"; color: root.ink; font.pixelSize: root.compact ? 17 : 21 }
+            GGText { colorKey: "ui.KnowledgeSurface.2"; text: "ATLAS"; color: root.gold; font.pixelSize: 12; font.letterSpacing: 4 }
+            GGText { colorKey: "ui.KnowledgeSurface.3"; text: "Kunskap att utforska"; color: root.ink; font.pixelSize: root.compact ? 17 : 21 }
         }
         Item { Layout.fillWidth: true }
-        AtlasButton {
+        AtlasButton { property string uiColorScope: "ui.control.KnowledgeSurface.1";
             objectName: "knowledgeBodyButton"
             text: root.bodySourceOpen ? "‹ Kroppen" : "Kropp / WEST"
             active: root.mode === "KROPP"
             onClicked: root.showBody()
         }
-        AtlasButton {
+        AtlasButton { property string uiColorScope: "ui.control.KnowledgeSurface.2";
             objectName: "knowledgeAtlasButton"
             visible: root.mode === "KROPP"
             text: "Atlas"
             onClicked: { root.mode = "BILD"; root.notice = "" }
         }
-        AtlasButton { visible: root.mode !== "KROPP" && !root.bodySourceOpen; text: root.width < 650 ? "☰" : "Material"; active: root.browserVisible; onClicked: root.browserVisible = !root.browserVisible }
-        AtlasButton { visible: root.mode !== "KROPP" && !root.bodySourceOpen; text: root.width < 650 ? "i" : "Detaljer"; active: root.detailsVisible; onClicked: root.detailsVisible = !root.detailsVisible }
-        AtlasButton {
+        AtlasButton { property string uiColorScope: "ui.control.KnowledgeSurface.3"; visible: root.mode !== "KROPP" && !root.bodySourceOpen; text: root.width < 650 ? "☰" : "Material"; active: root.browserVisible; onClicked: root.browserVisible = !root.browserVisible }
+        AtlasButton { property string uiColorScope: "ui.control.KnowledgeSurface.4"; visible: root.mode !== "KROPP" && !root.bodySourceOpen; text: root.width < 650 ? "i" : "Detaljer"; active: root.detailsVisible; onClicked: root.detailsVisible = !root.detailsVisible }
+        AtlasButton { property string uiColorScope: "ui.control.KnowledgeSurface.5";
             objectName: "knowledgeImportButton"
             text: root.importBusy ? "Läser…" : (root.width < 650 ? "+" : "+ Lägg till")
             accent: true; enabled: !root.importBusy
@@ -448,11 +450,11 @@ Item {
             height: parent.height
             visible: root.browserVisible && !root.bodySourceOpen
             z: root.narrow ? 10 : 1
-            radius: 7; color: root.narrow ? "#f0151c25" : "#151c25"
-            border.color: "#26313e"
+            radius: 7; color: root.narrow ? "#f01a1a1a" : RuntimeTheme.GGTheme.panel
+            border.color: RuntimeTheme.GGTheme.hover
             ColumnLayout {
                 anchors.fill: parent; anchors.margins: 13; spacing: 10
-                Text { text: "DITT MATERIAL"; color: root.muted; font.pixelSize: 10; font.letterSpacing: 1.5 }
+                GGText { colorKey: "ui.KnowledgeSurface.4"; text: "DITT MATERIAL"; color: root.muted; font.pixelSize: 10; font.letterSpacing: 1.5 }
                 TextField {
                     id: search
                     objectName: "knowledgeSearch"
@@ -460,9 +462,9 @@ Item {
                     implicitHeight: 34
                     placeholderText: "Sök i dokument…"
                     text: root.searchQuery
-                    color: root.ink; placeholderTextColor: "#75818f"; font.pixelSize: 12
+                    color: root.ink; placeholderTextColor: RuntimeTheme.GGTheme.dim; font.pixelSize: 12
                     selectByMouse: true
-                    background: Rectangle { color: "#0e151d"; radius: 5; border.color: search.activeFocus ? "#718879" : "#2a3744" }
+                    background: Rectangle { color: RuntimeTheme.GGTheme.canvas; radius: 5; border.color: search.activeFocus ? RuntimeTheme.GGTheme.dim : RuntimeTheme.GGTheme.line }
                     onTextEdited: { root.searchQuery = text; searchDelay.restart() }
                     onAccepted: { searchDelay.stop(); root.refresh() }
                 }
@@ -470,7 +472,7 @@ Item {
                     Layout.fillWidth: true; spacing: 5
                     Repeater {
                         model: [{label: "Alla", kind: "ALL"}, {label: "Källor", kind: "SOURCE"}, {label: "Föremål", kind: "OBJECT"}]
-                        delegate: AtlasButton {
+                        delegate: AtlasButton { property string uiColorScope: "ui.control.KnowledgeSurface.6";
                             required property var modelData
                             Layout.fillWidth: true; implicitWidth: 0; implicitHeight: 27
                             text: modelData.label; active: root.filterKind === modelData.kind
@@ -484,8 +486,8 @@ Item {
                     Layout.fillWidth: true; Layout.fillHeight: true
                     clip: true; spacing: 5
                     model: root.libraryEntries
-                    ScrollBar.vertical: GgScrollBar {}
-                    delegate: Button {
+                    ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.KnowledgeSurface.GgScrollBar.7";}
+                    delegate: Button { property string uiColorScope: "ui.control.KnowledgeSurface.7";
                         id: materialRow
                         required property var modelData
                         width: ListView.view.width; height: root.searchQuery.length ? 76 : 58
@@ -494,23 +496,23 @@ Item {
                         background: Rectangle {
                             radius: 4
                             color: root.selectedNode && String(root.selectedNode.id) === materialRow.nodeId
-                                ? "#273530" : (materialRow.hovered ? "#212c38" : "#19232e")
+                                ? RuntimeTheme.GGTheme.hover : (materialRow.hovered ? RuntimeTheme.GGTheme.hover : RuntimeTheme.GGTheme.raised)
                         }
                         contentItem: Column {
                             spacing: 4
-                            Text {
+                            GGText { colorKey: "ui.KnowledgeSurface.5";
                                 width: parent.width; text: String(materialRow.modelData.label || materialRow.modelData.source_title || "Material")
                                 color: root.ink; font.pixelSize: 12; elide: Text.ElideRight; textFormat: Text.PlainText
                             }
-                            Text {
+                            GGText { colorKey: "ui.KnowledgeSurface.6";
                                 width: parent.width
                                 text: materialRow.modelData.page ? "Sida " + materialRow.modelData.page
                                     : (materialRow.modelData.kind === "SCENE" ? "Klickbar vy · " + Number(materialRow.modelData.hotspot_count || 0) + " detaljer"
                                         : (materialRow.modelData.kind === "CONCEPT" ? "Begrepp · " + Number(materialRow.modelData.source_count || 0) + " källor"
                                             : (materialRow.modelData.kind === "OBJECT" ? "Föremålsbild" : "Dokument")))
-                                color: "#8da594"; font.pixelSize: 10; elide: Text.ElideRight
+                                color: RuntimeTheme.GGTheme.positive; font.pixelSize: 10; elide: Text.ElideRight
                             }
-                            Text {
+                            GGText { colorKey: "ui.KnowledgeSurface.7";
                                 width: parent.width; visible: root.searchQuery.length > 0
                                 text: String(materialRow.modelData.text || materialRow.modelData.summary || "")
                                 color: root.muted; font.pixelSize: 10; elide: Text.ElideRight; textFormat: Text.PlainText
@@ -526,33 +528,33 @@ Item {
                         anchors.centerIn: parent
                         width: parent.width - 12; spacing: 9
                         visible: materialList.count === 0
-                        Text {
+                        GGText { colorKey: "ui.KnowledgeSurface.8";
                             width: parent.width
                             text: root.searchQuery.length ? "Ingen träff i materialet" : "Börja med ditt material"
                             color: root.ink; font.pixelSize: 13; wrapMode: Text.WordWrap
                         }
-                        Text {
+                        GGText { colorKey: "ui.KnowledgeSurface.9";
                             width: parent.width
                             text: root.searchQuery.length ? "Prova ett annat ord." : "Lägg till PDF:er, anteckningar eller föremålsbilder. Originalens sidor och källor följer med."
                             color: root.muted; font.pixelSize: 12; wrapMode: Text.WordWrap
                         }
                     }
                 }
-                Rectangle { Layout.fillWidth: true; height: 1; color: "#29333d" }
-                AtlasButton { Layout.fillWidth: true; text: "Visa illustrativt exempel"; onClicked: root.showExample() }
-                Text {
+                Rectangle { Layout.fillWidth: true; height: 1; color: RuntimeTheme.GGTheme.line }
+                AtlasButton { property string uiColorScope: "ui.control.KnowledgeSurface.8"; Layout.fillWidth: true; text: "Visa illustrativt exempel"; onClicked: root.showExample() }
+                GGText { colorKey: "ui.KnowledgeSurface.10";
                     Layout.fillWidth: true; wrapMode: Text.WordWrap
                     text: Number((root.payload.counts || {}).sources || 0) + " källor  ·  "
                         + Number((root.payload.counts || {}).pages || 0) + " sidor"
                     color: root.muted; font.pixelSize: 11
                 }
-                Text {
+                GGText { colorKey: "ui.KnowledgeSurface.11";
                     Layout.fillWidth: true; visible: (root.payload.notices || []).length > 0
                     text: (root.payload.notices || []).join("\n")
-                    color: "#b6a081"; font.pixelSize: 10; wrapMode: Text.WordWrap
+                    color: RuntimeTheme.GGTheme.accent; font.pixelSize: 10; wrapMode: Text.WordWrap
                     maximumLineCount: 6; elide: Text.ElideRight; textFormat: Text.PlainText
                 }
-                AtlasButton {
+                AtlasButton { property string uiColorScope: "ui.control.KnowledgeSurface.9";
                     Layout.fillWidth: true; visible: root.importMessages.length > 0
                     text: "Visa importresultat"; onClicked: importReport.open()
                 }
@@ -564,9 +566,9 @@ Item {
             x: root.leftWidth > 0 ? root.leftWidth + 12 : 0
             width: Math.max(120, parent.width - x - (root.rightWidth > 0 ? root.rightWidth + 12 : 0))
             height: parent.height
-            color: "#090d12"; radius: 8; clip: true; border.color: "#2d3742"
+            color: RuntimeTheme.GGTheme.canvas; radius: 8; clip: true; border.color: RuntimeTheme.GGTheme.line
 
-            KnowledgeRasterView {
+            KnowledgeRasterView { property string uiColorScope: "ui.widget.KnowledgeSurface.KnowledgeRasterView.10";
                 id: raster
                 anchors.fill: parent
                 visible: root.mode === "BILD" && !root.showingText
@@ -584,14 +586,14 @@ Item {
                 contentWidth: width
                 contentHeight: sourceText.implicitHeight + 36
                 clip: true; boundsBehavior: Flickable.StopAtBounds
-                ScrollBar.vertical: GgScrollBar {}
+                ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.KnowledgeSurface.GgScrollBar.11";}
                 TextEdit {
                     id: sourceText
                     objectName: "knowledgeSourceText"
                     x: 25; y: 14; width: parent.width - 50
                     text: root.showingText ? String(root.pageView.text || "") : ""
                     textFormat: TextEdit.PlainText
-                    color: "#c8d0da"; selectionColor: "#4d655b"; selectedTextColor: "#ffffff"
+                    color: RuntimeTheme.GGTheme.text; selectionColor: RuntimeTheme.GGTheme.edge; selectedTextColor: RuntimeTheme.GGTheme.bright
                     font.pixelSize: 13; wrapMode: TextEdit.Wrap
                     readOnly: true; selectByMouse: true
                 }
@@ -614,7 +616,7 @@ Item {
                         for (var n = 0; n < nodes.length; ++n) positions[String(nodes[n].id)] = root.graphPoint(n)
                         var edges = root.payload.edges || []
                         ctx.lineWidth = 1
-                        ctx.strokeStyle = "#314452"
+                        ctx.strokeStyle = RuntimeTheme.GGTheme.edge
                         for (var i = 0; i < Math.min(400, edges.length); ++i) {
                             var from = positions[String(edges[i].source)]
                             var to = positions[String(edges[i].target)]
@@ -624,7 +626,7 @@ Item {
                 }
                 Repeater {
                     model: root.graphNodes
-                    delegate: Button {
+                    delegate: Button { property string uiColorScope: "ui.control.KnowledgeSurface.10";
                         id: graphNode
                         required property var modelData
                         required property int index
@@ -636,22 +638,22 @@ Item {
                         Accessible.name: String(modelData.label || "Begrepp")
                         background: Rectangle {
                             radius: graphNode.width / 2
-                            color: graphNode.modelData.kind === "OBJECT" ? "#7b654e"
-                                : (graphNode.modelData.kind === "SOURCE" ? "#3b6158" : "#345363")
+                            color: graphNode.modelData.kind === "OBJECT" ? RuntimeTheme.GGTheme.dim
+                                : (graphNode.modelData.kind === "SOURCE" ? RuntimeTheme.GGTheme.edge : RuntimeTheme.GGTheme.edge)
                             border.color: graphNode.hovered || (root.selectedNode && root.selectedNode.id === graphNode.modelData.id)
-                                ? "#e1ca9c" : "#729197"
+                                ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.muted
                         }
                         contentItem: Item {}
-                        Text {
+                        GGText { colorKey: "ui.KnowledgeSurface.12";
                             anchors.top: parent.bottom; anchors.topMargin: 5; anchors.horizontalCenter: parent.horizontalCenter
                             text: String(graphNode.modelData.label || "")
-                            textFormat: Text.PlainText; color: graphNode.hovered ? "#edd8b2" : "#aab8c2"
+                            textFormat: Text.PlainText; color: graphNode.hovered ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.text
                             font.pixelSize: 10; width: 104; elide: Text.ElideRight; horizontalAlignment: Text.AlignHCenter
                         }
                         onClicked: root.selectNode(modelData.id)
                     }
                 }
-                Text {
+                GGText { colorKey: "ui.KnowledgeSurface.13";
                     anchors.centerIn: parent; width: parent.width - 50
                     visible: root.graphNodes.length === 0
                     text: "Lägg till material för att se begrepp och källor här."
@@ -662,46 +664,46 @@ Item {
             Rectangle {
                 anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top
                 height: 95
-                gradient: Gradient { GradientStop { position: 0; color: "#f0090d12" } GradientStop { position: 1; color: "#00090d12" } }
+                gradient: Gradient { GradientStop { position: 0; color: "#f00c0c0c" } GradientStop { position: 1; color: "#000c0c0c" } }
             }
             Column {
                 anchors.left: parent.left; anchors.top: parent.top; anchors.margins: 19
                 width: parent.width - 172; spacing: 5
-                Text {
+                GGText { colorKey: "ui.KnowledgeSurface.14";
                     text: root.pageView ? "KÄLLSIDA · " + String(root.pageView.page || 1)
                         : (root.scene.illustrative ? "ILLUSTRATIVT EXEMPEL" : "DITT MATERIAL")
-                    color: root.scene.illustrative && !root.pageView ? "#c8a97e" : "#8db89a"
+                    color: root.scene.illustrative && !root.pageView ? RuntimeTheme.GGTheme.accent : RuntimeTheme.GGTheme.positive
                     font.pixelSize: 9; font.letterSpacing: 1.5
                 }
-                Text {
+                GGText { colorKey: "ui.KnowledgeSurface.15";
                     width: parent.width
                     text: root.mode === "KARTA" ? "Samband i materialet" : (root.pageView ? root.selectionTitle : String(root.scene.title || "Kunskapsvärld"))
-                    color: "#eef2f4"; font.pixelSize: root.compact ? 18 : 23; elide: Text.ElideRight; textFormat: Text.PlainText
+                    color: RuntimeTheme.GGTheme.bright; font.pixelSize: root.compact ? 18 : 23; elide: Text.ElideRight; textFormat: Text.PlainText
                 }
             }
             Row {
                 anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 14; spacing: 5
-                AtlasButton { text: "Bild"; active: root.mode === "BILD"; onClicked: root.mode = "BILD" }
-                AtlasButton { text: "Karta"; active: root.mode === "KARTA"; onClicked: { root.mode = "KARTA"; graph.requestPaint() } }
+                AtlasButton { property string uiColorScope: "ui.control.KnowledgeSurface.11"; text: "Bild"; active: root.mode === "BILD"; onClicked: root.mode = "BILD" }
+                AtlasButton { property string uiColorScope: "ui.control.KnowledgeSurface.12"; text: "Karta"; active: root.mode === "KARTA"; onClicked: { root.mode = "KARTA"; graph.requestPaint() } }
             }
 
             Row {
                 anchors.left: parent.left; anchors.bottom: parent.bottom; anchors.margins: 14
                 spacing: 5
-                AtlasButton { objectName: "knowledgeBack"; text: "‹ Tillbaka"; onClicked: root.back() }
-                AtlasButton {
+                AtlasButton { property string uiColorScope: "ui.control.KnowledgeSurface.13"; objectName: "knowledgeBack"; text: "‹ Tillbaka"; onClicked: root.back() }
+                AtlasButton { property string uiColorScope: "ui.control.KnowledgeSurface.14";
                     objectName: "knowledgeZoomOut"; text: "−"; visible: root.mode === "BILD" && !root.showingText
                     implicitWidth: 32; onClicked: raster.zoomAt(0.8, raster.width / 2, raster.height / 2)
                 }
-                AtlasButton {
+                AtlasButton { property string uiColorScope: "ui.control.KnowledgeSurface.15";
                     objectName: "knowledgeZoomReset"; text: Math.round(raster.zoom * 100) + "%"; visible: root.mode === "BILD" && !root.showingText
                     onClicked: raster.resetView()
                 }
-                AtlasButton {
+                AtlasButton { property string uiColorScope: "ui.control.KnowledgeSurface.16";
                     objectName: "knowledgeZoomIn"; text: "+"; visible: root.mode === "BILD" && !root.showingText
                     implicitWidth: 32; onClicked: raster.zoomAt(1.25, raster.width / 2, raster.height / 2)
                 }
-                AtlasButton {
+                AtlasButton { property string uiColorScope: "ui.control.KnowledgeSurface.17";
                     text: "Punkter"; active: raster.annotationsVisible
                     visible: root.mode === "BILD" && !root.pageView && stage.width > 490
                     onClicked: raster.annotationsVisible = !raster.annotationsVisible
@@ -711,17 +713,17 @@ Item {
             Row {
                 anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 14
                 spacing: 5; visible: root.pageView !== null && root.mode === "BILD"
-                AtlasButton {
+                AtlasButton { property string uiColorScope: "ui.control.KnowledgeSurface.18";
                     text: "‹"; implicitWidth: 30
                     enabled: !root.pageBusy && root.pageView && Number(root.pageView.page) > 1
                     onClicked: root.openPage(root.pageView.source_id, Number(root.pageView.page) - 1)
                 }
-                Text {
+                GGText { colorKey: "ui.KnowledgeSurface.16";
                     anchors.verticalCenter: parent.verticalCenter
                     text: root.pageView ? root.pageView.page + " / " + root.pageView.pages : ""
                     color: root.ink; font.pixelSize: 11
                 }
-                AtlasButton {
+                AtlasButton { property string uiColorScope: "ui.control.KnowledgeSurface.19";
                     text: "›"; implicitWidth: 30
                     enabled: !root.pageBusy && root.pageView && Number(root.pageView.page) < Number(root.pageView.pages)
                     onClicked: root.openPage(root.pageView.source_id, Number(root.pageView.page) + 1)
@@ -737,8 +739,8 @@ Item {
                 Rectangle {
                     anchors.fill: parent; anchors.margins: 8
                     visible: drop.containsDrag
-                    color: "#d917252c"; radius: 6; border.width: 2; border.color: root.gold
-                    Text { anchors.centerIn: parent; text: "Släpp materialet här"; color: root.ink; font.pixelSize: 20 }
+                    color: "#d9212121"; radius: 6; border.width: 2; border.color: root.gold
+                    GGText { colorKey: "ui.KnowledgeSurface.17"; anchors.centerIn: parent; text: "Släpp materialet här"; color: root.ink; font.pixelSize: 20 }
                 }
             }
         }
@@ -750,37 +752,37 @@ Item {
             height: parent.height
             visible: root.detailsVisible && !root.bodySourceOpen
             z: root.narrow ? 11 : 1
-            color: root.narrow ? "#f0151c25" : "#151c25"; radius: 7; border.color: "#26313e"
+            color: root.narrow ? "#f01a1a1a" : RuntimeTheme.GGTheme.panel; radius: 7; border.color: RuntimeTheme.GGTheme.hover
             ColumnLayout {
                 anchors.fill: parent; anchors.margins: 17; spacing: 13
                 RowLayout {
                     Layout.fillWidth: true
-                    Text { Layout.fillWidth: true; text: "NÄRMARE"; color: root.muted; font.pixelSize: 10; font.letterSpacing: 1.5 }
-                    AtlasButton { visible: root.narrow; text: "Stäng"; implicitHeight: 26; onClicked: root.detailsVisible = false }
+                    GGText { colorKey: "ui.KnowledgeSurface.18"; Layout.fillWidth: true; text: "NÄRMARE"; color: root.muted; font.pixelSize: 10; font.letterSpacing: 1.5 }
+                    AtlasButton { property string uiColorScope: "ui.control.KnowledgeSurface.20"; visible: root.narrow; text: "Stäng"; implicitHeight: 26; onClicked: root.detailsVisible = false }
                 }
-                Text {
+                GGText { colorKey: "ui.KnowledgeSurface.19";
                     Layout.fillWidth: true
                     text: root.selectionTitle; textFormat: Text.PlainText
                     color: root.ink; font.pixelSize: 23; wrapMode: Text.WordWrap
                     maximumLineCount: 3; elide: Text.ElideRight
                 }
-                Rectangle { Layout.fillWidth: true; height: 2; color: "#5e786d" }
-                Text {
+                Rectangle { Layout.fillWidth: true; height: 2; color: RuntimeTheme.GGTheme.dim }
+                GGText { colorKey: "ui.KnowledgeSurface.20";
                     Layout.fillWidth: true
                     text: root.selectionSummary
                     textFormat: Text.PlainText
-                    color: "#b7c3cf"; font.pixelSize: 12; wrapMode: Text.WordWrap
+                    color: RuntimeTheme.GGTheme.text; font.pixelSize: 12; wrapMode: Text.WordWrap
                     maximumLineCount: 5; elide: Text.ElideRight
                 }
-                Text {
+                GGText { colorKey: "ui.KnowledgeSurface.21";
                     objectName: "knowledgeStaleNotice"
                     Layout.fillWidth: true
                     visible: root.sceneStale && !root.selectedNode && !root.pageView
                     text: String(root.scene.notice || "Källorna har ändrats sedan den här vyn skapades. Hänvisningarna behöver kontrolleras på nytt.")
-                    color: "#d5af78"; font.pixelSize: 12; wrapMode: Text.WordWrap
+                    color: RuntimeTheme.GGTheme.accent; font.pixelSize: 12; wrapMode: Text.WordWrap
                     textFormat: Text.PlainText
                 }
-                AtlasButton {
+                AtlasButton { property string uiColorScope: "ui.control.KnowledgeSurface.21";
                     objectName: "knowledgeFocusDetail"
                     Layout.fillWidth: true; visible: !!root.selectedHotspot && root.mode === "BILD"
                     text: "Zooma in på detaljen"
@@ -789,7 +791,7 @@ Item {
                         if (root.narrow) root.detailsVisible = false
                     }
                 }
-                Text {
+                GGText { colorKey: "ui.KnowledgeSurface.22";
                     Layout.fillWidth: true
                     text: root.passages.length ? "KÄLLOR OCH SIDOR" : (root.scene.illustrative && !root.selectedNode ? "OM EXEMPLET" : "KÄLLUNDERLAG")
                     color: root.muted; font.pixelSize: 10; font.letterSpacing: 1
@@ -799,23 +801,23 @@ Item {
                     objectName: "knowledgePassageList"
                     Layout.fillWidth: true; Layout.fillHeight: true
                     clip: true; spacing: 13; model: root.passages
-                    ScrollBar.vertical: GgScrollBar {}
+                    ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.KnowledgeSurface.GgScrollBar.23";}
                     delegate: Column {
                         required property var modelData
                         width: ListView.view.width; spacing: 7
-                        Text {
+                        GGText { colorKey: "ui.KnowledgeSurface.23";
                             width: parent.width
                             text: String(modelData.source_title || modelData.title || "Källa") + " · s. " + Number(modelData.page || 1)
                             textFormat: Text.PlainText
-                            color: "#a7c5b2"; font.pixelSize: 11; wrapMode: Text.WordWrap
+                            color: RuntimeTheme.GGTheme.text; font.pixelSize: 11; wrapMode: Text.WordWrap
                         }
-                        Text {
+                        GGText { colorKey: "ui.KnowledgeSurface.24";
                             width: parent.width
                             text: String(modelData.text || modelData.quote || "")
                             textFormat: Text.PlainText
-                            color: "#acb8c5"; font.pixelSize: 12; wrapMode: Text.WordWrap
+                            color: RuntimeTheme.GGTheme.text; font.pixelSize: 12; wrapMode: Text.WordWrap
                         }
-                        AtlasButton {
+                        AtlasButton { property string uiColorScope: "ui.control.KnowledgeSurface.22";
                             text: "Öppna källsidan ↗"
                             visible: !!modelData.source_id
                             enabled: !root.pageBusy
@@ -824,9 +826,9 @@ Item {
                                 if (root.narrow) root.detailsVisible = false
                             }
                         }
-                        Rectangle { width: parent.width; height: 1; color: "#2a3540" }
+                        Rectangle { width: parent.width; height: 1; color: RuntimeTheme.GGTheme.line }
                     }
-                    Text {
+                    GGText { colorKey: "ui.KnowledgeSurface.25";
                         width: parent.width; visible: passageList.count === 0
                         text: root.scene.illustrative && !root.selectedNode
                             ? "Illustrationen visar hur navigationen fungerar. Den är inte ett mätresultat eller hämtad ur dina dokument. Lägg till eget material för källbelagda förklaringar."
@@ -834,26 +836,26 @@ Item {
                         color: root.muted; font.pixelSize: 12; wrapMode: Text.WordWrap
                     }
                 }
-                Text {
+                GGText { colorKey: "ui.KnowledgeSurface.26";
                     Layout.fillWidth: true
                     visible: root.mode === "KARTA"
                     text: "Linjer visar omnämnanden i källorna. De bevisar inte orsakssamband."
                     color: root.muted; font.pixelSize: 11; wrapMode: Text.WordWrap
                 }
-                Text {
+                GGText { colorKey: "ui.KnowledgeSurface.27";
                     Layout.fillWidth: true
                     visible: !!root.selectedDetail.passages_limited
                     text: "Visar " + root.passages.length + " av " + Number(root.selectedDetail.total_passages || 0)
                         + " källsidor. Öppna en källsida för att bläddra vidare."
                     color: root.muted; font.pixelSize: 11; wrapMode: Text.WordWrap
                 }
-                AtlasButton {
+                AtlasButton { property string uiColorScope: "ui.control.KnowledgeSurface.23";
                     objectName: "knowledgeExplainButton"
                     Layout.fillWidth: true; text: "Förbered fråga med källor"
                     enabled: root.canPrepareQuestion
                     onClicked: root.explainSelection()
                 }
-                AtlasButton {
+                AtlasButton { property string uiColorScope: "ui.control.KnowledgeSurface.24";
                     objectName: "knowledgeVisualizeButton"
                     Layout.fillWidth: true; text: "Förbered visuell förklaring"; accent: true
                     enabled: root.canPrepareQuestion
@@ -863,7 +865,7 @@ Item {
         }
     }
 
-    KnowledgeBodyView {
+    KnowledgeBodyView { property string uiColorScope: "ui.widget.KnowledgeSurface.KnowledgeBodyView.27";
         id: bodyView
         anchors.left: parent.left; anchors.right: parent.right
         anchors.top: header.bottom; anchors.bottom: footer.top
@@ -884,13 +886,13 @@ Item {
         anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
         anchors.leftMargin: 17; anchors.rightMargin: 17; anchors.bottomMargin: 10
         height: 20; spacing: 12
-        Rectangle { width: 5; height: 5; radius: 2.5; color: root.importBusy || root.pageBusy ? root.gold : "#8db89a" }
-        Text {
+        Rectangle { GGColorTarget { colorKey: "ui.fill.KnowledgeSurface.2"; } width: 5; height: 5; radius: 2.5; color: root.importBusy || root.pageBusy ? root.gold : RuntimeTheme.GGTheme.positive }
+        GGText { colorKey: "ui.KnowledgeSurface.28";
             Layout.fillWidth: true; elide: Text.ElideRight
             text: root.notice || (root.mode === "KARTA" ? "Klicka på en källa eller ett begrepp" : "Scrolla för att zooma · dra för att flytta · klicka för att utforska")
             color: root.muted; font.pixelSize: 11; textFormat: Text.PlainText
         }
-        Text { visible: !root.narrow; text: "Navigation utan AI-kostnad"; color: "#8da594"; font.pixelSize: 11 }
+        GGText { colorKey: "ui.KnowledgeSurface.29"; visible: !root.narrow; text: "Navigation utan AI-kostnad"; color: RuntimeTheme.GGTheme.positive; font.pixelSize: 11 }
     }
 
     Timer { id: searchDelay; interval: 220; onTriggered: root.refresh() }

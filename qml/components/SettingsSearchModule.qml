@@ -1,5 +1,7 @@
 pragma ComponentBehavior: Bound
 
+
+import "." as RuntimeTheme
 import QtQuick
 import QtQuick.Controls
 
@@ -40,12 +42,12 @@ Item {
 
     implicitHeight: 470
 
-    GgFrame {
+    GgFrame { property string uiColorScope: "ui.widget.SettingsSearchModule.GgFrame.1";
         anchors.fill: parent
         leftLegend: "SETTINGS SEARCH"
         rightLegend: root.filteredEntries().length + " MATCHES"
-        backgroundColor: "#161616"
-        borderColor: "#6a6a6a"
+        backgroundColor: RuntimeTheme.GGTheme.panel
+        borderColor: RuntimeTheme.GGTheme.edge
     }
 
     Column {
@@ -56,10 +58,10 @@ Item {
         anchors.bottomMargin: 12
         spacing: 8
 
-        Text {
+        GGText { colorKey: "ui.SettingsSearchModule.1";
             width: parent.width
             text: "Search finds a settings module or contribution by name, scope or keyword. Select a result to open the existing live controls."
-            color: "#c8cdd4"
+            color: RuntimeTheme.GGTheme.text
             wrapMode: Text.WordWrap
             font.family: "monospace"
             font.pixelSize: 11
@@ -73,34 +75,34 @@ Item {
             spacing: 5
             model: root.filteredEntries()
             boundsBehavior: Flickable.StopAtBounds
-            ScrollBar.vertical: GgScrollBar {}
+            ScrollBar.vertical: GgScrollBar { property string uiColorScope: "ui.widget.SettingsSearchModule.GgScrollBar.2";}
 
             delegate: Rectangle {
                 required property var modelData
                 width: resultList.width - 8
                 height: 42
-                color: resultHit.containsMouse ? "#24292e" : "#181818"
-                border.color: resultHit.containsMouse ? "#8a8a8a" : "#343a40"
+                color: resultHit.containsMouse ? RuntimeTheme.GGTheme.raised : RuntimeTheme.GGTheme.panel
+                border.color: resultHit.containsMouse ? RuntimeTheme.GGTheme.dim : RuntimeTheme.GGTheme.line
                 border.width: 1
                 radius: 2
 
-                Text {
+                GGText { colorKey: "ui.SettingsSearchModule.2";
                     anchors.left: parent.left
                     anchors.leftMargin: 9
                     anchors.verticalCenter: parent.verticalCenter
                     text: String(modelData.title || modelData.page || "SETTING")
-                    color: "#e6edf3"
+                    color: RuntimeTheme.GGTheme.bright
                     font.family: "monospace"
                     font.pixelSize: 11
                     font.bold: true
                 }
 
-                Text {
+                GGText { colorKey: "ui.SettingsSearchModule.3";
                     anchors.right: parent.right
                     anchors.rightMargin: 10
                     anchors.verticalCenter: parent.verticalCenter
                     text: String(modelData.page || "") + "  →"
-                    color: "#c7a873"
+                    color: RuntimeTheme.GGTheme.accent
                     font.family: "monospace"
                     font.pixelSize: 10
                 }
@@ -115,11 +117,11 @@ Item {
             }
         }
 
-        Text {
+        GGText { colorKey: "ui.SettingsSearchModule.4";
             visible: root.filteredEntries().length === 0
             width: parent.width
             text: "No settings module matches the current filter."
-            color: "#c8a97e"
+            color: RuntimeTheme.GGTheme.accent
             font.family: "monospace"
             font.pixelSize: 11
         }

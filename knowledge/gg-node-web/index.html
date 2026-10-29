@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="sv"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#151718"><link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="style.css">
+<title>GG · lätt webbnod · lokalt labb</title>
+<main>
+<header><span class="dot" id="dot"></span><h1>GG · lätt webbnod</h1><output id="status" role="status">Pausad</output></header>
+<p>Verifiera offentliga testmeddelanden med saldo- och signaturbevis. Inga privata nycklar, ingen mining och ingen automatisk nätverksöverföring.</p>
+<nav><button id="toggle" aria-pressed="false">Starta lokal verifiering</button><button id="clear">Töm lokal kö</button><button id="export">Exportera kö</button></nav>
+<label><input type="checkbox" id="visibleOnly" checked>Pausa när fliken döljs</label>
+<label><input type="checkbox" id="battery" checked>Pausa vid låg batterinivå där webbläsaren stöder det</label>
+<p id="budget">64 meddelanden · 256 KiB kö · högst 1 MiB indata per sidöppning och UTC-dag · 5 min livslängd</p>
+<label for="checkpoint">Betrott checkpoint (offentlig JSON: chain_id och account_root)</label>
+<textarea id="checkpoint" rows="3" spellcheck="false" placeholder='{"chain_id":"gglab:…","account_root":"…"}'></textarea>
+<p>Hämta checkpoint från din betrodda labbinstans. Ett självvalt rotvärde bevisar inte vilket nätverk som är legitimt.</p>
+<label for="message">Offentlig signerad labbtransaktion (max 8 KiB)</label>
+<textarea id="message" rows="7" spellcheck="false"></textarea>
+<button id="verify">Kontrollera och köa</button>
+<p id="storage" aria-live="polite"></p><pre id="events" aria-live="polite"></pre>
+<footer>Offlinekö i denna webbläsare. Ingen peer discovery, konsensus eller radiosändare är ansluten. Operativsystemet kan stoppa bakgrundskörning.</footer>
+</main><script type="module" src="app.mjs"></script></html>

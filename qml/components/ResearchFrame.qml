@@ -7,7 +7,7 @@ Item {
     default property alias contentData: body.data
     implicitWidth: 320
     implicitHeight: 80
-    GgFrame { anchors.fill: parent; leftLegend: root.leftLegend }
+    GgFrame { property string uiColorScope: "ui.widget.ResearchFrame.GgFrame.1"; anchors.fill: parent; leftLegend: root.leftLegend }
     Item {
         id: body
         anchors.fill: parent

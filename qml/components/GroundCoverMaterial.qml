@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick3D
 
-GgBatchMaterial {
+GgBatchMaterial { property string uiColorScope: "ui.widget.GroundCoverMaterial.GgBatchMaterial.1";
     renderLane: 1
     property url imageSource
     property vector3d uCameraRight: Qt.vector3d(1,0,0)
