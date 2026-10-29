@@ -1,6 +1,30 @@
 GG-W update · 2026-10-29
 Complete desktop and headless source update since the published 2026-10-26 patch
 
+LAN recovery follow-up after the Linux-joining patch
+
+- The first observed Windows/Linux/Termux probe paired all three devices and
+  recorded 16 signed test transfers, but ended with an error and zero complete
+  circles. Coordinator balances were Windows 984, Termux 1016 and Linux 1000
+  GG-LAN(TEST) at that observation, not a claim of later/current balances.
+  This partial result is retained as a failed/incomplete test;
+  it is not replaced by loopback success or reported as a full physical pass.
+- Cancellable socket polling is separated from the complete-frame deadline.
+  Valid slow responses retain their bounded opportunity to finish, while
+  cancellation, frame limits and the common work deadline remain enforced.
+  Circle failures expose only bounded public transport/error codes.
+- Desktop provides duration 1-60 seconds and batch 1-16, defaulting to batch 1
+  for 10 seconds. Failed or unacknowledged final synchronization is visible.
+  The CLI instructions use the same small initial batch; larger batches are
+  explicit choices after a successful initial physical-device test.
+- Full physical token-circle success remains pending a coordinated update,
+  full restart and fresh pairing of all three devices. Verification of this
+  source patch does not restart or change the currently running user session.
+- LAN start keeps automatic proposal production off for pairing and the token
+  probe. After fresh pairing, run the batch-1 probe immediately. Fixed session,
+  frame and transport-credit caps are retained; this patch does not increase
+  quotas or claim an unbounded production network.
+
 Follow-up after the complete October 29 publication
 
 - Full GG-W Desktop on Linux can join the Windows coordinator by opening its

@@ -128,6 +128,33 @@ class LanDagRuntimeTests(unittest.TestCase):
         self.assertFalse(manager.active)
         self.assertFalse(manager.snapshot()['lan_setup']['starting'])
 
+    def test_bootstrap_join_defaults_to_paused_producers_and_honors_explicit_opt_in_without_io(self):
+        coordinator={'peer_key':'b'*64,'host':'127.0.0.1','port':16120}
+        bootstrap={'schema':runtime.BOOTSTRAP_SCHEMA,'coordinator_invite':{'body':coordinator},
+                   'allowed_cidr':'127.0.0.0/8'}
+        own={'body':{'peer_key':'a'*64,'label':'mock joiner','host':'127.0.0.1','port':16121,
+                     'producer_keys':['c'*64,'d'*64]}}
+        for override,expected in (({},False),({'auto_produce':True},True)):
+            with self.subTest(override=override):
+                peer=Mock(spec_set=['public_key','allowed','start_pairing','announce_invite','snapshot'])
+                peer.public_key=own['body']['peer_key'];peer.allowed=runtime._cidr('127.0.0.0/8')
+                peer.start_pairing.return_value=own
+                peer.snapshot.side_effect=lambda:{'lan':{'state':'PAIRING'}}
+                api=Mock(spec_set=['validate_invite','LanDagPeer'])
+                api.validate_invite.return_value=coordinator;api.LanDagPeer.return_value=peer
+                with patch.object(runtime,'_api',return_value=api), \
+                     patch.object(runtime.socket,'socket',side_effect=AssertionError('No socket expected')) as socket_factory, \
+                     patch.object(lan,'Keypair',side_effect=AssertionError('No key creation expected')) as key_factory:
+                    manager=runtime.LanDagRuntime()
+                    joined=manager.start(label='mock joiner',bind_host='127.0.0.1',port=16121,
+                                         bootstrap=bootstrap,**override)
+                api.LanDagPeer.assert_called_once_with('mock joiner','127.0.0.1',16121,'b'*64,expected,
+                    allowed_cidr='127.0.0.0/8',allow_test_tokens=False)
+                self.assertIs(joined['lan_setup']['auto_produce'],expected)
+                peer.start_pairing.assert_called_once_with()
+                peer.announce_invite.assert_called_once_with(bootstrap['coordinator_invite'])
+                socket_factory.assert_not_called();key_factory.assert_not_called()
+
     def test_three_loopback_managers_return_candidates_before_explicit_session(self):
         managers=[runtime.LanDagRuntime() for _ in range(3)]
         for manager in managers:self.addCleanup(manager.stop)

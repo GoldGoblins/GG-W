@@ -38,8 +38,9 @@ eller pengar som kan tas ut eller användas på ett publikt nätverk.
 
 Packa upp plattformens källpaket och kör dess uttryckliga bootstrap enligt
 [terminalens README](../support/gg-cli/README.md). Ingen nod startas av en
-vanlig statusläsning. Installationen och Pythonkörningen på en fysisk
-Termuxtelefon måste fortfarande verifieras där.
+vanlig statusläsning. Den uppdaterade transporten måste återprovas på den
+fysiska Termuxtelefonen; en tidigare lyckad anslutning är inte ett godkänt
+tokencirkelprov för denna version.
 
 Windows är koordinator. I Desktop öppnas DAGoblin och LAN-inställningen.
 Starta parning och spara den publika bootstrapfilen till Linux och telefonen.
@@ -57,7 +58,7 @@ Telefonen kör sin egen foregroundprocess med bootstrapfilen bredvid
 `gg-cli.py`. Exempel från GG-CLI-mappen i Termux:
 
 ```sh
-python gg-cli.py --foreground --command "lan.start label=Termux allow_test_tokens=true" --bootstrap-file gg-lan-bootstrap.json
+python gg-cli.py --foreground --command "lan.start label=Termux allow_test_tokens=true auto_produce=false" --bootstrap-file gg-lan-bootstrap.json
 ```
 
 Linux CLI är ett valfritt alternativ med `python3` och `label=Linux`.
@@ -76,16 +77,19 @@ När alla tre signerade inbjudningar tillåter testtokens kan Windows skapa
 sessionen med testledgern. I samma interaktiva koordinator-CLI används:
 
 ```text
-lan.start label=Windows allow_test_tokens=true
+lan.start label=Windows allow_test_tokens=true auto_produce=false
 lan.export_bootstrap path=gg-lan-bootstrap.json
 lan.status
 lan.session_create distribute=true enable_test_tokens=true
-lan.circle_start duration_ms=10000 batch=16 amount_atomic=1000000
+lan.circle_start duration_ms=10000 batch=1 amount_atomic=1000000
 ```
 
 De andra klienterna startas med bootstrapfilen innan sessionen skapas.
 Kontrollera deras namn i `lan.status`. I Desktop finns motsvarande
-cirkelknapp och en saldorad per peer i LAN-dialogen. `lan.circle_stop`
+cirkelknapp och en saldorad per peer i LAN-dialogen. Börja direkt efter ny
+parning med batch 1 i
+10 sekunder. Desktop har val för batch 1–16 och längd 1–60 sekunder;
+höj batchen först efter ett godkänt gemensamt prov. `lan.circle_stop`
 avbryter provet, medan `lan.stop` eller Ctrl+C stänger hela den egna peeren.
 Ett prov har en gemensam arbetsbudget på högst 60 sekunder, inklusive
 första och sista kvittosynkronisering och nätväntan, samt en fast kvittokvot.
@@ -101,6 +105,21 @@ den autentiserade transporten. Ett godkänt varv kräver att alla tre har
 bekräftat samma kvittokedja. Visad TX/s bygger på faktiskt kvitterade
 testöverföringar och uppmätt tid, med transportens resursgränser kvar.
 Delvis genomförda prov, kvotstopp och saknad synk ska redovisas uttryckligen.
+
+Det första observerade provet på faktisk Windowsdator, Linuxdator och Termuxtelefon
+registrerade 16 signerade testöverföringar men avslutades med fel före ett
+komplett varv. Koordinatorns saldon var Windows 984, Termux 1016 och Linux
+1000 GG-LAN(TEST) vid den observationen, inte den senare sessionens aktuella
+saldon. Detta är ett partiellt resultat med noll kompletta varv,
+inte ett godkänt fysisk-enhetsprov. Efter transportuppdateringen ska alla tre
+egna processer stoppas, uppdateras, startas om och paras på nytt innan provet
+upprepas. Ett källkodspaket ändrar aldrig automatiskt en redan körande nod.
+
+Automatisk förslagsproduktion hålls avstängd under ny parning och tokenprov
+(`auto_produce=false`). Befintliga sessions-, frame- och transportkrediter
+är ändliga och höjs inte. Prototypen ska provas i en ny session; kvotstopp
+hanteras här med helt ny parning i stället för höjda gränser. Ett senare förslagsprov
+kan startas uttryckligen med Producera lokalt eller `lan.produce`.
 
 Desktop visar den aktiva LAN-peerens graf, verkliga peerstatus och egna
 producenter. **Stoppa** avbryter även under parning och belastning; städningen

@@ -86,17 +86,46 @@ def _checked(value,domain,public):
     return value['body']
 
 
-def _receive(sock,limit,*,account=None,deadline=None):
+def _failure_code(error,fallback='GG_LAN_IO_OR_PROTOCOL_FAILED'):
+    code=str(error)
+    if re.fullmatch(r'GG_[A-Z0-9_]{1,80}',code):return code
+    if isinstance(error,socket.timeout):return 'GG_LAN_IO_TIMEOUT'
+    if isinstance(error,ConnectionResetError):return 'GG_LAN_CONNECTION_RESET'
+    if isinstance(error,ConnectionRefusedError):return 'GG_LAN_CONNECTION_REFUSED'
+    if isinstance(error,BrokenPipeError):return 'GG_LAN_BROKEN_PIPE'
+    if isinstance(error,OSError):return 'GG_LAN_IO_FAILED'
+    return fallback
+
+
+def _failure_details(error,operation='',stage=''):
+    existing=getattr(error,'_gg_lan_details',{})
+    allowed_operations={'TOKEN_STATUS','TOKEN_SYNC','TOKEN_SUBMIT','TOKEN_APPLY','CIRCLE_SIGN','CIRCLE_END'}
+    allowed_stages={'CHECK','WAIT','CONNECT','AUTH','SEND','RECEIVE','VALIDATE','EXECUTE'}
+    classes={'TimeoutError','ConnectionResetError','ConnectionRefusedError','BrokenPipeError','OSError','ValueError','TypeError','JSONDecodeError'}
+    if not isinstance(existing,dict):existing={}
+    operation=operation or existing.get('operation','');stage=stage or existing.get('stage','')
+    return {'operation':operation if isinstance(operation,str) and operation in allowed_operations else '',
+        'stage':stage if isinstance(stage,str) and stage in allowed_stages else '',
+        'error_class':type(error).__name__ if type(error).__name__ in classes else 'Exception'}
+
+
+def _receive(sock,limit,*,account=None,deadline=None,check=None):
     deadline=min(deadline if deadline is not None else float('inf'),time.monotonic()+FRAME_SECONDS)
     def exact(count):
         data=bytearray()
         while len(data)<count:
+            if check is not None:check()
             remaining=deadline-time.monotonic()
             if remaining<=0:raise ValueError('GG_LAN_READ_DEADLINE')
             sock.settimeout(min(IO_TIMEOUT,remaining))
-            chunk=sock.recv(min(65536,count-len(data)))
+            # IO_TIMEOUT is a cancellation polling interval, not a new frame
+            # budget. A slow signer may be silent for more than one poll.
+            try:chunk=sock.recv(min(65536,count-len(data)))
+            except socket.timeout:continue
             if not chunk:raise ValueError('GG_LAN_EOF')
             if account is not None:account(len(chunk))
+            if check is not None:check()
+            if time.monotonic()>=deadline:raise ValueError('GG_LAN_READ_DEADLINE')
             data.extend(chunk)
         return bytes(data)
     size=struct.unpack('!I',exact(4))[0]
@@ -169,13 +198,13 @@ class LanDagPeer:
         self._network='';self._bundle=None;self._roster={};self._local_indices=[];self._cursors={}
         self._handlers=set();self._sockets=set();self._slots=threading.BoundedSemaphore(4)
         self._orphans=OrderedDict();self._orphan_bytes=0;self._sync_gap=False
-        self._traffic={};self._total_bytes=0;self._rejected=0;self._last_error='';self._seen={}
+        self._traffic={};self._total_bytes=0;self._rejected=0;self._last_error='';self._last_error_at=0.0;self._last_error_details={};self._seen={}
         self._raw_received=0;self._connection_times=deque(maxlen=32);self._connections_admitted=0
         self._candidates=OrderedDict()
         self._tokens=None;self._token_operation=threading.RLock();self._token_plan=None
         self._circle_cancel=threading.Event();self._circle_thread=None;self._circle_sockets=set()
         self._circle={'state':'IDLE','transactions':0,'completed_rounds':0,'elapsed_ms':0,'tps':0,
-            'all_peers_synced':False,'last_error':'','stop_reason':''}
+            'all_peers_synced':False,'last_error':'','last_error_details':{},'stop_reason':''}
         self._token_rpc_times={};self._token_peer_cursors={};self._closed_circle_ids=set();self._last_token_sync=0.0;self._circle_epoch=0
 
     def start_pairing(self):
@@ -366,8 +395,11 @@ class LanDagPeer:
             self._raw_received+=size
             if self._raw_received>MAX_TOTAL_BYTES:raise ValueError('GG_LAN_CREDIT')
 
-    def _read(self,sock,limit,*,deadline=None):
-        return _receive(sock,limit,account=self._account_received,deadline=deadline)
+    def _read(self,sock,limit,*,deadline=None,check=None):
+        def permitted():
+            if self._cancel.is_set():raise ValueError('GG_LAN_STOPPED')
+            if check is not None:check()
+        return _receive(sock,limit,account=self._account_received,deadline=deadline,check=permitted)
 
     def _accept(self):
         while not self._cancel.is_set():
@@ -419,14 +451,16 @@ class LanDagPeer:
         self._credit(peer,size)
         return peer,digest(transcript,b'GG-LAN-DAG-CHANNEL-v1\0')
 
-    def _client_auth(self,sock,peer,deadline=None):
+    def _client_auth(self,sock,peer,deadline=None,check=None):
+        if check is not None:check()
         nonce=secrets.token_hex(32);_send(sock,self._hello(self.public_key,nonce),MAX_INVITE,deadline=deadline)
-        challenge,size=self._read(sock,MAX_INVITE,deadline=deadline);body=_checked(challenge,_SERVER,peer)
+        challenge,size=self._read(sock,MAX_INVITE,deadline=deadline,check=check);body=_checked(challenge,_SERVER,peer)
         expected={'schema','network_id','client_key','server_key','client_nonce','server_nonce'}
         if (not isinstance(body,dict) or set(body)!=expected or body.get('schema')!='gg.lan-dag.auth.v1'
                 or body.get('network_id')!=self._network or body.get('client_key')!=self.public_key
                 or body.get('server_key')!=peer or body.get('client_nonce')!=nonce):raise ValueError('GG_LAN_HANDSHAKE')
         _public(body['server_nonce']);self._credit(peer,size)
+        if check is not None:check()
         _send(sock,_signed(self._identity,_CLIENT,body),MAX_INVITE,deadline=deadline)
         return digest(body,b'GG-LAN-DAG-CHANNEL-v1\0')
 
@@ -477,9 +511,8 @@ class LanDagPeer:
                 self._slots.release()
 
     def _error(self,error):
-        code=str(error)
-        if not re.fullmatch(r'GG_[A-Z0-9_]{1,80}',code):code='GG_LAN_IO_OR_PROTOCOL_FAILED'
-        with self._lock:self._rejected+=1;self._last_error=code
+        with self._lock:
+            self._rejected+=1;self._last_error=_failure_code(error);self._last_error_at=time.time();self._last_error_details=_failure_details(error)
 
     def _token_ledger(self):
         ledger=self._tokens
@@ -560,39 +593,50 @@ class LanDagPeer:
         raise ValueError('GG_LAN_TOKEN_REQUEST')
 
     def _token_rpc(self,peer,kind,payload,*,cancel=None,deadline=None):
-        if deadline is not None and time.monotonic()>=deadline:raise ValueError('GG_LAN_CIRCLE_DEADLINE')
-        if self._cancel.is_set() or cancel is not None and cancel.is_set():raise ValueError('GG_LAN_CIRCLE_CANCELLED')
-        if peer==self.public_key:return self._token_command(peer,kind,payload)
-        address=self._roster.get(peer)
-        if address is None:raise ValueError('GG_LAN_UNKNOWN_PEER')
-        # Existing gossip may use20 connections/s. Keep extra test-token RPCs
-        # to8/s per peer so the private32/s acceptance cap retains headroom.
-        delay=self._token_rpc_times.get(peer,0)+.125-time.monotonic()
-        if deadline is not None:delay=min(delay,max(0,deadline-time.monotonic()))
-        if delay>0 and (cancel or self._cancel).wait(delay):raise ValueError('GG_LAN_CIRCLE_CANCELLED')
-        if deadline is not None and time.monotonic()>=deadline:raise ValueError('GG_LAN_CIRCLE_DEADLINE')
-        self._token_rpc_times[peer]=time.monotonic()
-        if self._cancel.is_set() or cancel is not None and cancel.is_set():raise ValueError('GG_LAN_CIRCLE_CANCELLED')
-        timeout=min(IO_TIMEOUT,max(.001,deadline-time.monotonic())) if deadline is not None else IO_TIMEOUT
-        with socket.create_connection((address['host'],address['port']),timeout=timeout) as sock:
-            sock.settimeout(timeout);connection_deadline=min(time.monotonic()+CONNECTION_SECONDS,deadline) if deadline is not None else time.monotonic()+CONNECTION_SECONDS
-            with self._lock:
-                self._sockets.add(sock)
-                if cancel is not None:self._circle_sockets.add(sock)
-            try:
-                session=self._client_auth(sock,peer,connection_deadline)
-                self._credit('out:'+peer,_send(sock,self._frame(session,0,kind,payload),MAX_FRAME,deadline=connection_deadline))
-                response,size=self._read(sock,MAX_FRAME,deadline=connection_deadline)
-                body=self._check_frame(response,size,peer,session,0)
-                if body['kind']!='TOKEN_RESULT' or not isinstance(body['payload'],dict):raise ValueError('GG_LAN_TOKEN_RESPONSE')
-                result=body['payload']
-                if 'error' in result:
-                    code=result['error']
-                    raise ValueError(code if isinstance(code,str) and re.fullmatch(r'GG_[A-Z0-9_]{1,80}',code) else 'GG_LAN_TOKEN_REQUEST_FAILED')
-                with self._lock:self._seen[peer]=time.time()
-                return result
-            finally:
-                with self._lock:self._sockets.discard(sock);self._circle_sockets.discard(sock)
+        stage='CHECK'
+        def permitted():
+            if self._cancel.is_set() or cancel is not None and cancel.is_set():raise ValueError('GG_LAN_CIRCLE_CANCELLED')
+            if deadline is not None and time.monotonic()>=deadline:raise ValueError('GG_LAN_CIRCLE_DEADLINE')
+        try:
+            permitted()
+            if peer==self.public_key:
+                stage='EXECUTE';result=self._token_command(peer,kind,payload);permitted();return result
+            address=self._roster.get(peer)
+            if address is None:raise ValueError('GG_LAN_UNKNOWN_PEER')
+            # Existing gossip may use20 connections/s. Keep extra test-token RPCs
+            # to8/s per peer so the private32/s acceptance cap retains headroom.
+            stage='WAIT';delay=self._token_rpc_times.get(peer,0)+.125-time.monotonic()
+            if deadline is not None:delay=min(delay,max(0,deadline-time.monotonic()))
+            if delay>0 and (cancel or self._cancel).wait(delay):raise ValueError('GG_LAN_CIRCLE_CANCELLED')
+            permitted();self._token_rpc_times[peer]=time.monotonic()
+            timeout=min(IO_TIMEOUT,max(.001,deadline-time.monotonic())) if deadline is not None else IO_TIMEOUT
+            stage='CONNECT'
+            with socket.create_connection((address['host'],address['port']),timeout=timeout) as sock:
+                sock.settimeout(timeout);connection_deadline=min(time.monotonic()+CONNECTION_SECONDS,deadline) if deadline is not None else time.monotonic()+CONNECTION_SECONDS
+                with self._lock:
+                    self._sockets.add(sock)
+                    if cancel is not None:self._circle_sockets.add(sock)
+                try:
+                    stage='AUTH';session=self._client_auth(sock,peer,connection_deadline,check=permitted)
+                    permitted();stage='SEND'
+                    self._credit('out:'+peer,_send(sock,self._frame(session,0,kind,payload),MAX_FRAME,deadline=connection_deadline))
+                    stage='RECEIVE';response,size=self._read(sock,MAX_FRAME,deadline=connection_deadline,check=permitted)
+                    stage='VALIDATE';permitted();body=self._check_frame(response,size,peer,session,0)
+                    if body['kind']!='TOKEN_RESULT' or not isinstance(body['payload'],dict):raise ValueError('GG_LAN_TOKEN_RESPONSE')
+                    result=body['payload']
+                    if 'error' in result:
+                        code=result['error']
+                        raise ValueError(code if isinstance(code,str) and re.fullmatch(r'GG_[A-Z0-9_]{1,80}',code) else 'GG_LAN_TOKEN_REQUEST_FAILED')
+                    permitted()
+                    with self._lock:self._seen[peer]=time.time()
+                    return result
+                finally:
+                    with self._lock:self._sockets.discard(sock);self._circle_sockets.discard(sock)
+        except Exception as error:
+            # Preserve the exception and request outcome; never replay an RPC
+            # whose acknowledgement might have been lost after commitment.
+            error._gg_lan_details=_failure_details(error,kind,stage)
+            raise
 
     def _sync_tokens(self,*,cancel=None,deadline=None):
         ledger=self._token_ledger()
@@ -668,7 +712,7 @@ class LanDagPeer:
                 'max_transfers':remaining,'initial_sequence':status['committed'],'initial_head':status['head']}
             signed=_signed(self._identity,_CIRCLE,plan)
             self._circle={'state':'RUNNING','transactions':0,'completed_rounds':0,'elapsed_ms':0,'tps':0,
-                'all_peers_synced':False,'last_error':'','stop_reason':'','duration_ms':duration_ms,'batch':batch,
+                'all_peers_synced':False,'last_error':'','last_error_details':{},'stop_reason':'','duration_ms':duration_ms,'batch':batch,
                 'role':'COORDINATOR','scope':'PRIVATE_COORDINATOR_ORDERED_TEST_LEDGER'}
             self._circle_thread=threading.Thread(target=self._circle_loop,args=(signed,self._circle_cancel),name='gg-lan-token-circle',daemon=True)
             self._circle_thread.start()
@@ -690,7 +734,7 @@ class LanDagPeer:
 
     def _circle_loop(self,signed,cancel):
         started=time.monotonic();plan=signed['body'];deadline=started+plan['duration_ms']/1000
-        initial=plan['initial_sequence'];ledger=self._tokens;error='';reason='DURATION';state='COMPLETE';synced=False
+        initial=plan['initial_sequence'];ledger=self._tokens;error='';details={};reason='DURATION';state='COMPLETE';synced=False
         def permitted():
             if cancel.is_set() or self._cancel.is_set():raise ValueError('GG_LAN_CIRCLE_CANCELLED')
             if time.monotonic()>=deadline:raise ValueError('GG_LAN_CIRCLE_DEADLINE')
@@ -728,13 +772,14 @@ class LanDagPeer:
             if ledger.status()['committed']==initial:state='NO_TRANSFERS';reason='NO_TRANSFERS'
         except Exception as exception:
             code=str(exception)
-            error=code if re.fullmatch(r'GG_[A-Z0-9_]{1,80}',code) else 'GG_LAN_CIRCLE_FAILED'
+            error=_failure_code(exception,'GG_LAN_CIRCLE_FAILED');details=_failure_details(exception)
             if cancel.is_set() or self._cancel.is_set():state='STOPPED';reason='CANCELLED'
             elif time.monotonic()>=deadline or code=='GG_LAN_CIRCLE_DEADLINE':
                 with self._lock:rounds=self._circle['completed_rounds']
                 complete=synced and ledger.status()['committed']-initial==rounds*3 and rounds>0
                 state='COMPLETE' if complete else 'TIME_BUDGET';reason='DURATION'
                 error='' if complete else 'GG_LAN_CIRCLE_DEADLINE'
+                if complete:details={}
             else:state='ERROR';reason='FAILED'
         finally:
             elapsed=max(.001,time.monotonic()-started);cleanup_started=time.monotonic();cleanup_deadline=cleanup_started+1
@@ -743,7 +788,7 @@ class LanDagPeer:
                     try:self._token_rpc(peer,'CIRCLE_END',{'run_id':plan['run_id']},deadline=cleanup_deadline)
                     except Exception:pass
             count=ledger.status()['committed']-initial
-            with self._lock:self._circle.update(state=state,transactions=count,elapsed_ms=round(elapsed*1000),tps=round(count/elapsed,3),all_peers_synced=synced,last_error=error,stop_reason=reason,cleanup_ms=round((time.monotonic()-cleanup_started)*1000))
+            with self._lock:self._circle.update(state=state,transactions=count,elapsed_ms=round(elapsed*1000),tps=round(count/elapsed,3),all_peers_synced=synced,last_error=error,last_error_details=details,stop_reason=reason,cleanup_ms=round((time.monotonic()-cleanup_started)*1000))
 
     def _ingest(self,raw,peer,claimed_hash=None):
         if peer not in self._roster or peer==self.public_key:raise ValueError('GG_LAN_UNKNOWN_PEER')
@@ -855,7 +900,7 @@ class LanDagPeer:
                 'allow_test_tokens':self.allow_test_tokens,'test_tokens_enabled':ledger is not None,
                 'orphan_count':len(self._orphans),'orphan_bytes':self._orphan_bytes,'sync_gap':self._sync_gap,
                 'traffic_bytes':self._raw_received,'traffic_bytes_basis':'APPLICATION_TCP_READ_BYTES',
-                'charged_transport_bytes':self._total_bytes,'rejected_frames':self._rejected,'last_error':self._last_error,
+                'charged_transport_bytes':self._total_bytes,'rejected_frames':self._rejected,'last_error':self._last_error,'last_error_at':self._last_error_at,'last_error_details':dict(self._last_error_details),
                 'limits':{'frame_bytes':MAX_FRAME,'public_bundle_bytes':MAX_BUNDLE,'orphan_count':MAX_ORPHANS,'orphan_bytes':MAX_ORPHAN_BYTES,
                     'candidate_invites':MAX_PEERS-1,'frame_deadline_seconds':FRAME_SECONDS,'connection_deadline_seconds':CONNECTION_SECONDS,
                     'raw_received_bytes':MAX_TOTAL_BYTES,'connections_per_second':32,'session_connections':MAX_REQUESTS}}
@@ -867,7 +912,7 @@ class LanDagPeer:
             expired=time.monotonic()>=participant_plan['deadline']
             circle={'state':'EXPIRED' if expired else 'RUNNING','role':'PARTICIPANT',
                 'transactions':max(0,ledger.revision()-participant_plan['body']['initial_sequence']),
-                'counts_basis':'OBSERVED_RECEIPTS_SINCE_PLAN_START','last_error':'',
+                'counts_basis':'OBSERVED_RECEIPTS_SINCE_PLAN_START','last_error':'','last_error_details':{},
                 'stop_reason':'DURATION' if expired else '',
                 'scope':'PRIVATE_COORDINATOR_ORDERED_TEST_LEDGER'}
         body['token_circle']=circle

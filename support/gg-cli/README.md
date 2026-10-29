@@ -101,11 +101,11 @@ telefonen. På varje enhet skapas egna tillfälliga nycklar i RAM; bootstrapfile
 innehåller inga privata nycklar. Från Linuxpaketets mapp:
 
 ```sh
-python3 gg-cli.py --foreground --command "lan.start label=Linux allow_test_tokens=true" --bootstrap-file gg-lan-bootstrap.json --invite-out gg-lan-linux.json
+python3 gg-cli.py --foreground --command "lan.start label=Linux allow_test_tokens=true auto_produce=false" --bootstrap-file gg-lan-bootstrap.json
 ```
 
-På telefonen: samma kommando med `label=Termux` och exempelvis
-`--invite-out gg-lan-termux.json`. Använd `python` om det är tolkens namn.
+På telefonen: samma kommando med `label=Termux`. Använd `python` om det är
+tolkens namn. `--invite-out` behövs inte för automatisk annonsering.
 Ingen manuell IP-adress behövs: bootstrap anger koordinatorn och operativsystemet
 väljer den egna adressen. Den signerade inbjudan annonseras till koordinatorn.
 Windows visar högst två kandidater före ditt uttryckliga sessionsval.
@@ -115,7 +115,8 @@ Tre peers delar sex producenter, två signerare per enhet. Förslags-DAG:en
 överför tomma signerade förslag med verkliga föräldrar. Det uttryckliga
 testtokenvalet aktiverar en separat koordinatorordnad GG-LAN(TEST)-ledger;
 inga finansiella överföringar eller DAG-finalitetscertifikat ingår. Aktuell fysisk Linux-/Termuxruntime
-är ännu inte verifierad. Se [hela provet](knowledge/dagoblin-lan.md).
+har anslutit i det första fysiska provet, men kompletta tokenvarv och full
+slutkvittering är ännu inte godkända. Se [hela provet](knowledge/dagoblin-lan.md).
 
 `--foreground` visar status och hålls öppet till Ctrl+C. Ett separat
 engångskommando kan inte styra den processen. Interaktiv CLI har samma
@@ -128,12 +129,11 @@ i taget. Linux och telefonen startas med den exporterade bootstrapfilen
 innan kandidaterna granskas och sessionen skapas:
 
 ```text
-lan.start label=Windows allow_test_tokens=true
+lan.start label=Windows allow_test_tokens=true auto_produce=false
 lan.export_bootstrap path=gg-lan-bootstrap.json
 lan.status
 lan.session_create {"distribute":true,"enable_test_tokens":true}
-lan.produce interval_ms=250
-lan.circle_start duration_ms=10000 batch=16 amount_atomic=1000000
+lan.circle_start duration_ms=10000 batch=1 amount_atomic=1000000
 ```
 
 `lan.status` ska först visa Windows och de två förväntade kandidaterna.
@@ -146,6 +146,10 @@ GG-LAN(TEST) med sex decimaler. Cirkelprovet signerar på respektive apparat,
 mäter kvitterade överföringar och kontrollerar att alla tre har samma
 kvittokedja. `lan.circle_stop` avbryter provet. Testtokens har inget ekonomiskt
 värde; saldo och kvitton är inte DAG-konsensus eller huvudnätsaktivitet.
+Automatisk förslagsproduktion är avstängd under parning och tokenprov. Kör
+batch-1-provet direkt efter ny parning; fasta sessions- och transportkvoter
+höjs inte av denna uppdatering. `lan.produce interval_ms=250` är ett separat
+uttryckligt val för ett senare förslagsprov, inte ett steg före tokenprovet.
 
 ```sh
 python gg-cli.py --once --json

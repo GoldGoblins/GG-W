@@ -44,7 +44,7 @@ js('state={lan:{state:"READY",public_key:"a"},lan_setup:{active:true,coordinator
 assert js('tokenAmount("1000000000")')=='1000'
 assert js('tokenAmount("1000000001")')=='1000.000001'
 assert js('wholeTokenAtomic()')=='1000000'
-click('lanCircleStart');assert actions[-1]==('lan_circle_start',{'duration_ms':10000,'batch':16,'amount_atomic':'1000000'})
+click('lanCircleStart');assert actions[-1]==('lan_circle_start',{'duration_ms':10000,'batch':1,'amount_atomic':'1000000'})
 js('state={lan:{state:"READY"},lan_setup:{active:true,coordinator:true},test_tokens:{enabled:true,decimals:6},token_circle:{state:"RUNNING"}}')
 assert not find('lanCircleStart').isEnabled();click('lanCircleStop');assert actions[-1][0]=='lan_circle_stop'
 root.deleteLater();engine.deleteLater();app.processEvents();assert not warnings,warnings

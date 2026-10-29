@@ -20,7 +20,7 @@
     },
     "README.md": {
       "upstream_sha256": "1fa0f62e802aa8e200ac4de9147d20d5777b395dd14ba58299be28e2b9f50eae",
-      "windows_sha256": "f8d80cc88350a7b835542568803d81c003dd681646554d4c65153a732f2dce1d"
+      "windows_sha256": "118fb9a10ab9b45993893577ca322234780c75553d24fe2349745047666e62e3"
     },
     "backend/application_paths.py": {
       "upstream_sha256": "20ec0345b0b2415f2586b8e08a1df58efba42b8e818dfd45345f601a5d56a2c1",
@@ -1840,7 +1840,7 @@
     },
     "support/gg-cli/README.md": {
       "upstream_sha256": null,
-      "windows_sha256": "83591afe919e72fa55b338b26456f80bc919d1f8f512711e74c9a6f721149a37"
+      "windows_sha256": "36e8cf55378a7b66e923b8831a5feeafef40403fc489d14fcae7f861c9b72fc2"
     },
     "support/gg-cli/bootstrap.py": {
       "upstream_sha256": null,
@@ -2656,11 +2656,11 @@
     },
     "backend/gg_lan_dag.py": {
       "upstream_sha256": null,
-      "windows_sha256": "66c942f8a0b9c7439ba98bc4702adb0c990a251d5dd410fd797c93678ef96d2a"
+      "windows_sha256": "dee75adc4bcb02ac3237240c1396cb12c7233a82e15f1fe26cb0d1846f54bb03"
     },
     "backend/lan_dag_runtime.py": {
       "upstream_sha256": null,
-      "windows_sha256": "34aeeecb26a9dbb8a493e7a4b90eef62de02011c71241bece1c554276ec09fb9"
+      "windows_sha256": "bb08ad9308824eb1a2853def15f33621bbaa3203b8329376ec2b75a584c11619"
     },
     "backend/network_profiles.py": {
       "upstream_sha256": null,
@@ -2672,7 +2672,7 @@
     },
     "knowledge/dagoblin-lan.md": {
       "upstream_sha256": null,
-      "windows_sha256": "161c3059c8d7cda85aa628a162531d01af61707a471453a85c3797711d08c8bf"
+      "windows_sha256": "e5970594341a5eaf30127d1e073a09f6bf3fe3eb792fa73d30a59038df9ee98a"
     },
     "knowledge/dagoblin-launch-readiness.md": {
       "upstream_sha256": null,
@@ -2680,7 +2680,7 @@
     },
     "qml/components/LanDagSetupPopup.qml": {
       "upstream_sha256": null,
-      "windows_sha256": "aab4f530e0580d2db45f89f212c8da7fdf5dc2b80bc052cb153e8b5799046496"
+      "windows_sha256": "41c80bf880d167e1811162e9c75a747fc38f2bfe21ec6fe2e993c79cf1d53289"
     },
     "tests/test_activity_color_bindings.py": {
       "upstream_sha256": null,
@@ -2700,7 +2700,7 @@
     },
     "tests/test_lan_dag_runtime.py": {
       "upstream_sha256": null,
-      "windows_sha256": "863aa28725d7bb8a72903fab78f7158abe36db04d41f5a204adedb2b3f28f9ab"
+      "windows_sha256": "15f6212c3c90cae3a804b919a39528f2d8569aaaac00ff37b9802695c29d012b"
     },
     "tests/test_lan_desktop_routing.py": {
       "upstream_sha256": null,
@@ -2760,7 +2760,7 @@
     },
     "docs/PATCH-NOTES-2026-10-29.txt": {
       "upstream_sha256": null,
-      "windows_sha256": "3c0d4e3c062432c22a00c5383ede2301792e88eed056a2cd0c7cc491cb4bf03b"
+      "windows_sha256": "894b1dcf3a8e47f829d7f20e345aeb0135e6a49233f04b82ae92ff0877e7fca0"
     },
     "support/gg-cli/install.py": {
       "upstream_sha256": null,
@@ -2780,7 +2780,7 @@
     },
     "support/gg-cli/repository-README.md": {
       "upstream_sha256": null,
-      "windows_sha256": "3594c7c1db6c3a05abfbcefba769234063d63508540e2a637a24666e63281505"
+      "windows_sha256": "7b3eb075c2da2f6ab0c28997110f6e44f783b2702f047a45d471d408ea321adc"
     },
     "support/gg-cli/repository.gitignore": {
       "upstream_sha256": null,
@@ -2792,7 +2792,7 @@
     },
     "tests/test_lan_test_token_ui.py": {
       "upstream_sha256": null,
-      "windows_sha256": "6088fbb363240f350b524580c4fa4dd7e90ec96539740f5bb926ec5157b42cc8"
+      "windows_sha256": "f12afc39fb6b02e7b1d8e0ad0c373fc19fd2d405deb706d0449bdd7b29f55725"
     },
     "tests/test_lan_test_tokens_audit.py": {
       "upstream_sha256": null,
@@ -2813,6 +2813,14 @@
     "tests/test_lan_desktop_join.py": {
       "upstream_sha256": null,
       "windows_sha256": "da4637a5be5551b21bcd136946343c9d2939ad69c0a4735250a8f11ec9f8cc8a"
+    },
+    "tests/test_lan_circle_ui_controls.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "7b60b207f7cbdf9bc7bb3dff05eec3f2ec6511127839e97bc191502e3c569f45"
+    },
+    "tests/test_lan_deadline_transport.py": {
+      "upstream_sha256": null,
+      "windows_sha256": "21021b440a36b4ccdeb338e6b31cea6b96c2a2852e61b4c9681ee64f3a49798c"
     }
   },
   "container_runtime": {
@@ -2867,6 +2875,7 @@
     "backend/game_workflow_profile.py",
     "backend/game_workflow_scout.py",
     "backend/game_workflow_verify.py",
+    "backend/gg_lan_dag.py",
     "backend/image_admission.py",
     "backend/kaspa_contract.py",
     "backend/lan_dag_runtime.py",
@@ -2982,6 +2991,8 @@
     "qml/crypto-hole/index.html",
     "skills/gg-live-eyes/SKILL.md",
     "startup.py",
+    "support/gg-cli/README.md",
+    "support/gg-cli/repository-README.md",
     "tests/preview_crypto_ui.py",
     "tests/run_crypto_checks.py",
     "tests/test_app_audio_idle.py",
@@ -3018,7 +3029,11 @@
     "tests/test_game_engine_audio_compatibility.py",
     "tests/test_game_workflows.py",
     "tests/test_game_workflows_engine.py",
+    "tests/test_lan_circle_ui_controls.py",
+    "tests/test_lan_dag_runtime.py",
+    "tests/test_lan_deadline_transport.py",
     "tests/test_lan_desktop_join.py",
+    "tests/test_lan_test_token_ui.py",
     "tests/test_live_eyes_status_ui.py",
     "tests/test_live_eyes_video_activity.py",
     "tests/test_media_background_ui.py",
@@ -17790,6 +17805,44 @@
       "scope": "Current source-bound software-QML, routing, startup and input regressions. No actual user node or network listener is started or stopped by these checks. Linux hardware/full optional native parity and physical3device token circles remain pending.",
       "published_base_date": "2026-10-29",
       "published_history_retained": true
+    },
+    "task2026_10_29_lan_frame_deadline_and_circle_controls": {
+      "status": "PASS",
+      "source_focused_checks": {
+        "status": "PASS",
+        "cases": 33,
+        "skipped": 0,
+        "seconds": 16.547,
+        "modules": [
+          "tests.test_lan_deadline_transport",
+          "tests.test_lan_circle_ui_controls",
+          "tests.test_lan_test_token_ui",
+          "tests.test_lan_desktop_join",
+          "tests.test_lan_dag_runtime",
+          "tests.test_lan_token_transport",
+          "tests.test_lan_token_runtime",
+          "tests.test_desktop_operator_input"
+        ],
+        "scope": "Owned loopback and software/offscreen controls only; actual user nodes untouched"
+      },
+      "change": "Cancellable receive polling retains a fixed whole-frame/work deadline; sanitized failure details identify stage/operation without private error text. Desktop chooses duration1-60s and batch1-16 with defaultbatch1/10s, truthful final sync status. LAN starts leave auto production off for pairing/token probe.",
+      "caps": "Existing session/frame/transport-credit caps retained; no quota increase, credit refill or accounting refactor.",
+      "physical_first_observed_probe": {
+        "transactions": 16,
+        "complete_circles": 0,
+        "result": "ERROR_PARTIAL",
+        "coordinator_balances_at_that_observation": {
+          "Windows": "984",
+          "Termux": "1016",
+          "Linux": "1000"
+        },
+        "not_current_balances": true,
+        "not_full_physical_pass": true
+      },
+      "physical_full_circle_verified": false,
+      "fresh_pairing_and_batch1_probe_pending": true,
+      "user_running_session_modified_by_release_checks": false,
+      "scope": "Current source-bound software/offscreen/owned-loopback checks only. No claim that this updated source passed a complete physical three-device circle. All prior released MEDIA/KNOWLEDGE history retained."
     }
   },
   "verification_before_2026_10_21": {

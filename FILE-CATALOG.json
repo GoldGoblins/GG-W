@@ -15,7 +15,7 @@
     "interface": 291,
     "native-engine": 1188,
     "shared-support": 93,
-    "tests": 549,
+    "tests": 551,
     "tools": 38
   },
   "files": [
@@ -83,24 +83,24 @@
       "path": "README.md",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 125773,
-      "sha256": "f8d80cc88350a7b835542568803d81c003dd681646554d4c65153a732f2dce1d",
+      "bytes": 126897,
+      "sha256": "118fb9a10ab9b45993893577ca322234780c75553d24fe2349745047666e62e3",
       "mode": "0o600"
     },
     {
       "path": "SOURCE-MANIFEST.json",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 566728,
-      "sha256": "7dfcf5314fa28b3e4f27278a847751e08f476214bf604e3f26655ca23728925e",
+      "bytes": 567056,
+      "sha256": "818da383fb9b6851b8140a2d67420ea964de22f4e317629bf6554c2402aef765",
       "mode": "0o644"
     },
     {
       "path": "WINDOWS-PORT.json",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 1557989,
-      "sha256": "a36cd3286809810fcb398d3e5afb4a23203de1de06838d6b2bf87b7582397536",
+      "bytes": 1560528,
+      "sha256": "88a96d5382b1259539a499bfa2ff8e51b58cc3bc2dd9df79b19cd1a981d1cfc3",
       "mode": "0o644"
     },
     {
@@ -2403,8 +2403,8 @@
       "path": "backend/gg_lan_dag.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 60397,
-      "sha256": "66c942f8a0b9c7439ba98bc4702adb0c990a251d5dd410fd797c93678ef96d2a",
+      "bytes": 63268,
+      "sha256": "dee75adc4bcb02ac3237240c1396cb12c7233a82e15f1fe26cb0d1846f54bb03",
       "mode": "0o644"
     },
     {
@@ -2611,8 +2611,8 @@
       "path": "backend/lan_dag_runtime.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 19287,
-      "sha256": "34aeeecb26a9dbb8a493e7a4b90eef62de02011c71241bece1c554276ec09fb9",
+      "bytes": 19271,
+      "sha256": "bb08ad9308824eb1a2853def15f33621bbaa3203b8329376ec2b75a584c11619",
       "mode": "0o644"
     },
     {
@@ -4443,8 +4443,8 @@
       "path": "docs/PATCH-NOTES-2026-10-29.txt",
       "category": "documentation",
       "kind": "file",
-      "bytes": 9513,
-      "sha256": "3c0d4e3c062432c22a00c5383ede2301792e88eed056a2cd0c7cc491cb4bf03b",
+      "bytes": 11124,
+      "sha256": "894b1dcf3a8e47f829d7f20e345aeb0135e6a49233f04b82ae92ff0877e7fca0",
       "mode": "0o644"
     },
     {
@@ -4651,8 +4651,8 @@
       "path": "knowledge/dagoblin-lan.md",
       "category": "gpt-knowledge",
       "kind": "file",
-      "bytes": 6982,
-      "sha256": "161c3059c8d7cda85aa628a162531d01af61707a471453a85c3797711d08c8bf",
+      "bytes": 8274,
+      "sha256": "e5970594341a5eaf30127d1e073a09f6bf3fe3eb792fa73d30a59038df9ee98a",
       "mode": "0o644"
     },
     {
@@ -16235,8 +16235,8 @@
       "path": "qml/components/LanDagSetupPopup.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 18937,
-      "sha256": "aab4f530e0580d2db45f89f212c8da7fdf5dc2b80bc052cb153e8b5799046496",
+      "bytes": 22612,
+      "sha256": "41c80bf880d167e1811162e9c75a747fc38f2bfe21ec6fe2e993c79cf1d53289",
       "mode": "0o644"
     },
     {
@@ -18123,8 +18123,8 @@
       "path": "support/gg-cli/README.md",
       "category": "shared-support",
       "kind": "file",
-      "bytes": 18679,
-      "sha256": "83591afe919e72fa55b338b26456f80bc919d1f8f512711e74c9a6f721149a37",
+      "bytes": 19069,
+      "sha256": "36e8cf55378a7b66e923b8831a5feeafef40403fc489d14fcae7f861c9b72fc2",
       "mode": "0o644"
     },
     {
@@ -18179,8 +18179,8 @@
       "path": "support/gg-cli/repository-README.md",
       "category": "shared-support",
       "kind": "file",
-      "bytes": 5603,
-      "sha256": "3594c7c1db6c3a05abfbcefba769234063d63508540e2a637a24666e63281505",
+      "bytes": 6843,
+      "sha256": "7b3eb075c2da2f6ab0c28997110f6e44f783b2702f047a45d471d408ea321adc",
       "mode": "0o644"
     },
     {
@@ -21480,6 +21480,14 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_lan_circle_ui_controls.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 7608,
+      "sha256": "7b60b207f7cbdf9bc7bb3dff05eec3f2ec6511127839e97bc191502e3c569f45",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_lan_dag.py",
       "category": "tests",
       "kind": "file",
@@ -21491,8 +21499,16 @@
       "path": "tests/test_lan_dag_runtime.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 9064,
-      "sha256": "863aa28725d7bb8a72903fab78f7158abe36db04d41f5a204adedb2b3f28f9ab",
+      "bytes": 11183,
+      "sha256": "15f6212c3c90cae3a804b919a39528f2d8569aaaac00ff37b9802695c29d012b",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_deadline_transport.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 8227,
+      "sha256": "21021b440a36b4ccdeb338e6b31cea6b96c2a2852e61b4c9681ee64f3a49798c",
       "mode": "0o644"
     },
     {
@@ -21531,8 +21547,8 @@
       "path": "tests/test_lan_test_token_ui.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 3730,
-      "sha256": "6088fbb363240f350b524580c4fa4dd7e90ec96539740f5bb926ec5157b42cc8",
+      "bytes": 3729,
+      "sha256": "f12afc39fb6b02e7b1d8e0ad0c373fc19fd2d405deb706d0449bdd7b29f55725",
       "mode": "0o644"
     },
     {

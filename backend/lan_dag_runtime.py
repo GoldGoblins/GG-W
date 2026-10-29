@@ -229,7 +229,7 @@ class LanDagRuntime:
                     trusted=coordinator['peer_key'];allowed=bootstrap['allowed_cidr'];route=(coordinator['host'],coordinator['port'])
                 host=options.get('bind_host','auto')
                 if host=='auto':host=auto_bind_host(route)
-                auto_produce=options.get('auto_produce',bootstrap is not None)
+                auto_produce=options.get('auto_produce',False)
                 allow_test_tokens=options.get('allow_test_tokens',False)
                 if type(allow_test_tokens) is not bool:raise ValueError('GG_LAN_OPTION')
                 peer=_api().LanDagPeer(options.get('label','GG LAN node'),host,options.get('port',16120),

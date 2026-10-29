@@ -73,6 +73,25 @@ actual visible owner window and supplying monotonic input timestamps.
 The complete earlier patch and MEDIA/KNOWLEDGE history remain included.
 Full physical three-device and Linux hardware validation are still pending.
 
+### LAN recovery follow-up · 2026-10-29
+
+The first observed Windows/Linux/Termux probe recorded 16 signed test transfers
+and stopped with an error before a complete circle: the coordinator recorded
+Windows 984, Termux 1016 and Linux 1000 GG-LAN(TEST). This is partial evidence,
+not a passed three-device circle test or a statement of the later session's
+current balances.
+
+This follow-up separates cancellable socket polling from the deadline for a
+complete frame, retains the shared work budget, and reports bounded transport
+error details. Desktop now starts with batch **1** for **10 seconds**, with
+explicit duration (1–60 seconds) and batch (1–16) controls. Start small before
+increasing the batch. Failed/unsynchronized runs remain visibly incomplete.
+Update and restart all three peers, pair them again, and repeat the physical
+test immediately with batch 1. LAN startup leaves automatic proposal production
+off during pairing and the token probe. Existing finite transport/session quotas
+remain unchanged; this is still a bounded prototype. The existing session is not
+silently restarted by installing source.
+
 
 RESEARCH contains backlog, evidence, source/method memory, web-skill checks,
 SQL previews, recorded evaluations, WASM, reverse engineering and game workflows.

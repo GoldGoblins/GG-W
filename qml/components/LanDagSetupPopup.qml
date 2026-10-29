@@ -23,6 +23,8 @@ Popup {
     readonly property var tokens:state.test_tokens||({})
     readonly property var circle:state.token_circle||({})
     readonly property bool circleRunning:["RUNNING","STOPPING"].indexOf(String(circle.state||""))>=0
+    readonly property bool circleFinished:["COMPLETE","STOPPED","ERROR","TIME_BUDGET","NO_TRANSFERS"].indexOf(String(circle.state||""))>=0
+    readonly property bool circleSettingsValid:/^[0-9]{1,2}$/.test(circleBatch.text)&&Number(circleBatch.text)>=1&&Number(circleBatch.text)<=16&&/^[0-9]{1,2}$/.test(circleDuration.text)&&Number(circleDuration.text)>=1&&Number(circleDuration.text)<=60
     readonly property bool allTokenOptedIn:candidates.length===3&&candidates.every(function(peer){return peer.allow_test_tokens===true})
     readonly property bool canStart:root.canAct&&!root.owned&&!root.localRunning&&labelField.text.trim().length>0&&/^[0-9]{4,5}$/.test(portField.text)&&Number(portField.text)>=1024&&Number(portField.text)<=65535
     property string formError:""
@@ -47,7 +49,41 @@ Popup {
         var fraction=text.slice(-d).replace(/0+$/,"")
         return text.slice(0,-d)+(fraction?"."+fraction:"")
     }
-    function command(label){return (label==="Termux"?'python':'python3')+' gg-cli.py --foreground --command "lan.start label='+label+(root.setup.allow_test_tokens===true?' allow_test_tokens=true':'')+'" --bootstrap-file gg-lan-bootstrap.json'}
+    function circleCode(value){
+        var text=String(value||"")
+        return !text?"":/^[A-Z][A-Z0-9_]{0,95}$/.test(text)?text:"Okänd orsak"
+    }
+    function circleDiagnostic(value){
+        var text=String(value||"")
+        return /^[A-Za-z][A-Za-z0-9_]{0,47}$/.test(text)?text:""
+    }
+    function diagnosticParts(details){
+        details=details||({})
+        var parts=[],operation=circleDiagnostic(details.operation),stage=circleDiagnostic(details.stage),errorClass=circleDiagnostic(details.error_class)
+        if(operation)parts.push("Operation: "+operation)
+        if(stage)parts.push("Steg: "+stage)
+        if(errorClass)parts.push("Felklass: "+errorClass)
+        return parts
+    }
+    function transportErrorText(){
+        var error=circleCode(root.lan.last_error)
+        return error?["Senaste transportfel: "+error].concat(diagnosticParts(root.lan.last_error_details)).join(" · "):""
+    }
+    function circleDetails(){
+        var error=circleCode(root.circle.last_error),reason=circleCode(root.circle.stop_reason)
+        var parts=[]
+        if(error)parts.push("Fel: "+error)
+        if(reason)parts.push("Stopporsak: "+reason)
+        if(error)parts=parts.concat(diagnosticParts(root.circle.last_error_details))
+        return parts.join(" · ")
+    }
+    function circleSyncText(){
+        if(root.circleRunning)return root.circle.all_peers_synced===true?"Pågår · senaste kvittokedjan bekräftad av alla tre peers; slutkontroll återstår.":"Pågår · gemensam kvittokedja ännu inte bekräftad."
+        if(root.circle.all_peers_synced===true)return "Avslutat · alla tre peers har bekräftat samma kvittokedja."
+        if(root.circleFinished)return Number(root.circle.transactions)>0?"Avslutat · delresultat: alla tre peers har inte bekräftat samma kvittokedja.":"Avslutat · gemensam kvittokedja kunde inte bekräftas."
+        return "Redo · gemensam kvittokedja verifieras under cirkelprovet."
+    }
+    function command(label){return (label==="Termux"?'python':'python3')+' gg-cli.py --foreground --command "lan.start label='+label+' auto_produce=false'+(root.setup.allow_test_tokens===true?' allow_test_tokens=true':'')+'" --bootstrap-file gg-lan-bootstrap.json'}
     function addPasted(){try{var value=JSON.parse(inviteInput.text);run("lan_peer_add",{invite:value});inviteInput.text=""}catch(error){formError="Klistra in en signerad publik inbjudan som JSON."}}
     function joinBootstrap(path){if(root.canStart)root.run("lan_join_file",{path:String(path),label:labelField.text.trim(),port:Number(portField.text),bind_host:"auto",allow_test_tokens:tokenOptIn.checked})}
     component Label:GGText {font.family:"monospace";font.pixelSize:10;color:RuntimeTheme.GGTheme.text;textFormat:Text.PlainText;wrapMode:Text.Wrap}
@@ -65,7 +101,7 @@ Popup {
                     Action {width:30;text:"↻";enabled:root.canAct;onClicked:root.refreshRequested()}
                     Action {objectName:"lanPriorityStop";width:100;text:root.stopPending?"Stoppar…":"■ Stoppa";enabled:root.owned&&!root.stopPending;onClicked:root.priorityStopRequested()}
                 }
-                Label {objectName:"lanSetupError";colorKey:"ui.lan.error";width:parent.width;visible:text.length>0;text:root.formError||root.operationError||String(root.setup.announcement_error||root.lan.last_error||"");color:RuntimeTheme.GGTheme.negative}
+                Label {objectName:"lanSetupError";colorKey:"ui.lan.error";width:parent.width;visible:text.length>0;text:root.formError||root.operationError||String(root.setup.announcement_error||"")||root.transportErrorText();color:RuntimeTheme.GGTheme.negative}
                 Section {height:startBody.height+18
                     Column {id:startBody;x:9;y:9;width:parent.width-18;spacing:7
                         Label {colorKey:"ui.lan.step.start";text:"1 · Starta koordinator eller anslut den här datorn";font.bold:true}
@@ -146,11 +182,18 @@ Popup {
                             }
                         }
                         Row {spacing:7
-                            Action {objectName:"lanCircleStart";text:"▷ Cirkulera 10 s · batch 16";enabled:root.canAct&&root.ready&&root.coordinator&&!root.circleRunning&&root.wholeTokenAtomic().length>0;onClicked:root.run("lan_circle_start",{duration_ms:10000,batch:16,amount_atomic:root.wholeTokenAtomic()})}
+                            Label {text:"Längd (1–60 s)";height:27;verticalAlignment:Text.AlignVCenter}
+                            CryptoField {id:circleDuration;objectName:"lanCircleDuration";property string uiColorScope:"ui.lan.field.circle.duration";width:48;height:27;text:"10";maximumLength:2;inputMethodHints:Qt.ImhDigitsOnly;enabled:root.canAct&&root.coordinator&&!root.circleRunning;Accessible.name:"Cirkelprovets längd i sekunder, 1 till 60"}
+                            Label {text:"Batch (1–16)";height:27;verticalAlignment:Text.AlignVCenter}
+                            CryptoField {id:circleBatch;objectName:"lanCircleBatch";property string uiColorScope:"ui.lan.field.circle.batch";width:48;height:27;text:"1";maximumLength:2;inputMethodHints:Qt.ImhDigitsOnly;enabled:circleDuration.enabled;Accessible.name:"Överföringar per batch, 1 till 16"}
+                        }
+                        Row {spacing:7
+                            Action {objectName:"lanCircleStart";text:"▷ Cirkulera "+circleDuration.text+" s · batch "+circleBatch.text;enabled:root.canAct&&root.ready&&root.coordinator&&!root.circleRunning&&root.circleSettingsValid&&root.wholeTokenAtomic().length>0;onClicked:root.run("lan_circle_start",{duration_ms:Number(circleDuration.text)*1000,batch:Number(circleBatch.text),amount_atomic:root.wholeTokenAtomic()})}
                             Action {objectName:"lanCircleStop";text:"■ Stoppa prov";enabled:root.canAct&&root.circleRunning;onClicked:root.run("lan_circle_stop",{})}
                         }
                         Label {objectName:"lanCircleStatus";colorKey:"ui.lan.token.circle";width:parent.width;text:String(root.circle.state||"Redo")+" · "+String(root.circle.transactions===undefined?"—":root.circle.transactions)+" TX · "+(typeof root.circle.tps==="number"?root.circle.tps.toFixed(1):"—")+" TX/s · "+String(root.circle.completed_rounds===undefined?"—":root.circle.completed_rounds)+" varv";color:root.circle.last_error?RuntimeTheme.GGTheme.negative:RuntimeTheme.GGTheme.cyan}
-                        Label {colorKey:"ui.lan.token.synced";width:parent.width;text:root.circle.all_peers_synced===true?"Alla tre peers har bekräftat samma kvittokedja.":"Gemensamt kvitto verifieras när provet avslutas.";font.pixelSize:9;color:RuntimeTheme.GGTheme.dim}
+                        Label {objectName:"lanCircleDetails";colorKey:"ui.lan.token.circle.details";width:parent.width;text:root.circleDetails();visible:text.length>0;font.pixelSize:9;color:root.circle.last_error?RuntimeTheme.GGTheme.negative:RuntimeTheme.GGTheme.dim}
+                        Label {objectName:"lanCircleSync";colorKey:"ui.lan.token.synced";width:parent.width;text:root.circleSyncText();font.pixelSize:9;color:root.circleFinished&&root.circle.all_peers_synced!==true?RuntimeTheme.GGTheme.negative:RuntimeTheme.GGTheme.dim}
                     }
                 }
             }

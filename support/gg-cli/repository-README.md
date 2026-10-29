@@ -5,8 +5,8 @@ protokoll och samma CLI-kommandon används på dator och telefon. Ingen Qt,
 webbläsare eller desktopinstallation behövs.
 
 Detta är källkod med uttrycklig installation av beroenden, inte en fristående
-EXE/APK. Repositoriet är avsett som `GoldGoblins/GG-CLI`; ursprungskoden
-underhålls även i [GoldGoblins/GG](https://github.com/GoldGoblins/GG).
+EXE/APK. Repositoriet är `GoldGoblins/GG-CLI`; den fullständiga desktopkoden
+för det gemensamma LAN-provet finns i [GoldGoblins/GG-W](https://github.com/GoldGoblins/GG-W).
 
 ## Hämta koden
 
@@ -53,8 +53,9 @@ sh install/termux.sh --launch
 
 Kör skriptet med `sh` som ovan; en vanlig Linuxsökväg för shebang krävs inte.
 Termux är Android/Bionic. En lyckad Windows-/Linuxinstallation bevisar inte
-att dess Pythonberoenden fungerar på en fysisk telefon. Det fysiska
-Termuxprovet är ännu inte verifierat i detta källunderlag.
+att alla dess Pythonberoenden fungerar på varje telefon. Den första fysiska
+telefonen har anslutit i LAN-provet, men ett komplett tokencirkelprov är
+fortfarande inte godkänt.
 
 Alla tre skript är tunna anrop till samma `install.py`. `--launch` öppnar CLI,
 men startar ingen nod. Utelämna flaggan om du bara vill installera miljön.
@@ -83,11 +84,11 @@ identitet och endpoint, inga privata nycklar.
 Linux ansluter exempelvis så här från paketets mapp:
 
 ```sh
-python3 gg-cli.py --foreground --command "lan.start label=Linux allow_test_tokens=true" --bootstrap-file gg-lan-bootstrap.json --invite-out gg-lan-linux.json
+python3 gg-cli.py --foreground --command "lan.start label=Linux allow_test_tokens=true auto_produce=false" --bootstrap-file gg-lan-bootstrap.json
 ```
 
-I Termux används `python`, `label=Termux` och exempelvis
-`--invite-out gg-lan-termux.json`. Den egna LAN-adressen väljs automatiskt.
+I Termux används `python` och `label=Termux`. `--invite-out` behövs inte
+för automatisk annonsering. Den egna LAN-adressen väljs automatiskt.
 Varje peer annonserar sin signerade publika inbjudan till koordinatorn;
 Windows granskar de två kandidaterna och godkänner den gemensamma sessionen.
 Ingen manuell IP-letning behövs när klienterna väl har startats.
@@ -104,7 +105,7 @@ kan samma interaktiva koordinator-session köra:
 
 ```text
 lan.session_create distribute=true enable_test_tokens=true
-lan.circle_start duration_ms=10000 batch=16 amount_atomic=1000000
+lan.circle_start duration_ms=10000 batch=1 amount_atomic=1000000
 ```
 
 `lan.circle_stop` avbryter provet. Varje apparat signerar själv; koordinatorn
@@ -115,6 +116,20 @@ högst 60 sekunders gemensam arbetsbudget och en fast kvittokvot, följt av
 högst en sekund för avstängningsmeddelanden. Verkligt uppmätt TX/s rapporteras
 separat från block-/förslagshastigheten och bildfrekvensen.
 
+Börja direkt efter ny parning med batch **1** i **10 sekunder**. Automatisk
+förslagsproduktion är avstängd under parning/tokenprov; startkommandot anger
+`auto_produce=false`. Befintliga ändliga sessions-/transportkvoter är kvar.
+Höj därefter uttryckligen upp till
+batch 16 när alla tre bekräftar samma kvittokedja och kompletta varv. Desktop
+har motsvarande kontroller för batch 1–16 och längd 1–60 sekunder. En felkod
+eller saknad slutkvittering betyder ett ofullständigt prov, även om verkliga
+signerade överföringar redan hunnit bokföras. Felaktiga prov räknas inte som PASS.
+
+Vid uppdatering: stoppa den egna peeren med Ctrl+C, kör `git pull`, starta
+om och para alla tre igen med en ny publik bootstrap. Hämta även uppdaterad
+GG-W på desktopdatorerna; en separat engångsprocess uppdaterar inte kod i en
+redan körande nod.
+
 [Hela CLI-handboken](support/gg-cli/README.md) ·
 [LAN-provet](knowledge/dagoblin-lan.md) ·
 [Protokoll- och lanseringsgränser](knowledge/dagoblin-launch-readiness.md)
@@ -123,8 +138,12 @@ separat från block-/förslagshastigheten och bildfrekvensen.
 
 Windowskontrollerna använder disponibla lokala processer och isolerade
 testdata. Tre loopbackprocesser är inte tre verifierade fysiska enheter.
-Den aktuella Linux-/Termuxkoden måste installeras och provas på respektive
-enhet innan någon sådan kompatibilitet eller genomströmning påstås.
+Det första observerade Windows/Linux/Termux-provet registrerade 16 signerade
+testöverföringar men avbröts med fel före ett komplett varv. Koordinatorns
+saldon var då Windows 984, Termux 1016 och Linux 1000 GG-LAN(TEST); detta är
+inte ett påstående om den senare sessionens aktuella saldon. Detta är
+ett partiellt resultat, inte ett godkänt tokencirkelprov. Efter denna
+källuppdatering återstår full omstart, ny parning och ett nytt fysiskt prov.
 
 Publikt testnät och huvudnät är inte aktiverade av en installation. CLI delar
 de gränser och den status som den aktuella backendkoden faktiskt rapporterar.
