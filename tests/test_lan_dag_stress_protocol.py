@@ -2,6 +2,7 @@
 import json
 import time
 import unittest
+from copy import deepcopy
 from unittest.mock import patch
 from backend import gg_lan_dag as lan
 from backend.gg_parallel_dag import ParallelDag,make_public_genesis,pack,_tree
@@ -95,13 +96,87 @@ class DagStressProtocolTests(unittest.TestCase):
         coordinator=self.peers[0];original=coordinator._token_rpc
         def fault(target,kind,payload,**kwargs):
             result=original(target,kind,payload,**kwargs)
-            if kind=='DAG_STRESS_STATUS':result['evidence']['protocol_fault']='GG_DAG_PRODUCER_EQUIVOCATION'
+            if kind in ('DAG_STRESS_STOP','DAG_STRESS_STATUS'):result['evidence']['protocol_fault']='GG_DAG_PRODUCER_EQUIVOCATION'
             return result
         coordinator._token_rpc=fault;coordinator.start_dag_stress(1000,1,100)
         result=self.finish()
         self.assertEqual(result['state'],'ERROR',result);self.assertFalse(result['all_peers_synced'])
         self.assertIsNone(result['acknowledged_transactions']);self.assertIn('EQUIVOCATION',result['last_error'])
         self.assertFalse(lan.LanDagPeer._dag_same_evidence({},{}))
+
+    def coordinate_near_deadline(self,*,mismatch=False,status_late=True,late_block=None):
+        """Real signed ledger evidence with a deterministic slow-control clock.
+
+        STOP consumes most of the budget. Any unnecessary STATUS request would
+        cross the original deadline. Worker creation is excluded from this
+        control-phase test; independent real-worker tests above cover that path.
+        """
+        coordinator=self.peers[0];signed=self.plan()
+        coordinator._dag_stress_command(coordinator.public_key,'DAG_STRESS_PREPARE',{'plan':signed})
+        plan=coordinator._dag_plan;clock=[100.0];polls=[];stop_counts={};injected=[False]
+        lookup={peer.public_key:peer for peer in self.peers};originals={peer.public_key:peer._dag_stress_command for peer in self.peers}
+        for peer in self.peers:
+            def command(source,kind,payload,peer=peer):
+                if kind=='DAG_STRESS_BEGIN':
+                    peer._dag_plan['begun']=True;peer._dag_stress['state']='RUNNING'
+                    if peer is coordinator:peer._engine.produce_lan_test_block(0,2)
+                    return peer._dag_status()
+                return originals[peer.public_key](source,kind,payload)
+            peer._dag_stress_command=command
+        def rpc(target,kind,payload,*,cancel=None,deadline=None):
+            if kind=='DAG_STRESS_STOP':
+                stop_counts[target]=stop_counts.get(target,0)+1;clock[0]+=.4
+                if late_block is not None and sum(stop_counts.values())==3 and not injected[0]:
+                    coordinator._ingest(late_block,self.peers[1].public_key);injected[0]=True
+            elif kind=='DAG_STRESS_STATUS':
+                polls.append(target);clock[0]+=.3 if status_late else .01
+            else:clock[0]+=.01
+            if deadline is not None and clock[0]>=deadline:
+                error=ValueError('GG_LAN_CIRCLE_DEADLINE')
+                error._gg_lan_details={'operation':kind,'stage':'RECEIVE'}
+                raise error
+            result=lookup[target]._dag_stress_command(coordinator.public_key,kind,payload)
+            if mismatch and target==self.peers[1].public_key and kind=='DAG_STRESS_STOP' and stop_counts[target]==1:
+                result=deepcopy(result);result['evidence']['blockset_digest']='0'*64
+            return result
+        coordinator._token_rpc=rpc
+        with patch.object(lan.time,'monotonic',side_effect=lambda:clock[0]):
+            plan.update(started=100.0,deadline=101.0,production_deadline=100.0)
+            coordinator._dag_coordinate(plan,coordinator._dag_cancel)
+            result=coordinator._dag_stress_snapshot()
+        return result,polls
+
+    def test_matching_stop_observations_complete_without_status_near_deadline(self):
+        result,polls=self.coordinate_near_deadline()
+        self.assertEqual(result['state'],'COMPLETE',result)
+        self.assertTrue(result['all_peers_synced']);self.assertEqual(result['acknowledged_transactions'],2)
+        self.assertEqual(polls,[]);self.assertEqual(result['status_polls'],0)
+        self.assertEqual(result['acknowledgement_basis'],'STOP_OBSERVATIONS')
+        self.assertEqual(next(row['state'] for row in result['participants'] if row['local']),result['state'])
+        self.assertGreater(result['phase_ms']['STOP'],0)
+
+    def test_mismatched_stop_observation_cannot_ack_after_status_exceeds_deadline(self):
+        result,polls=self.coordinate_near_deadline(mismatch=True)
+        self.assertEqual(result['state'],'TIME_BUDGET',result);self.assertFalse(result['all_peers_synced'])
+        self.assertIsNone(result['acknowledged_transactions']);self.assertIsNone(result['acknowledged_tps'])
+        self.assertEqual(polls,[self.peers[1].public_key]);self.assertEqual(result['failure_phase'],'CONVERGENCE')
+        self.assertEqual(result['last_error_details'],{'operation':'DAG_STRESS_STATUS','stage':'RECEIVE','error_class':'ValueError'})
+
+    def test_only_mismatched_peer_is_polled_and_fresh_matching_observation_can_ack(self):
+        result,polls=self.coordinate_near_deadline(mismatch=True,status_late=False)
+        self.assertEqual(result['state'],'COMPLETE',result);self.assertTrue(result['all_peers_synced'])
+        self.assertEqual(polls,[self.peers[1].public_key]);self.assertEqual(result['status_polls'],1)
+        self.assertEqual(result['acknowledgement_basis'],'STOP_AND_STATUS_OBSERVATIONS')
+
+    def test_late_valid_block_invalidates_pre_cleanup_matching_observations(self):
+        source=self.peers[1]
+        isolated=ParallelDag.from_public_genesis(source._engine.export_public_genesis())
+        isolated.attach_local_producers({2:source._local_keys[0]})
+        late=isolated.produce_lan_test_block(2,1)['wire']
+        result,polls=self.coordinate_near_deadline(late_block=late)
+        self.assertEqual(polls,[]);self.assertEqual(result['state'],'TIME_BUDGET',result)
+        self.assertEqual(result['last_error'],'GG_LAN_DAG_FINAL_EVIDENCE_CHANGED')
+        self.assertFalse(result['all_peers_synced']);self.assertIsNone(result['acknowledged_tps'])
 
     def test_limits_optin_unrelated_production_and_capability_query(self):
         coordinator=self.peers[0]

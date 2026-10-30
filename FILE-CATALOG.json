@@ -92,7 +92,7 @@
       "category": "entrypoints-and-guidance",
       "kind": "file",
       "bytes": 574172,
-      "sha256": "f89d5c9a5c89e8a796e82258facc323fd046ef7a6a63076fbadb5ad9e54f5f3b",
+      "sha256": "70854023e86b1b54c8053a98e144863fc019ce9410e1fb5c28cbbf285ae6c2a3",
       "mode": "0o644"
     },
     {
@@ -100,7 +100,7 @@
       "category": "entrypoints-and-guidance",
       "kind": "file",
       "bytes": 1578358,
-      "sha256": "e96cc78d28f0580d0402b6cb1d688c525d7a00154100b856f3ed4c55becbab4a",
+      "sha256": "67e8515ee5f53053e9d1f5bb6d6d833176b5c812f2b2d3b6f9d4d4d4f9c173bb",
       "mode": "0o644"
     },
     {
@@ -2403,8 +2403,8 @@
       "path": "backend/gg_lan_dag.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 87367,
-      "sha256": "6ae77dd045075f5e27f7bdd2a8b320065346d7a065d040b86a87f43b939e75b4",
+      "bytes": 90593,
+      "sha256": "845a7234b0c78f67b96728e413257de2728f882407310176c2a70ded13cf94eb",
       "mode": "0o644"
     },
     {
@@ -21515,8 +21515,8 @@
       "path": "tests/test_lan_dag_stress_protocol.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 9863,
-      "sha256": "2216c1a7fc3732a8963b0c721ffbf8aed09f774ee27edf39748798dd51d42dd6",
+      "bytes": 14972,
+      "sha256": "ed9c082d40d0a5f4bb752f6413b53dcae24c64231186017d9cd63d9e603cb7a6",
       "mode": "0o644"
     },
     {

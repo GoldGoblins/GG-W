@@ -443,6 +443,12 @@ class LanDagPeer:
             return {**state,'evidence':evidence,'run_id':plan['body']['run_id'] if plan else '',
                 'worker_active':bool(self._dag_worker and self._dag_worker.is_alive())}
 
+    @staticmethod
+    def _dag_stopped_observation_matches(status,evidence,run_id):
+        return (isinstance(status,dict) and status.get('run_id')==run_id
+            and status.get('worker_active') is False and status.get('state') in ('COMPLETE','STOPPING')
+            and status.get('last_error')=='' and LanDagPeer._dag_same_evidence(evidence,status.get('evidence')))
+
     def _dag_stress_command(self,peer,kind,payload):
         """Authenticated coordinator-only, idempotent two-phase finite controls."""
         if peer!=self._trusted:raise ValueError('GG_LAN_COORDINATOR_REQUIRED')
@@ -487,7 +493,8 @@ class LanDagPeer:
                     self._dag_stress.update(state='STARTING',duration_ms=body['duration_ms'],transactions_per_block=body['transactions_per_block'],
                         interval_ms=body['interval_ms'],elapsed_ms=0,blocks=0,transactions=0,all_peers_synced=False,
                         acknowledged_blocks=None,acknowledged_transactions=None,acknowledged_bps=None,acknowledged_tps=None,
-                        stop_reason='',last_error='',participants=[])
+                        stop_reason='',last_error='',last_error_details={},failure_phase='',phase_ms={},status_polls=0,
+                        acknowledgement_basis='',participants=[])
                 return self._dag_status()
             if kind in ('DAG_STRESS_BEGIN','DAG_STRESS_STOP') and set(payload)=={'run_id'}:
                 _public(payload['run_id']);plan=self._dag_plan
@@ -562,41 +569,68 @@ class LanDagPeer:
     def _dag_coordinate(self,plan,cancel):
         attempted=[];statuses={};terminal='TIME_BUDGET';reason='DURATION';error='';synced=False
         deadline=plan['deadline'];run_id=plan['body']['run_id']
+        phase='PREPARE';phase_started=time.monotonic();phase_ms={};details={};failure_phase='';status_polls=0
+        acknowledgement_basis='';observed_before_deadline=False
+        def enter_phase(name):
+            nonlocal phase,phase_started
+            now=time.monotonic();phase_ms[phase]=round(phase_ms.get(phase,0)+(now-phase_started)*1000,3)
+            phase=name;phase_started=now
+        def peer_failure(status):
+            if not isinstance(status,dict):return ''
+            proof=status.get('evidence');fault=proof.get('protocol_fault') if isinstance(proof,dict) else ''
+            value=status.get('last_error') or fault
+            return _failure_code(ValueError(str(value)),'GG_LAN_DAG_PEER_FAILED') if value else ''
         try:
             for peer in self._roster:
                 if peer==self.public_key:continue
                 attempted.append(peer)
                 statuses[peer]=self._token_rpc(peer,'DAG_STRESS_PREPARE',{'plan':plan['signed']},cancel=cancel,deadline=deadline)
+            enter_phase('BEGIN')
             for peer in attempted:
                 statuses[peer]=self._token_rpc(peer,'DAG_STRESS_BEGIN',{'run_id':run_id},cancel=cancel,deadline=deadline)
             self._dag_stress_command(self.public_key,'DAG_STRESS_BEGIN',{'run_id':run_id})
+            enter_phase('PRODUCE')
             while time.monotonic()<plan['production_deadline'] and not cancel.is_set() and not self._cancel.is_set():
                 if self._dag_stress['state'] in ('ERROR','LIMIT_REACHED'):break
                 cancel.wait(min(.1,max(0,plan['production_deadline']-time.monotonic())))
             if cancel.is_set() or self._cancel.is_set():reason='CANCELLED'
+            enter_phase('STOP')
             self._dag_stress_command(self.public_key,'DAG_STRESS_STOP',{'run_id':run_id})
             for peer in attempted:
                 statuses[peer]=self._token_rpc(peer,'DAG_STRESS_STOP',{'run_id':run_id},deadline=deadline)
+            enter_phase('CONVERGENCE')
             while time.monotonic()<deadline and not self._cancel.is_set():
-                local=self._dag_status();evidence=local['evidence'];synced=not evidence['protocol_fault']
+                # STOP is already an authenticated, run-bound observation after
+                # joining that peer's worker. Reuse its complete proof when it
+                # matches the fresh local set; request only missing observations.
+                local=self._dag_status();evidence=local['evidence'];unmatched=[]
                 for peer in attempted:
-                    status=self._token_rpc(peer,'DAG_STRESS_STATUS',{},deadline=deadline);statuses[peer]=status
-                    if status.get('run_id')!=run_id or status.get('worker_active') or not self._dag_same_evidence(evidence,status.get('evidence')):synced=False
-                    peer_error=status.get('last_error') or status.get('evidence',{}).get('protocol_fault')
+                    status=statuses.get(peer,{});peer_error=peer_failure(status)
                     if peer_error:
-                        terminal='LIMIT_REACHED' if status.get('state')=='LIMIT_REACHED' else 'ERROR';error=_failure_code(ValueError(str(peer_error)),'GG_LAN_DAG_PEER_FAILED')
+                        terminal='LIMIT_REACHED' if status.get('state')=='LIMIT_REACHED' else 'ERROR';error=peer_error
+                    if not self._dag_stopped_observation_matches(status,evidence,run_id):unmatched.append(peer)
                 if evidence['protocol_fault']:terminal='ERROR';error=evidence['protocol_fault']
-                if synced or error:break
-                cancel.wait(.025)
+                if error:break
+                if not unmatched and local.get('worker_active') is False and time.monotonic()<deadline:
+                    synced=True;observed_before_deadline=True
+                    acknowledgement_basis='STOP_OBSERVATIONS' if status_polls==0 else 'STOP_AND_STATUS_OBSERVATIONS'
+                    break
+                for peer in unmatched:
+                    status_polls+=1
+                    statuses[peer]=self._token_rpc(peer,'DAG_STRESS_STATUS',{},deadline=deadline)
+                # Local STOP signals the production Event. Waiting on that same
+                # Event here would spin; lifetime cancellation remains separate.
+                self._cancel.wait(min(.025,max(0,deadline-time.monotonic())))
             local=self._dag_status()
-            synced=synced and all(statuses.get(peer,{}).get('run_id')==run_id
-                and not statuses[peer].get('worker_active') and self._dag_same_evidence(local['evidence'],statuses[peer].get('evidence')) for peer in attempted)
+            synced=synced and observed_before_deadline and local.get('worker_active') is False and all(
+                self._dag_stopped_observation_matches(statuses.get(peer),local['evidence'],run_id) for peer in attempted)
             if local['last_error']:
                 error=local['last_error'];terminal='LIMIT_REACHED' if local['state']=='LIMIT_REACHED' else 'ERROR'
             if error:synced=False;reason='SOFTWARE_PROFILE_LIMIT' if terminal=='LIMIT_REACHED' else 'FAILED'
             elif synced and local['transactions']>0:terminal='COMPLETE'
             else:terminal='TIME_BUDGET'
         except Exception as exception:
+            failure_phase=phase;details=_failure_details(exception)
             error=_failure_code(exception,'GG_LAN_DAG_STRESS_FAILED')
             software_limit=error in {'GG_LAN_CREDIT','GG_LAN_ORPHAN_CREDIT','GG_LAN_DAG_STRESS_RUN_LIMIT','GG_DAG_SESSION_CREDIT','GG_DAG_PEER_CREDIT','GG_DAG_STORAGE_LIMIT','GG_DAG_RECORD_LIMIT'}
             terminal='LIMIT_REACHED' if software_limit else 'TIME_BUDGET' if time.monotonic()>=deadline else 'ERROR'
@@ -604,31 +638,45 @@ class LanDagPeer:
             else:reason='SOFTWARE_PROFILE_LIMIT' if software_limit else 'DURATION' if terminal=='TIME_BUDGET' else 'FAILED'
             synced=False
         finally:
+            if not synced and not failure_phase:failure_phase=phase
+            enter_phase('CLEANUP')
             # Roll back every attempted remote start, including a lost ACK.
             # These controls only address this run ID and never engine live work.
             self._dag_cancel.set();self._dag_closed.add(run_id)
             cleanup_deadline=time.monotonic()+1
             for peer in attempted:
-                try:self._token_rpc(peer,'DAG_STRESS_STOP',{'run_id':run_id},deadline=cleanup_deadline)
+                try:
+                    observation=self._token_rpc(peer,'DAG_STRESS_STOP',{'run_id':run_id},deadline=cleanup_deadline)
+                    # Later cleanup may invalidate an earlier observation, but
+                    # can never establish a new ACK after the work deadline.
+                    peer_error=peer_failure(observation)
+                    if peer_error:
+                        synced=False;terminal='LIMIT_REACHED' if observation.get('state')=='LIMIT_REACHED' else 'ERROR'
+                        reason='SOFTWARE_PROFILE_LIMIT' if terminal=='LIMIT_REACHED' else 'FAILED';error=peer_error;failure_phase='CLEANUP'
+                    if synced and not self._dag_stopped_observation_matches(observation,statuses[peer].get('evidence'),run_id):synced=False
                 except Exception:pass
             worker=self._dag_worker
             if worker and worker is not threading.current_thread():worker.join(max(0,cleanup_deadline-time.monotonic()))
             elapsed=max(.001,time.monotonic()-plan['started']);local=self._dag_status()
-            synced=synced and all(self._dag_same_evidence(local['evidence'],statuses.get(peer,{}).get('evidence')) for peer in attempted)
+            synced=synced and local.get('worker_active') is False and all(
+                self._dag_stopped_observation_matches(statuses.get(peer),local['evidence'],run_id) for peer in attempted)
             if local['evidence']['protocol_fault']:
                 synced=False;terminal='ERROR';reason='FAILED';error=local['evidence']['protocol_fault']
             elif terminal=='COMPLETE' and not synced:
-                terminal='TIME_BUDGET';reason='DURATION';error='GG_LAN_DAG_FINAL_EVIDENCE_CHANGED'
+                terminal='TIME_BUDGET';reason='DURATION';error='GG_LAN_DAG_FINAL_EVIDENCE_CHANGED';failure_phase='FINAL_EVIDENCE'
+            enter_phase('FINALIZE')
             rows=[]
             for peer,roster in self._roster.items():
                 status=local if peer==self.public_key else statuses.get(peer,{})
                 proof=status.get('evidence',{})
                 rows.append({'label':roster['label'],'local':peer==self.public_key,'opted_in':roster.get('allow_dag_transactions') is True,
-                    'state':status.get('state','UNOBSERVED'),'blocks':proof.get('blocks'),'transactions':proof.get('transactions'),
+                    'state':terminal if peer==self.public_key else status.get('state','UNOBSERVED'),'blocks':proof.get('blocks'),'transactions':proof.get('transactions'),
                     'protocol_fault':proof.get('protocol_fault',''),'blockset_digest':proof.get('blockset_digest'),'state_root':proof.get('state_root')})
             with self._lock:
                 self._dag_stress.update(state=terminal,stop_reason=reason,last_error=error,elapsed_ms=round(elapsed*1000),
                     blocks=local['blocks'],transactions=local['transactions'],participants=rows,all_peers_synced=synced,
+                    last_error_details=details,failure_phase=failure_phase,phase_ms=phase_ms,status_polls=status_polls,
+                    acknowledgement_basis=acknowledgement_basis if synced else '',
                     acknowledged_blocks=local['blocks'] if synced else None,acknowledged_transactions=local['transactions'] if synced else None,
                     acknowledged_bps=round(local['blocks']/elapsed,3) if synced else None,acknowledged_tps=round(local['transactions']/elapsed,3) if synced else None)
 
