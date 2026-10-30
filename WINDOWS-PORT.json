@@ -40,7 +40,7 @@
     },
     "backend/chat_surface_host.py": {
       "upstream_sha256": "51ddab5617c74e707efdcd1f0ea11ae0a753f920051fdf00cfdea1e9ecfafa0f",
-      "windows_sha256": "af299be78262a6b2b49cfc68b00e718c4af1f37d61302ff2312ebbd9fcb181ed"
+      "windows_sha256": "3a4264613380a5682030dc6477fec3ee2c42ddadb4641e68ba561152b03c052c"
     },
     "backend/codex_image_storage.py": {
       "upstream_sha256": "4ba52652bc8898c0f998a81085076ca3a69d7578ad564b7e6080439636dbfa5c",
@@ -824,7 +824,7 @@
     },
     "backend/terminal_grid.py": {
       "upstream_sha256": null,
-      "windows_sha256": "531d9fb63034d642fa65fe32e944318f558a62bf3f7cea94870347a28b32d00b"
+      "windows_sha256": "6a40238ce3dcaa1fa2a9a81d096ef51823d4a71c1e608f59efe0aabe4e9d9915"
     },
     "backend/tmog_sampler.py": {
       "upstream_sha256": null,
@@ -1788,7 +1788,7 @@
     },
     "backend/terminal_cli.py": {
       "upstream_sha256": null,
-      "windows_sha256": "2857cdfd7545c688fa1f5ed1a38ad3815965dc6aa5e9aca24bc7761c809babff"
+      "windows_sha256": "68804633e841e2f337a3ccdf7ef07e0db586c09da563852cd373a8997c43ce40"
     },
     "backend/terminal_service.py": {
       "upstream_sha256": null,
@@ -1840,7 +1840,7 @@
     },
     "support/gg-cli/README.md": {
       "upstream_sha256": null,
-      "windows_sha256": "36e8cf55378a7b66e923b8831a5feeafef40403fc489d14fcae7f861c9b72fc2"
+      "windows_sha256": "dfb8b7d4c74187aa88e384026e15deb640f8dca9a751f3ed520aca83fcc8f7fe"
     },
     "support/gg-cli/bootstrap.py": {
       "upstream_sha256": null,
@@ -1848,7 +1848,7 @@
     },
     "support/gg-cli/build_release.py": {
       "upstream_sha256": null,
-      "windows_sha256": "9343a9c36accb08de54f96cff819134c89ea4d995e865d12630f1c796b4b5e0f"
+      "windows_sha256": "f7a9041fb2f41da89d566ba3c5ea669c7ab229f805d0d56d9ca828b30e066886"
     },
     "support/gg-cli/requirements-wallet.txt": {
       "upstream_sha256": null,
@@ -2372,7 +2372,7 @@
     },
     "backend/gg_parallel_dag.py": {
       "upstream_sha256": null,
-      "windows_sha256": "4764ca4069b8a17b0ca100443628354ea1764c25abbab464422c7e06ab1b819f"
+      "windows_sha256": "92058acc2e821f53520955a8c87f8030611febd6a515683c8a1771a7dfc36cd4"
     },
     "knowledge/design/gg-network-wallet-v13/README.md": {
       "upstream_sha256": null,
@@ -2396,7 +2396,7 @@
     },
     "knowledge/gg-parallel-dag.md": {
       "upstream_sha256": null,
-      "windows_sha256": "d7d9626e90b480a35eecb937f755af60fa80f5f4c8fb02adbafc262fd4f016fa"
+      "windows_sha256": "6a3ac16a0ac0637de9087b98b8df2198b066ffdb4baae957e862ea226846abb7"
     },
     "knowledge/research/dagoblin/README.md": {
       "upstream_sha256": null,
@@ -2440,7 +2440,7 @@
     },
     "qml/components/GGParallelDagDashboard.qml": {
       "upstream_sha256": null,
-      "windows_sha256": "e2adff83697da2ed2ab09bcc6a861edd7720f04240118c45e6103b9b24ee9586"
+      "windows_sha256": "980f270f5974ae5f8634a886368bc5b91b4472c18bde6a175f55061ba7fbce08"
     },
     "qml/components/GGTheme.qml": {
       "upstream_sha256": null,
@@ -2616,7 +2616,7 @@
     },
     "knowledge/gg-network-live.md": {
       "upstream_sha256": null,
-      "windows_sha256": "221c769367a150176ba9e8813f516aca3d61138a46e3126fdee16b26db73a681"
+      "windows_sha256": "e8bd2f4e70fbee3e36e52c4289cd23d0e6211d49977c37d5fb4a5c770a9be599"
     },
     "qml/components/GGMeasurementBar.qml": {
       "upstream_sha256": null,
@@ -2656,11 +2656,11 @@
     },
     "backend/gg_lan_dag.py": {
       "upstream_sha256": null,
-      "windows_sha256": "dee75adc4bcb02ac3237240c1396cb12c7233a82e15f1fe26cb0d1846f54bb03"
+      "windows_sha256": "6ae77dd045075f5e27f7bdd2a8b320065346d7a065d040b86a87f43b939e75b4"
     },
     "backend/lan_dag_runtime.py": {
       "upstream_sha256": null,
-      "windows_sha256": "bb08ad9308824eb1a2853def15f33621bbaa3203b8329376ec2b75a584c11619"
+      "windows_sha256": "23595b314477c6dd56d599693d8f4f74826c0b714f4ad6a16735c51e289f91be"
     },
     "backend/network_profiles.py": {
       "upstream_sha256": null,
@@ -2672,15 +2672,15 @@
     },
     "knowledge/dagoblin-lan.md": {
       "upstream_sha256": null,
-      "windows_sha256": "e5970594341a5eaf30127d1e073a09f6bf3fe3eb792fa73d30a59038df9ee98a"
+      "windows_sha256": "fe035ebcf7858756d9aa28acfb47f4c2b4231976c36bfe246ed06856cfd8f5ca"
     },
     "knowledge/dagoblin-launch-readiness.md": {
       "upstream_sha256": null,
-      "windows_sha256": "08c02d575ab9b93ede180658ec6971a7bb9a8542ea914b506f2de6db642cbbd5"
+      "windows_sha256": "320c6e977503cbd5dd19298c64e1961826622fcda049e544aa4bbe753f166031"
     },
     "qml/components/LanDagSetupPopup.qml": {
       "upstream_sha256": null,
-      "windows_sha256": "41c80bf880d167e1811162e9c75a747fc38f2bfe21ec6fe2e993c79cf1d53289"
+      "windows_sha256": "35ef2d3e341b836f7f1e65da443f1e562a767ece3ae10987cfae3ae40baf947d"
     },
     "tests/test_activity_color_bindings.py": {
       "upstream_sha256": null,
@@ -2708,7 +2708,7 @@
     },
     "tests/test_lan_desktop_ui.py": {
       "upstream_sha256": null,
-      "windows_sha256": "42ad0e6d599b5db634797d152b248473b1508a38d635d9797003b7d1c8bc2601"
+      "windows_sha256": "a914c66fa27feb6e833643f094543b8828afd6cf2448ea6fd50cacbd50f6ae41"
     },
     "tests/test_lan_terminal.py": {
       "upstream_sha256": null,
@@ -2780,7 +2780,7 @@
     },
     "support/gg-cli/repository-README.md": {
       "upstream_sha256": null,
-      "windows_sha256": "7b3eb075c2da2f6ab0c28997110f6e44f783b2702f047a45d471d408ea321adc"
+      "windows_sha256": "a51c4f877e0a7ab0b64276a520c42130d65eaee96fbc053358287072448caec2"
     },
     "support/gg-cli/repository.gitignore": {
       "upstream_sha256": null,
@@ -4703,10 +4703,10 @@
           "error"
         ],
         "captions": [
-          "\u00d6GON \u00b7 F\u00c5NGAR",
-          "\u00d6GON \u00b7 VIDEO",
-          "\u00d6GON \u00b7 NYSS",
-          "\u00d6GON \u00b7 FEL"
+          "ÖGON · FÅNGAR",
+          "ÖGON · VIDEO",
+          "ÖGON · NYSS",
+          "ÖGON · FEL"
         ],
         "completed_current_fps": 0,
         "completed_current_frame_age": null,
@@ -6665,7 +6665,7 @@
       "delivery": {
         "change": "Measured strict RPC batches/keepalive; four real fixed CometBFT validators with SDK-verified execution and pinned WASM client; native terminal wallet/marketplace/network for Windows/Linux/Termux; confirmed Windows secure_open ctypes cache leak fixed live; deferred optional GUI/backend loading",
         "validation": "Finite own-node exact amounts/nonces/roots/H+1/replay/fault recovery; real Qt UI and VT100; actual clean Windows install and Linux VM node/wallet/catalogue run; live643414-type release and60s allocation stability; negative security and lifecycle guards",
-        "limits": "One physical host/operator with static validators, no public GG network or verified bridge. Android native compile only, physical phone/native wallet SDK not tested. Full-program200\u2013300MiB maximum under all workloads is not established. Upstream Hardhat Zod3 advisory remains. No real assets or user-node writes.",
+        "limits": "One physical host/operator with static validators, no public GG network or verified bridge. Android native compile only, physical phone/native wallet SDK not tested. Full-program200–300MiB maximum under all workloads is not established. Upstream Hardhat Zod3 advisory remains. No real assets or user-node writes.",
         "docs": [
           "knowledge/gg-network-foundation-v11.md",
           "knowledge/windows-secure-open-memory.md",
@@ -6900,7 +6900,7 @@
       "public_price_acceptance": {
         "status": "PRICED",
         "quality": "BONDING_CURVE_SPOT",
-        "source": "Pump RPC \u00b7 reserve estimate",
+        "source": "Pump RPC · reserve estimate",
         "evidence": ".runtime/network-v13-price-acceptance.json",
         "historical_acceptance_only": true
       },
@@ -8218,8 +8218,8 @@
           "knowledge/web-gpts/GG-Content-Studio/references/REF-03-handarbete-arbetsbank.png": "a6d769f2673d33047475f858f2d56afd3e0d5edb7c02cc63e34da1c8ee197c9f",
           "knowledge/web-gpts/GG-Content-Studio/references/REF-04-adelstenar-morkgron-sammet.png": "dc6d1a3479eae21cffb926f6cc1dc22b5da99c5f73d896900e9611bdc52ae26b",
           "knowledge/web-gpts/GG-Content-Studio/references/REF-06-aldre-silverforemal-arbetsyta.png": "c0ce7eb958b7d847255099d90f1f348740beffe4aeab76a9e358a5ffcafebe66",
-          "knowledge/web-gpts/GG-Marknadsf\u00f6ring/README_KUNSKAPSBAS.md": "c5614f3e15f52b518e1611b4c0d76b3803a810d30f3134093e2791ed29f79414",
-          "knowledge/web-gpts/GG-Marknadsf\u00f6ring/TEKNISK_MARKNADSMANUAL.md": "441ad433f3885f13cc3bc329953dcaac5ef85e3ca6c043fb2e42c82f3b122ce0",
+          "knowledge/web-gpts/GG-Marknadsföring/README_KUNSKAPSBAS.md": "c5614f3e15f52b518e1611b4c0d76b3803a810d30f3134093e2791ed29f79414",
+          "knowledge/web-gpts/GG-Marknadsföring/TEKNISK_MARKNADSMANUAL.md": "441ad433f3885f13cc3bc329953dcaac5ef85e3ca6c043fb2e42c82f3b122ce0",
           "knowledge/web-gpts/GG-Metaarkitekt-gptskapare/01-identitet-och-grundide.md": "d9b2be92981284301bba46f7af0f1f761c2b09bdf07f92bcb587b10ed6b47fb6",
           "knowledge/web-gpts/GG-Metaarkitekt-gptskapare/02-mini-idekompass-och-research.md": "b8248c2b194e6d19747f6265bcddfd5e6c704d513a70554df4a7a8f2c79084a9",
           "knowledge/web-gpts/GG-Metaarkitekt-gptskapare/03-gpt-arkitektur-och-instruktionsdesign.md": "ecaa5d2e12b2d453f6babbb7a8f0867289a8c3747ced25d8976d7c4bdc1b77a2",
@@ -11573,8 +11573,8 @@
           "knowledge/web-gpts/GG-Content-Studio/references/REF-03-handarbete-arbetsbank.png": "a6d769f2673d33047475f858f2d56afd3e0d5edb7c02cc63e34da1c8ee197c9f",
           "knowledge/web-gpts/GG-Content-Studio/references/REF-04-adelstenar-morkgron-sammet.png": "dc6d1a3479eae21cffb926f6cc1dc22b5da99c5f73d896900e9611bdc52ae26b",
           "knowledge/web-gpts/GG-Content-Studio/references/REF-06-aldre-silverforemal-arbetsyta.png": "c0ce7eb958b7d847255099d90f1f348740beffe4aeab76a9e358a5ffcafebe66",
-          "knowledge/web-gpts/GG-Marknadsf\u00f6ring/README_KUNSKAPSBAS.md": "c5614f3e15f52b518e1611b4c0d76b3803a810d30f3134093e2791ed29f79414",
-          "knowledge/web-gpts/GG-Marknadsf\u00f6ring/TEKNISK_MARKNADSMANUAL.md": "441ad433f3885f13cc3bc329953dcaac5ef85e3ca6c043fb2e42c82f3b122ce0",
+          "knowledge/web-gpts/GG-Marknadsföring/README_KUNSKAPSBAS.md": "c5614f3e15f52b518e1611b4c0d76b3803a810d30f3134093e2791ed29f79414",
+          "knowledge/web-gpts/GG-Marknadsföring/TEKNISK_MARKNADSMANUAL.md": "441ad433f3885f13cc3bc329953dcaac5ef85e3ca6c043fb2e42c82f3b122ce0",
           "knowledge/web-gpts/GG-Metaarkitekt-gptskapare/01-identitet-och-grundide.md": "d9b2be92981284301bba46f7af0f1f761c2b09bdf07f92bcb587b10ed6b47fb6",
           "knowledge/web-gpts/GG-Metaarkitekt-gptskapare/02-mini-idekompass-och-research.md": "b8248c2b194e6d19747f6265bcddfd5e6c704d513a70554df4a7a8f2c79084a9",
           "knowledge/web-gpts/GG-Metaarkitekt-gptskapare/03-gpt-arkitektur-och-instruktionsdesign.md": "ecaa5d2e12b2d453f6babbb7a8f0867289a8c3747ced25d8976d7c4bdc1b77a2",
@@ -14963,8 +14963,8 @@
           "knowledge/web-gpts/GG-Content-Studio/references/REF-03-handarbete-arbetsbank.png": "a6d769f2673d33047475f858f2d56afd3e0d5edb7c02cc63e34da1c8ee197c9f",
           "knowledge/web-gpts/GG-Content-Studio/references/REF-04-adelstenar-morkgron-sammet.png": "dc6d1a3479eae21cffb926f6cc1dc22b5da99c5f73d896900e9611bdc52ae26b",
           "knowledge/web-gpts/GG-Content-Studio/references/REF-06-aldre-silverforemal-arbetsyta.png": "c0ce7eb958b7d847255099d90f1f348740beffe4aeab76a9e358a5ffcafebe66",
-          "knowledge/web-gpts/GG-Marknadsf\u00f6ring/README_KUNSKAPSBAS.md": "c5614f3e15f52b518e1611b4c0d76b3803a810d30f3134093e2791ed29f79414",
-          "knowledge/web-gpts/GG-Marknadsf\u00f6ring/TEKNISK_MARKNADSMANUAL.md": "441ad433f3885f13cc3bc329953dcaac5ef85e3ca6c043fb2e42c82f3b122ce0",
+          "knowledge/web-gpts/GG-Marknadsföring/README_KUNSKAPSBAS.md": "c5614f3e15f52b518e1611b4c0d76b3803a810d30f3134093e2791ed29f79414",
+          "knowledge/web-gpts/GG-Marknadsföring/TEKNISK_MARKNADSMANUAL.md": "441ad433f3885f13cc3bc329953dcaac5ef85e3ca6c043fb2e42c82f3b122ce0",
           "knowledge/web-gpts/GG-Metaarkitekt-gptskapare/01-identitet-och-grundide.md": "d9b2be92981284301bba46f7af0f1f761c2b09bdf07f92bcb587b10ed6b47fb6",
           "knowledge/web-gpts/GG-Metaarkitekt-gptskapare/02-mini-idekompass-och-research.md": "b8248c2b194e6d19747f6265bcddfd5e6c704d513a70554df4a7a8f2c79084a9",
           "knowledge/web-gpts/GG-Metaarkitekt-gptskapare/03-gpt-arkitektur-och-instruktionsdesign.md": "ecaa5d2e12b2d453f6babbb7a8f0867289a8c3747ced25d8976d7c4bdc1b77a2",

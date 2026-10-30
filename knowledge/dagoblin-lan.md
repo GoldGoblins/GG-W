@@ -19,9 +19,10 @@ med fasta frame-, byte-, orphan- och sessionskvoter. Normal dataframe är
 högst 64 KiB; den större publika sessionsfilen är högst 256 KiB. En sådan
 begränsning är inte ett bevis mot alla nätverksattacker.
 
-Förslags-DAG:en överför **verkliga tomma signerade förslag**. Finansiella
-transaktioner mellan peers är avstängda: de lokala förhandsrötterna är ännu
-inte gemensamma slutliga checkpoints. Grafen visar verkliga signerade
+Det ursprungliga förslags-DAG-läget överför **verkliga tomma signerade förslag**.
+Ett separat uttryckligt DAG-testläge beskrivs nedan. Finansiella transaktioner
+mellan peers är avstängda: de lokala förhandsrötterna är ännu inte gemensamma
+slutliga checkpoints. Grafen visar verkliga signerade
 förslag och deras verkliga föräldrar; mottagningsordningen är lokal.
 Kanonisk finalitet är noll. Ed25519 är inte kvantsäkert. Trafikens signaturer
 ger inte krypterad innehållssekretess.
@@ -33,6 +34,63 @@ alla peers kontrollerar signaturer, exakta heltalssaldon, nonce och samma
 tillståndsrot. Varje peer behåller sin egen signerare. Detta är en uttryckligt
 koordinatorordnad testledger med en fast testtilldelning, inte DAG-konsensus
 eller pengar som kan tas ut eller användas på ett publikt nätverk.
+
+## DAGoblin med testtransaktioner i blocken
+
+Användarens mål är DAGoblin på tre verkliga enheter, tusentals transaktioner
+per block och flera hundra block per sekund, med samma levande graf som visar
+backendens faktiska arbete. Det är ett prestandamål, inte ett uppmätt resultat.
+Exempelvis motsvarar 1 000 TX/block och 200 block/s 200 000 TX/s. Signering,
+verifiering, transport, köer och minnesbehov måste mätas på varje plattform.
+
+Det nya valbara testprotokollet lägger individuellt signerade, icke-finansiella
+testtransaktioner i DAG-blockens payload. Varje peer behåller sina två egna
+producent-/testkontosignerare i RAM. Gemensam publik genesis ger sex
+producentägda testkonton och ett oföränderligt kontrollpunktsankare.
+En producents nästa block refererar dess föregående block; producentsekvens,
+transaktionsnonce och sammanlagd debitering kontrolleras. Mottagna testbelopp
+höjer inte avsändarens tillåtna provvolym utöver den egna ursprungliga
+tilldelningen. Detta är en avgränsad testmodell, inte allmän finansiell
+exekvering eller kanonisk DAG-finalitet. Signerad equivokering ska ge ett
+synligt fel, inte döljas som framgångsrik samsyn.
+
+Alla tre måste uttryckligen välja `allow_dag_transactions=true` före ny
+parning. Det nya invite-/sessionsformatet kräver uppdaterad kod på alla tre
+apparaterna; en gammal körande process uppdateras inte av ett källpaket.
+Windows skapar och delar en ny publik bootstrap. Klientexempel:
+
+```sh
+python gg-cli.py --foreground --command "lan.start label=Termux allow_dag_transactions=true auto_produce=false" --bootstrap-file gg-lan-bootstrap.json
+```
+
+Linux använder `python3` och `label=Linux`. På koordinatorn används följande
+kommandon i samma ägda interaktiva CLI-session, eller motsvarande kontroller
+i desktopens LAN-dialog:
+
+```text
+lan.session_create distribute=true enable_dag_transactions=true
+lan.dag_stress_start duration_ms=10000 transactions_per_block=16 interval_ms=100
+lan.dag_stress_stop
+```
+
+Belastningsprovet har bestämd längd, explicita deltagarval och ändliga
+resursbudgetar. Det får inte adoptera eller stoppa en annan manuellt startad
+producentkörning. UI läser tillåtna intervall och blockstorlekar från backend;
+den första profilens begränsningar är program-/protokollgränser, inte ett
+uppmätt hårdvarutak. Kvotstopp och storleksfel redovisas uttryckligen.
+
+Grafens block, föräldralänkar, lokalt verifierade DAG-TX och mättider kommer
+från antagna DAG-block. Den separata kvittoledgerns räknare fyller aldrig
+DAG-grafen. Ett nätverksbekräftat resultat kräver autentiserade svar med samma
+blockmängd, räknare och tillstånd på alla tre, utan protokollfel. Lokal
+validering och gemensamt bekräftad genomströmning redovisas var för sig.
+
+Det fysiska kvittocirkelprovet den 30 oktober 2026 avslutades med 18 signerade
+överföringar, sex hela varv och bekräftad gemensam kvittokedja. Ett separat
+visuellt DAG-prov skapade 435 signerade tomma blockförslag från Windowsnodens
+två egna producenter och visade faktiska länkar och mätstaplar innan paus.
+Inget av dessa prov verifierar den nya transaktionsvägens fysiska kapacitet
+eller det framtida prestandamålet.
 
 ## Uppstart
 

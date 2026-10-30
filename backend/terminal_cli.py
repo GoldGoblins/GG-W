@@ -121,7 +121,7 @@ def parse_command(text,extra=None):
                 raise ValueError('TERMINAL_ARGUMENT_INVALID')
             # Financial values remain exact strings, never binary floats.
             if key in {'sender','index','count','blocks','transactions_per_block','interval_ms','producer_count','port','duration_ms','batch'} and re.fullmatch(r'-?\d+',value):args[key]=int(value)
-            elif key in {'auto_produce','distribute','allow_test_tokens','enable_test_tokens'} and value in {'true','false'}:args[key]=value=='true'
+            elif key in {'auto_produce','distribute','allow_test_tokens','enable_test_tokens','allow_dag_transactions','enable_dag_transactions'} and value in {'true','false'}:args[key]=value=='true'
             else:args[key]=value
     if extra:
         for key,value in extra.items():
@@ -671,6 +671,11 @@ def foreground_summary(command, body):
     if command in {'lan.start','lan.join_file'}:
         lan=_object(body.get('lan'));setup=_object(body.get('lan_setup'))
         tokens=_object(body.get('test_tokens'));circle=_object(body.get('token_circle'))
+        stress=_object(body.get('dag_stress'))
+        stress_summary={key:stress[key] for key in (
+            'state','role','elapsed_ms','duration_ms','transactions_per_block','interval_ms',
+            'blocks','transactions','all_peers_synced','acknowledged_blocks','acknowledged_transactions',
+            'acknowledged_bps','acknowledged_tps','stop_reason','last_error') if key in stress}
         return {'schema':'gg.terminal.foreground.v1','engine':'DAGOBLIN_PRIVATE_LAN',
                 'scope':'PRIVATE_LAN_SESSION_EXPERIMENT','state':lan.get('state'),
                 'endpoint':lan.get('endpoint'),'producer_count':body.get('producer_count',0),
@@ -678,9 +683,13 @@ def foreground_summary(command, body):
                 'candidate_peers':setup.get('invite_count',0),'configured_peers':lan.get('configured_peers',0),
                 'authenticated_peers':len(lan.get('authenticated_peers',[])),
                 'proposals':body.get('blocks_admitted',0),'canonical_finalized':0,
+                'validated_dag_transactions':body.get('transactions_validated',0),
+                'dag_test_transactions_enabled':stress.get('enabled') is True,
+                'dag_stress':stress_summary,
                 'test_tokens':tokens,'token_circle':circle,
                 'ephemeral_keys':True,'new_pairing_after_restart':True,
-                'physical_hosts_verified':False,'transactions_enabled':False,'mainnet_enabled':False}
+                'physical_hosts_verified':False,'transactions_enabled':lan.get('transactions_enabled') is True,
+                'financial_transactions_enabled':False,'mainnet_enabled':False}
     if command=='dag.live_start':
         live=_object(body.get('live'))
         return {'schema':'gg.terminal.foreground.v1','engine':'DAGOBLIN_LOCAL',

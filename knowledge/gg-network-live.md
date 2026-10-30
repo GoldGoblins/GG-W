@@ -134,6 +134,26 @@ när den öppnas. En kvarvarande punkts vertikala läge beräknas från dess ege
 höjd, vilket undviker övergående rörelse till grannblockets position när
 fönstret flyttas. Befintliga noder och föräldra–barn-länkar behåller sina objekt.
 
+## Samma verkliga graf för LAN
+
+En aktiv LAN-peer väljer samma DAGoblin-dashboard och snabba observationsväg
+som det lokala provet. Grafen läser LAN-motorns faktiska `block_graph`, med
+dess antagna block och riktiga föräldrareferenser. Den skapar inga extra
+punkter för att efterlikna en viss hastighet.
+
+I det ursprungliga LAN-läget gäller toolbarens start/paus uttryckligen den
+här apparatens två egna producenter. I det nya transaktionsläget används
+i stället ett uttryckligt, tidsbegränsat DAG-prov. Stoppa LAN-peer avslutar
+hela den här apparatens ägda nätverkssession. Antalet parade apparater,
+antalet producentidentiteter och faktiska aktiva arbetartrådar är olika mått.
+
+Lokalt verifierad DAG-TX, signerade blockförslag per sekund och gemensamt
+nätverksbekräftad genomströmning redovisas separat. Den äldre
+GG-LAN(TEST)-kvittocirkeln levererar inga block till DAG-grafen och dess
+överföringsräknare får inte presenteras som DAG-transaktioner. Det nya
+valbara DAG-testläget innehåller däremot verkliga signerade testtransaktioner
+i blockens payload. Se [LAN-protokollet och belastningsprovet](dagoblin-lan.md).
+
 Hardhats tidigare verifierade processgränser behålls: en ägd process,
 512 MiB och 300 sekunders förbrukad CPU-tid på Windows. Detta är nodgränser,
 inte en garanti för hela programmets RAM. Alla testidentiteter är disponibla;

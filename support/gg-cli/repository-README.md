@@ -84,7 +84,7 @@ identitet och endpoint, inga privata nycklar.
 Linux ansluter exempelvis så här från paketets mapp:
 
 ```sh
-python3 gg-cli.py --foreground --command "lan.start label=Linux allow_test_tokens=true auto_produce=false" --bootstrap-file gg-lan-bootstrap.json
+python3 gg-cli.py --foreground --command "lan.start label=Linux allow_dag_transactions=true auto_produce=false" --bootstrap-file gg-lan-bootstrap.json
 ```
 
 I Termux används `python` och `label=Termux`. `--invite-out` behövs inte
@@ -92,6 +92,26 @@ för automatisk annonsering. Den egna LAN-adressen väljs automatiskt.
 Varje peer annonserar sin signerade publika inbjudan till koordinatorn;
 Windows granskar de två kandidaterna och godkänner den gemensamma sessionen.
 Ingen manuell IP-letning behövs när klienterna väl har startats.
+
+Detta val gäller signerade, icke-finansiella testtransaktioner **i DAGoblin-
+blocken**. Alla tre behöver uppdaterad kod och uttryckligt deltagarval före
+ny parning. Windows väljer DAG-testtransaktioner i LAN-dialogen och kör sedan
+ett tidsbegränsat prov där samma graf visar verkliga block, föräldralänkar,
+verifierade DAG-TX och mättider. Motsvarande kommandon i en interaktiv
+koordinatorsession är:
+
+```text
+lan.session_create distribute=true enable_dag_transactions=true
+lan.dag_stress_start duration_ms=10000 transactions_per_block=16 interval_ms=100
+lan.dag_stress_stop
+```
+
+Backend annonserar den aktuella testprofilens gränser. De är programgränser,
+inte uppmätt hårdvarukapacitet. Tusentals TX/block och flera hundra block/s är
+ett framtida prestandamål. Lokal validering och autentiserat gemensamt
+bekräftat resultat redovisas separat; inget prov ger kanonisk finalitet.
+Den äldre `allow_test_tokens`-/`lan.circle_start`-vägen är en separat
+kvittoledger och väljs inte samtidigt med DAG-testtransaktionsläget.
 
 En separat engångsprocess styr inte en redan körande CLI-process. Använd
 samma interaktiva sessions `:`-fält för `lan.*`-kommandon. Foregroundläget

@@ -51,6 +51,16 @@ _INSTALL_ACK=b'GG-LAN-DAG-INSTALL-ACK-v1\0'
 _ANNOUNCE=b'GG-LAN-DAG-ANNOUNCE-v1\0'
 _ANNOUNCE_ACK=b'GG-LAN-DAG-ANNOUNCE-ACK-v1\0'
 _CIRCLE=b'GG-LAN-TEST-TOKEN-CIRCLE-v1\0'
+_DAG_STRESS=b'GG-LAN-DAG-STRESS-v1\0'
+DAG_STRESS_MAX_TX=64
+DAG_STRESS_LIMITS={'min_duration_ms':1000,'max_duration_ms':60000,'min_interval_ms':100,
+    'max_interval_ms':60000,'max_tx_per_block':DAG_STRESS_MAX_TX,'wire_bytes':MAX_WIRE,
+    'scope':'STAGE1_SOFTWARE_PROTOCOL_BOUNDS_NOT_HARDWARE_CAPACITY'}
+
+
+def dag_stress_capabilities():
+    """Read-only constants: importing or querying creates no key/socket/work."""
+    return {'supported':True,'limits':dict(DAG_STRESS_LIMITS)}
 
 
 def _integer(value,low,high):
@@ -99,7 +109,8 @@ def _failure_code(error,fallback='GG_LAN_IO_OR_PROTOCOL_FAILED'):
 
 def _failure_details(error,operation='',stage=''):
     existing=getattr(error,'_gg_lan_details',{})
-    allowed_operations={'TOKEN_STATUS','TOKEN_SYNC','TOKEN_SUBMIT','TOKEN_APPLY','CIRCLE_SIGN','CIRCLE_END'}
+    allowed_operations={'TOKEN_STATUS','TOKEN_SYNC','TOKEN_SUBMIT','TOKEN_APPLY','CIRCLE_SIGN','CIRCLE_END',
+        'DAG_STRESS_PREPARE','DAG_STRESS_BEGIN','DAG_STRESS_STOP','DAG_STRESS_STATUS'}
     allowed_stages={'CHECK','WAIT','CONNECT','AUTH','SEND','RECEIVE','VALIDATE','EXECUTE'}
     classes={'TimeoutError','ConnectionResetError','ConnectionRefusedError','BrokenPipeError','OSError','ValueError','TypeError','JSONDecodeError'}
     if not isinstance(existing,dict):existing={}
@@ -159,7 +170,9 @@ def validate_invite(invite):
     body=invite.get('body')
     fields={'schema','label','host','port','peer_key','producer_keys','nonce'}
     if not isinstance(body,dict):raise ValueError('GG_LAN_INVITE')
-    if body.get('schema')=='gg.lan-dag.invite.v2':
+    if body.get('schema')=='gg.lan-dag.invite.v3':
+        if set(body)!=fields|{'allow_test_tokens','allow_dag_transactions'} or body.get('allow_dag_transactions') is not True or type(body.get('allow_test_tokens')) is not bool:raise ValueError('GG_LAN_INVITE')
+    elif body.get('schema')=='gg.lan-dag.invite.v2':
         if set(body)!=fields|{'allow_test_tokens'} or body.get('allow_test_tokens') is not True:raise ValueError('GG_LAN_INVITE')
     elif body.get('schema')!='gg.lan-dag.invite.v1' or set(body)!=fields:raise ValueError('GG_LAN_INVITE')
     _public(body['peer_key']);_public(body['nonce']);_label(body['label']);_endpoint(body['host'],body['port'])
@@ -182,13 +195,15 @@ def fetch_invite(host,port):
 
 
 class LanDagPeer:
-    def __init__(self,label,bind_host='127.0.0.1',port=0,trusted_coordinator=None,auto_produce=False,*,allowed_cidr=None,allow_test_tokens=False):
+    def __init__(self,label,bind_host='127.0.0.1',port=0,trusted_coordinator=None,auto_produce=False,*,allowed_cidr=None,allow_test_tokens=False,allow_dag_transactions=False):
         self.label=_label(label);self.host,self.port=_endpoint(bind_host,port,allow_zero=True)
         self.allowed=ipaddress.ip_network(allowed_cidr or ('127.0.0.0/8' if self.host.startswith('127.') else self.host+'/24'),strict=False)
         if self.allowed.version!=4 or ipaddress.ip_address(self.host) not in self.allowed or not any(self.allowed.subnet_of(block) for block in _PRIVATE):raise ValueError('GG_LAN_SUBNET')
         if type(auto_produce) is not bool:raise ValueError('GG_LAN_OPTION')
         if type(allow_test_tokens) is not bool:raise ValueError('GG_LAN_OPTION')
+        if type(allow_dag_transactions) is not bool:raise ValueError('GG_LAN_OPTION')
         self.allow_test_tokens=allow_test_tokens
+        self.allow_dag_transactions=allow_dag_transactions;self._dag_enabled=False
         self._identity=Keypair();self._local_keys=[Keypair() for _ in range(PRODUCERS_PER_PEER)]
         self.public_key=self._identity.pubkey().hex()
         self._trusted=_public(trusted_coordinator) if trusted_coordinator is not None else self.public_key
@@ -206,6 +221,12 @@ class LanDagPeer:
         self._circle={'state':'IDLE','transactions':0,'completed_rounds':0,'elapsed_ms':0,'tps':0,
             'all_peers_synced':False,'last_error':'','last_error_details':{},'stop_reason':''}
         self._token_rpc_times={};self._token_peer_cursors={};self._closed_circle_ids=set();self._last_token_sync=0.0;self._circle_epoch=0
+        self._dag_control=threading.RLock();self._dag_plan=None;self._dag_closed=set()
+        self._dag_cancel=threading.Event();self._dag_worker=None;self._dag_controller=None
+        self._dag_stress={'state':'IDLE','duration_ms':0,'transactions_per_block':0,'interval_ms':100,
+            'elapsed_ms':0,'blocks':0,'transactions':0,'all_peers_synced':False,
+            'acknowledged_blocks':None,'acknowledged_transactions':None,'acknowledged_bps':None,'acknowledged_tps':None,
+            'stop_reason':'','last_error':'','participants':[]}
 
     def start_pairing(self):
         with self._lock:
@@ -219,6 +240,7 @@ class LanDagPeer:
             body={'schema':'gg.lan-dag.invite.v1','label':self.label,'host':self.host,'port':self.port,
                 'peer_key':self.public_key,'producer_keys':[key.pubkey().hex() for key in self._local_keys],'nonce':self._pair_nonce}
             if self.allow_test_tokens:body.update(schema='gg.lan-dag.invite.v2',allow_test_tokens=True)
+            if self.allow_dag_transactions:body.update(schema='gg.lan-dag.invite.v3',allow_test_tokens=self.allow_test_tokens,allow_dag_transactions=True)
             self._invite=_signed(self._identity,_INVITE,body)
             self._acceptor=threading.Thread(target=self._accept,name='gg-lan-accept',daemon=True);self._acceptor.start()
             return self.public_invite()
@@ -277,8 +299,9 @@ class LanDagPeer:
         return _signed(self._identity,_ANNOUNCE_ACK,{'state':'CANDIDATE','coordinator':self.public_key,
             'peer_key':public,'nonce':body['nonce'],'invite_hash':digest(invite)})
 
-    def create_session(self,invites,label='GG LAN',*,enable_test_tokens=False):
+    def create_session(self,invites,label='GG LAN',*,enable_test_tokens=False,enable_dag_transactions=False):
         if type(enable_test_tokens) is not bool:raise ValueError('GG_LAN_OPTION')
+        if type(enable_dag_transactions) is not bool or enable_dag_transactions and enable_test_tokens:raise ValueError('GG_LAN_OPTION')
         if self._trusted!=self.public_key:raise ValueError('GG_LAN_COORDINATOR_REQUIRED')
         if not isinstance(invites,list) or len(invites)!=MAX_PEERS:raise ValueError('GG_LAN_THREE_PEERS_REQUIRED')
         checked=[validate_invite(value) for value in invites]
@@ -293,10 +316,13 @@ class LanDagPeer:
             roster.append({'invite':deepcopy(invite),'producer_indices':[2*index,2*index+1]})
             public.extend(row['producer_keys'])
         body={'schema':'gg.lan-dag.session.v1','label':_label(label),'coordinator':self.public_key,
-            'roster':roster,'public_genesis':make_public_genesis(public),'transactions_enabled':False}
+            'roster':roster,'public_genesis':make_public_genesis(public,enable_dag_transactions=enable_dag_transactions),'transactions_enabled':False}
         if enable_test_tokens:
             if not all(row.get('allow_test_tokens') is True for row in checked):raise ValueError('GG_LAN_TOKEN_ALL_PEERS_OPT_IN_REQUIRED')
             body.update(schema='gg.lan-dag.session.v2',test_tokens=test_tokens.genesis(checked,self.public_key))
+        if enable_dag_transactions:
+            if not all(row.get('allow_dag_transactions') is True for row in checked):raise ValueError('GG_LAN_DAG_ALL_PEERS_OPT_IN_REQUIRED')
+            body.update(schema='gg.lan-dag.session.v3',transactions_enabled=True,dag_test_mode='PRODUCER_OWNED_NONFINANCIAL')
         bundle=_signed(self._identity,_BUNDLE,body)
         if len(pack(bundle))>MAX_BUNDLE:raise ValueError('GG_LAN_BUNDLE_SIZE')
         return bundle
@@ -307,10 +333,13 @@ class LanDagPeer:
             body=_checked(bundle,_BUNDLE,self._trusted)
             expected={'schema','label','coordinator','roster','public_genesis','transactions_enabled'}
             enabled=isinstance(body,dict) and body.get('schema')=='gg.lan-dag.session.v2'
+            dag_enabled=isinstance(body,dict) and body.get('schema')=='gg.lan-dag.session.v3'
             if enabled:expected.add('test_tokens')
+            if dag_enabled:expected.add('dag_test_mode')
             if (not isinstance(body,dict) or set(body)!=expected
-                    or body.get('schema') not in ('gg.lan-dag.session.v1','gg.lan-dag.session.v2') or body.get('coordinator')!=self._trusted
-                    or body.get('transactions_enabled') is not False):raise ValueError('GG_LAN_SESSION')
+                    or body.get('schema') not in ('gg.lan-dag.session.v1','gg.lan-dag.session.v2','gg.lan-dag.session.v3') or body.get('coordinator')!=self._trusted
+                    or body.get('transactions_enabled') is not dag_enabled
+                    or dag_enabled and body.get('dag_test_mode')!='PRODUCER_OWNED_NONFINANCIAL'):raise ValueError('GG_LAN_SESSION')
             _label(body['label']);roster=body['roster']
             if not isinstance(roster,list) or len(roster)!=MAX_PEERS:raise ValueError('GG_LAN_ROSTER')
             peers={};all_producers=[];endpoints=set()
@@ -328,6 +357,8 @@ class LanDagPeer:
             if own is None or own['nonce']!=self._pair_nonce or own['producer_keys']!=[key.pubkey().hex() for key in self._local_keys] or (own['host'],own['port'])!=(self.host,self.port):raise ValueError('GG_LAN_OWN_IDENTITY')
             network=digest(body,b'GG-LAN-DAG-NETWORK-v1\0')
             ledger=None
+            if dag_enabled and (not self.allow_dag_transactions or not all(row.get('allow_dag_transactions') is True for row in peers.values())):
+                raise ValueError('GG_LAN_DAG_ALL_PEERS_OPT_IN_REQUIRED')
             if enabled:
                 if not self.allow_test_tokens or not all(row.get('allow_test_tokens') is True for row in peers.values()):
                     raise ValueError('GG_LAN_TOKEN_ALL_PEERS_OPT_IN_REQUIRED')
@@ -339,16 +370,17 @@ class LanDagPeer:
                     if self._network!=network:raise ValueError('GG_LAN_NETWORK_ALREADY_BOUND')
                     return self.snapshot()
             engine=ParallelDag.from_public_genesis(body['public_genesis'])
+            if engine._lan_test_mode!=dag_enabled:raise ValueError('GG_LAN_DAG_GENESIS_MODE')
             if engine._producer_public!=all_producers:raise ValueError('GG_LAN_PRODUCER_BINDING')
             engine.attach_local_producers(dict(zip(own['producer_indices'],self._local_keys)))
             with self._lock:
                 if self._cancel.is_set():
                     engine.stop();raise ValueError('GG_LAN_STOPPED')
                 self._engine=engine;self._network=network;self._bundle=deepcopy(bundle);self._roster=peers
-                self._tokens=ledger
+                self._tokens=ledger;self._dag_enabled=dag_enabled
                 self._local_indices=list(own['producer_indices']);self._cursors={key:0 for key in peers if key!=self.public_key}
                 self._gossip=threading.Thread(target=self._gossip_loop,name='gg-lan-gossip',daemon=True);self._gossip.start()
-            if self.auto_produce:self.start_producing()
+            if self.auto_produce and not dag_enabled:self.start_producing()
             return self.snapshot()
 
     def distribute_session(self,bundle):
@@ -372,6 +404,7 @@ class LanDagPeer:
                 if self._cancel.is_set():raise ValueError('GG_LAN_STOPPED')
                 engine=self._engine
             if engine is None:raise ValueError('GG_LAN_SESSION_REQUIRED')
+            if self._dag_enabled:raise ValueError('GG_LAN_DAG_USE_FINITE_STRESS')
             result=engine.start_async_live(6,0,interval_ms,producer_count=6,local_producers=self._local_indices)
             # request_stop is lock-free and can race the engine replacing its
             # resumable live Event. Recheck after startup, then join that work.
@@ -382,6 +415,253 @@ class LanDagPeer:
     def stop_producing(self):
         with self._lock:engine=self._engine
         return engine.stop_live() if engine else self.snapshot()
+
+    @staticmethod
+    def _dag_same_evidence(left,right):
+        fields=('chain_id','blocks','transactions','blockset_digest','state_root','producer_blocks','producer_transactions')
+        for value in (left,right):
+            if not isinstance(value,dict) or any(key not in value for key in fields) or value.get('protocol_fault')!='':return False
+            if not isinstance(value['chain_id'],str) or not re.fullmatch(r'ggdag:[0-9a-f]{24}',value['chain_id']):return False
+            if any(type(value[key]) is not int or value[key]<0 for key in ('blocks','transactions')):return False
+            if any(not isinstance(value[key],str) or not _HEX.fullmatch(value[key]) for key in ('blockset_digest','state_root')):return False
+            for key,total in (('producer_blocks','blocks'),('producer_transactions','transactions')):
+                rows=value[key]
+                if not isinstance(rows,list) or len(rows)!=6 or any(type(row) is not int or row<0 for row in rows) or sum(rows)!=value[total]:return False
+        return all(left[key]==right[key] for key in fields)
+
+    def _dag_status(self):
+        engine=self._engine
+        if engine is None or not self._dag_enabled:raise ValueError('GG_LAN_DAG_TRANSACTIONS_DISABLED')
+        evidence=engine.lan_evidence()
+        with self._lock:
+            plan=self._dag_plan;state=dict(self._dag_stress)
+            if plan is not None:
+                state['blocks']=max(0,evidence['blocks']-plan['baseline']['blocks'])
+                state['transactions']=max(0,evidence['transactions']-plan['baseline']['transactions'])
+                if state['state'] in ('STARTING','RUNNING','STOPPING'):
+                    state['elapsed_ms']=round((time.monotonic()-plan['started'])*1000)
+            return {**state,'evidence':evidence,'run_id':plan['body']['run_id'] if plan else '',
+                'worker_active':bool(self._dag_worker and self._dag_worker.is_alive())}
+
+    def _dag_stress_command(self,peer,kind,payload):
+        """Authenticated coordinator-only, idempotent two-phase finite controls."""
+        if peer!=self._trusted:raise ValueError('GG_LAN_COORDINATOR_REQUIRED')
+        if self._cancel.is_set():raise ValueError('GG_LAN_STOPPED')
+        if not isinstance(payload,dict):raise ValueError('GG_LAN_DAG_STRESS_REQUEST')
+        with self._dag_control:
+            if kind=='DAG_STRESS_STATUS' and not payload:return self._dag_status()
+            if kind=='DAG_STRESS_PREPARE' and set(payload)=={'plan'}:
+                signed=payload['plan'];body=_checked(signed,_DAG_STRESS,self._trusted)
+                fields={'schema','network_id','run_id','duration_ms','transactions_per_block','interval_ms','remote','expires_at_ns','baseline'}
+                if (not isinstance(body,dict) or set(body)!=fields or body.get('schema')!='gg.lan-dag.stress.v1'
+                        or body.get('network_id')!=self._network or type(body.get('remote')) is not bool):raise ValueError('GG_LAN_DAG_STRESS_PLAN')
+                _public(body['run_id']);_integer(body['duration_ms'],1000,60000)
+                _integer(body['transactions_per_block'],1,DAG_STRESS_MAX_TX);_integer(body['interval_ms'],100,60000)
+                _integer(body['expires_at_ns'],1,2**63-1)
+                if not self._dag_enabled or not self.allow_dag_transactions or not all(row.get('allow_dag_transactions') is True for row in self._roster.values()):
+                    raise ValueError('GG_LAN_DAG_ALL_PEERS_OPT_IN_REQUIRED')
+                self._engine.preflight_lan_test_block(body['transactions_per_block'],MAX_WIRE)
+                remaining=(body['expires_at_ns']-time.time_ns())/1e9
+                if remaining<=0 or remaining>body['duration_ms']/1000+1:raise ValueError('GG_LAN_DAG_STRESS_CLOCK_OR_EXPIRY')
+                current=self._dag_plan
+                if current is not None and current['body']['run_id']==body['run_id']:
+                    if current['body']!=body:raise ValueError('GG_LAN_DAG_STRESS_CHANGED')
+                    if body['run_id'] in self._dag_closed:raise ValueError('GG_LAN_DAG_STRESS_REPLAY')
+                    return self._dag_status()
+                if body['run_id'] in self._dag_closed:raise ValueError('GG_LAN_DAG_STRESS_REPLAY')
+                if len(self._dag_closed)>=4096:raise ValueError('GG_LAN_DAG_STRESS_RUN_LIMIT')
+                if self._dag_worker and self._dag_worker.is_alive() or current is not None and time.monotonic()<current['deadline'] and current['body']['run_id'] not in self._dag_closed:
+                    raise ValueError('GG_LAN_DAG_STRESS_BUSY')
+                if self._engine.snapshot()['live']['enabled']:raise ValueError('GG_LAN_DAG_UNRELATED_PRODUCER_ACTIVE')
+                baseline=self._engine.lan_evidence()
+                if not self._dag_same_evidence(baseline,body['baseline']):raise ValueError('GG_LAN_DAG_BASELINE_NOT_SYNCED')
+                if current is not None:self._dag_closed.add(current['body']['run_id'])
+                now=time.monotonic();duration=min(remaining,body['duration_ms']/1000)
+                # Reserve a bounded portion of the same global budget for drain
+                # and authenticated evidence; this is not additional run time.
+                deadline=now+duration;drain=min(2.0,body['duration_ms']/3000)
+                self._dag_cancel=threading.Event()
+                self._dag_plan={'body':deepcopy(body),'signed':deepcopy(signed),'deadline':deadline,
+                    'production_deadline':deadline-drain,'started':now,'baseline':baseline,'begun':False}
+                with self._lock:
+                    self._dag_stress.update(state='STARTING',duration_ms=body['duration_ms'],transactions_per_block=body['transactions_per_block'],
+                        interval_ms=body['interval_ms'],elapsed_ms=0,blocks=0,transactions=0,all_peers_synced=False,
+                        acknowledged_blocks=None,acknowledged_transactions=None,acknowledged_bps=None,acknowledged_tps=None,
+                        stop_reason='',last_error='',participants=[])
+                return self._dag_status()
+            if kind in ('DAG_STRESS_BEGIN','DAG_STRESS_STOP') and set(payload)=={'run_id'}:
+                _public(payload['run_id']);plan=self._dag_plan
+                if plan is None or plan['body']['run_id']!=payload['run_id']:
+                    if kind=='DAG_STRESS_STOP':return {'state':'ALREADY_CLOSED','run_id':payload['run_id']}
+                    raise ValueError('GG_LAN_DAG_STRESS_RUN')
+                if kind=='DAG_STRESS_BEGIN':
+                    if payload['run_id'] in self._dag_closed or time.monotonic()>=plan['production_deadline']:raise ValueError('GG_LAN_DAG_STRESS_REPLAY_OR_EXPIRED')
+                    if plan['begun']:return self._dag_status()
+                    if self._engine.snapshot()['live']['enabled']:raise ValueError('GG_LAN_DAG_UNRELATED_PRODUCER_ACTIVE')
+                    plan['begun']=True
+                    with self._lock:self._dag_stress['state']='RUNNING'
+                    with self._engine._lock:
+                        for index in self._local_indices:self._engine._producer_stats[index]['configured_interval_ms']=plan['body']['interval_ms']
+                    result=self._dag_status()
+                    if self.public_key==self._trusted or plan['body']['remote']:
+                        self._dag_worker=threading.Thread(target=self._dag_produce_loop,args=(plan,self._dag_cancel),name='gg-lan-dag-stress-worker',daemon=True)
+                        self._dag_worker.start()
+                        result['worker_active']=True
+                    return result
+                self._dag_cancel.set();self._dag_closed.add(payload['run_id'])
+                worker=self._dag_worker
+                if worker and worker is not threading.current_thread():worker.join(min(1,max(0,plan['deadline']-time.monotonic())))
+                if worker and worker.is_alive():raise ValueError('GG_LAN_DAG_STRESS_STOP_TIMEOUT')
+                with self._lock:
+                    if self._dag_stress['state'] not in ('ERROR','LIMIT_REACHED','COMPLETE','TIME_BUDGET'):
+                        self._dag_stress['state']='STOPPING' if self.public_key==self._trusted else 'COMPLETE'
+                    self._dag_stress['elapsed_ms']=round((time.monotonic()-plan['started'])*1000)
+                return self._dag_status()
+            raise ValueError('GG_LAN_DAG_STRESS_REQUEST')
+
+    def _dag_produce_loop(self,plan,cancel):
+        def permitted():
+            if cancel.is_set() or self._cancel.is_set() or time.monotonic()>=plan['production_deadline']:raise ValueError('GG_LAN_DAG_STRESS_DEADLINE')
+        try:
+            cadence=plan['body']['interval_ms']/1000;due=time.monotonic()
+            while time.monotonic()<plan['production_deadline'] and not cancel.is_set() and not self._cancel.is_set():
+                if cancel.wait(max(0,min(due,plan['production_deadline'])-time.monotonic())):break
+                for producer in self._local_indices:
+                    permitted();self._engine.produce_lan_test_block(producer,plan['body']['transactions_per_block'],MAX_WIRE,check=permitted)
+                due=max(due+cadence,time.monotonic())
+        except ValueError as error:
+            code=str(error)
+            if code!='GG_LAN_DAG_STRESS_DEADLINE':
+                state='LIMIT_REACHED' if code in {'GG_DAG_SESSION_CREDIT','GG_DAG_PEER_CREDIT','GG_DAG_RECORD_LIMIT','GG_DAG_STORAGE_LIMIT','GG_DAG_LAN_WIRE_PROFILE_LIMIT'} else 'ERROR'
+                with self._lock:self._dag_stress.update(state=state,stop_reason='SOFTWARE_PROFILE_LIMIT' if state=='LIMIT_REACHED' else 'FAILED',last_error=_failure_code(error,'GG_LAN_DAG_STRESS_FAILED'))
+        except Exception as error:
+            with self._lock:self._dag_stress.update(state='ERROR',stop_reason='FAILED',last_error=_failure_code(error,'GG_LAN_DAG_STRESS_FAILED'))
+        finally:
+            with self._lock:
+                if self._dag_plan is plan and self._dag_stress['state']=='RUNNING':self._dag_stress['state']='STOPPING'
+
+    def start_dag_stress(self,duration_ms=10000,transactions_per_block=16,interval_ms=100,remote=True):
+        _integer(duration_ms,1000,60000);_integer(transactions_per_block,1,DAG_STRESS_MAX_TX);_integer(interval_ms,100,60000)
+        if type(remote) is not bool:raise ValueError('GG_LAN_OPTION')
+        if self.public_key!=self._trusted:raise ValueError('GG_LAN_COORDINATOR_REQUIRED')
+        with self._dag_control:
+            if self._dag_controller and self._dag_controller.is_alive():raise ValueError('GG_LAN_DAG_STRESS_BUSY')
+            if not self._dag_enabled:raise ValueError('GG_LAN_DAG_TRANSACTIONS_DISABLED')
+            self._engine.preflight_lan_test_block(transactions_per_block,MAX_WIRE)
+            baseline=self._engine.lan_evidence()
+            body={'schema':'gg.lan-dag.stress.v1','network_id':self._network,'run_id':secrets.token_hex(32),
+                'duration_ms':duration_ms,'transactions_per_block':transactions_per_block,'interval_ms':interval_ms,
+                'remote':remote,'expires_at_ns':time.time_ns()+duration_ms*1_000_000,'baseline':baseline}
+            signed=_signed(self._identity,_DAG_STRESS,body)
+            self._dag_stress_command(self.public_key,'DAG_STRESS_PREPARE',{'plan':signed})
+            plan=self._dag_plan;cancel=self._dag_cancel
+            self._dag_controller=threading.Thread(target=self._dag_coordinate,args=(plan,cancel),name='gg-lan-dag-stress-control',daemon=True)
+            self._dag_controller.start()
+            return self._dag_stress_snapshot()
+
+    def _dag_coordinate(self,plan,cancel):
+        attempted=[];statuses={};terminal='TIME_BUDGET';reason='DURATION';error='';synced=False
+        deadline=plan['deadline'];run_id=plan['body']['run_id']
+        try:
+            for peer in self._roster:
+                if peer==self.public_key:continue
+                attempted.append(peer)
+                statuses[peer]=self._token_rpc(peer,'DAG_STRESS_PREPARE',{'plan':plan['signed']},cancel=cancel,deadline=deadline)
+            for peer in attempted:
+                statuses[peer]=self._token_rpc(peer,'DAG_STRESS_BEGIN',{'run_id':run_id},cancel=cancel,deadline=deadline)
+            self._dag_stress_command(self.public_key,'DAG_STRESS_BEGIN',{'run_id':run_id})
+            while time.monotonic()<plan['production_deadline'] and not cancel.is_set() and not self._cancel.is_set():
+                if self._dag_stress['state'] in ('ERROR','LIMIT_REACHED'):break
+                cancel.wait(min(.1,max(0,plan['production_deadline']-time.monotonic())))
+            if cancel.is_set() or self._cancel.is_set():reason='CANCELLED'
+            self._dag_stress_command(self.public_key,'DAG_STRESS_STOP',{'run_id':run_id})
+            for peer in attempted:
+                statuses[peer]=self._token_rpc(peer,'DAG_STRESS_STOP',{'run_id':run_id},deadline=deadline)
+            while time.monotonic()<deadline and not self._cancel.is_set():
+                local=self._dag_status();evidence=local['evidence'];synced=not evidence['protocol_fault']
+                for peer in attempted:
+                    status=self._token_rpc(peer,'DAG_STRESS_STATUS',{},deadline=deadline);statuses[peer]=status
+                    if status.get('run_id')!=run_id or status.get('worker_active') or not self._dag_same_evidence(evidence,status.get('evidence')):synced=False
+                    peer_error=status.get('last_error') or status.get('evidence',{}).get('protocol_fault')
+                    if peer_error:
+                        terminal='LIMIT_REACHED' if status.get('state')=='LIMIT_REACHED' else 'ERROR';error=_failure_code(ValueError(str(peer_error)),'GG_LAN_DAG_PEER_FAILED')
+                if evidence['protocol_fault']:terminal='ERROR';error=evidence['protocol_fault']
+                if synced or error:break
+                cancel.wait(.025)
+            local=self._dag_status()
+            synced=synced and all(statuses.get(peer,{}).get('run_id')==run_id
+                and not statuses[peer].get('worker_active') and self._dag_same_evidence(local['evidence'],statuses[peer].get('evidence')) for peer in attempted)
+            if local['last_error']:
+                error=local['last_error'];terminal='LIMIT_REACHED' if local['state']=='LIMIT_REACHED' else 'ERROR'
+            if error:synced=False;reason='SOFTWARE_PROFILE_LIMIT' if terminal=='LIMIT_REACHED' else 'FAILED'
+            elif synced and local['transactions']>0:terminal='COMPLETE'
+            else:terminal='TIME_BUDGET'
+        except Exception as exception:
+            error=_failure_code(exception,'GG_LAN_DAG_STRESS_FAILED')
+            software_limit=error in {'GG_LAN_CREDIT','GG_LAN_ORPHAN_CREDIT','GG_LAN_DAG_STRESS_RUN_LIMIT','GG_DAG_SESSION_CREDIT','GG_DAG_PEER_CREDIT','GG_DAG_STORAGE_LIMIT','GG_DAG_RECORD_LIMIT'}
+            terminal='LIMIT_REACHED' if software_limit else 'TIME_BUDGET' if time.monotonic()>=deadline else 'ERROR'
+            if reason=='CANCELLED' or self._cancel.is_set():reason='CANCELLED';terminal='TIME_BUDGET'
+            else:reason='SOFTWARE_PROFILE_LIMIT' if software_limit else 'DURATION' if terminal=='TIME_BUDGET' else 'FAILED'
+            synced=False
+        finally:
+            # Roll back every attempted remote start, including a lost ACK.
+            # These controls only address this run ID and never engine live work.
+            self._dag_cancel.set();self._dag_closed.add(run_id)
+            cleanup_deadline=time.monotonic()+1
+            for peer in attempted:
+                try:self._token_rpc(peer,'DAG_STRESS_STOP',{'run_id':run_id},deadline=cleanup_deadline)
+                except Exception:pass
+            worker=self._dag_worker
+            if worker and worker is not threading.current_thread():worker.join(max(0,cleanup_deadline-time.monotonic()))
+            elapsed=max(.001,time.monotonic()-plan['started']);local=self._dag_status()
+            synced=synced and all(self._dag_same_evidence(local['evidence'],statuses.get(peer,{}).get('evidence')) for peer in attempted)
+            if local['evidence']['protocol_fault']:
+                synced=False;terminal='ERROR';reason='FAILED';error=local['evidence']['protocol_fault']
+            elif terminal=='COMPLETE' and not synced:
+                terminal='TIME_BUDGET';reason='DURATION';error='GG_LAN_DAG_FINAL_EVIDENCE_CHANGED'
+            rows=[]
+            for peer,roster in self._roster.items():
+                status=local if peer==self.public_key else statuses.get(peer,{})
+                proof=status.get('evidence',{})
+                rows.append({'label':roster['label'],'local':peer==self.public_key,'opted_in':roster.get('allow_dag_transactions') is True,
+                    'state':status.get('state','UNOBSERVED'),'blocks':proof.get('blocks'),'transactions':proof.get('transactions'),
+                    'protocol_fault':proof.get('protocol_fault',''),'blockset_digest':proof.get('blockset_digest'),'state_root':proof.get('state_root')})
+            with self._lock:
+                self._dag_stress.update(state=terminal,stop_reason=reason,last_error=error,elapsed_ms=round(elapsed*1000),
+                    blocks=local['blocks'],transactions=local['transactions'],participants=rows,all_peers_synced=synced,
+                    acknowledged_blocks=local['blocks'] if synced else None,acknowledged_transactions=local['transactions'] if synced else None,
+                    acknowledged_bps=round(local['blocks']/elapsed,3) if synced else None,acknowledged_tps=round(local['transactions']/elapsed,3) if synced else None)
+
+    def stop_dag_stress(self):
+        with self._dag_control:
+            if self.public_key!=self._trusted:raise ValueError('GG_LAN_COORDINATOR_REQUIRED')
+            if self._dag_plan is not None:
+                self._dag_cancel.set()
+                with self._lock:
+                    if self._dag_stress['state'] in ('STARTING','RUNNING'):self._dag_stress['state']='STOPPING'
+            return self._dag_stress_snapshot()
+
+    def _dag_stress_snapshot(self):
+        with self._lock:
+            state=deepcopy(self._dag_stress);engine=self._engine
+            participants=[{'label':row.get('label','Peer'),'local':peer==self.public_key,'opted_in':row.get('allow_dag_transactions') is True} for peer,row in self._roster.items()]
+            busy=bool(self._dag_controller and self._dag_controller.is_alive() or self._dag_worker and self._dag_worker.is_alive())
+            active=self._dag_plan is not None and time.monotonic()<self._dag_plan['deadline'] and self._dag_plan['body']['run_id'] not in self._dag_closed
+        if self._dag_enabled:
+            try:
+                current=self._dag_status()
+                for key in ('blocks','transactions','elapsed_ms'):state[key]=current[key]
+                state['worker_active']=current['worker_active']
+            except ValueError:
+                if self._dag_enabled and not self._cancel.is_set():raise
+                state['worker_active']=False
+        else:state['worker_active']=False
+        state['worker_count']=1 if state['worker_active'] else 0
+        return {**dag_stress_capabilities(),**state,'enabled':self._dag_enabled,'local_opt_in':self.allow_dag_transactions,
+            'role':'COORDINATOR' if self.public_key==self._trusted else 'PARTICIPANT',
+            'can_start':bool(self._dag_enabled and self.public_key==self._trusted and len(participants)==3 and all(row['opted_in'] for row in participants)
+                and not busy and not active and engine is not None and not engine.snapshot()['live']['enabled'] and not engine._lan_fault),
+            'participants':state['participants'] or participants,'counts_basis':'LOCAL_DAG_ADMISSION_NOT_FINALITY'}
 
     def _credit(self,peer,size):
         with self._lock:
@@ -480,8 +760,8 @@ class LanDagPeer:
             peer,session=self._server_auth(sock,first,address,deadline)
             request,size=self._read(sock,MAX_FRAME,deadline=deadline);body=self._check_frame(request,size,peer,session,0)
             payload=body['payload'];records=[]
-            if body['kind'].startswith(('TOKEN_','CIRCLE_')):
-                try:result=self._token_command(peer,body['kind'],payload)
+            if body['kind'].startswith(('TOKEN_','CIRCLE_','DAG_STRESS_')):
+                try:result=self._dag_stress_command(peer,body['kind'],payload) if body['kind'].startswith('DAG_STRESS_') else self._token_command(peer,body['kind'],payload)
                 except ValueError as error:
                     code=str(error)
                     result={'error':code if re.fullmatch(r'GG_[A-Z0-9_]{1,80}',code) else 'GG_LAN_TOKEN_REQUEST_FAILED'}
@@ -600,7 +880,7 @@ class LanDagPeer:
         try:
             permitted()
             if peer==self.public_key:
-                stage='EXECUTE';result=self._token_command(peer,kind,payload);permitted();return result
+                stage='EXECUTE';result=self._dag_stress_command(peer,kind,payload) if kind.startswith('DAG_STRESS_') else self._token_command(peer,kind,payload);permitted();return result
             address=self._roster.get(peer)
             if address is None:raise ValueError('GG_LAN_UNKNOWN_PEER')
             # Existing gossip may use20 connections/s. Keep extra test-token RPCs
@@ -896,8 +1176,8 @@ class LanDagPeer:
                 'candidate_invite_count':len(self._candidates),'configured_peers':len(self._roster),'authenticated_peers':[{'label':self._roster[peer]['label'],'last_seen':stamp,
                     'endpoint':{'host':self._roster[peer]['host'],'port':self._roster[peer]['port']},'producer_indices':self._roster[peer]['producer_indices']}
                     for peer,stamp in self._seen.items()],
-                'physical_hosts_verified':False,'transactions_enabled':False,'traffic_confidentiality':False,
-                'allow_test_tokens':self.allow_test_tokens,'test_tokens_enabled':ledger is not None,
+                'physical_hosts_verified':False,'transactions_enabled':self._dag_enabled,'traffic_confidentiality':False,
+                'allow_test_tokens':self.allow_test_tokens,'test_tokens_enabled':ledger is not None,'allow_dag_transactions':self.allow_dag_transactions,
                 'orphan_count':len(self._orphans),'orphan_bytes':self._orphan_bytes,'sync_gap':self._sync_gap,
                 'traffic_bytes':self._raw_received,'traffic_bytes_basis':'APPLICATION_TCP_READ_BYTES',
                 'charged_transport_bytes':self._total_bytes,'rejected_frames':self._rejected,'last_error':self._last_error,'last_error_at':self._last_error_at,'last_error_details':dict(self._last_error_details),
@@ -916,6 +1196,14 @@ class LanDagPeer:
                 'stop_reason':'DURATION' if expired else '',
                 'scope':'PRIVATE_COORDINATOR_ORDERED_TEST_LEDGER'}
         body['token_circle']=circle
+        body['dag_stress']=self._dag_stress_snapshot()
+        if engine and self._dag_enabled:
+            worker_count=body['dag_stress']['worker_count'];body['worker_count']=worker_count
+            body['live'].update(mode='LAN_DAG_FINITE_STRESS',state='RUNNING' if worker_count else 'PAUSED',enabled=bool(worker_count),
+                active_workers=worker_count,local_worker_count=worker_count,local_producer_indices=list(self._local_indices),
+                interval_ms=body['dag_stress']['interval_ms'],cadence_origin='LOCAL_CONFIGURED_STRESS_WORKER',
+                target_proposal_bps=len(self._local_indices)*1000/body['dag_stress']['interval_ms'],
+                blocks=len(self._local_indices),transactions_per_block=body['dag_stress']['transactions_per_block'])
         if engine:body['block_graph']['source']='LAN_SIGNED_PROPOSAL_DAG'
         return body
 
@@ -933,6 +1221,7 @@ class LanDagPeer:
         """Signal work and close owned IO without waiting for a service lock."""
         self._cancel.set()
         self._circle_cancel.set()
+        self._dag_cancel.set()
         engine=self._engine
         if engine:engine.request_stop()
         listener=self._listener
@@ -965,12 +1254,16 @@ class LanDagPeer:
             except OSError:pass
             try:sock.close()
             except OSError:pass
-        for worker in (self._acceptor,self._gossip,self._circle_thread):
+        for worker in (self._acceptor,self._gossip,self._circle_thread,self._dag_worker,self._dag_controller):
             if worker and worker is not threading.current_thread():worker.join(2)
         with self._lock:handlers=list(self._handlers)
         for worker in handlers:
             if worker is not threading.current_thread():worker.join(2)
-        if any(worker and worker.is_alive() for worker in (self._acceptor,self._gossip,self._circle_thread,*handlers)):raise ValueError('GG_LAN_STOP_TIMEOUT')
+        if any(worker and worker.is_alive() for worker in (self._acceptor,self._gossip,self._circle_thread,self._dag_worker,self._dag_controller,*handlers)):raise ValueError('GG_LAN_STOP_TIMEOUT')
+        # The historical result remains in _dag_stress. Disable live evidence
+        # reads before clearing the engine/signers; stopped status never creates
+        # a fresh proof or tries to reconcile a cleared ledger.
+        with self._lock:self._dag_enabled=False
         if engine:engine.stop()
         if self._tokens:self._tokens.clear()
         with self._lock:

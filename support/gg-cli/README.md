@@ -262,6 +262,40 @@ universellt Codex-tema. Ingen Qt-import behövs för färgerna.
 
 ## GG-nätverket
 
+### DAGoblin på Windows, Linux och Termux
+
+Den gemensamma LAN-koden kör tre separat ägda peers. Det nya valbara
+DAG-testläget bär signerade testtransaktioner **i DAG-blocken**. Det kräver
+uppdaterad kod, ny parning och `allow_dag_transactions=true` på alla tre:
+
+```sh
+python gg-cli.py --foreground --command "lan.start label=Termux allow_dag_transactions=true auto_produce=false" --bootstrap-file gg-lan-bootstrap.json
+```
+
+På Linux används `python3` och `label=Linux`. Bootstrapen ska vara den nya
+publika fil som den uppdaterade Windowskoordinatorn skapade. Inga privata
+nycklar flyttas mellan apparaterna. Foregroundprocessen måste vara kvar;
+ett nytt engångskommando styr inte den gamla processen.
+
+Den interaktiva koordinatorns kommandon, eller desktopens motsvarande
+LAN-kontroller, skapar och kör det tidsbegränsade provet:
+
+```text
+lan.session_create distribute=true enable_dag_transactions=true
+lan.dag_stress_start duration_ms=10000 transactions_per_block=16 interval_ms=100
+lan.dag_stress_stop
+```
+
+Lokalt verifierade DAG-transaktioner och nätverksbekräftad genomströmning
+visas separat. En gemensam bekräftelse kräver samma verkliga blockmängd och
+tillstånd hos alla tre. Det är ett icke-finansiellt, ofinaliserat testprotokoll.
+Den tidigare `lan.circle_start` mäter en separat kvittoledger och får inte
+räknas som DAG-TX. Tusentals TX/block och flera hundra block/s är mål att
+belastningsprova, inte uppmätta egenskaper eller garantier för dessa profiler.
+Se [det gemensamma LAN-underlaget](../../knowledge/dagoblin-lan.md).
+
+### Lokala protokollprov
+
 Parallell DAG kan provas separat utan nodbinär eller nätverk:
 
 ```sh

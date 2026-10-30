@@ -594,7 +594,8 @@ class ChatSurfaceHost(QObject):
             grid = None
         if grid is None or getattr(grid, "_thread", None) is None:
             from backend.terminal_grid import TerminalGrid
-            grid = TerminalGrid(hole, retain_session_size=True, paste_image_paths=True)
+            grid = TerminalGrid(hole, retain_session_size=True, paste_image_paths=True,
+                                muted_prompt_background=True)
             self._gpt_grid = grid
             grid.hide_replay(self._startup_chat_restoring
                              and self._startup_chat_terminal == "ws.tui.gpt")

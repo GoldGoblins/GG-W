@@ -21,8 +21,13 @@ enhetsidentiteter hör till operatörens status/konfiguration, inte källpaketet
 - Privat LAN-transport för exakt tre parade peers, med två egna producenter
   per peer, signerad sessionsdomän och verifierade föräldrar. Tre separata
   lokala processer används i transportprovet. Fysiska enheter är inte därmed
-  verifierade. LAN-läget överför bara tomma förslag; finansiella transaktioner
-  är avstängda tills det finns en gemensam stabil tillstånds-/checkpointmodell.
+  verifierade. Det ursprungliga LAN-läget överför bara tomma förslag.
+- Ett nytt uttryckligt LAN-testläge överför individuellt signerade
+  testtransaktioner i DAG-blocken, med producentägda disponibla konton,
+  gemensamt oföränderligt genesisankare och tidsbegränsat belastningsprov.
+  Det kräver nytt protokoll och deltagarval på alla tre enheter. Testprofilens
+  storleks-/tidsgränser är inte ett uppmätt hårdvarutak. Finansiell exekvering
+  och kanonisk finalitet är fortsatt avstängda.
 - Ett separat privat GG-LAN(TEST)-prov har signerade testöverföringar och
   koordinatorordnade kvitton. Alla tre peers måste uttryckligen tillåta det
   före parning. Dess saldo och kvitton är en egen testledger; de är inte

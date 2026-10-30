@@ -9,7 +9,11 @@ desktopstarten: åtta oberoende producenter med olika takt och jitter kring
 målkapaciteten 64 tomma signerade förslag/s, paus/stopp och ett synligt
 kvotstopp. Varje förslag väljer en till sju kända föräldrar. Manuella
 protokollprov nedan finns kvar. [LAN-provet](dagoblin-lan.md) har i stället
-tre parade peers med två egna producenter vardera och bara tomma förslag.
+tre parade peers med två egna producenter vardera. Det ursprungliga
+LAN-läget överför bara tomma förslag; ett nytt uttryckligt testläge lägger
+signerade, icke-finansiella testtransaktioner i själva DAG-blocken. Det kräver
+nytt gemensamt testgenesisformat, separat deltagarval och ny parning på alla
+tre enheter; det aktiverar inte finansiell exekvering eller slutlighet.
 Den levande grafhistoriken behåller högst 128 verkliga förslag och deras
 faktiska föräldrareferenser. Stoppa har en separat avbrottsväg som fungerar
 även när den vanliga UI-arbetskön är upptagen.

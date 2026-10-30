@@ -213,9 +213,11 @@ class TerminalGrid(QQuickPaintedItem):
 
     def __init__(self, parent: QQuickItem | None = None, *,
                  retain_session_size: bool = False,
-                 paste_image_paths: bool = False) -> None:
+                 paste_image_paths: bool = False,
+                 muted_prompt_background: bool = False) -> None:
         super().__init__(parent)
         self._paste_image_paths = paste_image_paths
+        self._muted_prompt_background = muted_prompt_background
         self._vt = MiniVt(24, 80)
         self._decoder = codecs.getincrementaldecoder("utf-8")("replace")
         self._font = QFont("monospace")
@@ -925,6 +927,9 @@ class TerminalGrid(QQuickPaintedItem):
                 if run_flags & BOLD and 0 <= paint_fg <= 7:
                     paint_fg += 8
                 bg_rgb = rgb_of(paint_bg, False)
+                # Keep Codex prompt bands distinct without the bright ANSI gray.
+                if self._muted_prompt_background and paint_bg == 8:
+                    bg_rgb = (0x30, 0x30, 0x30)
                 fg_rgb = rgb_of(paint_fg, True)
                 if run_flags & DIM:
                     fg_rgb = (fg_rgb[0] // 2, fg_rgb[1] // 2, fg_rgb[2] // 2)

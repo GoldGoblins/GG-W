@@ -22,15 +22,16 @@ MAX_PUBLIC_DOCUMENT=256*1024
 MAX_BOOTSTRAP=8192
 PRIVATE_NETWORKS=tuple(ipaddress.ip_network(value) for value in ('10.0.0.0/8','172.16.0.0/12','192.168.0.0/16'))
 COMMANDS={
-    'lan.start':{'label','bind_host','port','allowed_cidr','trusted_coordinator','auto_produce','bootstrap','allow_test_tokens'},
-    'lan.join_file':{'path','label','bind_host','port','allow_test_tokens'},
+    'lan.start':{'label','bind_host','port','allowed_cidr','trusted_coordinator','auto_produce','bootstrap','allow_test_tokens','allow_dag_transactions'},
+    'lan.join_file':{'path','label','bind_host','port','allow_test_tokens','allow_dag_transactions'},
     'lan.status':set(),'lan.invite':set(),'lan.bootstrap':set(),'lan.bundle':set(),'lan.announce':set(),
     'lan.export_bootstrap':{'path'},'lan.export_invite':{'path'},'lan.peer_file':{'path'},
     'lan.pin':{'public_key'},'lan.peer_add':{'invite','host','port'},
-    'lan.session_create':{'label','distribute','enable_test_tokens'},'lan.install':{'bundle'},
+    'lan.session_create':{'label','distribute','enable_test_tokens','enable_dag_transactions'},'lan.install':{'bundle'},
     'lan.distribute':set(),'lan.produce':{'interval_ms'},'lan.pause':set(),'lan.stop':set(),
     'lan.token_send':{'recipient_peer_key','amount_atomic'},
     'lan.circle_start':{'duration_ms','batch','amount_atomic'},'lan.circle_stop':set(),
+    'lan.dag_stress_start':{'duration_ms','transactions_per_block','interval_ms'},'lan.dag_stress_stop':set(),
 }
 
 
@@ -129,6 +130,12 @@ def write_public_document(path,value,kind):
 
 
 def _stopped():
+    capabilities=_api().dag_stress_capabilities()
+    stress={**capabilities,'enabled':False,'local_opt_in':False,'role':'',
+            'can_start':False,'state':'IDLE','participants':[],'elapsed_ms':0,
+            'blocks':0,'transactions':0,'all_peers_synced':False,
+            'acknowledged_blocks':None,'acknowledged_transactions':None,
+            'acknowledged_bps':None,'acknowledged_tps':None,'stop_reason':'','last_error':''}
     return {'state':'STOPPED','mode':'PRIVATE_LAN_SESSION_EXPERIMENT','producer_count':0,'worker_count':0,
             'canonical_finalized':0,'blocks_admitted':0,'transactions_validated':0,'frontier_size':0,
             'block_graph':{'schema':'gg.block-graph.v1','topology':'MULTIPARENT_DAG','producer_count':0,
@@ -136,6 +143,7 @@ def _stopped():
             'lan':{'state':'STOPPED','scope':'PRIVATE_LAN_SESSION_EXPERIMENT','configured_peers':0,
                    'authenticated_peers':[],'physical_hosts_verified':False,'transactions_enabled':False,
                    'traffic_confidentiality':False,'mainnet_enabled':False},
+            'dag_stress':stress,
             'lan_setup':{'active':False,'starting':False,'coordinator':False,'invites':[],
                          'invite_count':0,'bundle_available':False,'distribution':[],
                          'ephemeral_keys':True,'new_pairing_after_restart':True}}
@@ -150,6 +158,7 @@ class LanDagRuntime:
         self._announcement_error=''
         self._revision=0
         self._allow_test_tokens=False
+        self._allow_dag_transactions=False
 
     @property
     def active(self):
@@ -177,7 +186,8 @@ class LanDagRuntime:
             row=invite['body']
             candidates.append({'label':row['label'],'host':row['host'],'port':row['port'],
                                'peer_key':key,'producer_keys':list(row['producer_keys']),
-                               'local':key==peer.public_key,'allow_test_tokens':row.get('allow_test_tokens') is True})
+                               'local':key==peer.public_key,'allow_test_tokens':row.get('allow_test_tokens') is True,
+                               'allow_dag_transactions':row.get('allow_dag_transactions') is True})
         body['lan'].update(mainnet_enabled=False,allowed_cidr=self._allowed)
         body['lan_setup']={'active':True,'starting':self._starting,'coordinator':self._trusted==peer.public_key,
                            'invite_count':len(candidates),'invites':candidates,
@@ -186,6 +196,7 @@ class LanDagRuntime:
                            'distribution':deepcopy(self._distribution),'auto_produce':self._auto_produce,
                            'announcement_error':self._announcement_error,
                            'allow_test_tokens':self._allow_test_tokens,
+                           'allow_dag_transactions':self._allow_dag_transactions,
                            'ephemeral_keys':True,'new_pairing_after_restart':True}
         return body
 
@@ -231,9 +242,11 @@ class LanDagRuntime:
                 if host=='auto':host=auto_bind_host(route)
                 auto_produce=options.get('auto_produce',False)
                 allow_test_tokens=options.get('allow_test_tokens',False)
-                if type(allow_test_tokens) is not bool:raise ValueError('GG_LAN_OPTION')
+                allow_dag_transactions=options.get('allow_dag_transactions',False)
+                if type(allow_test_tokens) is not bool or type(allow_dag_transactions) is not bool:raise ValueError('GG_LAN_OPTION')
+                extra={'allow_dag_transactions':True} if allow_dag_transactions else {}
                 peer=_api().LanDagPeer(options.get('label','GG LAN node'),host,options.get('port',16120),
-                                       trusted,auto_produce,allowed_cidr=allowed,allow_test_tokens=allow_test_tokens)
+                                       trusted,auto_produce,allowed_cidr=allowed,allow_test_tokens=allow_test_tokens,**extra)
                 self._peer=peer
                 if self._stop_requested.is_set():raise ValueError('GG_LAN_START_CANCELLED')
                 invite=peer.start_pairing()
@@ -241,6 +254,7 @@ class LanDagRuntime:
                 self._allowed=str(peer.allowed);self._trusted=trusted or peer.public_key
                 self._auto_produce=auto_produce;self._invites={peer.public_key:invite}
                 self._allow_test_tokens=allow_test_tokens
+                self._allow_dag_transactions=allow_dag_transactions
                 self._bundle=None;self._distribution=[]
                 self._bootstrap=bootstrap or ({'schema':BOOTSTRAP_SCHEMA,'coordinator_invite':deepcopy(invite),'allowed_cidr':self._allowed} if self._trusted==peer.public_key else None)
                 self._announcement_error=''
@@ -253,6 +267,7 @@ class LanDagRuntime:
                 if peer is not None:peer.stop()
                 self._peer=None;self._invites={};self._bundle=None;self._bootstrap=None
                 self._allow_test_tokens=False
+                self._allow_dag_transactions=False
                 raise
             finally:self._starting=False
 
@@ -285,6 +300,7 @@ class LanDagRuntime:
             if peer is not None:peer.stop()
             self._peer=None;self._starting=False;self._invites={};self._bundle=None;self._bootstrap=None;self._distribution=[]
             self._allow_test_tokens=False
+            self._allow_dag_transactions=False
             self._revision+=1
             return self.snapshot()
 
@@ -320,8 +336,10 @@ class LanDagRuntime:
             if command=='lan.session_create':
                 distribute=args.get('distribute',False)
                 enabled=args.get('enable_test_tokens',False)
-                if type(distribute) is not bool or type(enabled) is not bool:raise ValueError('GG_LAN_OPTION')
-                bundle=peer.create_session(list(self._all_invites(peer).values()),args.get('label','GG LAN'),enable_test_tokens=enabled)
+                enabled_dag=args.get('enable_dag_transactions',False)
+                if type(distribute) is not bool or type(enabled) is not bool or type(enabled_dag) is not bool:raise ValueError('GG_LAN_OPTION')
+                extra={'enable_dag_transactions':True} if enabled_dag else {}
+                bundle=peer.create_session(list(self._all_invites(peer).values()),args.get('label','GG LAN'),enable_test_tokens=enabled,**extra)
                 peer.install_session(bundle);self._bundle=deepcopy(bundle)
                 if distribute:self._distribution=peer.distribute_session(bundle)
                 self._revision+=1
@@ -344,6 +362,12 @@ class LanDagRuntime:
                 self._revision+=1;return self.snapshot()
             if command=='lan.circle_stop':
                 peer.stop_token_circle();self._revision+=1;return self.snapshot()
+            if command=='lan.dag_stress_start':
+                peer.start_dag_stress(duration_ms=args.get('duration_ms',10000),
+                    transactions_per_block=args.get('transactions_per_block',16),interval_ms=args.get('interval_ms',100),remote=True)
+                self._revision+=1;return self.snapshot()
+            if command=='lan.dag_stress_stop':
+                peer.stop_dag_stress();self._revision+=1;return self.snapshot()
         raise ValueError('GG_LAN_ACTION_ARGUMENTS')
 
 
