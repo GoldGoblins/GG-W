@@ -181,8 +181,8 @@ class DagStressProtocolTests(unittest.TestCase):
     def test_limits_optin_unrelated_production_and_capability_query(self):
         coordinator=self.peers[0]
         with self.assertRaises(ValueError):coordinator.start_dag_stress(999,1,100)
-        with self.assertRaises(ValueError):coordinator.start_dag_stress(1000,65,100)
-        with self.assertRaises(ValueError):coordinator.start_dag_stress(1000,1,99)
+        with self.assertRaises(ValueError):coordinator.start_dag_stress(1000,50001,100)
+        with self.assertRaises(ValueError):coordinator.start_dag_stress(1000,1,-1)
         coordinator._engine._live['enabled']=True
         with self.assertRaisesRegex(ValueError,'UNRELATED'):coordinator.start_dag_stress(1000,1,100)
         self.assertTrue(coordinator._engine._live['enabled'])
@@ -190,7 +190,7 @@ class DagStressProtocolTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'USE_FINITE_STRESS'):coordinator.start_producing()
         coordinator.stop_producing()
         with patch.object(lan,'Keypair',side_effect=AssertionError('key created')),patch.object(lan.socket,'socket',side_effect=AssertionError('socket created')):
-            self.assertEqual(lan.dag_stress_capabilities()['limits']['max_tx_per_block'],64)
+            self.assertEqual(lan.dag_stress_capabilities()['limits']['max_tx_per_block'],50000)
 
     def test_stop_during_run_and_repeated_stop_clear_signers_without_new_proof(self):
         coordinator=self.peers[0];coordinator.start_dag_stress(1000,1,100)

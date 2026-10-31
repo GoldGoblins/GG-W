@@ -31,9 +31,19 @@ def worker(label):
                 elif operation == 'distribute':
                     result = peer.distribute_session(request['bundle'])
                 elif operation == 'start':
-                    peer.start_dag_stress(duration_ms=5000, transactions_per_block=2,
-                                          interval_ms=250, remote=True)
+                    peer.start_dag_stress(duration_ms=request.get('duration_ms',5000),
+                                          transactions_per_block=request.get('transactions_per_block',2),
+                                          interval_ms=request.get('interval_ms',250), remote=True)
                     result = {'state': 'START_REQUESTED'}
+                elif operation == 'capacity':
+                    peer._large_capacity()
+                    result={'state':'CONFIGURED','wire_limit':peer._wire_limit}
+                elif operation == 'block':
+                    block=peer._engine.produce_lan_test_block(peer._local_indices[0],
+                        request['transactions_per_block'],peer._wire_limit)
+                    result={'state':'ADMITTED_UNFINALIZED','wire_bytes':len(block['wire'])}
+                elif operation == 'hardware_probe':
+                    result=peer._hardware_link_probe(time.monotonic()+5,threading.Event())
                 elif operation == 'status':
                     body = peer.snapshot()
                     engine = peer._engine
@@ -43,6 +53,7 @@ def worker(label):
                               'canonical_finalized': body['canonical_finalized'],
                               'evidence': engine.lan_evidence(),
                               'stress': body['dag_stress'],
+                              'transport': body['lan']['transport'],
                               'measurement_count': len(body.get('measurements', [])),
                               'last_measurement': body.get('last_wave', {}),
                               'owned_producer_signers': sum(key is not None for key in engine._producer_keys),
@@ -88,6 +99,7 @@ class OwnedProcess:
         self.reader.start()
         self.initial = self.receive()
         self.invite = self.initial['invite']
+        self.stop_acknowledged = False
 
     def receive(self):
         try:
@@ -101,14 +113,18 @@ class OwnedProcess:
     def call(self, operation, **values):
         self.process.stdin.write(json.dumps({'op': operation, **values}) + '\n')
         self.process.stdin.flush()
-        return self.receive()
+        result = self.receive()
+        if operation == 'stop' and result.get('state') == 'STOPPED':
+            self.stop_acknowledged = True
+        return result
 
     def close(self):
         if self.process.poll() is None:
-            try:
-                self.call('stop')
-            except (OSError, AssertionError):
-                pass
+            if not self.stop_acknowledged:
+                try:
+                    self.call('stop')
+                except (OSError, AssertionError):
+                    pass
             try:
                 self.process.wait(4)
             except subprocess.TimeoutExpired:
@@ -134,6 +150,95 @@ class OwnedProcess:
 
 
 class DagStressProcessTest(unittest.TestCase):
+    def test_5000_tx_block_crosses_authenticated_chunks_and_all_three_verify(self):
+        peers=[]
+        try:
+            for label in ('Large block sender','Large block verifier A','Large block verifier B'):
+                peers.append(OwnedProcess(label))
+            coordinator=peers[0]
+            for peer in peers[1:]:peer.call('pin',coordinator=coordinator.invite['body']['peer_key'])
+            bundle=coordinator.call('create',invites=[peer.invite for peer in peers])
+            self.assertTrue(all(row['state']=='READY' for row in coordinator.call('distribute',bundle=bundle)))
+            for peer in peers:peer.call('capacity')
+            link=coordinator.call('hardware_probe')
+            self.assertGreater(link['bytes_per_second'],0)
+            self.assertEqual(link['peer_samples'],2)
+            baseline=[peer.call('status')['transport']['counters']['failures'] for peer in peers]
+            block=coordinator.call('block',transactions_per_block=5000)
+            self.assertGreater(block['wire_bytes'],64*1024)
+            until=time.monotonic()+30
+            while True:
+                states=[peer.call('status') for peer in peers]
+                if all(row['transactions']==5000 for row in states):break
+                self.assertLess(time.monotonic(),until,'Real chunked block did not converge')
+                time.sleep(.1)
+            for field in ('blocks','transactions','blockset_digest','state_root','producer_blocks','producer_transactions'):
+                self.assertTrue(all(row['evidence'][field]==states[0]['evidence'][field] for row in states),field)
+            for index,row in enumerate(states):
+                self.assertEqual(row['canonical_finalized'],0)
+                self.assertFalse(row['evidence']['protocol_fault'])
+                self.assertEqual(row['transport']['counters']['failures'],baseline[index],row['transport'])
+            print(json.dumps({'scope':'THREE_OWNED_LOOPBACK_PROCESSES_NOT_PHYSICAL_HOSTS',
+                'transactions_per_block':5000,'wire_bytes':block['wire_bytes'],'shared_verified_blocks':1,
+                'shared_verified_transactions':5000,'new_transport_failures':0,'canonical_finalized':0}),flush=True)
+        finally:
+            for peer in reversed(peers):peer.close()
+
+    def test_high_payload_profiles_use_real_transport_and_shared_ack(self):
+        for transactions_per_block in (8, 32, 64, 128):
+            with self.subTest(transactions_per_block=transactions_per_block):
+                peers = []
+                try:
+                    for label in ('Windows profile fixture', 'Linux profile fixture', 'Termux profile fixture'):
+                        peers.append(OwnedProcess(label))
+                    coordinator = peers[0]
+                    for peer in peers[1:]:
+                        peer.call('pin', coordinator=coordinator.invite['body']['peer_key'])
+                    bundle = coordinator.call('create', invites=[peer.invite for peer in peers])
+                    distribution = coordinator.call('distribute', bundle=bundle)
+                    self.assertTrue(all(row['state'] == 'READY' for row in distribution))
+                    baseline = [peer.call('status')['transport']['counters']['failures'] for peer in peers]
+                    coordinator.call('start', duration_ms=10000,
+                                     transactions_per_block=transactions_per_block, interval_ms=1000)
+                    deadline = time.monotonic() + 14
+                    while True:
+                        result = coordinator.call('status')
+                        if result['stress']['state'] not in ('STARTING', 'RUNNING', 'STOPPING'):
+                            break
+                        self.assertLess(time.monotonic(), deadline, 'Owned stress did not terminate')
+                        time.sleep(.2)
+                    stress = result['stress']
+                    diagnostic = {key: stress.get(key) for key in
+                                  ('state', 'last_error', 'failure_phase', 'phase_ms', 'status_polls')}
+                    self.assertEqual(stress['state'], 'COMPLETE', json.dumps(diagnostic))
+                    self.assertTrue(stress['all_peers_synced'])
+                    self.assertGreater(stress['acknowledged_transactions'], 0)
+                    self.assertEqual(stress['transactions'], stress['blocks'] * transactions_per_block)
+                    self.assertEqual(stress['acknowledged_transactions'], stress['transactions'])
+                    self.assertEqual(stress['acknowledged_blocks'], stress['blocks'])
+                    states = [peer.call('status') for peer in peers]
+                    for field in ('chain_id', 'blocks', 'transactions', 'blockset_digest',
+                                  'state_root', 'producer_blocks', 'producer_transactions'):
+                        self.assertTrue(all(row['evidence'][field] == states[0]['evidence'][field]
+                                            for row in states), 'Shared evidence differs: ' + field)
+                    for index, row in enumerate(states):
+                        self.assertFalse(row['evidence']['protocol_fault'])
+                        self.assertEqual(row['canonical_finalized'], 0)
+                        self.assertEqual(row['owned_producer_signers'], 2)
+                        self.assertTrue(all(count > 0 for count in row['evidence']['producer_blocks']))
+                        self.assertEqual(row['last_measurement']['transactions'], transactions_per_block)
+                        self.assertEqual(row['transport']['counters']['failures'], baseline[index])
+                    print(json.dumps({'scope': 'THREE_OWNED_LOOPBACK_PROCESSES_NOT_PHYSICAL_HOSTS',
+                                      'transactions_per_block': transactions_per_block,
+                                      'state': stress['state'], 'acknowledged_blocks': stress['acknowledged_blocks'],
+                                      'acknowledged_transactions': stress['acknowledged_transactions'],
+                                      'new_transport_failures': 0}), flush=True)
+                    for peer in peers:
+                        self.assertEqual(peer.call('stop')['owned_threads'], 0)
+                finally:
+                    for peer in reversed(peers):
+                        peer.close()
+
     def test_actual_three_process_dag_payloads_converge_and_stop(self):
         peers = []
         try:

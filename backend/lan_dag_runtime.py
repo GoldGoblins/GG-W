@@ -32,6 +32,8 @@ COMMANDS={
     'lan.token_send':{'recipient_peer_key','amount_atomic'},
     'lan.circle_start':{'duration_ms','batch','amount_atomic'},'lan.circle_stop':set(),
     'lan.dag_stress_start':{'duration_ms','transactions_per_block','interval_ms'},'lan.dag_stress_stop':set(),
+    'lan.resources':{'budget'},'lan.hardware_test_start':{'duration_ms','max_transactions_per_block'},
+    'lan.hardware_test_stop':set(),
 }
 
 
@@ -368,6 +370,14 @@ class LanDagRuntime:
                 self._revision+=1;return self.snapshot()
             if command=='lan.dag_stress_stop':
                 peer.stop_dag_stress();self._revision+=1;return self.snapshot()
+            if command=='lan.resources':
+                peer.resources.configure(args.get('budget',{}))
+                self._revision+=1;return self.snapshot()
+            if command=='lan.hardware_test_start':
+                peer.hardware_test_start(args.get('duration_ms',10000),args.get('max_transactions_per_block',5000))
+                self._revision+=1;return self.snapshot()
+            if command=='lan.hardware_test_stop':
+                peer.resources.test.stop();self._revision+=1;return self.snapshot()
         raise ValueError('GG_LAN_ACTION_ARGUMENTS')
 
 

@@ -221,7 +221,7 @@ put(ready)
 assert js(root,'metricAt(0).value')=='12' and js(root,'metricAt(1).value')=='48'
 assert js(root,'graph.blocks[1].hash')=='b'*64 and js(root,'graph.edges.length')==1
 assert find(popup,'lanDagStressLocal').property('text')=='Lokalt verifierat under provet: 3 förslag · 12 DAG-TX'
-assert '2.0 förslag/s · 8.0 TX/s' in find(popup,'lanDagStressRates').property('text')
+assert '2.0 block/s · 4.0 TX/block under provet · 8.0 TX/s' in find(popup,'lanDagStressRates').property('text')
 assert '999' not in find(popup,'lanDagStressLocal').property('text')
 for phase in ['STARTING','RUNNING','STOPPING']:
     running=copy.deepcopy(ready);running['dag_stress'].update(state=phase,can_start=False,elapsed_ms=2500)

@@ -55,7 +55,7 @@ class ReceiveDeadlineTests(unittest.TestCase):
         remote='a'*64;peer._roster={remote:{'host':'127.0.0.1','port':16120}}
         cancel=threading.Event();timer=threading.Timer(.05,cancel.set);timer.start();self.addCleanup(timer.cancel)
         began=time.monotonic()
-        with patch.object(lan.socket,'create_connection',return_value=left),patch.object(lan,'IO_TIMEOUT',.02):
+        with patch.object(peer,'_connection',return_value=left),patch.object(lan,'IO_TIMEOUT',.02):
             with self.assertRaisesRegex(ValueError,'GG_LAN_CIRCLE_CANCELLED') as raised:
                 peer._token_rpc(remote,'TOKEN_STATUS',{},cancel=cancel,deadline=began+1)
         self.assertLess(time.monotonic()-began,.25)

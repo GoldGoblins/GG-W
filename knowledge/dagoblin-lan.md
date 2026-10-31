@@ -79,6 +79,59 @@ producentkörning. UI läser tillåtna intervall och blockstorlekar från backen
 den första profilens begränsningar är program-/protokollgränser, inte ett
 uppmätt hårdvarutak. Kvotstopp och storleksfel redovisas uttryckligen.
 
+### Hårdvarutest och individuella resurstak
+
+LAN-panelen har ett totalreglage och separata tak för CPU, GPU, RAM och nätverk
+på den egna noden. Reglagen ändrar nodens DAG-arbete, inte operativsystemets
+globala inställningar eller de andra apparaternas inställningar. Texten under
+varje reglage visar teoretiskt relativt behov vid den aktuella flaskhalsen.
+Kapaciteterna räknas först om till samma arbetslast i TX/s. Exempel: CPU
+6 000 TX/s och nätverk 10 000 TX/s med nätverkstaket 10 % ger ett gemensamt
+teoretiskt tak på 1 000 TX/s och ett relativt CPU-behov på cirka 16,7 %.
+Samma regel gäller när CPU, RAM eller en aktiv GPU-backend blir flaskhals.
+Totalreglaget anger andelen av detta gemensamma tak. Procent av uppmätt
+DAG-kapacitet är inte samma sak som operativsystemets totala CPU-mätare.
+
+Det uttryckligt startade hårdvarutestet använder en separat disponibel DAG
+med verklig signering och verifiering. RAM mäts med ett kopieringsprov och en
+separat budget för arbetsminne. När tre peers är parade mäts nätverket med
+ett ändligt, autentiserat dubbelriktat LAN-prov mot de två andra. Utan detta
+anges operativsystemets länkhastighet som en teoretisk uppskattning, eller
+okänd kapacitet om uppgift saknas. Ett misslyckat länktest ersätts inte med
+ett optimistiskt nätverkstal. Testets största faktiskt uppmätta blockstorlek
+visas separat. Hårdvarutestet är en kort kalibrering; resurstaken gäller den
+anslutna nodens DAG-körning.
+
+Den nuvarande kryptografiska DAG-backenden kör på CPU. GPU-reglaget är
+inaktivt tills en faktisk GPU-backend finns; bildrendering räknas inte som
+DAG-beräkning och ingen GPU-prestanda hittas på.
+
+I samma interaktiva CLI-process kan motsvarande funktioner användas så här:
+
+```text
+lan.hardware_test_start duration_ms=10000 max_transactions_per_block=50000
+lan.status
+lan.resources {"budget":{"overall":100,"cpu":100,"gpu":100,"ram":50,"network":10}}
+lan.hardware_test_stop
+```
+
+Den större testprofilen tillåter upp till 50 000 TX/block, 1–600 sekunders
+gemensam provbudget och `interval_ms=0` för automatisk takt. Varje block och
+TX verifieras fortfarande. Större block fragmenteras i signerade frames på
+högst 64 KiB och återmonteras med kontrollerad storlek, ordning och
+transportdigest före DAG-verifiering. Blockgränsen är högst 32 MiB och
+sänks av minnesbudgeten; sessioner och transport har fortsatt ändliga
+skyddskvoter. Ingen av dessa gränser är ett uppmätt hårdvarutak. Ändra
+blockstorlek och provlängd efter faktiskt uppmätt arbete, inte efter det
+teoretiska maximivärdet.
+
+Mätvärdena visar block/s, faktisk genomsnittlig TX/block och TX/s. Ett
+teoretiskt reglagetak eller ett lokalt antaget block är inte en gemensam
+nätkvittens. Ett lokalt transporttest har skickat ett verkligt block med
+5 000 TX mellan tre separata processer, som verifierade samma blockmängd
+och tillstånd utan nya transportfel. Detta ersätter inte ett nytt prov på
+de tre fysiska enheterna.
+
 Grafens block, föräldralänkar, lokalt verifierade DAG-TX och mättider kommer
 från antagna DAG-block. Den separata kvittoledgerns räknare fyller aldrig
 DAG-grafen. Ett nätverksbekräftat resultat kräver autentiserade svar med samma

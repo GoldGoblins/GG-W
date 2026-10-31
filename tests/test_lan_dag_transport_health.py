@@ -3,6 +3,7 @@
 All fixtures use RAM signers and fake sockets/clocks. No external endpoints,
 real wallets, live application, persistent logs or physical peers are used.
 """
+import errno
 import socket
 import threading
 import unittest
@@ -33,6 +34,18 @@ class FakeSocket:
     def close(self):self.closed=True
     def __enter__(self):return self
     def __exit__(self,*args):self.close()
+
+
+class ConnectSocket(FakeSocket):
+    def __init__(self,code=errno.EINPROGRESS,error=0):
+        super().__init__();self.code=code;self.error=error;self.connect_calls=0;self.on_connect=None
+    def setblocking(self,value):self.blocking=value
+    def connect_ex(self,endpoint):
+        self.connect_calls+=1
+        if self.on_connect:self.on_connect()
+        return self.code
+    def getsockopt(self,level,option):return self.error
+    def shutdown(self,how):self.close()
 
 
 class TransportHealthTests(unittest.TestCase):
@@ -149,6 +162,23 @@ class TransportHealthTests(unittest.TestCase):
                 if active:self.assertLess(stamps[0],100.2)
                 else:self.assertGreaterEqual(stamps[0],102)
 
+    def test_existing_idle_error_backoff_is_shortened_when_stress_begins(self):
+        for active in (False,True):
+            with self.subTest(active=active):
+                peer,remote=self.peer();clock=Clock();peer._cancel=clock;peer._cursors={remote:0}
+                stamps=[]
+                def pull(*args):stamps.append(clock.now);clock.set();return 0
+                with patch.object(lan.time,'monotonic',side_effect=clock.monotonic):
+                    for _ in range(5):peer._gossip_result(remote,error=True)
+                    self.assertEqual(peer._gossip_health[remote]['next'],104)
+                    if active:peer._dag_plan={'begun':True,'deadline':110}
+                    with patch.object(peer,'_pull',side_effect=pull):peer._gossip_loop()
+                self.assertEqual(len(stamps),1)
+                if active:
+                    self.assertGreaterEqual(stamps[0],101)
+                    self.assertLess(stamps[0],101.2)
+                else:self.assertGreaterEqual(stamps[0],104)
+
     def test_accept_drop_reasons_are_observable_without_refunding_limits(self):
         for reason in ('SESSION','RATE','HANDLERS','BYTES'):
             with self.subTest(reason=reason):
@@ -175,7 +205,7 @@ class TransportHealthTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'GG_LAN_CREDIT'):peer._credit(remote,10)
         self.assertEqual(peer._traffic[remote]['frames'],lan.MAX_REQUESTS+1)
         self.assertEqual(peer._total_bytes,10)
-        with patch.object(lan.socket,'create_connection',side_effect=AssertionError('exhausted session connected')):
+        with patch.object(peer,'_connection',side_effect=AssertionError('exhausted session connected')):
             with self.assertRaisesRegex(ValueError,'GG_LAN_SESSION_EXHAUSTED'):peer._pull(remote,'PAGE',{'after':0})
         with patch.object(peer,'_pull',side_effect=AssertionError('exhausted gossip continued')):peer._gossip_loop()
         body=peer.snapshot()['lan'];self.assertEqual(body['state'],'EXHAUSTED')
@@ -222,14 +252,14 @@ class TransportHealthTests(unittest.TestCase):
     def test_stop_after_pacing_opens_no_new_socket(self):
         peer,remote=self.peer()
         with (patch.object(peer,'_pace_connection',side_effect=lambda *args,**kwargs:peer._cancel.set()),
-              patch.object(lan.socket,'create_connection') as connect):
+              patch.object(peer,'_connection') as connect):
             with self.assertRaisesRegex(ValueError,'GG_LAN_STOPPED'):peer._pull(remote,'PAGE',{'after':0})
         connect.assert_not_called()
         self.assertTrue(peer._transport_history[-1]['expected'])
 
     def test_pull_request_and_server_data_end_share_connection_deadline(self):
         peer,remote=self.peer();sock=FakeSocket()
-        with (patch.object(lan.socket,'create_connection',return_value=sock),
+        with (patch.object(peer,'_connection',return_value=sock),
               patch.object(peer,'_client_auth',return_value='session'),
               patch.object(peer,'_read',return_value=({},10)),
               patch.object(peer,'_check_frame',return_value={'kind':'END','payload':{'records':0}}),
@@ -259,7 +289,7 @@ class TransportHealthTests(unittest.TestCase):
 
     def test_rpc_lost_ack_is_not_replayed_and_has_exact_operation_stage(self):
         peer,remote=self.peer();sock=FakeSocket()
-        with (patch.object(lan.socket,'create_connection',return_value=sock) as connect,
+        with (patch.object(peer,'_connection',return_value=sock) as connect,
               patch.object(peer,'_client_auth',return_value='session'),
               patch.object(peer,'_read',side_effect=ValueError('GG_LAN_EOF')),
               patch.object(lan,'_send',return_value=10) as send):
@@ -268,6 +298,145 @@ class TransportHealthTests(unittest.TestCase):
         self.assertFalse(peer._sockets);self.assertFalse(peer._circle_sockets)
         record=peer._transport_history[-1]
         self.assertEqual((record['operation'],record['stage'],record['code']),('DAG_STRESS_STOP','RECEIVE','GG_LAN_EOF'))
+
+    def test_pending_connect_600ms_uses_existing_budget_and_is_owned_before_attempt(self):
+        peer,remote=self.peer();clock=Clock();sock=ConnectSocket();cancel=threading.Event();polls=[]
+        def registered():
+            self.assertIn(sock,peer._sockets);self.assertIn(sock,peer._circle_sockets)
+            self.assertFalse(sock.blocking)
+        sock.on_connect=registered
+        def ready(_readable,writable,errors,delay):
+            self.assertFalse(peer._lock._is_owned());polls.append(delay)
+            clock.now+=min(delay,max(0,100.6-clock.now))
+            return ([],[sock],[]) if clock.now>=100.6 else ([],[],[])
+        with (patch.object(lan.time,'monotonic',side_effect=clock.monotonic),
+              patch.object(lan.socket,'socket',return_value=sock) as create,
+              patch.object(lan.select,'select',side_effect=ready)):
+            with peer._connection(remote,deadline=103,cancel=cancel) as connected:
+                self.assertIs(connected,sock);self.assertAlmostEqual(clock.now,100.6)
+                self.assertIn(sock,peer._sockets)
+                self.assertEqual(sock.timeout,lan.IO_TIMEOUT)
+        self.assertEqual((create.call_count,sock.connect_calls),(1,1));self.assertGreater(len(polls),1)
+        self.assertTrue(all(0<delay<=lan.IO_TIMEOUT for delay in polls));self.assertTrue(sock.closed)
+        self.assertFalse(peer._sockets);self.assertFalse(peer._circle_sockets)
+
+    def test_pending_connect_shorter_deadline_expires_without_new_attempt(self):
+        peer,remote=self.peer();clock=Clock();sock=ConnectSocket();waits=[]
+        def pending(_readable,writable,errors,delay):waits.append(delay);clock.now+=delay;return [],[],[]
+        with (patch.object(lan.time,'monotonic',side_effect=clock.monotonic),
+              patch.object(lan.socket,'socket',return_value=sock) as create,
+              patch.object(lan.select,'select',side_effect=pending)):
+            with self.assertRaises(socket.timeout):
+                with peer._connection(remote,deadline=100.2):self.fail('late connection admitted')
+        self.assertAlmostEqual(clock.now,100.2);self.assertLessEqual(max(waits),.2+1e-9)
+        self.assertEqual((create.call_count,sock.connect_calls),(1,1))
+        self.assertTrue(sock.closed);self.assertFalse(peer._sockets)
+
+    def test_cancel_or_expiry_before_connect_creates_no_socket(self):
+        for kind in ('stop','task','deadline'):
+            with self.subTest(kind=kind):
+                peer,remote=self.peer();clock=Clock();cancel=threading.Event()
+                if kind=='stop':peer._cancel.set()
+                if kind=='task':cancel.set()
+                expected=socket.timeout if kind=='deadline' else ValueError
+                with patch.object(lan.time,'monotonic',side_effect=clock.monotonic),patch.object(lan.socket,'socket') as create:
+                    with self.assertRaises(expected):
+                        with peer._connection(remote,deadline=100 if kind=='deadline' else 103,cancel=cancel):self.fail('cancelled connect')
+                create.assert_not_called();self.assertFalse(peer._sockets);self.assertFalse(peer._circle_sockets)
+
+    def test_cancel_after_socket_creation_prevents_connect_and_closes_socket(self):
+        peer,remote=self.peer();sock=ConnectSocket()
+        def create(*args):peer._cancel.set();return sock
+        with patch.object(lan.socket,'socket',side_effect=create):
+            with self.assertRaisesRegex(ValueError,'GG_LAN_STOPPED'):
+                with peer._connection(remote,deadline=lan.time.monotonic()+3):self.fail('cancelled socket connected')
+        self.assertEqual(sock.connect_calls,0);self.assertTrue(sock.closed);self.assertFalse(peer._sockets)
+
+    def test_stop_or_task_cancel_closes_registered_pending_connect(self):
+        for task in (False,True):
+            with self.subTest(task=task):
+                peer,remote=self.peer();clock=Clock();sock=ConnectSocket();cancel=peer._circle_cancel if task else None
+                def stopped(*args):
+                    self.assertIn(sock,peer._sockets)
+                    if task:peer.stop_token_circle()
+                    else:peer.request_stop()
+                    self.assertTrue(sock.closed)
+                    raise OSError('closed pending socket')
+                with (patch.object(lan.time,'monotonic',side_effect=clock.monotonic),
+                      patch.object(lan.socket,'socket',return_value=sock),patch.object(lan.select,'select',side_effect=stopped)):
+                    with self.assertRaisesRegex(ValueError,'GG_LAN_CIRCLE_CANCELLED' if task else 'GG_LAN_STOPPED'):
+                        with peer._connection(remote,deadline=103,cancel=cancel):self.fail('stopped connection admitted')
+                self.assertEqual(sock.connect_calls,1);self.assertFalse(peer._sockets);self.assertFalse(peer._circle_sockets)
+
+    def test_refused_connect_is_one_attempt_and_never_authenticates_or_replays_rpc(self):
+        peer,remote=self.peer();sock=ConnectSocket(code=10061)
+        with (patch.object(lan.socket,'socket',return_value=sock) as create,
+              patch.object(peer,'_client_auth') as auth,patch.object(lan,'_send') as send):
+            with self.assertRaises(ConnectionRefusedError):peer._token_rpc(remote,'DAG_STRESS_STOP',{})
+        self.assertEqual((create.call_count,sock.connect_calls),(1,1))
+        auth.assert_not_called();send.assert_not_called();self.assertTrue(sock.closed)
+        self.assertFalse(peer._sockets);self.assertEqual(peer._last_error,'GG_LAN_CONNECTION_REFUSED')
+        self.assertEqual(peer._last_error_details['stage'],'CONNECT')
+
+    def test_posix_windows_pending_success_and_so_error_results(self):
+        for code,error in ((errno.EINPROGRESS,0),(10035,0),(10036,0),(10037,0),(10056,0),
+                           (errno.EINPROGRESS,errno.ECONNREFUSED),(10035,10061)):
+            with self.subTest(code=code,error=error):
+                peer,remote=self.peer();sock=ConnectSocket(code,error)
+                with patch.object(lan.socket,'socket',return_value=sock),patch.object(lan.select,'select',return_value=([],[sock],[])):
+                    if error:
+                        with self.assertRaises(ConnectionRefusedError):
+                            with peer._connection(remote,deadline=lan.time.monotonic()+3):self.fail('refused socket yielded')
+                    else:
+                        with peer._connection(remote,deadline=lan.time.monotonic()+3) as connected:self.assertIs(connected,sock)
+                self.assertEqual(sock.connect_calls,1);self.assertTrue(sock.closed);self.assertFalse(peer._sockets)
+
+    def test_rpc_budget_starts_before_pacing_connect_and_is_shared_through_auth_send_read(self):
+        for work_budget in (.9,10):
+            with self.subTest(work_budget=work_budget):
+                peer,remote=self.peer();clock=Clock();sock=FakeSocket();deadline=min(103,100+work_budget)
+                def pace(*args,**kwargs):clock.now+=.2
+                class Connected:
+                    def __enter__(self):clock.now+=.6;return sock
+                    def __exit__(self,*args):sock.close()
+                with (patch.object(lan.time,'monotonic',side_effect=clock.monotonic),
+                      patch.object(peer,'_pace_connection',side_effect=pace),
+                      patch.object(peer,'_connection',return_value=Connected()) as connect,
+                      patch.object(peer,'_client_auth',return_value='session') as auth,
+                      patch.object(lan,'_send',return_value=10) as send,
+                      patch.object(peer,'_read',return_value=({},10)) as read,
+                      patch.object(peer,'_check_frame',return_value={'kind':'TOKEN_RESULT','payload':{}})):
+                    self.assertEqual(peer._token_rpc(remote,'TOKEN_STATUS',{},deadline=100+work_budget),{})
+                self.assertEqual(connect.call_args.kwargs['deadline'],deadline)
+                self.assertEqual(auth.call_args.args[2],deadline)
+                self.assertEqual(send.call_args.kwargs['deadline'],deadline)
+                self.assertEqual(read.call_args.kwargs['deadline'],deadline)
+
+    def test_context_preserves_body_protocol_failure_during_concurrent_stop(self):
+        peer,remote=self.peer();sock=ConnectSocket(code=0)
+        with patch.object(lan.socket,'socket',return_value=sock):
+            with self.assertRaisesRegex(ValueError,'GG_DAG_SIGNATURE'):
+                with peer._connection(remote,deadline=lan.time.monotonic()+3):
+                    peer._cancel.set();raise ValueError('GG_DAG_SIGNATURE')
+        self.assertTrue(sock.closed);self.assertFalse(peer._sockets)
+
+    def test_connection_checks_original_budget_and_cancel_after_successful_body_only(self):
+        for outcome in ('late','stop','task','late_protocol_error'):
+            with self.subTest(outcome=outcome):
+                peer,remote=self.peer();clock=Clock();sock=ConnectSocket(code=0);cancel=threading.Event()
+                expected=socket.timeout if outcome=='late' else ValueError
+                with patch.object(lan.time,'monotonic',side_effect=clock.monotonic),patch.object(lan.socket,'socket',return_value=sock):
+                    with self.assertRaises(expected) as raised:
+                        with peer._connection(remote,deadline=100.2,cancel=cancel):
+                            if outcome in {'late','late_protocol_error'}:clock.now=100.3
+                            if outcome in {'stop','late_protocol_error'}:peer._cancel.set()
+                            if outcome=='task':cancel.set()
+                            if outcome=='late_protocol_error':raise ValueError('GG_DAG_SIGNATURE')
+                if outcome=='stop':self.assertEqual(str(raised.exception),'GG_LAN_STOPPED')
+                if outcome=='task':self.assertEqual(str(raised.exception),'GG_LAN_CIRCLE_CANCELLED')
+                if outcome=='late_protocol_error':self.assertEqual(str(raised.exception),'GG_DAG_SIGNATURE')
+                self.assertEqual(sock.connect_calls,1);self.assertTrue(sock.closed)
+                self.assertFalse(peer._sockets);self.assertFalse(peer._circle_sockets)
 
 
 if __name__=='__main__':unittest.main()

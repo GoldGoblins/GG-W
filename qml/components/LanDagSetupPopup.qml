@@ -31,6 +31,59 @@ Item {
     readonly property var candidates:setup.invites||[]
     readonly property var tokens:state.test_tokens||({})
     readonly property var circle:state.token_circle||({})
+    readonly property var hardware:state.dag_resources||({})
+    readonly property var hardwareTest:hardware.test||({})
+    readonly property bool hardwareTesting:hardwareTest.state==="RUNNING"
+    property var draftBudget:null
+    readonly property var resourceBudget:draftBudget||hardware.budget||({overall:100,cpu:100,gpu:100,ram:100,network:100})
+    readonly property var resourcePreview:previewResources()
+    function changeBudget(name,value){
+        var next=Object.assign({},resourceBudget)
+        next[name]=Math.round(value)
+        draftBudget=next
+        budgetCommit.restart()
+    }
+    Timer {id:budgetCommit;interval:180;onTriggered:{if(!root.owned){root.draftBudget=null;return}if(!root.canAct){restart();return}root.run("lan_resources",{budget:root.draftBudget})}}
+    onHardwareChanged:{
+        if(draftBudget&&hardware.budget&&["overall","cpu","gpu","ram","network"].every(function(name){return draftBudget[name]===hardware.budget[name]}))draftBudget=null
+    }
+    function previewResources(){
+        var profile=hardwareTest.profile||({}),caps=profile.capacities_tps||({})
+        var active=profile.active_resources||["cpu","ram","network"]
+        var rows={},unknown=[],minimum=Infinity,bottlenecks=[]
+        ;["cpu","gpu","ram","network"].forEach(function(name){
+            var used=active.indexOf(name)>=0,c=caps[name],selected=Number(resourceBudget[name])
+            var known=typeof c==="number"&&Number.isFinite(c)&&c>=0
+            var ceiling=used&&known?c*selected/100:null
+            rows[name]={active:used,selected:selected,relative:null,ceiling:ceiling}
+            if(used&&!known)unknown.push(name)
+            if(used&&known)minimum=Math.min(minimum,ceiling)
+        })
+        var count=Number(stressTransactions.text),facts=hardware.hardware||({}),cost=profile.wire_bytes_per_transaction
+        var headroom=typeof facts.memory_total_bytes==="number"&&typeof facts.memory_available_bytes==="number"?Math.max(0,Math.min(facts.memory_total_bytes*Number(resourceBudget.ram)/100,facts.memory_available_bytes)-Number(hardware.memory_committed_bytes||0)):null
+        var memoryLimit=headroom!==null&&typeof cost==="number"&&count>0&&Math.ceil(cost*count*16)>headroom
+        var paused=memoryLimit||Number(resourceBudget.overall)===0||active.some(function(name){return rows[name].selected===0||rows[name].ceiling===0})
+        if(unknown.length&&!paused)return {tps:null,bps:null,resources:rows,bottlenecks:[],state:"NEEDS_BENCHMARK"}
+        var target=paused?0:minimum*Number(resourceBudget.overall)/100
+        active.forEach(function(name){
+            rows[name].relative=caps[name]?Math.min(rows[name].selected,target/caps[name]*100):0
+            if(memoryLimit?name==="ram":paused?(rows[name].selected===0||rows[name].ceiling===0):Math.abs(rows[name].ceiling-minimum)<.000001)bottlenecks.push(name)
+        })
+        return {tps:target,bps:count>0?target/count:null,resources:rows,bottlenecks:bottlenecks,state:memoryLimit?"MEMORY_LIMIT":target?"ESTIMATED":"PAUSED"}
+    }
+    function resourceName(name){return ({overall:"Totalt",cpu:"CPU",gpu:"GPU",ram:"RAM",network:"Nätverk"})[name]||name}
+    function relativeResourceText(name){
+        if(name==="overall")return "Andel av kapaciteten vid den aktuella flaskhalsen"
+        var row=resourcePreview.resources[name]
+        if(!row||!row.active)return "Används inte av denna DAG-backend"
+        if(row.relative===null)return "Relativt behov: okänt · kör hårdvarutest"
+        return "Relativt behov: "+row.relative.toFixed(1)+" % · eget tak: "+row.selected.toFixed(0)+" %"+(resourcePreview.bottlenecks.indexOf(name)>=0?" · flaskhals":"")
+    }
+    function resourceEstimateText(){
+        if(resourcePreview.state==="MEMORY_LIMIT")return "RAM-budgeten räcker inte för valt block · teoretiskt tak: 0 TX/s"
+        if(resourcePreview.tps===null)return "Teoretiskt tak: okänt · hårdvarutest behövs"
+        return "Teoretiskt tak: "+resourcePreview.tps.toFixed(1)+" TX/s · "+measuredRate(resourcePreview.bps)+" block/s · "+stressTransactions.text+" TX/block · flaskhals: "+resourcePreview.bottlenecks.map(resourceName).join(", ")
+    }
     // Resolve capability fallback after the owner has bound both snapshots.
     property bool bindingsReady:false
     Component.onCompleted:bindingsReady=true
@@ -40,7 +93,7 @@ Item {
     readonly property bool stressRunning:["STARTING","RUNNING","STOPPING"].indexOf(String(stress.state||""))>=0
     readonly property bool stressParticipantsReady:(stress.participants||[]).length===3&&(stress.participants||[]).every(function(peer){return peer.opted_in===true})
     readonly property bool stressSettingsValid:boundedInteger(stressDuration.text,stressLimits.min_duration_ms,stressLimits.max_duration_ms,1000)&&boundedInteger(stressTransactions.text,1,stressLimits.max_tx_per_block,1)&&boundedInteger(stressInterval.text,stressLimits.min_interval_ms,stressLimits.max_interval_ms,1)
-    readonly property bool canStartStress:root.canAct&&root.ready&&!root.transportExhausted&&root.coordinator&&root.stressSupported&&stress.enabled===true&&stress.local_opt_in===true&&stress.role==="COORDINATOR"&&stress.can_start===true&&stressParticipantsReady&&!stressRunning&&!circleRunning&&stressSettingsValid
+    readonly property bool canStartStress:root.canAct&&root.ready&&!root.transportExhausted&&root.coordinator&&root.stressSupported&&stress.enabled===true&&stress.local_opt_in===true&&stress.role==="COORDINATOR"&&stress.can_start===true&&stressParticipantsReady&&!stressRunning&&!hardwareTesting&&!circleRunning&&stressSettingsValid&&["MEMORY_LIMIT","PAUSED"].indexOf(resourcePreview.state)<0
     readonly property bool circleRunning:["RUNNING","STOPPING"].indexOf(String(circle.state||""))>=0
     readonly property bool circleFinished:["COMPLETE","STOPPED","ERROR","TIME_BUDGET","NO_TRANSFERS"].indexOf(String(circle.state||""))>=0
     readonly property bool circleSettingsValid:/^[0-9]{1,2}$/.test(circleBatch.text)&&Number(circleBatch.text)>=1&&Number(circleBatch.text)<=16&&/^[0-9]{1,2}$/.test(circleDuration.text)&&Number(circleDuration.text)>=1&&Number(circleDuration.text)<=60
@@ -209,7 +262,7 @@ Item {
             connections_admitted:resultNumber(source.connections_admitted,true,Number.MAX_SAFE_INTEGER),active_handlers:resultNumber(source.active_handlers,true,4),
             counters:{failures:resultNumber(counters.failures,true,Number.MAX_SAFE_INTEGER),expected_closures:resultNumber(counters.expected_closures,true,Number.MAX_SAFE_INTEGER),successes:resultNumber(counters.successes,true,Number.MAX_SAFE_INTEGER),
                 admission_drops:{RATE:resultNumber(drops.RATE,true,Number.MAX_SAFE_INTEGER),HANDLERS:resultNumber(drops.HANDLERS,true,Number.MAX_SAFE_INTEGER),SESSION:resultNumber(drops.SESSION,true,Number.MAX_SAFE_INTEGER),BYTES:resultNumber(drops.BYTES,true,Number.MAX_SAFE_INTEGER)}},
-            last_failure:{code:resultCode(root.lan.last_error),at:resultTime(root.lan.last_error_at),transport:{operation:transportOperation(details.operation),stage:transportStage(details.stage),error_class:resultEnum(details.error_class,["TimeoutError","ConnectionResetError","ConnectionRefusedError","BrokenPipeError","OSError","ValueError","TypeError","JSONDecodeError","Exception"])}},history:history}
+            last_failure:{code:resultCode(root.lan.last_error),at:resultTime(root.lan.last_error_at),transport:{operation:transportOperation(details.operation),stage:transportStage(details.stage),error_class:resultEnum(details.error_class,["TimeoutError","ConnectionResetError","ConnectionRefusedError","BrokenPipeError","OSError","ValueError","TypeError","JSONDecodeError","Exception"])}},history:history,history_omitted:0}
     }
     function transportSummaryText(){
         var value=transportDiagnostics()
@@ -262,13 +315,23 @@ Item {
         var confirmed=stress.all_peers_synced===true&&blocks!==null&&transactions!==null,participants=[],source=Array.isArray(stress.participants)?stress.participants:[]
         for(var i=0;i<Math.min(3,source.length);i++){var peer=source[i]||({});participants.push({label:resultLabel(peer.label,i),state:resultState(peer.state)})}
         return {schema:"gg.lan-dag-stress.result.v1",state:status,
-            parameters:{duration_ms:resultNumber(stress.duration_ms,true,60000),transactions_per_block:resultNumber(stress.transactions_per_block,true,Number.MAX_SAFE_INTEGER),interval_ms:resultNumber(stress.interval_ms,true,60000)},
+            parameters:{duration_ms:resultNumber(stress.duration_ms,true,600000),transactions_per_block:resultNumber(stress.transactions_per_block,true,Number.MAX_SAFE_INTEGER),interval_ms:resultNumber(stress.interval_ms,true,60000)},
             local:{blocks:resultNumber(stress.blocks,true,Number.MAX_SAFE_INTEGER),transactions:resultNumber(stress.transactions,true,Number.MAX_SAFE_INTEGER),elapsed_ms:resultNumber(stress.elapsed_ms,false,600000)},
             acknowledgement:{confirmed:confirmed,basis:confirmed?resultEnum(stress.acknowledgement_basis,["STOP_OBSERVATIONS","STOP_AND_STATUS_OBSERVATIONS"]):null,blocks:confirmed?blocks:null,transactions:confirmed?transactions:null,bps:confirmed?resultNumber(stress.acknowledged_bps,false,Number.MAX_SAFE_INTEGER):null,tps:confirmed?resultNumber(stress.acknowledged_tps,false,Number.MAX_SAFE_INTEGER):null},
             failure:{code:resultCode(stress.last_error),reason:resultEnum(stress.stop_reason,["DURATION","CANCELLED","SOFTWARE_PROFILE_LIMIT","FAILED"]),phase:resultPhase(stress.failure_phase),transport:resultTransport()},
             phase_ms:resultPhaseTimes(),status_polls:resultNumber(stress.status_polls,true,1000000),participants:participants,transport_diagnostics:transportDiagnostics()}
     }
-    function copyStressResult(){var result=stressResultDocument();if(result!==null)copy(JSON.stringify(result,null,2))}
+    function copyStressResult(){
+        var result=stressResultDocument()
+        if(result===null)return
+        var diagnostics=result.transport_diagnostics,text=JSON.stringify(result)
+        while(text.length>4000&&diagnostics&&diagnostics.history.length>0){
+            diagnostics.history.shift();diagnostics.history_omitted++
+            text=JSON.stringify(result)
+        }
+        if(text.length>4000){formError="Provresultatet är för stort för att kopieras säkert (4000 tecken).";return}
+        copy(text)
+    }
     function startOptions(options){if(stressSupported&&dagOptIn.checked)options.allow_dag_transactions=true;return options}
     function sessionOptions(){var options={label:"GG LAN",distribute:true,enable_test_tokens:root.setup.allow_dag_transactions!==true&&root.allTokenOptedIn};if(root.setup.allow_dag_transactions===true&&root.allDagOptedIn)options.enable_dag_transactions=true;return options}
     function command(label){return (label==="Termux"?'python':'python3')+' gg-cli.py --foreground --command "lan.start label='+label+' auto_produce=false'+(root.setup.allow_test_tokens===true?' allow_test_tokens=true':'')+(root.setup.allow_dag_transactions===true?' allow_dag_transactions=true':'')+'" --bootstrap-file gg-lan-bootstrap.json'}
@@ -277,6 +340,24 @@ Item {
     component Label:GGText {font.family:"monospace";font.pixelSize:10;color:RuntimeTheme.GGTheme.text;textFormat:Text.PlainText;wrapMode:Text.Wrap}
     component Action:CryptoButton {height:27;font.pixelSize:10;enabled:root.canAct}
     component Section:Rectangle {color:"transparent";border.width:1;border.color:RuntimeTheme.GGTheme.line;width:body.width;radius:2}
+    component BudgetRow:Column {
+        required property string resource
+        width:parent.width;spacing:2
+        Row {width:parent.width;spacing:7
+            Label {width:65;height:26;verticalAlignment:Text.AlignVCenter;text:root.resourceName(resource)}
+            Slider {
+                id:budgetSlider;objectName:"lanResource_"+resource
+                width:Math.max(60,parent.width-129);height:26
+                from:0;to:100;stepSize:1
+                value:Number(root.resourceBudget[resource])
+                enabled:root.canAct&&root.owned&&(resource!=="gpu"||(root.hardware.hardware||{}).gpu_compute_supported===true)
+                Accessible.name:root.resourceName(resource)+" resurstak i procent"
+                onMoved:root.changeBudget(resource,value)
+            }
+            Label {objectName:"lanResourceValue_"+resource;width:50;height:26;verticalAlignment:Text.AlignVCenter;text:Math.round(budgetSlider.value)+" %";horizontalAlignment:Text.AlignRight}
+        }
+        Label {objectName:"lanResourceRelative_"+resource;width:parent.width;text:root.relativeResourceText(resource);font.pixelSize:9;color:RuntimeTheme.GGTheme.dim}
+    }
     component Line:Rectangle {width:parent.width;height:1;color:RuntimeTheme.GGTheme.line}
     Item {
         anchors.fill:parent;anchors.margins:12;anchors.topMargin:20
@@ -367,6 +448,21 @@ Item {
                         Repeater {model:root.stress.participants||[]
                             Label {required property var modelData;objectName:"lanDagStressParticipant";colorKey:"ui.lan.dag.stress.participant";width:stressBody.width;text:String(modelData.label||"Peer")+(modelData.local?" · den här apparaten":"")+" · "+(modelData.opted_in===true?"DAG-TX valt":"DAG-TX inte valt")+(modelData.state?" · "+String(modelData.state):"")}
                         }
+                        Line {}
+                        Label {text:"Den här nodens hårdvara och resurstak";font.bold:true}
+                        Label {width:parent.width;text:"Reglagen sätter egna tak. Relativt behov räknas mot samma TX/s och den svagaste aktiva resursen. Noden reglerar sitt DAG-arbete efter detta; andra apparater har egna lokala inställningar.";color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
+                        Repeater {model:["overall","cpu","gpu","ram","network"]
+                            BudgetRow {required property string modelData;resource:modelData}
+                        }
+                        Label {objectName:"lanResourceEstimate";width:parent.width;text:root.resourceEstimateText();color:RuntimeTheme.GGTheme.cyan;font.pixelSize:9}
+                        Label {objectName:"lanResourcePending";width:parent.width;visible:root.draftBudget!==null;text:"Ändrade resurstak väntar på nodens bekräftelse";color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
+                        Label {objectName:"lanHardwareBasis";width:parent.width;text:"Hårdvarutest: "+String(root.hardwareTest.state||"UNMEASURED")+" · största uppmätta block: "+root.measuredNumber((root.hardwareTest.profile||{}).largest_measured_transactions_per_block)+" TX. "+((root.hardwareTest.profile||{}).network_basis==="MEASURED_AUTHENTICATED_LAN_PROBE"?"Nätverk: uppmätt dubbelriktat LAN-prov.":(root.hardwareTest.profile||{}).network_basis==="OS_REPORTED_LINK_SPEED_NOT_MEASURED_THROUGHPUT"?"Nätverk: operativsystemets länkhastighet, teoretisk uppskattning.":"Nätverk: ännu inte uppmätt.")+" RAM: kopieringsprov och minnesbudget. GPU: "+((root.hardware.hardware||{}).gpu_compute_supported===true?"aktiv beräkningsbackend.":"DAG-beräkning saknas i denna backend.");color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
+                        Flow {width:parent.width;spacing:7
+                            Action {objectName:"lanHardwareTestStart";text:"▷ Hårdvarutest · 10 s";enabled:root.canAct&&root.owned&&!root.hardwareTesting&&!root.stressRunning&&!root.producing&&!root.circleRunning;onClicked:root.run("lan_hardware_test_start",{duration_ms:10000,max_transactions_per_block:50000})}
+                            Action {objectName:"lanHardwareTestStop";text:"■ Stoppa hårdvarutest";enabled:root.canAct&&root.hardwareTesting;onClicked:root.run("lan_hardware_test_stop",{})}
+                        }
+                        Label {width:parent.width;visible:text.length>0;text:root.circleCode(root.hardwareTest.last_error)||root.circleCode((root.hardwareTest.profile||{}).network_error);color:RuntimeTheme.GGTheme.negative;font.pixelSize:9}
+                        Line {}
                         Label {objectName:"lanDagStressLimits";colorKey:"ui.lan.dag.stress.limits";width:parent.width;text:"Nuvarande programgränser: "+root.measuredNumber(root.stressLimits.min_duration_ms/1000)+"–"+root.measuredNumber(root.stressLimits.max_duration_ms/1000)+" s · 1–"+root.measuredNumber(root.stressLimits.max_tx_per_block)+" DAG-TX/förslag · "+root.measuredNumber(root.stressLimits.min_interval_ms)+"–"+root.measuredNumber(root.stressLimits.max_interval_ms)+" ms. Dessa gränser är inte uppmätt hårdvarukapacitet.";color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
                         Row {width:parent.width;spacing:7
                             Column {width:(parent.width-14)/3;spacing:3
@@ -374,11 +470,11 @@ Item {
                                 CryptoField {id:stressDuration;objectName:"lanDagStressDuration";property string uiColorScope:"ui.lan.dag.stress.duration";width:parent.width;height:27;text:"10";maximumLength:6;inputMethodHints:Qt.ImhDigitsOnly;enabled:root.canAct&&root.stress.enabled===true&&root.coordinator&&root.stress.role==="COORDINATOR"&&!root.stressRunning;Accessible.name:"DAG-provets längd i sekunder, inom backendens gränser"}
                             }
                             Column {width:(parent.width-14)/3;spacing:3
-                                Label {text:"DAG-TX / förslag";font.pixelSize:9}
+                                Label {text:"DAG-TX / block";font.pixelSize:9}
                                 CryptoField {id:stressTransactions;objectName:"lanDagStressTransactions";property string uiColorScope:"ui.lan.dag.stress.transactions";width:parent.width;height:27;text:"1";maximumLength:7;inputMethodHints:Qt.ImhDigitsOnly;enabled:stressDuration.enabled;Accessible.name:"Signerade DAG-testtransaktioner per förslag, inom backendens gränser"}
                             }
                             Column {width:(parent.width-14)/3;spacing:3
-                                Label {text:"Intervall · ms";font.pixelSize:9}
+                                Label {text:"Intervall · ms · 0 = auto";font.pixelSize:9}
                                 CryptoField {id:stressInterval;objectName:"lanDagStressInterval";property string uiColorScope:"ui.lan.dag.stress.interval";width:parent.width;height:27;text:"250";maximumLength:7;inputMethodHints:Qt.ImhDigitsOnly;enabled:stressDuration.enabled;Accessible.name:"DAG-producenternas målintervall i millisekunder"}
                             }
                         }
@@ -389,7 +485,7 @@ Item {
                         }
                         Label {objectName:"lanDagStressStatus";colorKey:"ui.lan.dag.stress.status";width:parent.width;text:"DAG-prov · "+String(root.stress.state||"IDLE")+" · "+root.measuredNumber(root.stress.elapsed_ms)+" ms";color:root.stress.last_error?RuntimeTheme.GGTheme.negative:RuntimeTheme.GGTheme.cyan}
                         Label {objectName:"lanDagStressLocal";colorKey:"ui.lan.dag.stress.local";width:parent.width;text:"Lokalt verifierat under provet: "+root.measuredNumber(root.stress.blocks)+" förslag · "+root.measuredNumber(root.stress.transactions)+" DAG-TX"}
-                        Label {objectName:"lanDagStressRates";colorKey:"ui.lan.dag.stress.rates";width:parent.width;text:"DAG · senaste mätfönstret: "+root.measuredRate((root.state.block_graph||{}).metrics?root.state.block_graph.metrics.bps:undefined)+" förslag/s · "+root.measuredRate((root.state.block_graph||{}).metrics?root.state.block_graph.metrics.tps:undefined)+" TX/s · lokal validering";color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
+                        Label {objectName:"lanDagStressRates";colorKey:"ui.lan.dag.stress.rates";width:parent.width;text:"DAG · senaste mätfönstret: "+root.measuredRate((root.state.block_graph||{}).metrics?root.state.block_graph.metrics.bps:undefined)+" block/s · "+(root.stress.blocks>0?(root.stress.transactions/root.stress.blocks).toFixed(1):"—")+" TX/block under provet · "+root.measuredRate((root.state.block_graph||{}).metrics?root.state.block_graph.metrics.tps:undefined)+" TX/s · lokal validering";color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
                         Label {objectName:"lanDagStressAcknowledged";colorKey:"ui.lan.dag.stress.acknowledged";width:parent.width;text:root.stressAckText();color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
                         Label {objectName:"lanDagStressDetails";colorKey:"ui.lan.dag.stress.details";width:parent.width;text:root.stressDetails();visible:text.length>0;color:root.stress.last_error?RuntimeTheme.GGTheme.negative:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
                         Label {objectName:"lanDagStressPhaseSummary";colorKey:"ui.lan.dag.stress.phase.summary";width:parent.width;text:root.stressPhaseSummary();visible:text.length>0;color:root.resultPhase(root.stress.failure_phase)?RuntimeTheme.GGTheme.negative:RuntimeTheme.GGTheme.dim;font.pixelSize:9}

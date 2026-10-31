@@ -12,14 +12,14 @@ ROOT = Path(__file__).resolve().parents[1]
 HARNESS = r'''
 import json,sys,time
 from pathlib import Path
-from PySide6.QtCore import QUrl
+from PySide6.QtCore import QObject,QUrl,Slot
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlEngine,QQmlComponent,QQmlExpression,qmlContext
 from PySide6.QtQuick import QQuickItem
 app=QGuiApplication([]);engine=QQmlEngine();warnings=[]
 engine.warnings.connect(lambda rows:warnings.extend(row.toString() for row in rows))
 component=QQmlComponent(engine)
-source='import QtQuick\nimport '+json.dumps((Path.cwd()/'qml/components').as_uri())+'\nLanDagSetupPopup {}'
+source='import QtQuick\nimport '+json.dumps((Path.cwd()/'qml/components').as_uri())+'\nLanDagSetupPopup {'+sys.argv[2]+'}'
 component.setData(source.encode(),QUrl.fromLocalFile(str(Path(sys.argv[1])/'fixture.qml')))
 assert component.isReady(),[error.toString() for error in component.errors()]
 root=component.create();assert root is not None
@@ -51,6 +51,16 @@ def snapshot():
             'limits':{'min_duration_ms':1000,'max_duration_ms':60000,'max_tx_per_block':32,
                 'min_interval_ms':100,'max_interval_ms':60000}}}
 def put(body):js('state='+json.dumps(body))
+class ClipboardHost(QObject):
+    def __init__(self):
+        super().__init__();self.submitted=[];self.copied=[]
+    @Slot(str)
+    def tmogCopy(self,value):
+        self.submitted.append(value)
+        self.copied.append(str(value or '')[:4000])
+host=ClipboardHost()
+engine.rootContext().setContextProperty('clipboardHost',host)
+js('surfaceHost=clipboardHost')
 '''
 CLEANUP = r'''
 root.deleteLater();engine.deleteLater();app.processEvents()
@@ -60,12 +70,12 @@ print(json.dumps({'status':'PASS','native_window_shown':False}))
 
 
 class LanTransportUiTests(unittest.TestCase):
-    def check_offscreen(self, assertions):
+    def check_offscreen(self, assertions, definition=''):
         environment = dict(os.environ, QT_QPA_PLATFORM='offscreen',
             QT_QUICK_BACKEND='software', QT_QUICK_CONTROLS_STYLE='Basic')
         with tempfile.TemporaryDirectory(prefix='gg-lan-transport-ui-') as temporary:
             checked = subprocess.run([sys.executable, '-X', 'utf8', '-B', '-c',
-                HARNESS + assertions + CLEANUP, temporary], cwd=ROOT, env=environment,
+                HARNESS + assertions + CLEANUP, temporary, definition], cwd=ROOT, env=environment,
                 capture_output=True, text=True, encoding='utf-8', timeout=20)
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
         self.assertEqual(json.loads(checked.stdout)['status'], 'PASS')
@@ -170,6 +180,58 @@ for forbidden in ('PRIVATE_ENDPOINT_SENTINEL','PRIVATE_KEY_SENTINEL','<script>',
 body['lan'].pop('transport');put(body)
 assert result()['transport_diagnostics'] is None
 ''')
+
+    def test_clipboard_cap_keeps_recent_history_and_complete_proof_with_explicit_omissions(self):
+        self.check_offscreen(r'''
+from copy import deepcopy
+body=snapshot();now=time.time();maximum=2**53-1
+labels=[(name+' long named participant '*4)[:64] for name in ('Linux','Termux','Windows')]
+for participant,label in zip(body['dag_stress']['participants'],labels):participant['label']=label
+body['dag_stress'].update(phase_ms={name:600000 for name in ('PREPARE','BEGIN','PRODUCE','STOP','CONVERGENCE','CLEANUP','FINALIZE')},status_polls=1000000)
+body['lan'].update(last_error='GG_LAN_CONNECTION_REFUSED',last_error_at=now-40,
+    last_error_details={'operation':'DAG_STRESS_PREPARE','stage':'CONNECT','error_class':'ConnectionRefusedError'})
+transport=body['lan']['transport']
+transport.update(connections_admitted=maximum,active_handlers=4,private_key='PRIVATE_SENTINEL')
+transport['counters'].update(failures=maximum,expected_closures=maximum,successes=maximum,
+    admission_drops={name:maximum for name in ('RATE','HANDLERS','SESSION','BYTES')})
+transport['history']=[{'at':now-31+i,'operation':'DAG_STRESS_PREPARE','stage':'RECEIVE',
+    'code':'GG_LAN_CONNECTION_REFUSED','peer_label':labels[i%3],
+    'expected':bool(i%2),'reason':'HANDLERS','endpoint':'PRIVATE_SENTINEL'} for i in range(32)]
+put(body);full=result()
+assert len(full['transport_diagnostics']['history'])==32
+assert full['transport_diagnostics']['history_omitted']==0
+assert [row['label'] for row in full['participants']]==labels
+assert len(js('JSON.stringify(stressResultDocument())'))>4000
+js('copyStressResult()')
+assert len(host.submitted)==1 and host.submitted==host.copied
+copied=host.copied[-1];assert len(copied)<=4000
+assert '\n' not in copied and 'PRIVATE_SENTINEL' not in copied
+exported=json.loads(copied);diagnostics=exported['transport_diagnostics']
+omitted=diagnostics['history_omitted']
+assert type(omitted) is int and 0<omitted<32
+assert diagnostics['history']==full['transport_diagnostics']['history'][omitted:]
+expected=deepcopy(full)
+expected['transport_diagnostics']['history']=expected['transport_diagnostics']['history'][omitted:]
+expected['transport_diagnostics']['history_omitted']=omitted
+assert exported==expected
+# One fewer omission must exceed the cap: trimming is no larger than needed.
+expected['transport_diagnostics']['history'].insert(0,full['transport_diagnostics']['history'][omitted-1])
+expected['transport_diagnostics']['history_omitted']-=1
+assert js('JSON.stringify('+json.dumps(expected)+').length')>4000
+assert result()==full  # Copying never mutates the saved snapshot or ACK evidence.
+body['lan']['transport']['history']=[];put(body)
+js('copyStressResult()')
+assert host.submitted==host.copied and len(host.copied[-1])<=4000
+assert json.loads(host.copied[-1])['transport_diagnostics']['history_omitted']==0
+''')
+
+    def test_oversized_irreducible_document_never_reaches_truncating_host(self):
+        self.check_offscreen(r'''
+put(snapshot())
+js('copyStressResult()')
+assert host.submitted==[] and host.copied==[]
+assert text('lanSetupError')=='Provresultatet är för stort för att kopieras säkert (4000 tecken).'
+''', definition='function stressResultDocument(){return {schema:"gg.lan-dag-stress.result.v1",padding:"x".repeat(4001),transport_diagnostics:{history:[],history_omitted:0}}}')
 
 
 if __name__ == '__main__':

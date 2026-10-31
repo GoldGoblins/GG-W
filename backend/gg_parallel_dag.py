@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from collections import OrderedDict, deque
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from copy import deepcopy
 import hashlib
 import json
@@ -36,6 +37,9 @@ MAX_TX_PER_BLOCK=128
 MAX_WAVE_TRANSACTIONS=512
 MAX_BLOCK_BYTES=262144
 MAX_SESSION_BYTES=8*1024*1024
+LAN_MAX_TX_PER_BLOCK=50000
+LAN_MAX_BLOCK_BYTES=32*1024*1024
+LAN_MAX_SESSION_BYTES=512*1024*1024
 MAX_RECORDS=4096
 MAX_ATTEMPTS=4096
 MAX_ROOTS=8
@@ -134,6 +138,7 @@ class ParallelDag:
         self._random=random_source if random_source is not None else secrets.SystemRandom()
         if any(not callable(getattr(self._random,name,None)) for name in ('uniform','randint','sample')):raise ValueError('GG_DAG_RANDOM_SOURCE')
         self._lock=threading.RLock();self._wave_lock=threading.Lock()
+        self._capacity=None;self._lan_producer_locks={};self._lan_work_count=0
         self._active=False;self._events=deque(maxlen=32)
         self._lan_test_mode=False;self._lan_fault='';self._lan_heads={};self._lan_counts={}
         self._live_control=threading.RLock();self._live_thread=None;self._live_cancel=threading.Event()
@@ -203,6 +208,41 @@ class ParallelDag:
             node._event('PUBLIC_GENESIS_IMPORTED','Nyckellös lokal verifierare · uttryckligen betrodd offentlig testsession')
         return node
 
+    def capacity_limits(self):
+        with self._lock:
+            return dict(self._capacity or {'transactions_per_block':MAX_TX_PER_BLOCK,
+                'block_bytes':MAX_BLOCK_BYTES,'session_bytes':MAX_SESSION_BYTES,
+                'peer_bytes':MAX_SESSION_BYTES//self._producer_count})
+
+    def stored_wire_bytes(self):
+        with self._lock:return self._stored_bytes
+
+    def configure_lan_capacity(self,*,transactions_per_block=LAN_MAX_TX_PER_BLOCK,
+                               block_bytes=LAN_MAX_BLOCK_BYTES,session_bytes=LAN_MAX_SESSION_BYTES):
+        """An explicit RAM-workload envelope; legacy/manual limits stay intact."""
+        _integer(transactions_per_block,1,LAN_MAX_TX_PER_BLOCK,'GG_DAG_TX_LIMIT')
+        _integer(block_bytes,1,LAN_MAX_BLOCK_BYTES,'GG_DAG_WIRE_SIZE')
+        _integer(session_bytes,block_bytes,LAN_MAX_SESSION_BYTES,'GG_DAG_SESSION_CREDIT')
+        with self._lock:
+            if not self._active or not self._lan_test_mode:raise ValueError('GG_DAG_LAN_TEST_MODE_REQUIRED')
+            if self._lan_work_count:raise ValueError('GG_DAG_RESOURCE_BUSY')
+            if self._stored_bytes>session_bytes:raise ValueError('GG_DAG_RESOURCE_MEMORY')
+            self._capacity={'transactions_per_block':transactions_per_block,'block_bytes':block_bytes,
+                'session_bytes':session_bytes,'peer_bytes':session_bytes}
+            return dict(self._capacity)
+
+    def _lan_producer_lock(self,producer):
+        with self._lock:
+            _integer(producer,0,self._producer_count-1,'GG_DAG_PRODUCER')
+            return self._lan_producer_locks.setdefault(producer,threading.RLock())
+
+    @contextmanager
+    def _lan_work(self):
+        with self._lock:self._lan_work_count+=1
+        try:yield
+        finally:
+            with self._lock:self._lan_work_count-=1
+
     def attach_local_producers(self,keys):
         """Attach only caller-owned RAM signers matching this public genesis."""
         with self._lock:
@@ -242,6 +282,9 @@ class ParallelDag:
 
     def inspect_empty_proposal(self,raw):
         """Check signed empty wire data before a bounded orphan buffer holds it."""
+        if self._lan_test_mode and self._capacity is not None:
+            with self._lan_work():body,identifier,producer=self._decode_large_lan(raw)
+            return {'hash':identifier,'producer_index':producer,'parents':list(body['parents'])}
         if not isinstance(raw,bytes) or not 1<=len(raw)<=MAX_BLOCK_BYTES:raise ValueError('GG_DAG_WIRE_SIZE')
         try:value=json.loads(raw)
         except (ValueError,UnicodeError):raise ValueError('GG_DAG_WIRE_JSON') from None
@@ -268,11 +311,12 @@ class ParallelDag:
     def _start_session(self,producer_count):
         _integer(producer_count,1,MAX_PRODUCERS,'GG_DAG_PRODUCER_COUNT')
         with self._lock:
+            if self._lan_work_count:raise ValueError('GG_DAG_RESOURCE_BUSY')
             if self._active:
                 if self._producer_count!=producer_count:raise ValueError('GG_DAG_PRODUCER_COUNT_SESSION')
                 return self.snapshot()
             self._producer_count=producer_count
-            self._lan_test_mode=False;self._lan_fault='';self._lan_heads={};self._lan_counts={}
+            self._lan_test_mode=False;self._lan_fault='';self._lan_heads={};self._lan_counts={};self._capacity=None
             self._chain='ggdag:'+secrets.token_hex(12);self._started=time.monotonic();self._started_ns=time.time_ns()
             self._can_produce=True
             self._producer_keys=[Keypair() for _ in range(producer_count)]
@@ -314,12 +358,13 @@ class ParallelDag:
     def _charge(self,peer,size):
         self._stats['attempts']+=1
         # Invalid traffic consumes the same finite session work/byte allowance.
-        charge=min(max(1,size),MAX_BLOCK_BYTES+1)
+        limits=self.capacity_limits()
+        charge=min(max(1,size),limits['block_bytes']+1)
         self._stats['charged_bytes']+=charge
-        if self._stats['attempts']>MAX_ATTEMPTS or self._stats['charged_bytes']>MAX_SESSION_BYTES:raise ValueError('GG_DAG_SESSION_CREDIT')
+        if self._stats['attempts']>MAX_ATTEMPTS or self._stats['charged_bytes']>limits['session_bytes']:raise ValueError('GG_DAG_SESSION_CREDIT')
         _integer(peer,0,self._producer_count-1,'GG_DAG_UNKNOWN_PEER')
         self._peer_bytes[peer]+=charge
-        if self._peer_bytes[peer]>MAX_SESSION_BYTES//self._producer_count:raise ValueError('GG_DAG_PEER_CREDIT')
+        if self._peer_bytes[peer]>limits['peer_bytes']:raise ValueError('GG_DAG_PEER_CREDIT')
 
     def _validate_transaction(self,transaction,root):
         if not isinstance(transaction,dict) or set(transaction)!={'body','signature','witness'}:raise ValueError('GG_DAG_TX_SCHEMA')
@@ -369,22 +414,27 @@ class ParallelDag:
 
     def preflight_lan_test_block(self,transactions,max_wire):
         """Exact worst-width envelope bound, before any worker or signing starts."""
-        _integer(transactions,0,MAX_TX_PER_BLOCK,'GG_DAG_TX_LIMIT')
-        _integer(max_wire,1,MAX_BLOCK_BYTES,'GG_DAG_WIRE_SIZE')
+        limits=self.capacity_limits()
+        _integer(transactions,0,limits['transactions_per_block'],'GG_DAG_TX_LIMIT')
+        _integer(max_wire,1,limits['block_bytes'],'GG_DAG_WIRE_SIZE')
         with self._lock:
             if not self._active or not self._lan_test_mode:raise ValueError('GG_DAG_LAN_TEST_MODE_REQUIRED')
             tx={'schema':'gg.parallel-dag.tx.v2','chain_id':self._chain,'from':'f'*64,'to':'e'*64,
                 'amount_atomic':'1','nonce':2**32-1,'precheck_root':self._lan_checkpoint}
             body={'schema':'gg.parallel-dag.block.v1','chain_id':self._chain,'producer_index':MAX_PRODUCERS-1,
                 'sequence':MAX_ATTEMPTS,'rank':MAX_RECORDS,'parents':['f'*64]*MAX_PARENTS,
-                'precheck_root':self._lan_checkpoint,'transactions':[{'body':tx,'signature':'f'*128} for _ in range(transactions)],
+                'precheck_root':self._lan_checkpoint,'transactions':[],
                 'payload_root':'f'*64,'created_at_ns':2**63-1}
             size=len(pack({'body':body,'signature':'f'*128}))
+            if transactions:
+                size+=transactions*len(pack({'body':tx,'signature':'f'*128}))+transactions-1
             if size>max_wire:raise ValueError('GG_DAG_LAN_WIRE_PROFILE_LIMIT')
             return size
 
     def produce_lan_test_block(self,producer,transactions,max_wire=MAX_BLOCK_BYTES,*,check=None):
         """Sign and admit one real owned proposal; no receipt-circle side path."""
+        if self._lan_test_mode and self._capacity is not None:
+            with self._lan_work():return self._produce_large_lan(producer,transactions,max_wire,check=check)
         self.preflight_lan_test_block(transactions,max_wire)
         with self._lock:
             began=time.perf_counter()
@@ -436,8 +486,161 @@ class ParallelDag:
                 'producer_transactions':[row['transactions'] for row in self._producer_stats],
                 'canonical':False,'finality':FINALITY}
 
+    def _decode_large_lan(self,raw,*,count_signature=False):
+        """Validate the same canonical envelope outside the shared state lock."""
+        limits=self.capacity_limits()
+        if not isinstance(raw,bytes) or not 1<=len(raw)<=limits['block_bytes']:raise ValueError('GG_DAG_WIRE_SIZE')
+        def unique(pairs):
+            result={}
+            for key,value in pairs:
+                if key in result:raise ValueError('GG_DAG_DUPLICATE_JSON_KEY')
+                result[key]=value
+            return result
+        try:envelope=json.loads(raw,object_pairs_hook=unique)
+        except (ValueError,UnicodeError,RecursionError):raise ValueError('GG_DAG_WIRE_JSON') from None
+        if not isinstance(envelope,dict) or set(envelope)!={'body','signature'} or pack(envelope)!=raw:raise ValueError('GG_DAG_WIRE_CANONICAL')
+        body=envelope['body'];signature=envelope['signature']
+        expected={'schema','chain_id','producer_index','sequence','rank','parents','precheck_root','transactions','payload_root','created_at_ns'}
+        with self._lock:
+            if not self._active:raise ValueError('GG_DAG_NOT_RUNNING')
+            if not isinstance(body,dict) or set(body)!=expected or body.get('schema')!='gg.parallel-dag.block.v1' or body.get('chain_id')!=self._chain:raise ValueError('GG_DAG_BLOCK_DOMAIN')
+            producer=_integer(body['producer_index'],0,self._producer_count-1,'GG_DAG_PRODUCER')
+            public=self._producer_public[producer];checkpoint=self._lan_checkpoint;started=self._started_ns
+        _integer(body['sequence'],1,MAX_ATTEMPTS,'GG_DAG_SEQUENCE');_integer(body['rank'],1,MAX_RECORDS,'GG_DAG_RANK')
+        _integer(body['created_at_ns'],started-1_000_000_000,time.time_ns()+5_000_000_000,'GG_DAG_TIMESTAMP')
+        parents=body['parents']
+        if not isinstance(parents,list) or not 1<=len(parents)<=MAX_PARENTS or any(not _hash(parent) for parent in parents) or len(set(parents))!=len(parents):raise ValueError('GG_DAG_PARENTS')
+        transactions=body['transactions']
+        if not isinstance(transactions,list) or len(transactions)>limits['transactions_per_block']:raise ValueError('GG_DAG_TX_LIMIT')
+        if body['precheck_root']!=checkpoint:raise ValueError('GG_DAG_PRECHECK_ROOT')
+        if not _hash(body['payload_root']) or _tree(transactions,b'GG-DAG-PAYLOAD-v1\0')[-1][0]!=body['payload_root']:raise ValueError('GG_DAG_PAYLOAD_ROOT')
+        if not isinstance(signature,str) or not _SIGNATURE.fullmatch(signature):raise ValueError('GG_DAG_BLOCK_SIGNATURE')
+        if count_signature:
+            with self._lock:self._stats['signature_checks']+=1
+        _verify(public,b'GG-DAG-PROPOSAL-SIGN-v1\0'+pack(body),signature)
+        return body,digest(body,b'GG-DAG-BLOCK-v1\0'),producer
+
+    def _admit_large_lan(self,raw,peer,*,relayed=False,check=None):
+        """Serialize each author chain, not unrelated cryptographic work.
+
+        Every signature is verified. Only the final state transition holds the
+        shared lock; control/status reads remain available during large blocks.
+        """
+        began=time.monotonic()
+        with self._lock:
+            if not self._active:raise ValueError('GG_DAG_NOT_RUNNING')
+        try:
+            with self._lock:self._charge(peer,len(raw) if isinstance(raw,bytes) else 1)
+            if check is not None:check()
+            body,identifier,producer=self._decode_large_lan(raw,count_signature=True)
+            if not relayed and producer!=peer:raise ValueError('GG_DAG_PRODUCER_PEER')
+            with self._lan_producer_lock(producer):
+                sequence=body['sequence'];parents=body['parents'];transactions=body['transactions']
+                with self._lock:
+                    if not self._active or body['chain_id']!=self._chain:raise ValueError('GG_DAG_NOT_RUNNING')
+                    if identifier in self._records:
+                        if self._records[identifier]['wire']!=raw:raise ValueError('GG_DAG_DUPLICATE_CHANGED')
+                        self._stats['duplicates']+=1;return {'state':'DUPLICATE','hash':identifier,'finality':FINALITY}
+                    if len(self._records)>=MAX_RECORDS:raise ValueError('GG_DAG_RECORD_LIMIT')
+                    if any(parent not in self._records for parent in parents):raise ValueError('GG_DAG_UNKNOWN_PARENT')
+                    if body['rank']!=1+max(self._records[parent]['rank'] for parent in parents):raise ValueError('GG_DAG_RANK')
+                    if (producer,sequence) in self._producer_sequences:
+                        self._lan_fault='GG_DAG_PRODUCER_EQUIVOCATION';raise ValueError(self._lan_fault)
+                    previous=self._lan_heads.get(producer);expected=self._next_sequences[producer]+1
+                    nonce=self._lan_counts.get(producer,0);initial_nonce=nonce
+                    source=self._producer_public[producer];accounts=frozenset(self._genesis_state)
+                    checkpoint=self._lan_checkpoint;chain=self._chain
+                if sequence!=expected:raise ValueError('GG_DAG_LAN_CAUSAL_SEQUENCE')
+                if previous is not None and previous not in parents:raise ValueError('GG_DAG_LAN_OWN_PARENT')
+                identifiers=set()
+                for transaction in transactions:
+                    if not self._active:raise ValueError('GG_DAG_NOT_RUNNING')
+                    if check is not None:check()
+                    if not isinstance(transaction,dict) or set(transaction)!={'body','signature'}:raise ValueError('GG_DAG_TX_SCHEMA')
+                    tx=transaction['body'];signature=transaction['signature']
+                    if (not isinstance(tx,dict) or set(tx)!={'schema','chain_id','from','to','amount_atomic','nonce','precheck_root'}
+                            or tx.get('schema')!='gg.parallel-dag.tx.v2' or tx.get('chain_id')!=chain or tx.get('precheck_root')!=checkpoint):raise ValueError('GG_DAG_TX_DOMAIN')
+                    if not isinstance(tx['from'],str) or not isinstance(tx['to'],str) or tx['from']!=source or tx['to'] not in accounts or tx['to']==source:raise ValueError('GG_DAG_TX_ACCOUNT')
+                    if tx['amount_atomic']!='1':raise ValueError('GG_DAG_TX_AMOUNT')
+                    if type(tx['nonce']) is not int or tx['nonce']!=nonce:raise ValueError('GG_DAG_TX_NONCE')
+                    if nonce>=INITIAL_BALANCE:raise ValueError('GG_DAG_PRODUCER_BALANCE')
+                    if not isinstance(signature,str) or not _SIGNATURE.fullmatch(signature):raise ValueError('GG_DAG_TX_SIGNATURE')
+                    with self._lock:self._stats['signature_checks']+=1
+                    _verify(source,b'GG-DAG-LAN-TEST-TX-SIGN-v2\0'+pack(tx),signature)
+                    tx_id=digest(tx,b'GG-DAG-TX-ID-v1\0')
+                    if tx_id in identifiers:raise ValueError('GG_DAG_DUPLICATE_TX_IN_BLOCK')
+                    identifiers.add(tx_id);nonce+=1
+                if check is not None:check()
+                with self._lock:
+                    if not self._active or self._chain!=chain:raise ValueError('GG_DAG_NOT_RUNNING')
+                    if self._next_sequences[producer]+1!=sequence or self._lan_counts.get(producer,0)!=initial_nonce or self._lan_heads.get(producer)!=previous:raise ValueError('GG_DAG_LAN_CAUSAL_SEQUENCE')
+                    if self._stored_bytes+len(raw)>self.capacity_limits()['session_bytes']:raise ValueError('GG_DAG_STORAGE_LIMIT')
+                    rank=body['rank'];created=body['created_at_ns']
+                    self._records[identifier]={'body':body,'hash':identifier,'rank':rank,'timestamp':created/1e9,
+                        'parents':list(parents),'producer_index':producer,'producer_sequence':sequence,
+                        'transaction_count':len(transactions),'signature_verified':True,'wire':raw,'admission_index':self._stats['accepted']+1}
+                    self._recent_hashes.append(identifier)
+                    if rank>=self._max_rank:self._max_rank=rank;self._highest_hash=identifier
+                    self._producer_sequences.add((producer,sequence));self._frontier.difference_update(parents);self._frontier.add(identifier)
+                    self._next_sequences[producer]=sequence;self._lan_heads[producer]=identifier;self._lan_counts[producer]=nonce
+                    self._stored_bytes+=len(raw);self._stats['accepted']+=1;self._stats['transactions_validated']+=len(transactions)
+                    observed=time.monotonic();self._first_admission=self._first_admission or began;self._last_admission=observed
+                    self._rate_samples.append((observed,len(transactions),producer))
+                    self._producer_stats[producer].update(proposals=self._producer_stats[producer]['proposals']+1,
+                        transactions=self._producer_stats[producer]['transactions']+len(transactions),
+                        last_created_at_ns=str(created),last_created_at=created/1e9,last_admitted_at=time.time())
+                    return {'state':'ADMITTED_UNFINALIZED','hash':identifier,'rank':rank,'finality':FINALITY}
+        except Exception:
+            with self._lock:self._stats['rejected']+=1
+            raise
+
+    def _produce_large_lan(self,producer,transactions,max_wire,*,check=None):
+        self.preflight_lan_test_block(transactions,max_wire)
+        with self._lan_producer_lock(producer):
+            began=time.perf_counter()
+            if check is not None:check()
+            with self._lock:
+                if not self._active:raise ValueError('GG_DAG_NOT_RUNNING')
+                if self._lan_fault:raise ValueError(self._lan_fault)
+                key=self._producer_keys[producer]
+                if key is None:raise ValueError('GG_DAG_PRODUCER_NOT_OWNED')
+                previous=self._lan_heads.get(producer);parents=[] if previous is None else [previous]
+                for identifier in sorted(self._frontier):
+                    if identifier not in parents:parents.append(identifier)
+                    if len(parents)>=MAX_PARENTS:break
+                if not parents:parents=[next(iter(self._records))]
+                nonce=self._lan_counts.get(producer,0);chain=self._chain;checkpoint=self._lan_checkpoint
+                source=self._producer_public[producer];target=self._producer_public[(producer+1)%self._producer_count]
+                sequence=self._next_sequences[producer]+1;rank=1+max(self._records[parent]['rank'] for parent in parents)
+            items=[]
+            for offset in range(transactions):
+                if not self._active:raise ValueError('GG_DAG_NOT_RUNNING')
+                if check is not None:check()
+                tx={'schema':'gg.parallel-dag.tx.v2','chain_id':chain,'from':source,'to':target,
+                    'amount_atomic':'1','nonce':nonce+offset,'precheck_root':checkpoint}
+                items.append({'body':tx,'signature':key.sign_message(b'GG-DAG-LAN-TEST-TX-SIGN-v2\0'+pack(tx)).hex()})
+            body={'schema':'gg.parallel-dag.block.v1','chain_id':chain,'producer_index':producer,'sequence':sequence,
+                'rank':rank,'parents':parents,'precheck_root':checkpoint,'transactions':items,
+                'payload_root':_tree(items,b'GG-DAG-PAYLOAD-v1\0')[-1][0],'created_at_ns':time.time_ns()}
+            raw=pack({'body':body,'signature':key.sign_message(b'GG-DAG-PROPOSAL-SIGN-v1\0'+pack(body)).hex()})
+            producer_ms=(time.perf_counter()-began)*1000
+            if len(raw)>max_wire:raise ValueError('GG_DAG_LAN_WIRE_PROFILE_LIMIT')
+            if check is not None:check()
+            validation_began=time.perf_counter();result=self.admit(raw,producer,_check=check);self.reconcile()
+            with self._lock:
+                self._wave_count+=1
+                self._last_wave={'kind':'lan_test_proposal','blocks':1,'transactions':transactions,'producer_index':producer,
+                    'parents':len(parents),'producer_ms':round(producer_ms,3),'validation_ms':round((time.perf_counter()-validation_began)*1000,3),
+                    'total_ms':round((time.perf_counter()-began)*1000,3),'workers_used':1,'parallel':False,'worker_overlap_ms':0,
+                    'sequence':self._wave_count,'timestamp':time.time()}
+                self._measurements.append(dict(self._last_wave))
+                self._event('PROPOSAL_ADMITTED','LAN DAG test-TX '+str(transactions)+'; independently signed and validated; no finality')
+            return {**result,'wire':raw,'transactions':transactions}
+
     def admit(self,raw,peer,*,_relayed=False,_check=None):
         """Admit a complete canonical wire proposal; no execution/finality here."""
+        if self._lan_test_mode and self._capacity is not None:
+            with self._lan_work():return self._admit_large_lan(raw,peer,relayed=_relayed,check=_check)
         with self._lock:
             if not self._active:raise ValueError('GG_DAG_NOT_RUNNING')
             admission_started=time.monotonic()
@@ -515,12 +718,12 @@ class ParallelDag:
                 self._stats['rejected']+=1
                 raise
 
-    def admit_relayed(self,raw,authenticated_ingress):
+    def admit_relayed(self,raw,authenticated_ingress,*,check=None):
         """A pinned transport charges its authenticated sender, not an alleged
         producer. The actual producer signature still uses the public genesis.
         This method alone is not transport authentication.
         """
-        return self.admit(raw,authenticated_ingress,_relayed=True)
+        return self.admit(raw,authenticated_ingress,_relayed=True,_check=check)
 
     def _candidate(self,producer,sequence,parents,root,indices,*,_context=None):
         context=self._roots[root] if _context is None else _context['checkpoint'];transactions=[]
@@ -901,6 +1104,9 @@ class ParallelDag:
                 'max_wave_transactions':MAX_WAVE_TRANSACTIONS,'max_block_bytes':MAX_BLOCK_BYTES,'max_session_bytes':MAX_SESSION_BYTES,'max_records':MAX_RECORDS,'max_attempts':MAX_ATTEMPTS,
                 'min_live_interval_ms':MIN_LIVE_INTERVAL_MS,'max_live_interval_ms':MAX_LIVE_INTERVAL_MS,'measurement_count':MEASUREMENT_COUNT,
                 'max_producers':MAX_PRODUCERS,'producer_byte_credit':MAX_SESSION_BYTES//self._producer_count}
+            capacity=self.capacity_limits()
+            limits.update(max_tx_per_block=capacity['transactions_per_block'],max_block_bytes=capacity['block_bytes'],
+                max_session_bytes=capacity['session_bytes'],producer_byte_credit=capacity['peer_bytes'])
             if not self._active:return {'state':'STOPPED','mode':'LOCAL_PARALLEL_PROPOSAL_DAG','chain_id':'','finality':FINALITY,'canonical_finalized':0,'producer_count':self._producer_count,'worker_count':0,'producers':[],'blocks_admitted':0,'transactions_validated':0,'frontier_size':0,'wave_count':0,'limits':limits,
                 'last_wave':{},'live':dict(self._live),'measurements':[],'preview':{'accepted':0,'conflicts':0,'duplicates':0,'state_root':'','canonical':False},
                 'admission':{'attempts':0,'accepted':0,'rejected':0,'duplicates':0,'signature_checks':0,'charged_bytes':0,'transactions_validated':0,'remaining_bytes':MAX_SESSION_BYTES,'stored_bytes':0},
@@ -929,7 +1135,7 @@ class ParallelDag:
                 'frontier_size':len(self._frontier),'wave_count':self._wave_count,'last_wave':dict(self._last_wave),
                 'live':dict(self._live),'measurements':[dict(sample) for sample in self._measurements],
                 'preview':{**self._preview_counts,'state_root':self._preview_root,'canonical':False},'limits':limits,
-                'admission':{**self._stats,'remaining_bytes':max(0,MAX_SESSION_BYTES-self._stats['charged_bytes']),'stored_bytes':self._stored_bytes},
+                'admission':{**self._stats,'remaining_bytes':max(0,capacity['session_bytes']-self._stats['charged_bytes']),'stored_bytes':self._stored_bytes},
                 'block_graph':graph,'events':list(self._events)}
 
     def fork_verifier(self):
@@ -945,7 +1151,7 @@ class ParallelDag:
                 '_producer_sequences','_next_sequences','_resolved','_executed','_stored_bytes',
                 '_wave_count','_cursor','_last_wave','_preview_counts','_stats','_peer_bytes',
                 '_first_admission','_last_admission','_events','_measurements','_rate_samples','_producer_stats','_recent_hashes','_max_rank','_highest_hash',
-                '_lan_test_mode','_lan_fault','_lan_heads','_lan_counts')
+                '_lan_test_mode','_lan_fault','_lan_heads','_lan_counts','_capacity')
             verifier=ParallelDag(self._producer_count)
             for key in fields:setattr(verifier,key,deepcopy(getattr(self,key)))
             if self._lan_test_mode:verifier._lan_checkpoint=self._lan_checkpoint

@@ -120,7 +120,7 @@ def parse_command(text,extra=None):
             if not separator or not re.fullmatch(r'[a-z][a-z0-9_]{0,63}',key) or key in args:
                 raise ValueError('TERMINAL_ARGUMENT_INVALID')
             # Financial values remain exact strings, never binary floats.
-            if key in {'sender','index','count','blocks','transactions_per_block','interval_ms','producer_count','port','duration_ms','batch'} and re.fullmatch(r'-?\d+',value):args[key]=int(value)
+            if key in {'sender','index','count','blocks','transactions_per_block','max_transactions_per_block','interval_ms','producer_count','port','duration_ms','batch'} and re.fullmatch(r'-?\d+',value):args[key]=int(value)
             elif key in {'auto_produce','distribute','allow_test_tokens','enable_test_tokens','allow_dag_transactions','enable_dag_transactions'} and value in {'true','false'}:args[key]=value=='true'
             else:args[key]=value
     if extra:
@@ -665,6 +665,31 @@ class TerminalApp:
             await asyncio.to_thread(self.service.close)
 
 
+def _foreground_lan_transport(lan):
+    """Stable local diagnostics, excluding healthy gossip's changing counters."""
+    transport=_object(lan.get('transport'));counts=_object(transport.get('counters'))
+    drops=_object(counts.get('admission_drops'));details=_object(lan.get('last_error_details'))
+    def enum(value,allowed):return value if isinstance(value,str) and value in allowed else None
+    def count(value):return value if type(value) is int and 0<=value<=2**53-1 else None
+    stamp=lan.get('last_error_at');code=lan.get('last_error')
+    if not (type(stamp) in {int,float} and 0<=stamp<=4102444800):stamp=None
+    if not (isinstance(code,str) and re.fullmatch(r'GG_[A-Z0-9_]{1,80}',code)
+            and not re.search(r'[0-9a-f]{16,}',code,re.I)):code=None
+    return {'scope':'LOCAL_PEER_ONLY',
+            'state':enum(transport.get('state'),{'ACTIVE','EXHAUSTED','STOPPED'}),
+            'exhausted_reason':enum(transport.get('exhausted_reason'),{'','SESSION','BYTES','FRAMES'}),
+            'counters':{'failures':count(counts.get('failures')),
+                        'expected_closures':count(counts.get('expected_closures')),
+                        'admission_drops':{reason:count(drops.get(reason)) for reason in ('RATE','HANDLERS','SESSION','BYTES')}},
+            'last_failure':{'code':code,'at':stamp,'transport':{
+                'operation':enum(details.get('operation'),{'PAGE','GET','INCOMING','TOKEN_STATUS','TOKEN_SYNC',
+                    'TOKEN_SUBMIT','TOKEN_APPLY','CIRCLE_SIGN','CIRCLE_END','DAG_STRESS_PREPARE',
+                    'DAG_STRESS_BEGIN','DAG_STRESS_STOP','DAG_STRESS_STATUS'}),
+                'stage':enum(details.get('stage'),{'ACCEPT','CHECK','WAIT','CONNECT','AUTH','SEND','RECEIVE','VALIDATE','EXECUTE'}),
+                'error_class':enum(details.get('error_class'),{'TimeoutError','ConnectionResetError','ConnectionRefusedError',
+                    'BrokenPipeError','OSError','ValueError','TypeError','JSONDecodeError','Exception'})}}}
+
+
 def foreground_summary(command, body):
     """Bounded public observations; no wallet refresh, peer or signing input."""
     body=_object(body)
@@ -676,7 +701,7 @@ def foreground_summary(command, body):
             'state','role','elapsed_ms','duration_ms','transactions_per_block','interval_ms',
             'blocks','transactions','all_peers_synced','acknowledged_blocks','acknowledged_transactions',
             'acknowledged_bps','acknowledged_tps','stop_reason','last_error') if key in stress}
-        return {'schema':'gg.terminal.foreground.v1','engine':'DAGOBLIN_PRIVATE_LAN',
+        summary={'schema':'gg.terminal.foreground.v1','engine':'DAGOBLIN_PRIVATE_LAN',
                 'scope':'PRIVATE_LAN_SESSION_EXPERIMENT','state':lan.get('state'),
                 'endpoint':lan.get('endpoint'),'producer_count':body.get('producer_count',0),
                 'local_producer_indices':lan.get('local_producer_indices',[]),
@@ -690,6 +715,16 @@ def foreground_summary(command, body):
                 'ephemeral_keys':True,'new_pairing_after_restart':True,
                 'physical_hosts_verified':False,'transactions_enabled':lan.get('transactions_enabled') is True,
                 'financial_transactions_enabled':False,'mainnet_enabled':False}
+        if isinstance(lan.get('transport'),dict):summary['local_transport']=_foreground_lan_transport(lan)
+        resources=_object(body.get('dag_resources'))
+        if resources:
+            test=_object(resources.get('test'));plan=_object(resources.get('plan'))
+            profile=_object(test.get('profile'))
+            summary['local_resources']={'budget':resources.get('budget'),'test_state':test.get('state'),
+                'estimated_tps':plan.get('estimated_tps'),'bottlenecks':plan.get('bottlenecks'),
+                'relative_percent':{name:_object(row).get('relative_percent') for name,row in _object(plan.get('resources')).items()},
+                'network_basis':profile.get('network_basis'),'last_error':test.get('last_error','') or profile.get('network_error','')}
+        return summary
     if command=='dag.live_start':
         live=_object(body.get('live'))
         return {'schema':'gg.terminal.foreground.v1','engine':'DAGOBLIN_LOCAL',
