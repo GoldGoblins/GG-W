@@ -26,6 +26,11 @@ def snapshot():
     from backend import gg_parallel_dag,lan_dag_runtime
     result['lan_dag']=lan_dag_runtime.snapshot()
     result['parallel_dag']=result['lan_dag'] if lan_dag_runtime.active_manager() is not None else gg_parallel_dag.snapshot()
+    if lan_dag_runtime.active_manager() is None:
+        from backend.local_node_observation import active_source
+        observer=active_source()
+        observed=observer.snapshot() if observer is not None else None
+        if observed is not None:result['parallel_dag']=observed;result['lan_dag']=observed
     result['consensus_sample']=_consensus_sample if _consensus_sample and _consensus_sample['genesis']['chain_id']==result['consensus']['chain_id'] else None
     from backend import omni_wallet
     result['wallet_overview']=omni_wallet.snapshot(result,result['lab'])

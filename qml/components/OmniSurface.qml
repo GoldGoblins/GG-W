@@ -18,6 +18,7 @@ Item {
     property string scope: ""
     property var frozenEvents: []
     property var telemetryPatch: ({})
+    property real lastDagObservationMonotonic:-1
     readonly property var networkState: mergeTelemetry(state,telemetryPatch)
     property string pendingTelemetry: ""
     property var requestedNetworkStops: ({})
@@ -85,6 +86,16 @@ Item {
         var key=patch.network_page==="TESTNET"?"testnet":patch.network_page==="DAG"?"parallel_dag":""
         if(!key || !patch[key])return body
         var old=body[key]||({}), fresh=patch[key]
+        if(key==="parallel_dag") {
+            var oldCli=(old.observation||{}).read_only===true
+            var freshCli=(fresh.observation||{}).read_only===true&&(fresh.observation||{}).source==="LOCAL_CLI"
+            if(freshCli&&oldCli&&fresh.observation.publisher_started_at===old.observation.publisher_started_at&&typeof fresh.observation.publication_sequence==="number"&&fresh.observation.publication_sequence<Number(old.observation.publication_sequence||0))return body
+            // Observing an already running CLI is a read-only source change,
+            // never permission to start/adopt a node or replace an owned peer.
+            if(freshCli&&(oldCli||(!old.state||old.state==="STOPPED")&&!(old.lan_setup||{}).active)||oldCli&&!freshCli&&fresh.state==="STOPPED") {
+                var observed=Object.assign({},body);observed[key]=fresh;return observed
+            }
+        }
         var identity=key==="testnet"?"session":"chain_id"
         if(old[identity] && fresh[identity]!==undefined && old[identity]!==fresh[identity])return body
         // A normal account/wallet response may have been queued before the
@@ -100,6 +111,7 @@ Item {
         try {
             var patch=JSON.parse(raw)
             if(patch.network_page!==page)return
+            if(page==="DAG"&&typeof patch.observed_monotonic==="number"&&patch.observed_monotonic<lastDagObservationMonotonic)return
             if(patch.error) {
                 var key=page==="TESTNET"?"testnet":"parallel_dag", failed=Object.assign({},networkState[key]||({}))
                 failed.error=patch.error
@@ -112,6 +124,7 @@ Item {
             var current=networkState, merged=mergeTelemetry(current,patch)
             if(merged===current)return
             telemetryPatch=patch
+              if(page==="DAG"&&typeof patch.observed_monotonic==="number")lastDagObservationMonotonic=patch.observed_monotonic
         } catch(e) {}
     }
     function flushTelemetry(){var raw=pendingTelemetry;pendingTelemetry="";if(raw)applyTelemetry(raw)}

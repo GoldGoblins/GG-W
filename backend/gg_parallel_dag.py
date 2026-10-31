@@ -474,6 +474,16 @@ class ParallelDag:
             self._event('PROPOSAL_ADMITTED','LAN DAG test-TX '+str(transactions)+'; independently signed and validated; no finality')
             return {**result,'wire':raw,'transactions':transactions}
 
+    def lan_test_accounts(self):
+        """Public test-account observations, never private signers or finality."""
+        with self._lock:
+            if not self._active or not self._lan_test_mode:return []
+            return [{'producer_index':index,'address':public,
+                     'balance_atomic':self._preview_state[public]['balance_atomic'],
+                     'nonce':self._preview_state[public]['nonce'],
+                     'basis':'LOCAL_TEST_PREVIEW_NOT_CANONICAL','canonical':False}
+                    for index,public in enumerate(self._producer_public)]
+
     def lan_evidence(self):
         """A public observation of the entire admitted set, never a certificate."""
         with self._lock:

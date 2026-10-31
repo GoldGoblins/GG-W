@@ -1264,7 +1264,7 @@
     },
     "backend/omni_service.py": {
       "upstream_sha256": null,
-      "windows_sha256": "45e9ca6a75b6d484826b2244d9ea2536c0e04c4b171c1606c82c2f3dee49c049"
+      "windows_sha256": "5fc55db403f49f37ad2e662b430e28854160c8b4801a684e598d0ad08e3bba89"
     },
     "backend/omni_transport.py": {
       "upstream_sha256": null,
@@ -1324,7 +1324,7 @@
     },
     "qml/components/OmniSurface.qml": {
       "upstream_sha256": null,
-      "windows_sha256": "15a4df8aa8830ab71b7a5c0fdd5005c6ee9f7f1ef9f3955c9de27b93d6c7f820"
+      "windows_sha256": "695bde3ba6d67f5a2df08aab7513431946aebc70b97e981a3223c1e9d46a07b6"
     },
     "schemas/gg-intent.schema.json": {
       "upstream_sha256": null,
@@ -1788,11 +1788,11 @@
     },
     "backend/terminal_cli.py": {
       "upstream_sha256": null,
-      "windows_sha256": "822c78bd2715d43f7fe975a48e02b27d566cdbeb790c5c34c700f88eaba431a7"
+      "windows_sha256": "b8ae201c3f0ce985811b23fc6a246c4292f40075087ecc62a40733de3051d910"
     },
     "backend/terminal_service.py": {
       "upstream_sha256": null,
-      "windows_sha256": "01a374dcf8064496f11c9530e19ecb91676c219b2f63ce1dbdf1907a00d70bd3"
+      "windows_sha256": "5fda2058b63690f55bce5d294fa6830dec4fc9588c0a38e4684f1cbe3595c4f7"
     },
     "gg-cli.py": {
       "upstream_sha256": null,
@@ -1840,7 +1840,7 @@
     },
     "support/gg-cli/README.md": {
       "upstream_sha256": null,
-      "windows_sha256": "dfb8b7d4c74187aa88e384026e15deb640f8dca9a751f3ed520aca83fcc8f7fe"
+      "windows_sha256": "87c6071d1efc50076fa002ac1f0cc7d4ff2b97188a8779120e01525ac19fabcb"
     },
     "support/gg-cli/bootstrap.py": {
       "upstream_sha256": null,
@@ -1848,7 +1848,7 @@
     },
     "support/gg-cli/build_release.py": {
       "upstream_sha256": null,
-      "windows_sha256": "f7a9041fb2f41da89d566ba3c5ea669c7ab229f805d0d56d9ca828b30e066886"
+      "windows_sha256": "6e205c8abf21e95d5d3f1a9202d7da64c6a3dab8f640605617f98202e4fd623e"
     },
     "support/gg-cli/requirements-wallet.txt": {
       "upstream_sha256": null,
@@ -2088,7 +2088,7 @@
     },
     "qml/components/BlockRelationsGraph.qml": {
       "upstream_sha256": null,
-      "windows_sha256": "333f7031837c5928fcc784fcb39b6b01ddcd797f805f6eef46e1177e435106d3"
+      "windows_sha256": "ca8d61c700468e989caa3812c8a1b7a15a0ab7ea36b2de297d77609e85bb45cf"
     },
     "qml/components/BufferMark.qml": {
       "upstream_sha256": null,
@@ -2372,7 +2372,7 @@
     },
     "backend/gg_parallel_dag.py": {
       "upstream_sha256": null,
-      "windows_sha256": "fdfe53ebc8d288faca1c0f61f6f696c617df7bc95838f89d24b950f28daa65cf"
+      "windows_sha256": "31a76c83d1fbc577e9b924387af64167a83845e6a7e155eabdf821ca403cf041"
     },
     "knowledge/design/gg-network-wallet-v13/README.md": {
       "upstream_sha256": null,
@@ -2440,7 +2440,7 @@
     },
     "qml/components/GGParallelDagDashboard.qml": {
       "upstream_sha256": null,
-      "windows_sha256": "d1a900874ae58e78f77fcad94ddba46c6bed6ddc9143bb2181ca50c7a5fc4bb6"
+      "windows_sha256": "c1b53e08d6686d4369b7fe61aa47a2d7e442174794aba490e03de8dd9aec3bd0"
     },
     "qml/components/GGTheme.qml": {
       "upstream_sha256": null,
@@ -2612,7 +2612,7 @@
     },
     "backend/network_telemetry.py": {
       "upstream_sha256": null,
-      "windows_sha256": "6dae6e61e0b61e6275f498b8ed69ceea71f60630b831d0cc37304a4aa3b06e61"
+      "windows_sha256": "e66b89c823937eec318d5ac0900c3abd8944804359bbe954e73e8f5726665346"
     },
     "knowledge/gg-network-live.md": {
       "upstream_sha256": null,
@@ -2636,7 +2636,7 @@
     },
     "tests/test_network_telemetry.py": {
       "upstream_sha256": null,
-      "windows_sha256": "535041528627da9efdaa00dab1c50668a40be92b9cc901125ff456c3255dc48b"
+      "windows_sha256": "6d93a13e4efae704ebcbf184befa46e5b91db3781553f1e71c684d61c7470a36"
     },
     "tests/test_parallel_dag_live.py": {
       "upstream_sha256": null,
@@ -2656,7 +2656,7 @@
     },
     "backend/gg_lan_dag.py": {
       "upstream_sha256": null,
-      "windows_sha256": "8fdabfe9feb839608e38de2d1a5af304a05492ad3c827ea90637bfb5fd316c81"
+      "windows_sha256": "62decd73812a75b838eb27ec8d4a8fa2864662e5f8b7ba7df084cd1a6a16cb81"
     },
     "backend/lan_dag_runtime.py": {
       "upstream_sha256": null,
@@ -2672,7 +2672,7 @@
     },
     "knowledge/dagoblin-lan.md": {
       "upstream_sha256": null,
-      "windows_sha256": "729c31ef0894df728a66829d7112e6d2e2ca4399da3764b7178a0e8192bc38b2"
+      "windows_sha256": "6972cdb53da008a53467d47fbd8fc8274e1db366959acee9f9ac9f9a3caea227"
     },
     "knowledge/dagoblin-launch-readiness.md": {
       "upstream_sha256": null,
@@ -2680,7 +2680,7 @@
     },
     "qml/components/LanDagSetupPopup.qml": {
       "upstream_sha256": null,
-      "windows_sha256": "ce1dc6b6e594a6dcde08a9f8ac71300f44835d0763f5e51a70664817482b642b"
+      "windows_sha256": "c006add14d6fe67c4ce9863db03fa99be83b40caddd58b908314c045703836d0"
     },
     "tests/test_activity_color_bindings.py": {
       "upstream_sha256": null,
@@ -2708,7 +2708,7 @@
     },
     "tests/test_lan_desktop_ui.py": {
       "upstream_sha256": null,
-      "windows_sha256": "f43874eb93f4e2bde556ca836897767ac2dffc15549068e55a55095884ca6146"
+      "windows_sha256": "135097b37e28f0dd28d95c447c6870e4aeb54ed6b9e6198b90e03884850657e4"
     },
     "tests/test_lan_terminal.py": {
       "upstream_sha256": null,
@@ -2820,7 +2820,7 @@
     },
     "tests/test_lan_deadline_transport.py": {
       "upstream_sha256": null,
-      "windows_sha256": "c79b58e838c9594c28b5affe67f6d2b1ef2968e7f43f63a42f2b16df6760f1f9"
+      "windows_sha256": "b8c37caa5740e80ebe64a4aee71618d00e7f520d66ac00dcfa26a06e580dddfa"
     }
   },
   "container_runtime": {

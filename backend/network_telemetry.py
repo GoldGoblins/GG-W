@@ -21,7 +21,9 @@ SAMPLE_SECONDS = 1 / 75
 def dag_source():
     from backend import gg_parallel_dag, lan_dag_runtime
     manager = lan_dag_runtime.active_manager()
-    return manager if manager is not None else gg_parallel_dag
+    if manager is not None:return manager
+    from backend.local_node_observation import active_source
+    return active_source() or gg_parallel_dag
 
 
 def observe(page):
@@ -34,7 +36,11 @@ def observe(page):
         # extra read, but cannot hide a newer graph behind a newer revision.
         revision = source.telemetry_revision()
         body = source.snapshot()
-        return {'network_page': page, 'revision': revision, 'parallel_dag': body}
+        if body is None:
+            from backend import gg_parallel_dag
+            body=gg_parallel_dag.snapshot()
+        return {'network_page': page, 'revision': revision, 'parallel_dag': body,
+                'observed_monotonic':time.monotonic()}
     return None
 
 

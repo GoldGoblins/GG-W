@@ -322,6 +322,34 @@ ApplicationWindow {id:shell;width:1100;height:700;visible:true
         before_wrong_page=js('networkState.testnet.height')
         patch({'network_page':'TESTNET','testnet':{'height':10000}})
         assert js('networkState.testnet.height')==before_wrong_page
+        # A CLI that starts after Desktop is open must replace only the stopped
+        # local view. Its public observer never acquires node-control authority.
+        cli={'state':'RUNNING','chain_id':'fixture-cli-chain','producer_count':6,
+             'blocks_admitted':3,'transactions_validated':24,
+             'lan':{'state':'READY','label':'Linux CLI','connection_state':'CONNECTED'},
+             'lan_setup':{'active':True,'coordinator':False},
+             'observation':{'source':'LOCAL_CLI','read_only':True,'stale':False,
+                            'publisher_started_at':123,'publication_sequence':3,'node_label':'Linux CLI'},
+             'block_graph':{'topology':'MULTIPARENT_DAG','source':'LAN_SIGNED_PROPOSAL_DAG',
+                            'producer_count':6,'blocks':[],'edges':[],'observed_at':1000}}
+        patch({'network_page':'DAG','observed_monotonic':100,'parallel_dag':cli})
+        assert js('networkState.parallel_dag.transactions_validated')==24
+        dag=window.findChild(QQuickItem,'parallelDagDashboard');assert dag
+        assert dag.property('observerReadOnly') and not dag.property('canAct')
+        old_cli=json.loads(json.dumps(cli));old_cli['transactions_validated']=9999
+        old_cli['observation']['publication_sequence']=2
+        patch({'network_page':'DAG','observed_monotonic':101,'parallel_dag':old_cli})
+        assert js('networkState.parallel_dag.transactions_validated')==24
+        cli['observation']['stale']=True;cli['block_graph']['stale']=True
+        cli['lan']['connection_state']='STALE'
+        patch({'network_page':'DAG','observed_monotonic':102,'parallel_dag':cli})
+        assert js('networkState.parallel_dag.observation.stale') is True
+        protected=js('mergeTelemetry({parallel_dag:{state:"RUNNING",chain_id:"owned-desktop",lan_setup:{active:true}}},'+json.dumps({'network_page':'DAG','parallel_dag':cli})+').parallel_dag.chain_id')
+        assert protected=='owned-desktop'
+        patch({'network_page':'DAG','observed_monotonic':103,'parallel_dag':{'state':'STOPPED','chain_id':'','block_graph':{'blocks':[],'edges':[]}}})
+        assert js('networkState.parallel_dag.state')=='STOPPED'
+        patch({'network_page':'DAG','observed_monotonic':102,'parallel_dag':cli})
+        assert js('networkState.parallel_dag.state')=='STOPPED','Late queued CLI data must not resurrect a closed source'
         hub.setProperty('page','WALLET');QTest.qWait(30)
         assert host.views[-1]==''
         assert host.calls==0

@@ -13,6 +13,9 @@ Item {
     property string stopError:""
     property bool sidePanelOpen:true
     readonly property var dag:state.parallel_dag||({})
+    readonly property var observation:dag.observation||({})
+    readonly property bool observerReadOnly:observation.read_only===true
+    readonly property var ownTestAccounts:(dag.test_accounts||[]).filter(function(account){return account.local===true})
     readonly property var lan:dag.lan||({})
     readonly property var lanSetup:dag.lan_setup||({})
     readonly property var testTokens:dag.test_tokens||({})
@@ -45,7 +48,7 @@ Item {
             var measured=null
             for(var j=0;j<stats.length;j++)if(stats[j].index===i){measured=stats[j];break}
             var seen=blocks.filter(function(b){return b.proposer_index===i})
-            result.push({index:i,blocks:measured?measured.proposals:seen.length,
+            result.push({index:i,name:producerName(i),blocks:measured?measured.proposals:seen.length,
                 transactions:measured?measured.transactions:seen.reduce(function(n,b){return n+Number(b.transaction_count||0)},0),
                 sequence:seen.length?Math.max.apply(null,seen.map(function(b){return Number(b.producer_sequence||0)})):null,
                 rate:measured&&typeof measured.observed_proposal_bps==="number"?measured.observed_proposal_bps:null,
@@ -54,7 +57,7 @@ Item {
         return result
     }
     readonly property string liveLabel:dagTransactionMode?"DAG-prov · "+String(dagStress.state||"IDLE"):lanOwned&&!running?String(lan.state||"STARTING"):liveRunning?"Löpande":liveLimited?"Kvot nådd":live.state==="ERROR"?"Fel":running?"Pausad":"Stoppad"
-    readonly property string notice:stopError||operation.error||dag.error||(lanOwned&&lan.last_error?String(lan.last_error):lanOwned&&dagStress.last_error?String(dagStress.last_error):liveLimited?"Kvot nådd · förslag bevarade · "+(lanOwned?"stoppa LAN-peer för en ny session":"Stoppa/Starta för en ny session"):live.state==="ERROR"?String(live.stop_reason||"Löpande körning stoppades vid fel"):busy?"Arbetar · "+String(operation.name||""):sequenceRunning&&!lanOwned?"Våg "+sequenceSent+" / 3 · minst 2 s mellan jobb":sequenceResult&&!lanOwned?sequenceResult:lanOwned?lan.state!=="READY"?"LAN · "+String(lan.state||"STARTING")+" · väntar på godkänd session":dagTransactionMode?dagStress.state&&dagStress.state!=="IDLE"?stressResultText():"DAG-TX-session · kör ett tidsbegränsat prov med tre apparater; inställningar finns under DAG-stressprov & LAN":liveRunning?"2 egna producenter · förslag och DAG-TX räknas vid lokal validering":"Egna 2 pausade · mottagning och verifiering fortsätter":liveRunning?asynchronous?producerCount+" oberoende producenter · mål "+number(live.target_proposal_bps)+" förslag/s":"Löpande · "+number(live.blocks)+" förslag / "+number(live.interval_ms)+" ms · "+number(live.transactions_per_block)+" TX / förslag":"Lokal testdata · godtagande är inte finalitet")
+    readonly property string notice:stopError||operation.error||dag.error||(lanOwned&&lan.last_error?((connectionState==="CONNECTED"||connectionState==="STALE"?"Senaste transportfel: ":"")+String(lan.last_error)):lanOwned&&dagStress.last_error?String(dagStress.last_error):liveLimited?"Kvot nådd · förslag bevarade · "+(lanOwned?"stoppa LAN-peer för en ny session":"Stoppa/Starta för en ny session"):live.state==="ERROR"?String(live.stop_reason||"Löpande körning stoppades vid fel"):busy?"Arbetar · "+String(operation.name||""):sequenceRunning&&!lanOwned?"Våg "+sequenceSent+" / 3 · minst 2 s mellan jobb":sequenceResult&&!lanOwned?sequenceResult:lanOwned?lan.state!=="READY"?"LAN · "+String(lan.state||"STARTING")+" · väntar på godkänd session":dagTransactionMode?dagStress.state&&dagStress.state!=="IDLE"?stressResultText():"DAG-TX-session · kör ett tidsbegränsat prov med tre apparater; inställningar finns under DAG-stressprov & LAN":liveRunning?"2 egna producenter · förslag och DAG-TX räknas vid lokal validering":"Egna 2 pausade · mottagning och verifiering fortsätter":liveRunning?asynchronous?producerCount+" oberoende producenter · mål "+number(live.target_proposal_bps)+" förslag/s":"Löpande · "+number(live.blocks)+" förslag / "+number(live.interval_ms)+" ms · "+number(live.transactions_per_block)+" TX / förslag":"Lokal testdata · godtagande är inte finalitet")
     readonly property var rows:(graph.blocks||[]).slice().sort(function(a,b){return asynchronous?Number(b.admission_index)-Number(a.admission_index):Number(b.rank)-Number(a.rank)||Number(b.producer_sequence)-Number(a.producer_sequence)||Number(a.proposer_index)-Number(b.proposer_index)})
     readonly property var events:(dag.events||[]).slice(-48).reverse()
     readonly property color producerSeriesColor:RuntimeTheme.GGColorContext.colorFor("ui.chart.dag.producer",RuntimeTheme.GGTheme.purple)
@@ -63,7 +66,7 @@ Item {
     readonly property var producerColors:{var result=[],indices=[0,2,1,4,5,3,6,7,8,9,10,11,12,13,14,15];for(var i=0;i<producerCount;i++)result.push(RuntimeTheme.GGColorContext.colorFor("ui.graph.block.producer."+i,RuntimeTheme.GGTheme.color(indices[i])));return result}
     readonly property bool busy:operation.state==="running"
     readonly property bool approvalPending:operation.state==="approval_required"
-    readonly property bool canAct:!busy&&!approvalPending
+    readonly property bool canAct:!observerReadOnly&&!busy&&!approvalPending
     readonly property bool running:dag.state==="RUNNING"
     readonly property bool dockAvailable:width>=820
     readonly property bool railVisible:dockAvailable&&sidePanelOpen
@@ -85,13 +88,27 @@ Item {
     signal refreshRequested()
     signal pageRequested(string page)
     function toggleDetails(){if(dockAvailable){factsDrawer.close();sidePanelOpen=!sidePanelOpen}else factsDrawer.visible?factsDrawer.close():factsDrawer.open()}
-    function run(name,args){if(name==="dag_stop"){if((!running&&!lanOwned)||stopRequested)return;cancelSequence("Kommande vågor avbrutna")}else if(!canAct)return;if(name==="dag_start"&&(running||lanOwned))return;if(name==="dag_wave"&&(!running||lanOwned))return;if((name==="lan_produce"||name==="lan_pause")&&(!lanOwned||lan.state!=="READY"||dagStressRunning||dagTransactionMode))return;if(name==="lan_dag_stress_start"&&!canStartDefaultStress)return;if(name==="lan_dag_stress_stop"&&(!lanOwned||dagStress.supported!==true||dagStress.role!=="COORDINATOR"||!dagStressRunning))return;actionRequested(name,args||{})}
+    function run(name,args){if(observerReadOnly)return;if(name==="dag_stop"){if((!running&&!lanOwned)||stopRequested)return;cancelSequence("Kommande vågor avbrutna")}else if(!canAct)return;if(name==="dag_start"&&(running||lanOwned))return;if(name==="dag_wave"&&(!running||lanOwned))return;if((name==="lan_produce"||name==="lan_pause")&&(!lanOwned||lan.state!=="READY"||dagStressRunning||dagTransactionMode))return;if(name==="lan_dag_stress_start"&&!canStartDefaultStress)return;if(name==="lan_dag_stress_stop"&&(!lanOwned||dagStress.supported!==true||dagStress.role!=="COORDINATOR"||!dagStressRunning))return;actionRequested(name,args||{})}
     function triggerPrimary(){if(!primaryActionEnabled)return;if(dagTransactionMode)run(dagStressRunning?"lan_dag_stress_stop":"lan_dag_stress_start",dagStressRunning?{}:defaultStressArguments);else run(lanOwned?(liveRunning?"lan_pause":"lan_produce"):"dag_start",{})}
     function defaultDagStressArguments(){
         var bounds=dagStress.limits||({}),values=[bounds.min_duration_ms,bounds.max_duration_ms,bounds.min_interval_ms,bounds.max_interval_ms,bounds.max_tx_per_block]
         if(!values.every(function(value,index){return Number.isSafeInteger(value)&&value>=(index===2?0:1)})||bounds.min_duration_ms>bounds.max_duration_ms||bounds.min_interval_ms>bounds.max_interval_ms)return null
-        return {duration_ms:Math.max(bounds.min_duration_ms,Math.min(bounds.max_duration_ms,10000)),transactions_per_block:Math.min(bounds.max_tx_per_block,16),interval_ms:Math.max(bounds.min_interval_ms,Math.min(bounds.max_interval_ms,100))}
+        return {duration_ms:Math.max(bounds.min_duration_ms,Math.min(bounds.max_duration_ms,10000)),transactions_per_block:1,interval_ms:Math.max(bounds.min_interval_ms,Math.min(bounds.max_interval_ms,250))}
     }
+    function producerName(index){
+        var identities=lan.producer_identities||graph.producer_identities||[]
+        for(var i=0;i<identities.length;i++)if(identities[i].index===index)return String(identities[i].display_name)+(identities[i].local===true?" · egen":"")
+        return lanOwned?"Okänd nod · P"+(index+1):"Producent "+(index+1)
+    }
+    function producerAccountText(index){
+        var rows=dag.test_accounts||[]
+        for(var i=0;i<rows.length;i++)if(rows[i].producer_index===index)return "\nDAG-testkonto · saldo "+String(rows[i].balance_atomic)+" atomer · nonce "+String(rows[i].nonce)+" · lokal förhandsvy"
+        return ""
+    }
+    function connectionLabel(value){return ({CONNECTED:"Ansluten",DEGRADED:"Störd kontakt",DISCONNECTED:"Ingen kontakt",EXHAUSTED:"Kvotstopp",STALE:"Äldre data",UNOBSERVED:"Ej observerad",PAIRING:"Parar",STOPPED:"Stoppad"})[String(value)]||"Ej uppmätt"}
+    readonly property string connectionState:observation.stale===true?"STALE":String(lan.connection_state||"")
+    readonly property bool activeTransportError:lanOwned&&!!lan.last_error&&connectionState!=="CONNECTED"&&connectionState!=="STALE"
+    readonly property string connectionDetails:(lan.peer_status||[]).map(function(peer){return String(peer.label)+": "+connectionLabel(peer.state)+(typeof peer.age_seconds==="number"?" · senast "+peer.age_seconds.toFixed(1)+" s":"")}).join("\n")
     function stressResultText(){return "DAG-prov · "+String(dagStress.state)+" · "+number(dagStress.blocks)+" förslag / "+number(dagStress.transactions)+" DAG-TX lokalt · "+(hasDagAcknowledgement?"nätkvittens från alla tre":"nätkvittens ej bekräftad")}
     function wave(){if(running&&canAct&&validJob&&!sequenceRunning&&!liveRunning)run("dag_wave",{blocks:Number(blockCount.text),transactions_per_block:Number(txPerBlock.text)})}
     function toggleLive(){
@@ -171,10 +188,10 @@ Item {
             Action { property string uiColorScope: "ui.control.GGParallelDagDashboard.4";objectName:"dagDagMode";text:root.width<600?"DAG":"DAGoblin";flat:true;checked:true;enabled:true}
         }
         Row {objectName:"dagPrimaryControls";anchors.right:parent.right;anchors.rightMargin:8;y:3;spacing:5
-            Action {property string uiColorScope:"ui.control.dag.lan";objectName:"dagLanSetup";text:root.lanOwned?"LAN · "+String(root.lan.state||""):"LAN";enabled:true;onClicked:lanPopup.open()}
+            Action {property string uiColorScope:"ui.control.dag.lan";objectName:"dagLanSetup";text:root.lanOwned?"LAN · "+(root.connectionState?root.connectionLabel(root.connectionState):String(root.lan.state||"")):"LAN";enabled:true;onClicked:lanPopup.open()}
             Action { property string uiColorScope: "ui.control.GGParallelDagDashboard.5";objectName:"dagRefresh";width:26;tip:"Läs aktuell lokal DAG-status";onClicked:root.refreshRequested();contentItem:Item{LedgerGlyph{ property string uiColorScope: "ui.widget.GGParallelDagDashboard.LedgerGlyph.6";anchors.centerIn:parent;width:13;height:13;name:"refresh";color:RuntimeTheme.GGTheme.text}}}
             Action { property string uiColorScope: "ui.control.GGParallelDagDashboard.6";objectName:"dagStart";text:root.primaryActionText;tip:root.primaryActionTip;enabled:root.primaryActionEnabled;onClicked:root.triggerPrimary()}
-            Action { property string uiColorScope: "ui.control.GGParallelDagDashboard.7";objectName:"dagStop";text:root.stopRequested?"■ Stoppar…":root.lanOwned?(root.width<600?"■ LAN-peer":"■ Stoppa LAN-peer"):"■ Stoppa";tip:root.lanOwned?"Avsluta den här apparatens LAN-peer":"Stoppa lokal DAG-session";enabled:(root.running||root.lanOwned)&&!root.stopRequested;onClicked:root.run("dag_stop",{})}
+            Action { property string uiColorScope: "ui.control.GGParallelDagDashboard.7";objectName:"dagStop";text:root.stopRequested?"■ Stoppar…":root.lanOwned?(root.width<600?"■ LAN-peer":"■ Stoppa LAN-peer"):"■ Stoppa";tip:root.lanOwned?"Avsluta den här apparatens LAN-peer":"Stoppa lokal DAG-session";enabled:!root.observerReadOnly&&(root.running||root.lanOwned)&&!root.stopRequested;onClicked:root.run("dag_stop",{})}
             Action { property string uiColorScope: "ui.control.GGParallelDagDashboard.8";objectName:"dagDetails";width:26;text:"⋯";enabled:true;tip:"Visa DAG-fakta";onClicked:root.toggleDetails()}
         }
         Rectangle {anchors.bottom:parent.bottom;width:parent.width;height:1;color:RuntimeTheme.GGTheme.line}
@@ -182,7 +199,8 @@ Item {
     Item {id:main;objectName:"dagMainViewport";y:toolbar.height;width:root.mainWidth;height:Math.max(0,root.height-y);clip:true
         NetworkWorkspaceLayout {id:workspace;objectName:"dagMainLayout";property string uiColorScope:"ui.widget.dag.workspace";anchors.fill:parent;prefix:"dag";bookTitles:["Producenter","Skapa","Förslag","Mätning"];page:desktop?0:1
             summaryPanel:Column {spacing:5
-                Label {objectName:"dagSummaryScope";colorKey:"ui.dag.summary.caption";width:parent.width;text:root.lanOwned?"Privat LAN · "+root.number(root.dag.producer_count)+" producenter · 2 egna · lokal validering, nätkvittens separat":"Signerade förslag · "+root.producerCount+" lokala producenter · kontrollpunkt krävs för finalitet";font.pixelSize:9;color:RuntimeTheme.GGTheme.dim}
+                Label {objectName:"dagSummaryScope";colorKey:"ui.dag.summary.caption";width:parent.width;text:root.lanOwned?"Privat LAN · "+String(root.lan.label||"Egen nod")+" · "+root.number(root.dag.producer_count)+" producenter · 2 egna · lokal validering, nätkvittens separat":"Signerade förslag · "+root.producerCount+" lokala producenter · kontrollpunkt krävs för finalitet";font.pixelSize:9;color:RuntimeTheme.GGTheme.dim}
+                Label {objectName:"dagObservationSource";width:parent.width;visible:root.observerReadOnly;text:"Visar CLI-noden "+String(root.observation.node_label||"")+" · "+(root.observation.stale===true?"ÄLDRE DATA":"live")+" · styrning i CLI";font.pixelSize:9;color:root.observation.stale===true?RuntimeTheme.GGTheme.warning:RuntimeTheme.GGTheme.cyan}
                 Label {objectName:"dagLimitNotice";colorKey:"ui.dag.summary.limit";width:parent.width;visible:root.liveLimited||root.live.state==="ERROR";text:root.notice;font.pixelSize:9;color:root.liveLimited?RuntimeTheme.GGTheme.warning:RuntimeTheme.GGTheme.negative}
                 Grid {id:metrics;width:parent.width;columns:width>=500?4:2;columnSpacing:8;rowSpacing:4
                     Repeater {model:4
@@ -232,18 +250,18 @@ Item {
             accountsPanel:Item {objectName:"dagProducersPanel"
                 Head {property string uiColorScope:"ui.widget.dag.producers.head";title:"PRODUCENTER";detail:(root.dag.producers||[]).length?"sessionens mätvärden":"hämtad delvy"}
                 Item {y:20;width:parent.width;height:15
-                    Label {colorKey:"ui.dag.producer.column.node";width:parent.width*.30;text:"NOD";font.pixelSize:8;color:RuntimeTheme.GGTheme.dim}
-                    Label {colorKey:"ui.dag.producer.column.blocks";x:parent.width*.30;width:parent.width*.20;text:"FÖRSLAG";font.pixelSize:8;color:RuntimeTheme.GGTheme.dim;horizontalAlignment:Text.AlignRight}
-                    Label {colorKey:"ui.dag.producer.column.tx";x:parent.width*.53;width:parent.width*.17;text:"TX";font.pixelSize:8;color:RuntimeTheme.GGTheme.dim;horizontalAlignment:Text.AlignRight}
-                    Label {colorKey:"ui.dag.producer.column.seq";x:parent.width*.74;width:parent.width*.26;text:root.asynchronous?"MÄTT /s":"SEKVENS";font.pixelSize:8;color:RuntimeTheme.GGTheme.dim;horizontalAlignment:Text.AlignRight}
+                    Label {colorKey:"ui.dag.producer.column.node";width:parent.width*.46;text:"NOD";font.pixelSize:8;color:RuntimeTheme.GGTheme.dim}
+                    Label {colorKey:"ui.dag.producer.column.blocks";x:parent.width*.46;width:parent.width*.14;text:"FÖRSLAG";font.pixelSize:8;color:RuntimeTheme.GGTheme.dim;horizontalAlignment:Text.AlignRight}
+                    Label {colorKey:"ui.dag.producer.column.tx";x:parent.width*.63;width:parent.width*.15;text:"TX";font.pixelSize:8;color:RuntimeTheme.GGTheme.dim;horizontalAlignment:Text.AlignRight}
+                    Label {colorKey:"ui.dag.producer.column.seq";x:parent.width*.81;width:parent.width*.19;text:root.asynchronous?"MÄTT /s":"SEKVENS";font.pixelSize:8;color:RuntimeTheme.GGTheme.dim;horizontalAlignment:Text.AlignRight}
                 }
                 ListView {objectName:"dagProducersList";y:35;width:parent.width;height:Math.max(0,parent.height-y-15);clip:true;model:root.producerRows.length;boundsBehavior:Flickable.StopAtBounds;ScrollBar.vertical:ScrollBar{}
                     delegate:Item {required property int index;readonly property var modelData:root.producerRows[index]||({});objectName:"dagProducerRow";width:ListView.view.width;height:25
                         Rectangle {id:producerMarker;x:1;y:10;width:5;height:5;radius:3;color:root.producerColor(modelData.index);GGColorTarget{target:producerMarker;colorKey:"ui.graph.block.producer."+modelData.index}}
-                        Label {colorKey:"ui.dag.producer.name";x:12;y:5;width:parent.width*.30-12;text:"Producent "+(modelData.index+1);font.pixelSize:9}
-                        Label {colorKey:"ui.dag.producer.blocks";x:parent.width*.30;y:5;width:parent.width*.20;text:modelData.blocks;font.pixelSize:9;horizontalAlignment:Text.AlignRight}
-                        Label {colorKey:"ui.dag.producer.tx";x:parent.width*.53;y:5;width:parent.width*.17;text:modelData.transactions;font.pixelSize:9;horizontalAlignment:Text.AlignRight}
-                        Label {colorKey:"ui.dag.producer.seq";x:parent.width*.74;y:5;width:parent.width*.26;text:root.asynchronous?typeof modelData.rate==="number"?modelData.rate.toFixed(1):"—":root.number(modelData.sequence);font.pixelSize:9;color:RuntimeTheme.GGTheme.dim;horizontalAlignment:Text.AlignRight}
+                        Label {objectName:"dagProducerName";colorKey:"ui.dag.producer.name";x:12;y:5;width:parent.width*.46-12;text:modelData.name;font.pixelSize:9;elide:Text.ElideRight;HoverHandler{id:producerNameHover}ToolTip.visible:producerNameHover.hovered;ToolTip.text:modelData.name+root.producerAccountText(modelData.index)}
+                        Label {colorKey:"ui.dag.producer.blocks";x:parent.width*.46;y:5;width:parent.width*.14;text:modelData.blocks;font.pixelSize:9;horizontalAlignment:Text.AlignRight}
+                        Label {colorKey:"ui.dag.producer.tx";x:parent.width*.63;y:5;width:parent.width*.15;text:modelData.transactions;font.pixelSize:9;horizontalAlignment:Text.AlignRight}
+                        Label {colorKey:"ui.dag.producer.seq";x:parent.width*.81;y:5;width:parent.width*.19;text:root.asynchronous?typeof modelData.rate==="number"?modelData.rate.toFixed(1):"—":root.number(modelData.sequence);font.pixelSize:9;color:RuntimeTheme.GGTheme.dim;horizontalAlignment:Text.AlignRight}
                         Rectangle {anchors.bottom:parent.bottom;width:parent.width;height:1;color:RuntimeTheme.GGTheme.line;opacity:.6}
                     }
                 }
@@ -252,20 +270,20 @@ Item {
             historyPanel:Item {objectName:"dagProposalsViewport"
                 Head {property string uiColorScope:"ui.widget.dag.proposals.head";title:"SENASTE FÖRSLAG";detail:root.rows.length+" st · ej finalitet"}
                 Item {y:20;width:parent.width;height:15
-                    Label {colorKey:"ui.dag.proposal.column.hash";width:parent.width*.38;text:"HASH / NOD";font.pixelSize:8;color:RuntimeTheme.GGTheme.dim}
-                    Label {colorKey:"ui.dag.proposal.column.rank";x:parent.width*.38;width:parent.width*.15;text:"RANG";font.pixelSize:8;color:RuntimeTheme.GGTheme.dim;horizontalAlignment:Text.AlignRight}
-                    Label {colorKey:"ui.dag.proposal.column.parents";x:parent.width*.55;width:parent.width*.16;text:"LÄNKAR";font.pixelSize:8;color:RuntimeTheme.GGTheme.dim;horizontalAlignment:Text.AlignRight}
-                    Label {colorKey:"ui.dag.proposal.column.tx";x:parent.width*.73;width:parent.width*.11;text:"TX";font.pixelSize:8;color:RuntimeTheme.GGTheme.dim;horizontalAlignment:Text.AlignRight}
-                    Label {colorKey:"ui.dag.proposal.column.status";x:parent.width*.87;width:parent.width*.13;text:"OK";font.pixelSize:8;color:RuntimeTheme.GGTheme.dim}
+                    Label {colorKey:"ui.dag.proposal.column.hash";width:parent.width*.32;text:"HASH";font.pixelSize:8;color:RuntimeTheme.GGTheme.dim}
+                    Label {colorKey:"ui.dag.proposal.column.rank";x:parent.width*.32;width:parent.width*.10;text:"RANG";font.pixelSize:8;color:RuntimeTheme.GGTheme.dim;horizontalAlignment:Text.AlignRight}
+                    Label {colorKey:"ui.dag.proposal.column.parents";x:parent.width*.44;width:parent.width*.11;text:"LÄNKAR";font.pixelSize:8;color:RuntimeTheme.GGTheme.dim;horizontalAlignment:Text.AlignRight}
+                    Label {colorKey:"ui.dag.proposal.column.tx";x:parent.width*.57;width:parent.width*.11;text:"TX";font.pixelSize:8;color:RuntimeTheme.GGTheme.dim;horizontalAlignment:Text.AlignRight}
+                    Label {colorKey:"ui.dag.proposal.column.status";x:parent.width*.70;width:parent.width*.30;text:"NOD ? SIGNATUR";font.pixelSize:8;color:RuntimeTheme.GGTheme.dim}
                 }
                 ListView {objectName:"dagProposalsList";y:35;width:parent.width;height:Math.max(0,parent.height-y);clip:true;model:root.rows.length;boundsBehavior:Flickable.StopAtBounds;ScrollBar.vertical:ScrollBar{}
                     delegate:Item {required property int index;readonly property var modelData:root.rows[index]||({});objectName:"dagProposalRow";width:ListView.view.width;height:25
-                        Label {colorKey:"ui.dag.proposal.hash";y:5;width:parent.width*.38;text:root.shortId(modelData.hash);font.pixelSize:9;color:RuntimeTheme.GGTheme.muted}
-                        Label {colorKey:"ui.dag.proposal.rank";x:parent.width*.38;y:5;width:parent.width*.15;text:root.number(modelData.rank);font.pixelSize:9;horizontalAlignment:Text.AlignRight}
-                        Label {colorKey:"ui.dag.proposal.parents";x:parent.width*.55;y:5;width:parent.width*.16;text:(modelData.parent_hashes||[]).length;font.pixelSize:9;horizontalAlignment:Text.AlignRight}
-                        Label {colorKey:"ui.dag.proposal.tx";x:parent.width*.73;y:5;width:parent.width*.11;text:root.number(modelData.transaction_count);font.pixelSize:9;horizontalAlignment:Text.AlignRight}
-                        Rectangle {x:parent.width*.87;y:10;width:5;height:5;radius:3;color:modelData.signature_verified?RuntimeTheme.GGTheme.cyan:RuntimeTheme.GGTheme.dim}
-                        Label {colorKey:"ui.dag.proposal.node";x:parent.width*.87+8;y:5;width:parent.width*.13-8;text:Number(modelData.proposer_index)>=0?"P"+(modelData.proposer_index+1):"G";font.pixelSize:8;color:RuntimeTheme.GGTheme.cyan}
+                        Label {colorKey:"ui.dag.proposal.hash";y:5;width:parent.width*.32;text:root.shortId(modelData.hash);font.pixelSize:9;color:RuntimeTheme.GGTheme.muted}
+                        Label {colorKey:"ui.dag.proposal.rank";x:parent.width*.32;y:5;width:parent.width*.10;text:root.number(modelData.rank);font.pixelSize:9;horizontalAlignment:Text.AlignRight}
+                        Label {colorKey:"ui.dag.proposal.parents";x:parent.width*.44;y:5;width:parent.width*.11;text:(modelData.parent_hashes||[]).length;font.pixelSize:9;horizontalAlignment:Text.AlignRight}
+                        Label {colorKey:"ui.dag.proposal.tx";x:parent.width*.57;y:5;width:parent.width*.11;text:root.number(modelData.transaction_count);font.pixelSize:9;horizontalAlignment:Text.AlignRight}
+                        Rectangle {x:parent.width*.70;y:10;width:5;height:5;radius:3;color:modelData.signature_verified?RuntimeTheme.GGTheme.cyan:RuntimeTheme.GGTheme.dim}
+                        Label {objectName:"dagProposalOwner";colorKey:"ui.dag.proposal.node";x:parent.width*.70+8;y:5;width:parent.width*.30-8;text:Number(modelData.proposer_index)>=0?root.producerName(modelData.proposer_index):"Genesis";font.pixelSize:8;elide:Text.ElideRight;color:RuntimeTheme.GGTheme.cyan;HoverHandler{id:proposalOwnerHover}ToolTip.visible:proposalOwnerHover.hovered;ToolTip.text:text}
                         Rectangle {anchors.bottom:parent.bottom;width:parent.width;height:1;color:RuntimeTheme.GGTheme.line;opacity:.6}
                     }
                 }
@@ -300,7 +318,7 @@ Item {
                     Action {objectName:"dagLanSettings";property string uiColorScope:"ui.control.dag.lan.settings";text:root.dagStress.supported===true?"DAG-stressprov & LAN":root.testTokens.enabled===true?"LAN & testtokenprov":"Parning & LAN-inställningar";enabled:true;onClicked:lanPopup.open()}
                     Label {colorKey:"ui.dag.lan.peer.count";y:6;text:(root.lan.authenticated_peers||[]).length+" autentiserade peers";color:RuntimeTheme.GGTheme.cyan}
                 }
-                Label {objectName:"dagOperationNotice";colorKey:"ui.dag.job.notice";width:parent.width;text:root.notice;font.pixelSize:9;color:root.operation.error||root.dag.error||(root.lanOwned&&(root.lan.last_error||root.dagStress.last_error))||root.live.state==="ERROR"?RuntimeTheme.GGTheme.negative:root.liveLimited?RuntimeTheme.GGTheme.warning:RuntimeTheme.GGTheme.dim}
+                Label {objectName:"dagOperationNotice";colorKey:"ui.dag.job.notice";width:parent.width;text:root.notice;font.pixelSize:9;color:root.operation.error||root.dag.error||(root.activeTransportError||(root.lanOwned&&root.dagStress.last_error))||root.live.state==="ERROR"?RuntimeTheme.GGTheme.negative:root.liveLimited?RuntimeTheme.GGTheme.warning:RuntimeTheme.GGTheme.dim}
             }
         }
     }
@@ -312,6 +330,9 @@ Item {
                     Column {spacing:0
                         Head {property string uiColorScope:"ui.widget.dag.rail.status.head";title:"MIN DAG-NOD"}
                         Fact {property string uiColorScope:"ui.widget.dag.rail.status";name:"Status";value:root.liveLabel;valueColor:root.liveLimited?RuntimeTheme.GGTheme.warning:root.liveRunning?RuntimeTheme.GGTheme.positive:RuntimeTheme.GGTheme.dim}
+                        Fact {objectName:"dagNodeOwner";visible:root.lanOwned;name:"Egen nod";value:String(root.lan.label||"—")}
+                        Fact {objectName:"dagConnectionStatus";visible:root.lanOwned;name:"Kontakt nu";value:root.connectionLabel(root.connectionState);valueColor:root.connectionState==="CONNECTED"?RuntimeTheme.GGTheme.positive:RuntimeTheme.GGTheme.warning;HoverHandler{id:connectionHover}ToolTip.visible:connectionHover.hovered;ToolTip.text:root.connectionDetails}
+                        Fact {objectName:"dagReceivedTraffic";visible:root.lanOwned;name:"TCP mottaget";value:root.bytes(root.lan.traffic_bytes)}
                         Fact {property string uiColorScope:"ui.widget.dag.rail.engine";name:"Motor";value:"DAGoblin · experiment"}
                         Fact {property string uiColorScope:"ui.widget.dag.rail.producers";name:"Producenter / trådar";value:root.number(root.dag.producer_count)+" / "+root.number(root.dag.worker_count)}
                         Fact {property string uiColorScope:"ui.widget.dag.rail.peers";name:"Peers";value:root.lanOwned?(root.lan.authenticated_peers||[]).length+" autentiserade / "+root.number(root.lan.configured_peers)+" parade":"0 · inget P2P"}

@@ -255,7 +255,7 @@ Item {
             if(!row||typeof row!=="object"||Array.isArray(row))continue
             var code=resultCode(row.code),at=resultTime(row.at)
             if(code===null||at===null)continue
-            history.push({at:at,operation:transportOperation(row.operation),stage:transportStage(row.stage),code:code,peer_label:resultPeerLabel(row.peer_label),expected:typeof row.expected==="boolean"?row.expected:null,reason:resultEnum(row.reason,["","RATE","HANDLERS","SESSION","BYTES"])})
+            history.push({at:at,operation:transportOperation(row.operation),stage:transportStage(row.stage),code:code,peer_label:resultPeerLabel(row.peer_label),expected:typeof row.expected==="boolean"?row.expected:null,reason:resultEnum(row.reason,["","RATE","HANDLERS","SESSION","BYTES","NO_REQUEST"])})
         }
         var details=root.lan.last_error_details||({})
         return {state:resultEnum(source.state,["ACTIVE","EXHAUSTED","STOPPED"]),exhausted_reason:resultEnum(source.exhausted_reason,["","SESSION","BYTES","FRAMES"]),
@@ -364,10 +364,11 @@ Item {
         ScrollView {anchors.fill:parent;clip:true;contentWidth:availableWidth
             Column {id:body;width:parent.width;spacing:8
                 Label {colorKey:"ui.lan.scope";width:parent.width;text:"Tre parade peers · två egna producenter per apparat. Riktiga signerade förslag över TCP; ingen kanonisk finalitet eller finansiell handel.";color:RuntimeTheme.GGTheme.dim}
+                Label {objectName:"lanObserverSource";width:parent.width;visible:(root.state.observation||{}).read_only===true;text:"Visar den redan körande CLI-noden. Start, stopp och nodinställningar styrs i dess CLI.";color:RuntimeTheme.GGTheme.cyan}
                 Row {width:parent.width;spacing:8
                     Label {objectName:"lanSetupStatus";colorKey:"ui.lan.status";width:parent.width-146;text:root.owned?String(root.lan.state||"STARTING")+" · "+String(root.lan.endpoint?root.lan.endpoint.host+":"+root.lan.endpoint.port:"")+" · "+(root.lan.authenticated_peers||[]).length+" autentiserade peers":"Ingen LAN-peer startad";color:root.ready?RuntimeTheme.GGTheme.positive:RuntimeTheme.GGTheme.dim}
                     Action {width:30;text:"↻";enabled:root.canAct;onClicked:root.refreshRequested()}
-                    Action {objectName:"lanPriorityStop";width:100;text:root.stopPending?"Stoppar…":"■ Stoppa";enabled:root.owned&&!root.stopPending;onClicked:root.priorityStopRequested()}
+                    Action {objectName:"lanPriorityStop";width:100;text:root.stopPending?"Stoppar…":"■ Stoppa";enabled:(root.state.observation||{}).read_only!==true&&root.owned&&!root.stopPending;onClicked:root.priorityStopRequested()}
                 }
                 Label {objectName:"lanSetupError";colorKey:"ui.lan.error";width:parent.width;visible:text.length>0;text:root.formError||root.operationError||String(root.setup.announcement_error||"")||root.transportErrorText();color:RuntimeTheme.GGTheme.negative}
                 Label {objectName:"lanTransportStatus";colorKey:"ui.lan.transport.status";width:parent.width;visible:text.length>0;text:root.transportSummaryText();color:root.transportExhausted?RuntimeTheme.GGTheme.negative:RuntimeTheme.GGTheme.dim;font.pixelSize:9}

@@ -4,6 +4,67 @@ Första målet är en Windows-dator, en Linux-dator och en Androidtelefon med
 Termux på samma privata nät. VPS och huvudnät ingår inte i detta steg.
 Samma headless-transport används av Desktop och terminalpaketen.
 
+## Samma nod i CLI och Desktop
+
+En redan startad GG-CLI-nod publicerar nu sin offentliga LAN-status lokalt för
+samma inloggade användare. När Desktop inte äger en egen LAN-peer visar
+**CRYPTO → NÄTVERK → DAGoblin** CLI-nodens faktiska graf, verifierade block och
+TX, testkonton, mätningar och peerstatus. Ingen extra nod startas. Vyn märks
+**Visar CLI-noden**; start, stopp och nodinställningar görs i det CLI som äger
+noden. Privata nycklar, mnemonic, lösenord och walletfiler ingår aldrig i den
+delade nodstatusen. DAG-testkontonas saldon är en lokal förhandsvy och är inte
+ett påstående om kanonisk finalitet eller en publik wallets saldo.
+
+CLI och Desktop måste använda samma operativsystemsanvändare och samma
+`XDG_DATA_HOME` för denna lokala läsvy. Det krävs ingen extra nätverksport.
+Status uppdateras av den vanliga CLI-observationen, normalt varje sekund.
+Efter fem sekunder utan en ny lokal observation markeras data som gamla.
+En avslutad process eller flera samtidigt aktiva CLI-källor väljs aldrig
+tyst som en ny levande nod. En Desktop-peer som användaren själv har startat
+behåller sin egen datakälla och styrning.
+
+Anslutning och historik visas separat: en godkänd parning betyder inte att en
+peer fortfarande svarar. Varje peer får en aktuell kontaktstatus och tiden
+sedan dess senaste fullständiga autentiserade utbyte. Kontakten blir gammal
+efter 15 sekunder och frånkopplad efter 45 sekunder utan nytt bekräftat utbyte.
+TCP-byte, lokalt signaturverifierade DAG-TX och gemensam provkvittens är
+separata mått. Testnät och huvudnät måste senare tillföra sina egna faktiska
+nätverksobservationer till samma typ av vy; privat LAN aktiverar dem inte.
+
+## Producenter och blockens avsändare
+
+Producentnamnen hämtas från sessionens signerade roster och dess exakta
+producentindex. Exempelvis visas **Windows · 1**, **Linux · 2** och
+**Termux · 1**, med **egen** på den aktuella nodens två producenter. Samma
+identitet används i producentlistan, senaste block, blockets tillgänglighets-
+text, tooltip och detaljvy. Namnen är de som valdes vid parningen; de är inte
+en fristående attestering av operativsystem eller fysisk hårdvara. Okända
+mappningar visas som okända och gissas aldrig från ett löpnummer.
+
+## Transport vid ojämn fördröjning
+
+Den 31 oktober visade de fysiska proven fel under PREPARE och BEGIN mot
+Linux. Linuxunderlaget rapporterade TCP-omsändningar och svarstider upp till
+1,8 sekunder. Källkodens tidigare gräns på en sekund per fullständigt
+meddelande kunde därför avbryta ett giltigt autentiseringsutbyte.
+
+Den uppdaterade profilen tillåter högst tre sekunder per meddelande och åtta
+sekunder per anslutning, alltid begränsat av provets tidigare gemensamma
+arbetsdeadline. Socketar fortsätter att kontrollera avbrott med korta
+pollintervall. En RPC med förlorad kvittens skickas inte om automatiskt.
+De två andra peersens blockutbyten har var sin fast, ägd arbetsloop så att en
+långsam peer inte blockerar den andra. En ren TCP-kontroll som stänger utan
+att skicka något bokförs som en väntad stängning; en avbruten eller felaktig
+protokollram är fortfarande ett fel.
+
+Standardknappen startar ett 10-sekundersprov med **1 TX/block och 250 ms**.
+Högre belastning väljs uttryckligen i LAN-panelen efter en fungerande baslinje.
+Regressionsproven omfattar verklig signerad autentisering över en injicerad
+1,8-sekunderslucka och tre separata lokala processer. De ersätter inte det
+nya fysiska provet efter att alla tre apparater har uppdaterats och startats
+om av användaren. Den bakomliggande orsaken i Wi-Fi, router eller drivrutin
+är fortfarande inte fastställd av dessa kodtester.
+
 ## Vad som överförs
 
 Varje peer skapar två egna tillfälliga producentnycklar och en separat

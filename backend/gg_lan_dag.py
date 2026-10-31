@@ -42,8 +42,13 @@ MAX_TOTAL_BYTES=32*1024*1024
 MAX_REQUESTS=16384
 ORPHAN_SECONDS=5.0
 IO_TIMEOUT=.35
-FRAME_SECONDS=1.0
-CONNECTION_SECONDS=3.0
+# A TCP retransmission on the measured Wi-Fi path can take 1.8 seconds.
+# Socket polling remains short for cancellation; complete signed frames and
+# handshakes have separate finite budgets, always capped by the caller's run.
+FRAME_SECONDS=3.0
+CONNECTION_SECONDS=8.0
+PEER_FRESH_SECONDS=15.0
+PEER_OFFLINE_SECONDS=45.0
 _HEX=re.compile(r'^[0-9a-f]{64}$')
 _SIG=re.compile(r'^[0-9a-f]{128}$')
 _PRIVATE=tuple(ipaddress.ip_network(value) for value in ('10.0.0.0/8','172.16.0.0/12','192.168.0.0/16','127.0.0.0/8'))
@@ -223,6 +228,7 @@ class LanDagPeer:
         self._handlers=set();self._sockets=set();self._slots=threading.BoundedSemaphore(4)
         self._orphans=OrderedDict();self._orphan_bytes=0;self._sync_gap=False
         self._traffic={};self._total_bytes=0;self._rejected=0;self._last_error='';self._last_error_at=0.0;self._last_error_details={};self._seen={}
+        self._seen_monotonic={};self._peer_failures={};self._peer_exchanges={}
         self._raw_received=0;self._connection_times=deque(maxlen=32);self._connections_admitted=0
         self._outbound_next={};self._gossip_next={};self._gossip_health={};self._control_waiters={}
         self._transport_exhausted='';self._transport_revision=0;self._transport_history=deque(maxlen=32)
@@ -666,7 +672,7 @@ class LanDagPeer:
             return self._dag_stress_snapshot()
 
     def _dag_coordinate(self,plan,cancel):
-        attempted=[];statuses={};terminal='TIME_BUDGET';reason='DURATION';error='';synced=False
+        attempted=[];statuses={};cleanup_statuses={};terminal='TIME_BUDGET';reason='DURATION';error='';synced=False
         deadline=plan['deadline'];run_id=plan['body']['run_id']
         phase='PREPARE';phase_started=time.monotonic();phase_ms={};details={};failure_phase='';status_polls=0
         acknowledgement_basis='';observed_before_deadline=False
@@ -747,6 +753,7 @@ class LanDagPeer:
             for peer in attempted:
                 try:
                     observation=self._token_rpc(peer,'DAG_STRESS_STOP',{'run_id':run_id},deadline=cleanup_deadline)
+                    cleanup_statuses[peer]=observation
                     # Later cleanup may invalidate an earlier observation, but
                     # can never establish a new ACK after the work deadline.
                     peer_error=peer_failure(observation)
@@ -767,10 +774,10 @@ class LanDagPeer:
             enter_phase('FINALIZE')
             rows=[]
             for peer,roster in self._roster.items():
-                status=local if peer==self.public_key else statuses.get(peer,{})
+                status=local if peer==self.public_key else cleanup_statuses.get(peer,{})
                 proof=status.get('evidence',{})
                 rows.append({'label':roster['label'],'local':peer==self.public_key,'opted_in':roster.get('allow_dag_transactions') is True,
-                    'state':terminal if peer==self.public_key else status.get('state','UNOBSERVED'),'blocks':proof.get('blocks'),'transactions':proof.get('transactions'),
+                    'state':terminal if peer==self.public_key else status.get('state','UNCONFIRMED'),'blocks':proof.get('blocks'),'transactions':proof.get('transactions'),
                     'protocol_fault':proof.get('protocol_fault',''),'blockset_digest':proof.get('blockset_digest'),'state_root':proof.get('state_root')})
             with self._lock:
                 self._dag_stress.update(state=terminal,stop_reason=reason,last_error=error,elapsed_ms=round(elapsed*1000),
@@ -946,11 +953,14 @@ class LanDagPeer:
             with self._lock:self._sockets.discard(sock);self._circle_sockets.discard(sock)
             sock.close()
 
-    def _read(self,sock,limit,*,deadline=None,check=None,bulk=False):
+    def _read(self,sock,limit,*,deadline=None,check=None,bulk=False,on_bytes=None):
         def permitted():
             if self._cancel.is_set():raise ValueError('GG_LAN_STOPPED')
             if check is not None:check()
-        return _receive(sock,limit,account=self._account_received,deadline=deadline,check=permitted,
+        def account(size):
+            self._account_received(size)
+            if on_bytes is not None:on_bytes(size)
+        return _receive(sock,limit,account=account,deadline=deadline,check=permitted,
             frame_seconds=BULK_SECONDS if bulk else FRAME_SECONDS)
 
     def _accept(self):
@@ -1023,10 +1033,11 @@ class LanDagPeer:
         return digest(body,b'GG-LAN-DAG-CHANNEL-v1\0')
 
     def _serve(self,sock,address):
-        operation='INCOMING';stage='RECEIVE';peer=None;complete=False
+        operation='INCOMING';stage='RECEIVE';peer=None;complete=False;first_bytes=[0]
+        def first_received(size):first_bytes[0]+=size
         try:
             deadline=time.monotonic()+CONNECTION_SECONDS
-            first,size=self._read(sock,MAX_BUNDLE+1024,deadline=deadline)
+            first,size=self._read(sock,MAX_BUNDLE+1024,deadline=deadline,on_bytes=first_received)
             self._credit('unconfigured',size)
             if first=={'kind':'invite'}:
                 stage='SEND';_send(sock,self.public_invite(),MAX_INVITE,deadline=deadline);complete=True;return
@@ -1062,7 +1073,7 @@ class LanDagPeer:
                     code=str(error)
                     result={'error':code if re.fullmatch(r'GG_[A-Z0-9_]{1,80}',code) else 'GG_LAN_TOKEN_REQUEST_FAILED'}
                 stage='SEND';self._credit('out:'+peer,_send(sock,self._frame(session,0,'TOKEN_RESULT',result),MAX_FRAME,deadline=deadline))
-                with self._lock:self._seen[peer]=time.time()
+                self._mark_seen(peer)
                 complete=True;return
             stage='EXECUTE'
             if body['kind']=='PAGE' and isinstance(payload,dict) and set(payload)=={'after'}:
@@ -1092,9 +1103,10 @@ class LanDagPeer:
                     self._credit('out:'+peer,_send(sock,value,MAX_FRAME,deadline=deadline,frame_seconds=BULK_SECONDS if bulk else FRAME_SECONDS))
                     sequence+=1
             self._credit('out:'+peer,_send(sock,self._frame(session,sequence,'END',{'records':len(records)}),MAX_FRAME,deadline=deadline,frame_seconds=BULK_SECONDS if bulk else FRAME_SECONDS))
-            with self._lock:self._seen[peer]=time.time()
+            self._mark_seen(peer)
             complete=True
-        except Exception as error:self._error(error,operation,stage,peer)
+        except Exception as error:
+            self._error(error,operation,stage,peer,empty_probe=peer is None and stage=='RECEIVE' and first_bytes[0]==0)
         finally:
             if complete:self._transport_success()
             try:sock.close()
@@ -1102,12 +1114,12 @@ class LanDagPeer:
                 with self._lock:self._sockets.discard(sock);self._handlers.discard(threading.current_thread())
                 self._slots.release()
 
-    def _error(self,error,operation='',stage='',peer=None,*,reason='',cancel=None):
+    def _error(self,error,operation='',stage='',peer=None,*,reason='',cancel=None,empty_probe=False):
         with self._lock:
             if getattr(error,'_gg_lan_recorded',False):return
             error._gg_lan_recorded=True
             code=_failure_code(error);details=_failure_details(error,operation,stage);stamp=time.time()
-            expected=(self._cancel.is_set() or cancel is not None and cancel.is_set()) and code in {
+            expected=(empty_probe and code=='GG_LAN_EOF') or (self._cancel.is_set() or cancel is not None and cancel.is_set()) and code in {
                 'GG_LAN_EOF','GG_LAN_IO_TIMEOUT','GG_LAN_CONNECTION_RESET','GG_LAN_CONNECTION_REFUSED',
                 'GG_LAN_BROKEN_PIPE','GG_LAN_IO_FAILED','GG_LAN_READ_DEADLINE','GG_LAN_SEND_DEADLINE',
                 'GG_LAN_CIRCLE_DEADLINE','GG_LAN_STOPPED','GG_LAN_CIRCLE_CANCELLED'}
@@ -1116,12 +1128,49 @@ class LanDagPeer:
                     or re.search(r'[0-9a-f]{16,}|[A-Za-z0-9]{24,}|[0-9a-f]{8}-[0-9a-f]{4}-|secret|password|bearer|api[_ -]?key|token',label,re.I)):label=''
             reason=reason if reason in self._transport_counts['admission_drops'] else ''
             if reason:self._transport_counts['admission_drops'][reason]+=1
+            if empty_probe and code=='GG_LAN_EOF':reason='NO_REQUEST'
             self._transport_counts['expected_closures' if expected else 'failures']+=1
             self._transport_history.append({'at':stamp,'operation':details['operation'],'stage':details['stage'],
                 'code':code,'peer_label':label,'expected':expected,'reason':reason})
             self._transport_revision+=1
             if not expected:
                 self._rejected+=1;self._last_error=code;self._last_error_at=stamp;self._last_error_details=details
+                if peer in self._roster:
+                    self._peer_failures[peer]={'monotonic':time.monotonic(),'code':code,'at':stamp}
+
+    def _mark_seen(self,peer):
+        """Only completed, authenticated exchanges establish recent contact."""
+        with self._lock:
+            self._seen[peer]=time.time();self._seen_monotonic[peer]=time.monotonic()
+            self._peer_exchanges[peer]=self._peer_exchanges.get(peer,0)+1
+
+    def _peer_observations(self):
+        now=time.monotonic();rows=[]
+        for peer,owner in self._roster.items():
+            if peer==self.public_key:continue
+            seen=self._seen_monotonic.get(peer)
+            age=max(0,now-seen) if seen is not None else None
+            failure=self._peer_failures.get(peer,{})
+            failed=bool(failure) and (seen is None or failure.get('monotonic',-1)>seen)
+            state=('STOPPED' if self._cancel.is_set() else 'EXHAUSTED' if self._transport_exhausted else 'UNOBSERVED' if age is None
+                   else 'DISCONNECTED' if age>PEER_OFFLINE_SECONDS else 'STALE' if age>PEER_FRESH_SECONDS
+                   else 'DEGRADED' if failed else 'CONNECTED')
+            rows.append({'label':owner.get('label','Okänd nod'),'state':state,'last_seen':self._seen.get(peer),
+                         'age_seconds':round(age,1) if age is not None else None,
+                         'authenticated_recently':age is not None and age<=PEER_FRESH_SECONDS and not self._cancel.is_set() and not self._transport_exhausted,
+                         'completed_exchanges':self._peer_exchanges.get(peer,0),
+                         'last_error':failure.get('code','') if failed else '',
+                         'producer_indices':list(owner.get('producer_indices',()))})
+        return rows
+
+    def _producer_identities(self):
+        rows=[]
+        for peer,owner in self._roster.items():
+            for slot,index in enumerate(owner.get('producer_indices',())):
+                rows.append({'index':index,'node_label':owner['label'],'local':peer==self.public_key,
+                             'node_producer_index':slot,'display_name':owner['label']+' · '+str(slot+1),
+                             'identity_basis':'SIGNED_SESSION_ROSTER'})
+        return sorted(rows,key=lambda row:row['index'])
 
     def _token_ledger(self):
         ledger=self._tokens
@@ -1228,7 +1277,7 @@ class LanDagPeer:
                     code=result['error']
                     raise ValueError(code if isinstance(code,str) and re.fullmatch(r'GG_[A-Z0-9_]{1,80}',code) else 'GG_LAN_TOKEN_REQUEST_FAILED')
                 permitted()
-                with self._lock:self._seen[peer]=time.time()
+                self._mark_seen(peer)
                 self._transport_success()
                 return result
         except Exception as error:
@@ -1471,7 +1520,7 @@ class LanDagPeer:
                     stage='VALIDATE';frame=self._check_frame(response,size,peer,session,sequence)
                     if frame['kind']=='END':
                         if assembler.pending or frame['payload']!={'records':completed}:raise ValueError('GG_LAN_PAGE_END')
-                        with self._lock:self._seen[peer]=time.time()
+                        self._mark_seen(peer)
                         self._transport_success();return completed
                     data=frame['payload']
                     if frame['kind']=='DATA_START':
@@ -1498,31 +1547,38 @@ class LanDagPeer:
             assembler.close();memory.close()
 
     def _gossip_loop(self):
+        # A stalled peer must not stop the other peer's actual block exchange.
+        # The signed roster is fixed for this session: exactly two owned lanes.
+        workers=[threading.Thread(target=self._gossip_peer_loop,args=(peer,),
+                    name='gg-lan-peer-'+str(index),daemon=True)
+                 for index,peer in enumerate(tuple(self._cursors)[:MAX_PEERS-1])]
+        for worker in workers:worker.start()
+        for worker in workers:worker.join()
+
+    def _gossip_peer_loop(self,peer):
         while not self._cancel.wait(.1):
             with self._lock:
                 if self._transport_exhausted:return
-            for peer in tuple(self._cursors):
-                if self._cancel.is_set():break
-                if self._resources_paused():continue
-                try:
-                    active=self._gossip_active()
-                    with self._lock:
-                        health=self._gossip_health.get(peer,{})
-                        next_poll=health.get('next',0)
-                        if active and health.get('errors',0):
-                            next_poll=min(next_poll,health.get('at',next_poll)+1.0)
-                        if time.monotonic()<next_poll and (not active or health.get('errors',0)):continue
-                        missing=[]
-                        for item in self._orphans.values():
-                            for identifier in item['parents']:
-                                if not self._engine.has_proposal(identifier) and identifier not in missing:missing.append(identifier)
-                        missing=missing[:8];cursor=self._cursors[peer]
-                    received=self._pull(peer,'GET',{'hashes':missing}) if missing else 0
-                    received=(received or 0)+(self._pull(peer,'PAGE',{'after':cursor}) or 0);self._drain_orphans()
-                    self._gossip_result(peer,progress=received>0,active=active)
-                except Exception as error:
-                    self._error(error);self._gossip_result(peer,error=True,active=self._gossip_active())
-            if self._tokens is not None and self.public_key!=self._trusted and time.monotonic()-self._last_token_sync>=1:
+            if self._resources_paused():continue
+            try:
+                active=self._gossip_active()
+                with self._lock:
+                    health=self._gossip_health.get(peer,{})
+                    next_poll=health.get('next',0)
+                    if active and health.get('errors',0):
+                        next_poll=min(next_poll,health.get('at',next_poll)+1.0)
+                    if time.monotonic()<next_poll and (not active or health.get('errors',0)):continue
+                    missing=[]
+                    for item in self._orphans.values():
+                        for identifier in item['parents']:
+                            if not self._engine.has_proposal(identifier) and identifier not in missing:missing.append(identifier)
+                    missing=missing[:8];cursor=self._cursors[peer]
+                received=self._pull(peer,'GET',{'hashes':missing}) if missing else 0
+                received=(received or 0)+(self._pull(peer,'PAGE',{'after':cursor}) or 0);self._drain_orphans()
+                self._gossip_result(peer,progress=received>0,active=active)
+            except Exception as error:
+                self._error(error);self._gossip_result(peer,error=True,active=self._gossip_active())
+            if self._tokens is not None and peer==self._trusted and time.monotonic()-self._last_token_sync>=1:
                 self._last_token_sync=time.monotonic()
                 try:
                     with self._token_operation:self._sync_tokens()
@@ -1531,13 +1587,22 @@ class LanDagPeer:
     def snapshot(self):
         with self._lock:
             engine=self._engine;ledger=self._tokens;circle=dict(self._circle);participant_plan=self._token_plan
+            peers=self._peer_observations();identities=self._producer_identities()
+            contact=('STOPPED' if self._cancel.is_set() else 'EXHAUSTED' if self._transport_exhausted else 'PAIRING' if not engine
+                     else 'CONNECTED' if peers and all(row['state']=='CONNECTED' for row in peers)
+                     else 'DEGRADED' if any(row['state'] in ('CONNECTED','DEGRADED','STALE') for row in peers)
+                     else 'DISCONNECTED')
             network={'state':'STOPPED' if self._cancel.is_set() else 'EXHAUSTED' if self._transport_exhausted else 'READY' if engine else 'PAIRING',
                 'scope':'PRIVATE_LAN_SESSION_EXPERIMENT','label':self.label,'endpoint':{'host':self.host,'port':self.port},
                 'allowed_cidr':str(self.allowed),'public_key':self.public_key,'trusted_coordinator':self._trusted,'auto_produce':self.auto_produce,
                 'network_id':self._network,'producer_count':6 if engine else 0,'local_producer_indices':list(self._local_indices),
                 'candidate_invite_count':len(self._candidates),'configured_peers':len(self._roster),'authenticated_peers':[{'label':self._roster[peer]['label'],'last_seen':stamp,
                     'endpoint':{'host':self._roster[peer]['host'],'port':self._roster[peer]['port']},'producer_indices':self._roster[peer]['producer_indices']}
-                    for peer,stamp in self._seen.items()],
+                    for peer,stamp in self._seen.items() if peer in self._roster and peer in self._seen_monotonic
+                    and time.monotonic()-self._seen_monotonic[peer]<=PEER_FRESH_SECONDS and not self._cancel.is_set() and not self._transport_exhausted],
+                'connection_state':contact,'peer_status':peers,'producer_identities':identities,
+                'network_kind':'PRIVATE_LAN','peer_fresh_seconds':PEER_FRESH_SECONDS,
+                'authenticated_exchanges':sum(self._peer_exchanges.values()),
                 'physical_hosts_verified':False,'transactions_enabled':self._dag_enabled,'traffic_confidentiality':False,
                 'allow_test_tokens':self.allow_test_tokens,'test_tokens_enabled':ledger is not None,'allow_dag_transactions':self.allow_dag_transactions,
                 'orphan_count':len(self._orphans),'orphan_bytes':self._orphan_bytes,'sync_gap':self._sync_gap,
@@ -1572,7 +1637,24 @@ class LanDagPeer:
                 interval_ms=body['dag_stress']['interval_ms'],cadence_origin='LOCAL_CONFIGURED_STRESS_WORKER',
                 target_proposal_bps=len(self._local_indices)*1000/body['dag_stress']['interval_ms'] if body['dag_stress']['interval_ms'] else None,
                 blocks=len(self._local_indices),transactions_per_block=body['dag_stress']['transactions_per_block'])
-        if engine:body['block_graph']['source']='LAN_SIGNED_PROPOSAL_DAG'
+        if engine:
+            graph=body['block_graph'];graph['source']='LAN_SIGNED_PROPOSAL_DAG'
+            graph['producer_identities']=deepcopy(identities)
+            owners={row['index']:row for row in identities}
+            if self._dag_enabled:
+                body['test_accounts']=engine.lan_test_accounts()
+                for account in body['test_accounts']:
+                    owner=owners.get(account['producer_index'])
+                    if owner:account.update(node_label=owner['node_label'],local=owner['local'],display_name=owner['display_name'])
+            for producer in body.get('producers',[]):
+                owner=owners.get(producer['index'])
+                if owner:producer.update(owner)
+            for block in graph.get('blocks',[]):
+                owner=owners.get(block.get('proposer_index'))
+                if owner and block.get('state')!='GENESIS':
+                    block.update(producer_name=owner['display_name'],node_label=owner['node_label'],local_producer=owner['local'])
+            network['verified_dag_blocks']=body.get('blocks_admitted',0)
+            network['verified_dag_transactions']=body.get('transactions_validated',0)
         return body
 
     def telemetry_revision(self):

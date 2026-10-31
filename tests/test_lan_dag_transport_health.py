@@ -49,6 +49,43 @@ class ConnectSocket(FakeSocket):
 
 
 class TransportHealthTests(unittest.TestCase):
+    def test_bare_tcp_probe_is_expected_but_partial_protocol_data_is_an_error(self):
+        peer=lan.LanDagPeer('owned-tcp-probe','127.0.0.1',0);self.addCleanup(peer.stop)
+        invite=peer.start_pairing();endpoint=(invite['body']['host'],invite['body']['port'])
+        for payload in (b'',b'\x00\x00'):
+            with socket.create_connection(endpoint,timeout=1) as sock:
+                if payload:sock.sendall(payload)
+            deadline=lan.time.monotonic()+1
+            expected_count=1 if not payload else 2
+            while peer._transport_counts['expected_closures']+peer._transport_counts['failures']<expected_count:
+                self.assertLess(lan.time.monotonic(),deadline)
+                threading.Event().wait(.01)
+        self.assertEqual(peer._transport_counts['expected_closures'],1)
+        self.assertEqual(peer._transport_counts['failures'],1)
+        self.assertEqual(peer._transport_history[0]['reason'],'NO_REQUEST')
+        self.assertFalse(peer._transport_history[1]['expected'])
+        self.assertFalse(peer._seen_monotonic)
+
+    def test_one_slow_peer_does_not_serialize_the_other_peers_gossip(self):
+        peer=lan.LanDagPeer('owned-fairness');self.addCleanup(peer.stop)
+        slow='a'*64;fast='b'*64;entered=threading.Event();release=threading.Event();progress=threading.Event()
+        self.addCleanup(release.set)
+        peer._cursors={slow:0,fast:0}
+        peer._roster={slow:{'label':'Linux','producer_indices':[0,1]},fast:{'label':'Termux','producer_indices':[2,3]}}
+        count=[0]
+        def pull(remote,kind,payload):
+            if remote==slow:entered.set();release.wait(1.5)
+            else:
+                count[0]+=1
+                if count[0]>=2:progress.set()
+            return 0
+        with patch.object(peer,'_pull',side_effect=pull),patch.object(peer,'_gossip_active',return_value=True):
+            peer._gossip=threading.Thread(target=peer._gossip_loop,daemon=True);peer._gossip.start()
+            self.assertTrue(entered.wait(.8))
+            self.assertTrue(progress.wait(.6),'Healthy peer was blocked behind the slow peer')
+            release.set();peer.stop()
+        self.assertFalse(peer._gossip.is_alive())
+
     def peer(self):
         peer=lan.LanDagPeer('local-fixture');remote='a'*64
         peer._roster={remote:{'label':'Linux','host':'127.0.0.1','port':16555,'producer_indices':[0,1]}}
@@ -73,7 +110,7 @@ class TransportHealthTests(unittest.TestCase):
 
     def test_send_default_is_finite_and_late_return_fails_closed(self):
         sock=FakeSocket()
-        with patch.object(lan.time,'monotonic',side_effect=(100,100,102)):
+        with patch.object(lan.time,'monotonic',side_effect=(100,100,100+lan.FRAME_SECONDS+1)):
             with self.assertRaisesRegex(ValueError,'GG_LAN_SEND_DEADLINE'):
                 lan._send(sock,{'state':'READY'},lan.MAX_FRAME)
         self.assertEqual(sock.timeout,lan.FRAME_SECONDS);self.assertEqual(sock.calls,1)
@@ -394,7 +431,7 @@ class TransportHealthTests(unittest.TestCase):
     def test_rpc_budget_starts_before_pacing_connect_and_is_shared_through_auth_send_read(self):
         for work_budget in (.9,10):
             with self.subTest(work_budget=work_budget):
-                peer,remote=self.peer();clock=Clock();sock=FakeSocket();deadline=min(103,100+work_budget)
+                peer,remote=self.peer();clock=Clock();sock=FakeSocket();deadline=min(100+lan.CONNECTION_SECONDS,100+work_budget)
                 def pace(*args,**kwargs):clock.now+=.2
                 class Connected:
                     def __enter__(self):clock.now+=.6;return sock

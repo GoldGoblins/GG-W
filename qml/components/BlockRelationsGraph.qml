@@ -92,6 +92,8 @@ Item {
         return result
     }
     function refresh() {
+        // A coalesced refresh may run after its source/page destroyed the item.
+        if(!root||!root._ready||typeof root.refreshGraph!=="function")return
         if(!inspectRefresh){refreshGraph();return}
         var started=Date.now()
         try{refreshGraph()}
@@ -127,7 +129,7 @@ Item {
             }
             seen[h]=true
             rows.push({hash:h,parent_hash:p,parent_hashes:parents,height:r.height,rank:rank,
-                transaction_count:typeof r.transaction_count==="number" && isFinite(r.transaction_count) && r.transaction_count>=0 && r.transaction_count<=4096 && r.transaction_count%1===0 ? r.transaction_count : null,
+                transaction_count:typeof r.transaction_count==="number" && isFinite(r.transaction_count) && r.transaction_count>=0 && r.transaction_count<=(dagMode?50000:4096) && r.transaction_count%1===0 ? r.transaction_count : null,
                 timestamp:typeof r.timestamp==="number" ? r.timestamp : null,
                 certificate_verified:!dagMode && r.certificate_verified===true,
                 signature_verified:dagMode && !genesis && r.signature_verified===true,
@@ -345,6 +347,11 @@ Item {
         return pointMode && dagMode && typeof phase==="number" ? baseline+Math.sin(phase*1.7)*Math.min(5,plot.height/32) : baseline
     }
     function proposerColor(lane) {return RuntimeTheme.GGColorContext.colorFor("ui.graph.block.producer."+Math.max(0,lane),lane<0 ? RuntimeTheme.GGTheme.blue : RuntimeTheme.GGTheme.color([0,2,1,4,5,3,6,7,8,9,10,11,12,13,14,15][lane%16]))}
+    function producerName(index){
+        var rows=graph.producer_identities||[]
+        for(var i=0;i<rows.length;i++)if(rows[i].index===index)return String(rows[i].display_name)+(rows[i].local===true?" · egen":"")
+        return graph.source==="LAN_SIGNED_PROPOSAL_DAG"?"Okänd nod · P"+(index+1):"Producent "+(index+1)
+    }
     function entranceOffset(identifier,vertical) {
         // Hash-seeded layout motion belongs to an already known block. It
         // changes no traffic, identity, timestamp, parent or production rate.
@@ -524,7 +531,7 @@ Item {
                 // explicit user-selected point for keyboard navigation.
                 opacity:1;activeFocusOnTab:true;z:1
                 Accessible.role:Accessible.Button
-                Accessible.name:root.dagMode ? genesis ? "Publikt genesisankare" : "Ofinaliserat signerat förslag, rank "+blockRank+", producent "+(proposerIndex+1)+", sekvens "+producerSequence : "Block "+blockHeight+", "+(transactionCount<0 ? "okänt antal" : transactionCount)+" transaktioner"
+                Accessible.name:root.dagMode ? genesis ? "Publikt genesisankare" : "Ofinaliserat signerat förslag, rank "+blockRank+", "+root.producerName(proposerIndex)+", sekvens "+producerSequence : "Block "+blockHeight+", "+(transactionCount<0 ? "okänt antal" : transactionCount)+" transaktioner"
                 function finishMotion(){moveX.complete();moveY.complete();appear.complete();birth.complete();enterX.complete();enterY.complete()}
                 onIndexChanged:if(index<root.shownCount-24){enterX.complete();enterY.complete()}
                 Behavior on x {enabled:root.motionActive && !root.pointMode;NumberAnimation {id:moveX;duration:node.horizontalDuration;easing.type:Easing.OutCubic}}
@@ -565,13 +572,13 @@ Item {
                 Keys.onRightPressed:if(index+1<root._rows.length)root.selectBlock(root._rows[index+1].hash)
                 Keys.onPressed:function(event){if(event.key===Qt.Key_C){root.copySelected();event.accepted=true}}
                 ToolTip.visible:hit.containsMouse
-                ToolTip.text:root.dagMode ? genesis ? "Publikt genesisankare, ingen finalitetsstämpel" : "Rank "+blockRank+" · producent "+(proposerIndex+1)+" · sekvens "+producerSequence+"\n"+(transactionCount<0 ? "Okänt antal" : transactionCount)+" lokala testposter\nSignatur kontrollerad · EJ FINALISERAT" : "Block "+blockHeight+" · "+(transactionCount<0 ? "okänt" : transactionCount)+" tx\n"+(proposerIndex>=0 ? "Validator "+(proposerIndex+1)+"\n" : "Lokal nod\n")+(verified ? "SDK-verifierat certifikat" : "Observerad noddata")
+                ToolTip.text:root.dagMode ? genesis ? "Publikt genesisankare, ingen finalitetsstämpel" : root.producerName(proposerIndex)+" · rank "+blockRank+" · sekvens "+producerSequence+"\n"+(transactionCount<0 ? "Okänt antal" : transactionCount)+" lokala testposter\nSignatur kontrollerad · EJ FINALISERAT" : "Block "+blockHeight+" · "+(transactionCount<0 ? "okänt" : transactionCount)+" tx\n"+(proposerIndex>=0 ? "Validator "+(proposerIndex+1)+"\n" : "Lokal nod\n")+(verified ? "SDK-verifierat certifikat" : "Observerad noddata")
             }
         }
         }
         GGText { colorKey: "ui.BlockRelationsGraph.6";
             visible:root.shownCount===0;anchors.centerIn:parent;width:Math.max(0,parent.width-20)
-            text:root.stale ? "Blockdata saknas eller kunde inte läsas." : root.dagMode ? "Inga lokalt signerade förslag ännu." : "Inga observerade block ännu."
+            text:root.stale ? "Blockdata saknas eller kunde inte läsas." : root.dagMode ? "Inga verifierade DAG-förslag ännu." : "Inga observerade block ännu."
             horizontalAlignment:Text.AlignHCenter;wrapMode:Text.WordWrap;textFormat:Text.PlainText
             color:RuntimeTheme.GGTheme.dim;font.family:"monospace";font.pixelSize:10
         }
@@ -613,7 +620,7 @@ Item {
                 background:Rectangle {color:RuntimeTheme.GGTheme.canvas;border.color:RuntimeTheme.GGTheme.line}
             }
             GGText { colorKey: "ui.BlockRelationsGraph.9";
-                width:parent.width;text:root.selectedBlock ? root.dagMode ? (root.selectedBlock.transaction_count===null ? "Okänt antal" : root.selectedBlock.transaction_count)+" lokalt validerade testposter\n"+(root.selectedBlock.genesis ? "Publikt genesisankare" : "Signatur kontrollerad, ingen global finalitet")+"\n"+root.selectedBlock.parent_hashes.length+" verkliga föräldrareferenser" : (root.selectedBlock.transaction_count===null ? "Okänt antal" : root.selectedBlock.transaction_count)+" inkluderade transaktioner\n"+(root.selectedBlock.certificate_verified ? "SDK-verifierat certifikat" : "Observerad noddata, separat från SDK-bevis") : ""
+                width:parent.width;text:root.selectedBlock ? root.dagMode ? (root.selectedBlock.genesis?"":root.producerName(root.selectedBlock.proposer_index)+"\n")+(root.selectedBlock.transaction_count===null ? "Okänt antal" : root.selectedBlock.transaction_count)+" lokalt validerade testposter\n"+(root.selectedBlock.genesis ? "Publikt genesisankare" : "Signatur kontrollerad, ingen global finalitet")+"\n"+root.selectedBlock.parent_hashes.length+" verkliga föräldrareferenser" : (root.selectedBlock.transaction_count===null ? "Okänt antal" : root.selectedBlock.transaction_count)+" inkluderade transaktioner\n"+(root.selectedBlock.certificate_verified ? "SDK-verifierat certifikat" : "Observerad noddata, separat från SDK-bevis") : ""
                 color:RuntimeTheme.GGTheme.muted;font.family:"monospace";font.pixelSize:10;wrapMode:Text.WordWrap;textFormat:Text.PlainText
             }
             Row {spacing:8

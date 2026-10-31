@@ -707,6 +707,7 @@ def foreground_summary(command, body):
                 'local_producer_indices':lan.get('local_producer_indices',[]),
                 'candidate_peers':setup.get('invite_count',0),'configured_peers':lan.get('configured_peers',0),
                 'authenticated_peers':len(lan.get('authenticated_peers',[])),
+                'connection_state':lan.get('connection_state','UNOBSERVED'),'node_label':lan.get('label',''),
                 'proposals':body.get('blocks_admitted',0),'canonical_finalized':0,
                 'validated_dag_transactions':body.get('transactions_validated',0),
                 'dag_test_transactions_enabled':stress.get('enabled') is True,
@@ -716,6 +717,7 @@ def foreground_summary(command, body):
                 'physical_hosts_verified':False,'transactions_enabled':lan.get('transactions_enabled') is True,
                 'financial_transactions_enabled':False,'mainnet_enabled':False}
         if isinstance(lan.get('transport'),dict):summary['local_transport']=_foreground_lan_transport(lan)
+        if isinstance(body.get('desktop_observation'),dict):summary['desktop_observation']=body['desktop_observation']
         resources=_object(body.get('dag_resources'))
         if resources:
             test=_object(resources.get('test'));plan=_object(resources.get('plan'))
@@ -796,7 +798,7 @@ def main(argv=None,service_factory=None):
                 foreground_arguments['bootstrap']=read_public_document(args.bootstrap_file,'bootstrap')
         if service_factory is None:
             from backend.terminal_service import TerminalService
-            service_factory=TerminalService
+            service_factory=lambda:TerminalService(publish_observation=True)
         service=service_factory()
         interactive=not args.json and sys.stdin.isatty() and sys.stdout.isatty()
         def require_terminal():

@@ -69,7 +69,7 @@ class ReceiveDeadlineTests(unittest.TestCase):
             def settimeout(self,_value):pass
             def recv(self,_count):return b'\0'
         charged=[]
-        with patch.object(lan.time,'monotonic',side_effect=(0,0,2)):
+        with patch.object(lan.time,'monotonic',side_effect=(0,0,lan.FRAME_SECONDS+1)):
             with self.assertRaisesRegex(ValueError,'GG_LAN_READ_DEADLINE'):
                 lan._receive(Late(),lan.MAX_FRAME,account=charged.append)
         self.assertEqual(charged,[1])
@@ -131,8 +131,9 @@ class SignedTokenDeadlineTests(unittest.TestCase):
             return result
         coordinator._token_command=delayed_ack
         transactions=sender._tokens.sign_batch(recipient.public_key,'1')
-        with self.assertRaisesRegex(ValueError,'GG_LAN_READ_DEADLINE') as raised:
-            sender._token_rpc(coordinator.public_key,'TOKEN_SUBMIT',{'transactions':transactions},cancel=threading.Event(),deadline=time.monotonic()+2)
+        with patch.object(lan,'FRAME_SECONDS',.25):
+            with self.assertRaisesRegex(ValueError,'GG_LAN_READ_DEADLINE') as raised:
+                sender._token_rpc(coordinator.public_key,'TOKEN_SUBMIT',{'transactions':transactions},cancel=threading.Event(),deadline=time.monotonic()+2)
         self.assertEqual(submissions,[1]);self.assertEqual(coordinator.token_snapshot()['sequence'],1)
         self.assertEqual(lan._failure_details(raised.exception),{'operation':'TOKEN_SUBMIT','stage':'RECEIVE','error_class':'ValueError'})
         self.assertFalse(sender._circle_sockets)

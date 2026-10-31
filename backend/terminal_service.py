@@ -11,6 +11,7 @@ import getpass
 import importlib.util
 import json
 import os
+import re
 import threading
 import time
 import uuid
@@ -43,7 +44,7 @@ COMMANDS.update(lan_dag_runtime.COMMANDS)
 
 
 class TerminalService:
-    def __init__(self,*,confirm=None,secret=None,show_words=None):
+    def __init__(self,*,confirm=None,secret=None,show_words=None,publish_observation=False):
         self.confirm=confirm
         self.secret=secret or getpass.getpass
         # A separate, private terminal surface is mandatory for mnemonic words.
@@ -54,6 +55,8 @@ class TerminalService:
         self._owns_dag=False
         self._dag_engine=None
         self._lan_runtime=None
+        self._publish_observation=bool(publish_observation)
+        self._observation_publisher=None
         self._closed=False
         self._portable=os.name!='nt'
         assets.bootstrap()
@@ -74,6 +77,21 @@ class TerminalService:
         # Each terminal owns its peer. Status/construction makes no keys or IO.
         if self._lan_runtime is None:self._lan_runtime=lan_dag_runtime.LanDagRuntime()
         return self._lan_runtime
+
+    def _publish_lan(self,body):
+        if not self._publish_observation:return body
+        try:
+            if body.get('lan_setup',{}).get('active'):
+                if self._observation_publisher is None:
+                    from backend.local_node_observation import Publisher
+                    self._observation_publisher=Publisher()
+                self._observation_publisher.publish(body)
+                body['desktop_observation']={'state':'PUBLISHED','source':'OWNED_LOCAL_CLI','read_only':True}
+            elif self._observation_publisher is not None:self._observation_publisher.close()
+        except (OSError,ValueError) as error:
+            code=str(error)
+            body['desktop_observation']={'state':'UNAVAILABLE','error':code if re.fullmatch(r'GG_[A-Z0-9_]{1,80}',code) else type(error).__name__}
+        return body
 
     def _wallet(self):
         # The optional single-process desktop lab must not import a Rust SDK in
@@ -108,9 +126,10 @@ class TerminalService:
             market=marketplace_contract.status_payload()
             market['public_catalog']=marketplace_discovery.snapshot()
             from backend import network_profiles
+            lan=self._publish_lan(self._lan().snapshot())
             return {'schema':'gg.terminal.status.v1','wallet':self._wallet(),'marketplace':market,
-                    'consensus':self._network().snapshot(),'parallel_dag':self._dag().snapshot(),'activity':assets.events(),
-                    'network_readiness':network_profiles.snapshot(),'lan_dag':self._lan().snapshot(),
+                    'consensus':self._network().snapshot(),'parallel_dag':lan if self._lan().active else self._dag().snapshot(),'activity':assets.events(),
+                    'network_readiness':network_profiles.snapshot(),'lan_dag':lan,
                     'commands':list(COMMANDS),'platform':os.name}
 
     def _password(self,prompt,*,repeat=False):
@@ -292,7 +311,9 @@ class TerminalService:
             if command.startswith('lan.'):
                 if command in {'lan.start','lan.join_file'} and self._dag_engine is not None and self._dag_engine.snapshot().get('state')!='STOPPED':
                     raise ValueError('GG_LAN_STOP_LOCAL_DAG_FIRST')
-                return self._lan().dispatch(command,args)
+                result=self._lan().dispatch(command,args)
+                if isinstance(result,dict) and 'lan_setup' in result:self._publish_lan(result)
+                return result
             if command=='network.readiness':
                 from backend import network_profiles
                 return network_profiles.snapshot(args.get('profile'))
@@ -406,6 +427,9 @@ class TerminalService:
         with self._lock:
             if self._closed:return
             self._closed=True
+            if self._observation_publisher is not None:
+                try:self._observation_publisher.close()
+                except OSError:pass
             if self._lan_runtime is not None:self._lan_runtime.stop()
             if self._owns_dag:
                 self._dag().stop();self._owns_dag=False

@@ -5,6 +5,12 @@ GG:s lokala nätverk. Ingen Qt, webbläsare, webview, bildmotor eller automatisk
 nodstart krävs. Terminalen ritar bara när tillståndet eller terminalstorleken
 ändras. En öppen desktop-session används inte som terminalens tillstånd.
 
+En uttryckligen startad CLI-LAN-nod delar däremot sin **offentliga nodstatus**
+med GG AI Desktop under samma användare. Desktop visar då CLI-nodens verkliga
+graf, producenter, verifierade TX och DAG-testkonton utan att starta en extra
+nod. Vyn märks **Visar CLI-noden** och nodens styrning stannar i CLI. Privata
+walletfiler och signerare delas inte. Se [LAN-vyn och kontaktstatus](../../knowledge/dagoblin-lan.md).
+
 Detta är ett källpaket med explicita paketinstallationer, inte ett fristående
 native-program eller en offline-installation. Windows är den lokala testmiljön.
 Den tidigare Linux/amd64-baslinjen har verifierats i en isolerad VM/container

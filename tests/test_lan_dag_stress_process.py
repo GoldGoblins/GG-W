@@ -54,6 +54,9 @@ def worker(label):
                               'evidence': engine.lan_evidence(),
                               'stress': body['dag_stress'],
                               'transport': body['lan']['transport'],
+                              'producer_identities':body['lan']['producer_identities'],
+                              'test_accounts':body.get('test_accounts',[]),
+                              'block_owners':[(r.get('proposer_index'),r.get('node_label')) for r in body['block_graph']['blocks'] if r.get('state')!='GENESIS'],
                               'measurement_count': len(body.get('measurements', [])),
                               'last_measurement': body.get('last_wave', {}),
                               'owned_producer_signers': sum(key is not None for key in engine._producer_keys),
@@ -178,6 +181,16 @@ class DagStressProcessTest(unittest.TestCase):
                 self.assertEqual(row['canonical_finalized'],0)
                 self.assertFalse(row['evidence']['protocol_fault'])
                 self.assertEqual(row['transport']['counters']['failures'],baseline[index],row['transport'])
+                self.assertEqual(len(row['producer_identities']),6)
+                self.assertEqual(sum(r['local'] for r in row['producer_identities']),2)
+                self.assertEqual({r['node_label'] for r in row['producer_identities']},
+                                 {'Large block sender','Large block verifier A','Large block verifier B'})
+                self.assertEqual(len(row['test_accounts']),6)
+                self.assertEqual(sum(a['local'] for a in row['test_accounts']),2)
+                self.assertTrue(all(isinstance(a['balance_atomic'],str) for a in row['test_accounts']))
+                self.assertEqual({owner for _producer,owner in row['block_owners']},{'Large block sender'})
+                self.assertEqual([(a['address'],a['balance_atomic'],a['nonce']) for a in row['test_accounts']],
+                                 [(a['address'],a['balance_atomic'],a['nonce']) for a in states[0]['test_accounts']])
             print(json.dumps({'scope':'THREE_OWNED_LOOPBACK_PROCESSES_NOT_PHYSICAL_HOSTS',
                 'transactions_per_block':5000,'wire_bytes':block['wire_bytes'],'shared_verified_blocks':1,
                 'shared_verified_transactions':5000,'new_transport_failures':0,'canonical_finalized':0}),flush=True)
