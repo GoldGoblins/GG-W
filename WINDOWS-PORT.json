@@ -1788,7 +1788,7 @@
     },
     "backend/terminal_cli.py": {
       "upstream_sha256": null,
-      "windows_sha256": "6eadd62569e80ed09a96069613393d13c4f5d7b03cf31edf88d50c11ac523e82"
+      "windows_sha256": "251c9c5e581329d354e29025ff0e9a789f3a773785159665c389462bc2d2e80c"
     },
     "backend/terminal_service.py": {
       "upstream_sha256": null,
@@ -2440,7 +2440,7 @@
     },
     "qml/components/GGParallelDagDashboard.qml": {
       "upstream_sha256": null,
-      "windows_sha256": "e4aefabfef953986b2ab1efe9192703db5e5a85a8ca4e2a0c50a7684e00b4e60"
+      "windows_sha256": "cf1f77a4d2c8dd06cb2fd3b7be052a9956ca4025c837c7d6d731ead4a3ecf2c3"
     },
     "qml/components/GGTheme.qml": {
       "upstream_sha256": null,
@@ -2656,7 +2656,7 @@
     },
     "backend/gg_lan_dag.py": {
       "upstream_sha256": null,
-      "windows_sha256": "45c6e1b20346e3b2aa54494caa84d0771217e807096641ee309e142af2f2fca8"
+      "windows_sha256": "49512c2224f7635369a9f01e4fdc92fe441c29126b78d034c59caede25795d14"
     },
     "backend/lan_dag_runtime.py": {
       "upstream_sha256": null,
@@ -2672,7 +2672,7 @@
     },
     "knowledge/dagoblin-lan.md": {
       "upstream_sha256": null,
-      "windows_sha256": "3f008c0d1c9e3d22a23e68e54cfab85634b6d4493167268c163af76f0ce4ff35"
+      "windows_sha256": "a2664321e5fd408e863f8a42abed7b5b73873bafdb9135735aade3ed1003329f"
     },
     "knowledge/dagoblin-launch-readiness.md": {
       "upstream_sha256": null,
@@ -2680,7 +2680,7 @@
     },
     "qml/components/LanDagSetupPopup.qml": {
       "upstream_sha256": null,
-      "windows_sha256": "f96a24ff17610f2d884d82430ae1c7a4a2165c8bb06c913d69ecb9e1c2d7406d"
+      "windows_sha256": "e1d4b6d2a6821408536ccf17a103f24e7f034847c893d76d2ed2e4ddcb4b0a83"
     },
     "tests/test_activity_color_bindings.py": {
       "upstream_sha256": null,

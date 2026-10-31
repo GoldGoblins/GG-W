@@ -75,20 +75,29 @@ assert 'nätkvittens från alla tre' in root.findChild(QQuickItem,'dagOperationN
 
 work={'local':{'transactions':32,'sign_ms':12.5,'verify_ms':44.5,'wall_ms':58.0,'age_seconds':.2},
       'relay':{'transactions':32,'cpu_ms':300.0,'wall_ms':450.0,'age_seconds':.3},'private_key':'MUST_NOT_EXPORT'}
+production={'basis':'LOCAL_OWN_PRODUCTION_NOT_NETWORK_CAPACITY','state':'COMPLETE','blocks':12,
+    'transactions':384,'elapsed_ms':4000,'bps':3,'tps':96,'private_key':'MUST_NOT_EXPORT'}
 dag['dag_stress'].update(state='TIME_BUDGET',all_peers_synced=False,workload=work,
-    participants=[{'label':'Linux','local':True,'state':'COMPLETE','workload':work},
-                  {'label':'Termux','state':'COMPLETE','workload':work}],
+    production=production,
+    participants=[{'label':'Linux','local':True,'state':'COMPLETE','workload':work,'production':production},
+                  {'label':'Termux','state':'COMPLETE','workload':work,'production':production}],
     convergence={'before_deadline':{'remaining_ms':42.0,'peers':[{'label':'Termux','matched':False,
         'blocks':99,'transactions':3168,'pending':['state_root','worker','MUST_NOT_EXPORT']}]},
         'cleanup':{'peers':[{'label':'Termux','matched':True}]}});put()
 assert 'saknade tillstånd, stoppad producent' in popup.findChild(QQuickItem,'lanDagConvergenceChecks').property('text')
 assert 'vid städning matchade' in popup.findChild(QQuickItem,'lanDagConvergenceChecks').property('text')
 assert 'CPU 300' in popup.findChild(QQuickItem,'lanDagNodeWorkloads').property('text')
+assert '12 egna block' in popup.findChild(QQuickItem,'lanDagNodeProduction').property('text')
+assert 'Termux:' in popup.findChild(QQuickItem,'lanDagNodeProduction').property('text')
+assert js(root,'productionRate("tps")')=='96.0'
+assert js(root,'acknowledgedRate("acknowledged_tps")')=='—'
+assert 'inte nätets kapacitet' in popup.findChild(QQuickItem,'lanDagStressScope').property('text')
 exported=json.loads(js(popup,'JSON.stringify(stressResultDocument())'))
 assert exported['convergence']['peers'][0]['pending']==['state_root','worker']
 assert exported['convergence']['peers'][0]['cleanup_matched'] is True
 assert exported['acknowledgement']['confirmed'] is False
 assert exported['workload']['relay']['transactions']==32
+assert exported['production']['transactions']==384 and exported['production']['tps']==96
 assert 'MUST_NOT_EXPORT' not in json.dumps(exported)
 assert len(json.dumps(exported,ensure_ascii=False,separators=(',',':')))<4000
 saved_stress=json.loads(json.dumps(dag['dag_stress']))

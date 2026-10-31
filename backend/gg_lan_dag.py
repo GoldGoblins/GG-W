@@ -246,7 +246,7 @@ class LanDagPeer:
         self._dag_stress={'state':'IDLE','duration_ms':0,'transactions_per_block':0,'interval_ms':100,
             'elapsed_ms':0,'blocks':0,'transactions':0,'all_peers_synced':False,
             'acknowledged_blocks':None,'acknowledged_transactions':None,'acknowledged_bps':None,'acknowledged_tps':None,
-            'stop_reason':'','last_error':'','participants':[]}
+            'stop_reason':'','last_error':'','participants':[],'production':None}
         self._wire_limit=MAX_WIRE;self._orphan_limit=MAX_ORPHAN_BYTES
         self._peer_bytes_limit=MAX_PEER_BYTES;self._total_bytes_limit=MAX_TOTAL_BYTES;self._frame_limit=MAX_REQUESTS
         self.resources=ResourceController(cancel=self._cancel,
@@ -528,6 +528,12 @@ class LanDagPeer:
         evidence=engine.lan_evidence()
         with self._lock:
             plan=self._dag_plan;state=dict(self._dag_stress)
+            production=state.get('production')
+            if isinstance(production,dict):
+                production=dict(production)
+                if production.get('state')=='RUNNING' and plan is not None and 'production_started' in plan:
+                    production['elapsed_ms']=(time.monotonic()-plan['production_started'])*1000
+                state['production']=self._dag_public_production(production)
             if plan is not None:
                 state['blocks']=max(0,evidence['blocks']-plan['baseline']['blocks'])
                 state['transactions']=max(0,evidence['transactions']-plan['baseline']['transactions'])
@@ -541,6 +547,20 @@ class LanDagPeer:
         return (isinstance(status,dict) and status.get('run_id')==run_id
             and status.get('worker_active') is False and status.get('state') in ('COMPLETE','STOPPING')
             and status.get('last_error')=='' and LanDagPeer._dag_same_evidence(evidence,status.get('evidence')))
+
+    @staticmethod
+    def _dag_public_production(value):
+        """Owned admitted work over its own worker window, never replica ACK."""
+        if not isinstance(value,dict):return None
+        state=value.get('state');blocks=value.get('blocks');transactions=value.get('transactions');elapsed=value.get('elapsed_ms')
+        if (state not in ('RUNNING','COMPLETE','STOPPED','ERROR','LIMIT_REACHED')
+                or any(type(number) is not int or not 0<=number<=2**53-1 for number in (blocks,transactions))
+                or type(elapsed) not in (int,float) or not math.isfinite(elapsed) or not 0<=elapsed<=10**9):return None
+        elapsed=round(elapsed,3);seconds=elapsed/1000
+        return {'basis':'LOCAL_OWN_PRODUCTION_NOT_NETWORK_CAPACITY','state':state,
+            'blocks':blocks,'transactions':transactions,'elapsed_ms':round(elapsed,3),
+            'bps':round(blocks/seconds,3) if seconds>0 else None,
+            'tps':round(transactions/seconds,3) if seconds>0 else None}
 
     @staticmethod
     def _dag_public_workload(value):
@@ -627,7 +647,7 @@ class LanDagPeer:
                         interval_ms=body['interval_ms'],elapsed_ms=0,blocks=0,transactions=0,all_peers_synced=False,
                         acknowledged_blocks=None,acknowledged_transactions=None,acknowledged_bps=None,acknowledged_tps=None,
                         stop_reason='',last_error='',last_error_details={},failure_phase='',phase_ms={},status_polls=0,convergence={},
-                        acknowledgement_basis='',participants=[])
+                        acknowledgement_basis='',participants=[],production=None)
                 return self._dag_status()
             if kind in ('DAG_STRESS_BEGIN','DAG_STRESS_STOP') and set(payload)=={'run_id'}:
                 _public(payload['run_id']);plan=self._dag_plan
@@ -660,6 +680,10 @@ class LanDagPeer:
             raise ValueError('GG_LAN_DAG_STRESS_REQUEST')
 
     def _dag_produce_loop(self,plan,cancel):
+        started=time.monotonic();produced_blocks=0;produced_transactions=0;production_state='COMPLETE'
+        with self._lock:
+            plan['production_started']=started
+            self._dag_stress['production']={'state':'RUNNING','blocks':0,'transactions':0,'elapsed_ms':0}
         def alive():
             if cancel.is_set() or self._cancel.is_set() or time.monotonic()>=plan['production_deadline']:raise ValueError('GG_LAN_DAG_STRESS_DEADLINE')
         def permitted():
@@ -675,17 +699,26 @@ class LanDagPeer:
                     permitted()
                     estimate=self._engine.preflight_lan_test_block(plan['body']['transactions_per_block'],self._wire_limit)
                     with self.resources.governor().reserve_memory(estimate*16):
-                        self._engine.produce_lan_test_block(producer,plan['body']['transactions_per_block'],self._wire_limit,check=permitted)
+                        block=self._engine.produce_lan_test_block(producer,plan['body']['transactions_per_block'],self._wire_limit,check=permitted)
+                    produced_blocks+=1;produced_transactions+=block['transactions']
+                    with self._lock:
+                        self._dag_stress['production']={'state':'RUNNING','blocks':produced_blocks,
+                            'transactions':produced_transactions,'elapsed_ms':(time.monotonic()-started)*1000}
                 due=max(due+cadence,time.monotonic())
         except ValueError as error:
             code=str(error)
             if code not in {'GG_LAN_DAG_STRESS_DEADLINE','GG_DAG_RESOURCE_DEADLINE'}:
                 state='LIMIT_REACHED' if code in {'GG_DAG_SESSION_CREDIT','GG_DAG_PEER_CREDIT','GG_DAG_RECORD_LIMIT','GG_DAG_STORAGE_LIMIT','GG_DAG_LAN_WIRE_PROFILE_LIMIT'} else 'ERROR'
+                production_state=state
                 with self._lock:self._dag_stress.update(state=state,stop_reason='SOFTWARE_PROFILE_LIMIT' if state=='LIMIT_REACHED' else 'FAILED',last_error=_failure_code(error,'GG_LAN_DAG_STRESS_FAILED'))
         except Exception as error:
+            production_state='ERROR'
             with self._lock:self._dag_stress.update(state='ERROR',stop_reason='FAILED',last_error=_failure_code(error,'GG_LAN_DAG_STRESS_FAILED'))
         finally:
             with self._lock:
+                if production_state=='COMPLETE' and (cancel.is_set() or self._cancel.is_set()):production_state='STOPPED'
+                self._dag_stress['production']=self._dag_public_production({'state':production_state,
+                    'blocks':produced_blocks,'transactions':produced_transactions,'elapsed_ms':(time.monotonic()-started)*1000})
                 if self._dag_plan is plan and self._dag_stress['state']=='RUNNING':self._dag_stress['state']='STOPPING'
 
     def start_dag_stress(self,duration_ms=10000,transactions_per_block=16,interval_ms=100,remote=True):
@@ -834,7 +867,8 @@ class LanDagPeer:
                 rows.append({'label':roster['label'],'local':peer==self.public_key,'opted_in':roster.get('allow_dag_transactions') is True,
                     'state':terminal if peer==self.public_key else status.get('state','UNCONFIRMED'),'blocks':proof.get('blocks'),'transactions':proof.get('transactions'),
                     'protocol_fault':proof.get('protocol_fault',''),'blockset_digest':proof.get('blockset_digest'),'state_root':proof.get('state_root'),
-                    'workload':self._dag_public_workload(status.get('workload'))})
+                    'workload':self._dag_public_workload(status.get('workload')),
+                    'production':self._dag_public_production(status.get('production'))})
             with self._lock:
                 self._dag_stress.update(state=terminal,stop_reason=reason,last_error=error,elapsed_ms=round(elapsed*1000),
                     blocks=local['blocks'],transactions=local['transactions'],participants=rows,all_peers_synced=synced,
@@ -865,7 +899,7 @@ class LanDagPeer:
         if self._dag_enabled:
             try:
                 current=self._dag_status()
-                for key in ('blocks','transactions','elapsed_ms','workload'):state[key]=current[key]
+                for key in ('blocks','transactions','elapsed_ms','workload','production'):state[key]=current[key]
                 state['worker_active']=current['worker_active']
             except ValueError:
                 if self._dag_enabled and not self._cancel.is_set():raise
@@ -876,7 +910,8 @@ class LanDagPeer:
             'role':'COORDINATOR' if self.public_key==self._trusted else 'PARTICIPANT',
             'can_start':bool(self._dag_enabled and self.public_key==self._trusted and len(participants)==3 and all(row['opted_in'] for row in participants)
                 and not self._transport_exhausted and not busy and not active and engine is not None and not engine.snapshot()['live']['enabled'] and not engine._lan_fault),
-            'participants':state['participants'] or participants,'counts_basis':'LOCAL_DAG_ADMISSION_NOT_FINALITY'}
+            'participants':state['participants'] or participants,'counts_basis':'LOCAL_DAG_ADMISSION_NOT_FINALITY',
+            'measurement_scope':'THREE_REPLICA_SYNC_TEST_NOT_NETWORK_CAPACITY'}
 
     def _credit(self,peer,size):
         with self._lock:

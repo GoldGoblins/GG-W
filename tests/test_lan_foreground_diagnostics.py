@@ -20,6 +20,23 @@ def snapshot():
 
 
 class ForegroundDiagnosticsTests(unittest.TestCase):
+    def test_own_production_is_reported_independently_of_missing_all_peer_ack(self):
+        body=snapshot();production={'basis':'LOCAL_OWN_PRODUCTION_NOT_NETWORK_CAPACITY','state':'COMPLETE',
+            'blocks':12,'transactions':384,'elapsed_ms':4000,'bps':3,'tps':96,'private_key':'MUST_NOT_EXPORT'}
+        body['dag_stress'].update(state='TIME_BUDGET',all_peers_synced=False,acknowledged_tps=None,
+            production=production,measurement_scope='THREE_REPLICA_SYNC_TEST_NOT_NETWORK_CAPACITY',
+            participants=[{'label':'Linux','production':production,'workload':{'local':None,'relay':None}}])
+        for command in ('lan.start','lan.join_file'):
+            result=cli.foreground_summary(command,body)['dag_stress']
+            self.assertEqual(result['production']['tps'],96)
+            self.assertEqual(result['node_workloads'][0]['production']['transactions'],384)
+            self.assertFalse(result['all_peers_synced']);self.assertIsNone(result['acknowledged_tps'])
+            self.assertNotIn('MUST_NOT_EXPORT',json.dumps(result))
+        body['dag_stress']['production']={'basis':'MUST_NOT_EXPORT','state':'MUST_NOT_EXPORT',
+            'blocks':True,'transactions':-1,'elapsed_ms':float('nan'),'bps':float('inf'),'tps':'MUST_NOT_EXPORT'}
+        result=cli.foreground_summary('lan.start',body)['dag_stress']['production']
+        self.assertTrue(all(value is None for value in result.values()))
+
     def test_observation_age_does_not_create_idle_output_but_job_time_changes_do(self):
         before=snapshot()
         work={'local':{'transactions':32,'sign_ms':10.0,'verify_ms':44.0,'wall_ms':55.0,'age_seconds':1.0},

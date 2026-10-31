@@ -4,6 +4,36 @@ Första målet är en Windows-dator, en Linux-dator och en Androidtelefon med
 Termux på samma privata nät. VPS och huvudnät ingår inte i detta steg.
 Samma headless-transport används av Desktop och terminalpaketen.
 
+## Noder i olika takt och vad provet mäter
+
+En långsam deltagare ska kunna arbeta och hämta block i sin egen takt utan
+att bestämma de snabbare producenternas takt. Varje nod har en egen
+produktionsloop och separata, begränsade arbetsloopar för sina två peers.
+En gemensam kvittens från alla tre är ett prov av identiska repliker, inte
+ett mått på nätets maximala genomströmning eller en konsensusregel.
+
+CLI och Desktop visar därför **egen produktion** separat: bara block som
+nodens egna producenter verkligen har signerat och fått lokalt antagna,
+deras TX och förfluten tid i den egna produktionsloopen. Tiden för start,
+stopp, synkning och städning ingår inte i den produktionstakten. Mottagna
+block räknas fortfarande i den lokala verifieringsvyn, men ökar aldrig
+räknaren för egen produktion. Uppgifterna finns kvar även när provets
+trepartskvittens inte hann bli klar. Andra noders produktionsmätningar är
+autentiserade rapporter, inte oberoende hårdvaruattestering.
+
+De äldre kvitterade TX/s avser hela synkprovet inklusive väntan på tre
+kopior. Exempelvis var 63,4 kvitterade TX/s den 31 oktober ett sådant
+provresultat, inte nätverkets uppmätta kapacitet. Eftersläpande kopior får
+inte betecknas som synkade eller finaliserade innan deras bevis matchar.
+
+Det nuvarande treapparatsprovet behåller sin gemensamma förberedelse,
+identiska startbaslinje, bestämda sluttid och strikta slutkontroll. Det
+är alltså fortfarande ett synkprov, inte färdig fristående nätverksdrift.
+Oberoende driftstarter, beständig återhämtning/checkpoints och en mobil
+lättklient är separata delar som ännu inte är byggda här. En permanent
+långsammare full verifierare kan samla eftersläpning; det ska synliggöras
+och hanteras genom återhämtning eller en uttrycklig klientroll.
+
 ## Samma nod i CLI och Desktop
 
 En redan startad GG-CLI-nod publicerar nu sin offentliga LAN-status lokalt för

@@ -700,6 +700,18 @@ def _foreground_workload(value):
     return result
 
 
+def _foreground_production(value):
+    source=_object(value)
+    if not source:return None
+    result={'basis':source.get('basis') if source.get('basis')=='LOCAL_OWN_PRODUCTION_NOT_NETWORK_CAPACITY' else None,
+        'state':source.get('state') if source.get('state') in ('RUNNING','COMPLETE','STOPPED','ERROR','LIMIT_REACHED') else None}
+    for key in ('blocks','transactions','elapsed_ms','bps','tps'):
+        number=source.get(key)
+        valid=type(number) is int if key in ('blocks','transactions') else type(number) in (int,float)
+        result[key]=number if valid and math.isfinite(number) and 0<=number<=2**53-1 else None
+    return result
+
+
 def foreground_summary(command, body):
     """Bounded public observations; no wallet refresh, peer or signing input."""
     body=_object(body)
@@ -710,9 +722,11 @@ def foreground_summary(command, body):
         stress_summary={key:stress[key] for key in (
             'state','role','elapsed_ms','duration_ms','transactions_per_block','interval_ms',
             'blocks','transactions','all_peers_synced','acknowledged_blocks','acknowledged_transactions',
-            'acknowledged_bps','acknowledged_tps','stop_reason','last_error','convergence') if key in stress}
+            'acknowledged_bps','acknowledged_tps','stop_reason','last_error','convergence','measurement_scope') if key in stress}
+        stress_summary['production']=_foreground_production(stress.get('production'))
         if isinstance(stress.get('workload'),dict):stress_summary['workload']=_foreground_workload(stress['workload'])
-        stress_summary['node_workloads']=[{'label':row.get('label'),'workload':_foreground_workload(row['workload'])}
+        stress_summary['node_workloads']=[{'label':row.get('label'),'workload':_foreground_workload(row['workload']),
+            'production':_foreground_production(row.get('production'))}
             for row in stress.get('participants',[])[:3] if isinstance(row,dict) and isinstance(row.get('workload'),dict)]
         summary={'schema':'gg.terminal.foreground.v1','engine':'DAGOBLIN_PRIVATE_LAN',
                 'scope':'PRIVATE_LAN_SESSION_EXPERIMENT','state':lan.get('state'),

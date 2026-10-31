@@ -156,6 +156,7 @@ Item {
     function number(value){return typeof value==="number"&&isFinite(value)?String(value):"—"}
     function measured(value){return typeof value==="number"&&isFinite(value)&&value>=0}
     function acknowledgedRate(name){return hasDagAcknowledgement&&measured(dagStress[name])?dagStress[name].toFixed(1):"—"}
+    function productionRate(name){var value=dagStress.production||({});return value.basis==="LOCAL_OWN_PRODUCTION_NOT_NETWORK_CAPACITY"&&measured(value[name])?value[name].toFixed(1):"—"}
     function millis(value){return typeof value==="number"&&isFinite(value)&&value>=0?value.toFixed(2)+" ms":"—"}
     function bytes(value){return typeof value==="number"&&isFinite(value)&&value>=0?(value>=1048576?(value/1048576).toFixed(2)+" MiB":(value/1024).toFixed(1)+" KiB"):"—"}
     function shortId(value){value=String(value||"");return value.length>18?value.slice(0,8)+"…"+value.slice(-5):value||"—"}
@@ -354,6 +355,8 @@ Item {
                         Fact {property string uiColorScope:"ui.widget.dag.rail.test.tokens";visible:root.testTokens.enabled===true;name:"Testledger · kvitterad TX";value:root.number(root.testTokens.sequence);valueColor:RuntimeTheme.GGTheme.cyan}
                         Fact {property string uiColorScope:"ui.widget.dag.rail.test.rate";visible:root.testTokens.enabled===true;name:"Testledger · TX/s";value:typeof root.tokenCircle.tps==="number"?root.tokenCircle.tps.toFixed(1):"—"}
                         Fact {objectName:"dagStressLocalCounts";property string uiColorScope:"ui.widget.dag.rail.stress.local";visible:root.dagStress.supported===true&&root.dagStress.enabled===true;name:"Prov · lokala förslag / TX";value:root.number(root.dagStress.blocks)+" / "+root.number(root.dagStress.transactions)}
+                        Fact {objectName:"dagOwnProductionBlockRate";visible:root.dagStress.supported===true&&root.dagStress.enabled===true;name:"Egen produktion · block/s";value:root.productionRate("bps")}
+                        Fact {objectName:"dagOwnProductionTxRate";visible:root.dagStress.supported===true&&root.dagStress.enabled===true;name:"Egen produktion · TX/s";value:root.productionRate("tps")}
                         Fact {objectName:"dagStressAckStatus";property string uiColorScope:"ui.widget.dag.rail.stress.ack.status";visible:root.dagStress.supported===true&&root.dagStress.enabled===true;name:"Prov · nätkvittens";value:root.hasDagAcknowledgement?"Alla tre bekräftade":"Ej bekräftad"}
                         Fact {property string uiColorScope:"ui.widget.dag.rail.stress.ack.blocks";visible:root.dagStress.supported===true&&root.dagStress.enabled===true;name:"Kvitterade förslag / TX";value:root.hasDagAcknowledgement?root.number(root.dagStress.acknowledged_blocks)+" / "+root.number(root.dagStress.acknowledged_transactions):"—"}
                         Fact {objectName:"dagStressAckBlockRate";property string uiColorScope:"ui.widget.dag.rail.stress.ack.bps";visible:root.dagStress.supported===true&&root.dagStress.enabled===true;name:"Kvitterade förslag / s";value:root.acknowledgedRate("acknowledged_bps")}

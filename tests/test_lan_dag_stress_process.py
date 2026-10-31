@@ -38,6 +38,26 @@ def worker(label):
                 elif operation == 'capacity':
                     peer._large_capacity()
                     result={'state':'CONFIGURED','wire_limit':peer._wire_limit}
+                elif operation == 'hold_work':
+                    # Test-only independent slow node: hold its own work and
+                    # ingestion outside engine locks. Real TCP/auth/validation
+                    # stay active; the other two processes receive no hook.
+                    gate=threading.Event();peer._test_work_gate=gate
+                    hold_until=time.monotonic()+12
+                    ingest=peer._ingest;produce=peer._engine.produce_lan_test_block
+                    def wait_for_work(check=None):
+                        while not gate.wait(.01):
+                            if peer._cancel.is_set():raise ValueError('GG_LAN_STOPPED')
+                            if check is not None:check()
+                            if time.monotonic()>=hold_until:raise ValueError('GG_TEST_HOLD_EXPIRED')
+                    def held_ingest(*args,**kwargs):
+                        wait_for_work();return ingest(*args,**kwargs)
+                    def held_produce(*args,**kwargs):
+                        wait_for_work(kwargs.get('check'));return produce(*args,**kwargs)
+                    peer._ingest=held_ingest;peer._engine.produce_lan_test_block=held_produce
+                    result={'state':'HELD'}
+                elif operation == 'release_work':
+                    peer._test_work_gate.set();result={'state':'RELEASED'}
                 elif operation == 'block':
                     block=peer._engine.produce_lan_test_block(peer._local_indices[0],
                         request['transactions_per_block'],peer._wire_limit)

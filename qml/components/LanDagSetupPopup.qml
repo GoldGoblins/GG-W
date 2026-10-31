@@ -225,6 +225,22 @@ Item {
     function measured(value){return typeof value==="number"&&isFinite(value)&&value>=0}
     function measuredNumber(value){return measured(value)?String(value):"—"}
     function measuredRate(value){return measured(value)?value.toFixed(1):"—"}
+    function resultProduction(value){
+        if(!value||typeof value!=="object")return null
+        var state=resultEnum(value.state,["RUNNING","COMPLETE","STOPPED","ERROR","LIMIT_REACHED"]),blocks=resultNumber(value.blocks,true,Number.MAX_SAFE_INTEGER),tx=resultNumber(value.transactions,true,Number.MAX_SAFE_INTEGER),ms=resultNumber(value.elapsed_ms,false,1000000000)
+        if(state===null||blocks===null||tx===null||ms===null)return null
+        return {state:state,blocks:blocks,transactions:tx,elapsed_ms:ms,bps:ms>0?Math.round(blocks*1000000/ms)/1000:null,tps:ms>0?Math.round(tx*1000000/ms)/1000:null}
+    }
+    function productionText(){
+        var rows=[{label:"Den här noden",production:stress.production}],peers=Array.isArray(stress.participants)?stress.participants.slice(0,3):[]
+        peers.forEach(function(peer){if(peer.local!==true&&peer.production)rows.push(peer)})
+        var lines=[]
+        rows.slice(0,3).forEach(function(row,index){
+            var value=resultProduction(row.production)
+            if(value)lines.push(resultLabel(row.label,index)+": "+value.blocks+" egna block · "+value.transactions+" TX · "+measuredRate(value.bps)+" block/s · "+measuredRate(value.tps)+" TX/s · "+measuredNumber(value.elapsed_ms)+" ms")
+        })
+        return lines.length?"Produktion per nod under dess arbetsperiod · separat från synkprovet\n"+lines.join("\n"):""
+    }
     function stressAckText(){
         if(stress.all_peers_synced!==true||!measured(stress.acknowledged_blocks)||!measured(stress.acknowledged_transactions))return "Nätkvittens: — · gemensam leverans ännu inte bekräftad av alla tre."
         return "Nätkvittens från alla tre: "+measuredNumber(stress.acknowledged_blocks)+" förslag · "+measuredNumber(stress.acknowledged_transactions)+" DAG-TX · "+measuredRate(stress.acknowledged_bps)+" förslag/s · "+measuredRate(stress.acknowledged_tps)+" TX/s"
@@ -367,7 +383,7 @@ Item {
             acknowledgement:{confirmed:confirmed,basis:confirmed?resultEnum(stress.acknowledgement_basis,["STOP_OBSERVATIONS","STOP_AND_STATUS_OBSERVATIONS"]):null,blocks:confirmed?blocks:null,transactions:confirmed?transactions:null,bps:confirmed?resultNumber(stress.acknowledged_bps,false,Number.MAX_SAFE_INTEGER):null,tps:confirmed?resultNumber(stress.acknowledged_tps,false,Number.MAX_SAFE_INTEGER):null},
             failure:{code:resultCode(stress.last_error),reason:resultEnum(stress.stop_reason,["DURATION","CANCELLED","SOFTWARE_PROFILE_LIMIT","FAILED"]),phase:resultPhase(stress.failure_phase),transport:resultTransport()},
             phase_ms:resultPhaseTimes(),status_polls:resultNumber(stress.status_polls,true,1000000),participants:participants,
-            convergence:resultConvergence(),workload:resultWorkload(stress.workload),transport_diagnostics:transportDiagnostics()}
+            convergence:resultConvergence(),workload:resultWorkload(stress.workload),production:resultProduction(stress.production),transport_diagnostics:transportDiagnostics()}
     }
     function copyStressResult(){
         var result=stressResultDocument()
@@ -493,7 +509,7 @@ Item {
                 Section {objectName:"lanDagStressSection";height:stressBody.height+18;visible:root.stressSupported&&root.owned
                     Column {id:stressBody;x:9;y:9;width:parent.width-18;spacing:7
                         Label {colorKey:"ui.lan.dag.stress.title";text:"5 · DAG-stressprov · tre apparaters egna signerare";font.bold:true}
-                        Label {objectName:"lanDagStressScope";colorKey:"ui.lan.dag.stress.scope";width:parent.width;text:root.stress.enabled===true?"Varje apparat signerar med sina två egna producenter. Samma graf visar lokalt verifierade förslag och DAG-TX; mottagna förslag ingår. Nätkvittens redovisas separat. Testtokenkvitton räknas inte som DAG-TX.":"Den här sessionen saknar uttryckligt DAG-TX-val från alla tre. Starta en ny parning med DAG-testtransaktioner valda på varje apparat.";color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
+                        Label {objectName:"lanDagStressScope";colorKey:"ui.lan.dag.stress.scope";width:parent.width;text:root.stress.enabled===true?"Varje apparat producerar i egen takt. Grafen visar lokalt verifierade block och TX. Produktion mäts under nodens egen arbetsperiod. Synkprovet mäter separat hur snabbt alla tre får identiska kopior; den tiden är inte nätets kapacitet eller finalitet. Testtokenkvitton räknas inte som DAG-TX.":"Den här sessionen saknar uttryckligt DAG-TX-val från alla tre. Starta en ny parning med DAG-testtransaktioner valda på varje apparat.";color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
                         Repeater {model:root.stress.participants||[]
                             Label {required property var modelData;objectName:"lanDagStressParticipant";colorKey:"ui.lan.dag.stress.participant";width:stressBody.width;text:String(modelData.label||"Peer")+(modelData.local?" · den här apparaten":"")+" · "+(modelData.opted_in===true?"DAG-TX valt":"DAG-TX inte valt")+(modelData.state?" · "+String(modelData.state):"")}
                         }
@@ -534,6 +550,7 @@ Item {
                         }
                         Label {objectName:"lanDagStressStatus";colorKey:"ui.lan.dag.stress.status";width:parent.width;text:"DAG-prov · "+root.stressStateLabel+" · "+root.measuredNumber(root.stress.elapsed_ms)+" ms";color:root.stress.last_error?RuntimeTheme.GGTheme.negative:RuntimeTheme.GGTheme.cyan}
                         Label {objectName:"lanDagStressLocal";colorKey:"ui.lan.dag.stress.local";width:parent.width;text:"Lokalt verifierat under provet: "+root.measuredNumber(root.stress.blocks)+" förslag · "+root.measuredNumber(root.stress.transactions)+" DAG-TX"}
+                        Label {objectName:"lanDagNodeProduction";width:parent.width;text:root.productionText();visible:text.length>0;color:RuntimeTheme.GGTheme.cyan;font.pixelSize:9}
                         Label {objectName:"lanDagStressRates";colorKey:"ui.lan.dag.stress.rates";width:parent.width;text:"DAG · senaste mätfönstret: "+root.measuredRate((root.state.block_graph||{}).metrics?root.state.block_graph.metrics.bps:undefined)+" block/s · "+(root.stress.blocks>0?(root.stress.transactions/root.stress.blocks).toFixed(1):"—")+" TX/block under provet · "+root.measuredRate((root.state.block_graph||{}).metrics?root.state.block_graph.metrics.tps:undefined)+" TX/s · lokal validering";color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
                         Label {objectName:"lanDagStressAcknowledged";colorKey:"ui.lan.dag.stress.acknowledged";width:parent.width;text:root.stressAckText();color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
                         Label {objectName:"lanDagStressDetails";colorKey:"ui.lan.dag.stress.details";width:parent.width;text:root.stressDetails();visible:text.length>0;color:root.stress.last_error?RuntimeTheme.GGTheme.negative:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
