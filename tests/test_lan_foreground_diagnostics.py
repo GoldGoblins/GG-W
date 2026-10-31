@@ -20,6 +20,18 @@ def snapshot():
 
 
 class ForegroundDiagnosticsTests(unittest.TestCase):
+    def test_observation_age_does_not_create_idle_output_but_job_time_changes_do(self):
+        before=snapshot()
+        work={'local':{'transactions':32,'sign_ms':10.0,'verify_ms':44.0,'wall_ms':55.0,'age_seconds':1.0},
+              'relay':{'transactions':32,'cpu_ms':40.0,'wall_ms':70.0,'age_seconds':1.0}}
+        before['dag_stress'].update(workload=work,participants=[{'label':'Linux','workload':deepcopy(work)}])
+        after=deepcopy(before)
+        for sample in (after['dag_stress']['workload'],after['dag_stress']['participants'][0]['workload']):
+            for row in sample.values():row['age_seconds']=100.0
+        self.assertEqual(cli.foreground_summary('lan.start',before),cli.foreground_summary('lan.start',after))
+        after['dag_stress']['workload']['relay']['wall_ms']=90.0
+        self.assertNotEqual(cli.foreground_summary('lan.start',before),cli.foreground_summary('lan.start',after))
+
     def test_exact_local_failure_and_limits_are_visible_without_remote_health_claim(self):
         body=snapshot();lan=body['lan']
         lan.update(last_error='GG_LAN_READ_DEADLINE',last_error_at=1793411138.409,

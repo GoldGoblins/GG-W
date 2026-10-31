@@ -148,6 +148,7 @@ class ParallelDag:
             'stop_reason':'','waves_completed':0,'in_flight':False,'mode':'WAVE_COMPATIBILITY',
             'producer_count':producer_count,'active_workers':0,'jobs_completed':0}
         self._measurements=deque(maxlen=MEASUREMENT_COUNT);self._rate_samples=deque(maxlen=MAX_RECORDS)
+        self._relay_measurement=None
 
     def start(self):
         """Manual compatibility session; its default remains four producers."""
@@ -330,7 +331,7 @@ class ParallelDag:
             self._recent_hashes=deque(maxlen=GRAPH_BLOCKS);self._max_rank=0;self._highest_hash=''
             self._resolved=set();self._executed=set();self._stored_bytes=0;self._wave_count=0;self._cursor=0
             self._last_wave={};self._preview_counts={'accepted':0,'conflicts':0,'duplicates':0}
-            self._measurements.clear();self._rate_samples.clear()
+            self._measurements.clear();self._rate_samples.clear();self._relay_measurement=None
             self._live.update(state='PAUSED',enabled=False,stop_reason='',waves_completed=0,in_flight=False,
                 producer_count=producer_count,active_workers=0,jobs_completed=0,mode='WAVE_COMPATIBILITY')
             self._stats={'attempts':0,'accepted':0,'rejected':0,'duplicates':0,'signature_checks':0,'charged_bytes':0,'transactions_validated':0}
@@ -495,6 +496,19 @@ class ParallelDag:
                 'producer_blocks':[row['proposals'] for row in self._producer_stats],
                 'producer_transactions':[row['transactions'] for row in self._producer_stats],
                 'canonical':False,'finality':FINALITY}
+
+    def workload_observation(self):
+        """Last actual jobs; elapsed/CPU work samples are not capacity claims."""
+        with self._lock:
+            local=None;last=self._last_wave
+            if type(last.get('transactions')) is int and last.get('timestamp'):
+                local={'transactions':last['transactions'],'sign_ms':last.get('producer_ms'),
+                    'verify_ms':last.get('validation_ms'),'wall_ms':last.get('total_ms'),
+                    'age_seconds':round(max(0,time.time()-last['timestamp']),3)}
+            relay=deepcopy(self._relay_measurement)
+            if relay is not None:
+                relay['age_seconds']=round(max(0,time.monotonic()-relay.pop('observed_monotonic')),3)
+            return {'basis':'RECENT_JOBS_NOT_CAPACITY','local':local,'relay':relay}
 
     def _decode_large_lan(self,raw,*,count_signature=False):
         """Validate the same canonical envelope outside the shared state lock."""
@@ -733,7 +747,21 @@ class ParallelDag:
         producer. The actual producer signature still uses the public genesis.
         This method alone is not transport authentication.
         """
-        return self.admit(raw,authenticated_ingress,_relayed=True,_check=check)
+        began=time.perf_counter_ns();cpu_began=time.thread_time_ns();result=None
+        try:
+            result=self.admit(raw,authenticated_ingress,_relayed=True,_check=check)
+            return result
+        finally:
+            wall_ms=(time.perf_counter_ns()-began)/1e6;cpu_ms=(time.thread_time_ns()-cpu_began)/1e6
+            if isinstance(result,dict) and result.get('state')=='ADMITTED_UNFINALIZED':
+                with self._lock:
+                    row=self._records.get(result['hash'])
+                    if row is not None:
+                        resolved=0<cpu_ms<=wall_ms
+                        self._relay_measurement={'transactions':row['transaction_count'],
+                            'wall_ms':round(wall_ms,3),'cpu_ms':round(cpu_ms,3) if resolved else None,
+                            'cpu_sample_resolved':resolved,
+                            'observed_monotonic':time.monotonic()}
 
     def _candidate(self,producer,sequence,parents,root,indices,*,_context=None):
         context=self._roots[root] if _context is None else _context['checkpoint'];transactions=[]
@@ -1174,7 +1202,7 @@ class ParallelDag:
             with self._lock:
                 self._active=False
                 self._live.update(state='STOPPED',enabled=False,in_flight=False,stop_reason='',active_workers=0)
-                self._measurements.clear();self._rate_samples.clear()
+                self._measurements.clear();self._rate_samples.clear();self._relay_measurement=None
                 for name in ('_producer_keys','_producer_public','_account_keys','_addresses','_preview_state','_genesis_state','_roots','_records','_frontier','_producer_sequences','_resolved','_executed','_producer_stats','_recent_hashes'):
                     value=getattr(self,name,None)
                     if hasattr(value,'clear'):value.clear()

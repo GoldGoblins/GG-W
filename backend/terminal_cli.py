@@ -690,6 +690,16 @@ def _foreground_lan_transport(lan):
                     'BrokenPipeError','OSError','ValueError','TypeError','JSONDecodeError','Exception'})}}}
 
 
+def _foreground_workload(value):
+    """Job measurements are stable; growing ages must not flood an idle CLI."""
+    source=_object(value);result={}
+    for name,fields in (('local',('transactions','sign_ms','verify_ms','wall_ms')),
+                        ('relay',('transactions','wall_ms','cpu_ms','cpu_sample_resolved'))):
+        row=_object(source.get(name))
+        result[name]={key:row[key] for key in fields if key in row} if row else None
+    return result
+
+
 def foreground_summary(command, body):
     """Bounded public observations; no wallet refresh, peer or signing input."""
     body=_object(body)
@@ -700,7 +710,10 @@ def foreground_summary(command, body):
         stress_summary={key:stress[key] for key in (
             'state','role','elapsed_ms','duration_ms','transactions_per_block','interval_ms',
             'blocks','transactions','all_peers_synced','acknowledged_blocks','acknowledged_transactions',
-            'acknowledged_bps','acknowledged_tps','stop_reason','last_error') if key in stress}
+            'acknowledged_bps','acknowledged_tps','stop_reason','last_error','convergence') if key in stress}
+        if isinstance(stress.get('workload'),dict):stress_summary['workload']=_foreground_workload(stress['workload'])
+        stress_summary['node_workloads']=[{'label':row.get('label'),'workload':_foreground_workload(row['workload'])}
+            for row in stress.get('participants',[])[:3] if isinstance(row,dict) and isinstance(row.get('workload'),dict)]
         summary={'schema':'gg.terminal.foreground.v1','engine':'DAGOBLIN_PRIVATE_LAN',
                 'scope':'PRIVATE_LAN_SESSION_EXPERIMENT','state':lan.get('state'),
                 'endpoint':lan.get('endpoint'),'producer_count':body.get('producer_count',0),

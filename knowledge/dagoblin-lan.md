@@ -68,7 +68,7 @@ långsam peer inte blockerar den andra. En ren TCP-kontroll som stänger utan
 att skicka något bokförs som en väntad stängning; en avbruten eller felaktig
 protokollram är fortfarande ett fel.
 
-Standardknappen startar ett 10-sekundersprov med **1 TX/block och 250 ms**.
+Standardknappen startar ett 10-sekundersprov med **1 TX/block och 1000 ms**.
 Högre belastning väljs uttryckligen i LAN-panelen efter en fungerande baslinje.
 De fysiska omproven nådde produktion men inte gemensam kvittens: 140 lokala
 block/TX vid 250 ms och 36 vid 1000 ms. Ett stopp tog 1,68 sekunder av den
@@ -82,6 +82,31 @@ Regressionsproven omfattar verklig signerad autentisering över en injicerad
 nya fysiska provet efter att alla tre apparater har uppdaterats och startats
 om av användaren. Den bakomliggande orsaken i Wi-Fi, router eller drivrutin
 är fortfarande inte fastställd av dessa kodtester.
+
+## Kvittensdiagnostik och faktisk jobbtid
+
+De fysiska proven med 1000 ms gav gemensam kvittens för 1 och 8 TX/block.
+32 TX/block saknade kvittens vid både 10 och 20 sekunder, trots att alla tre
+senare visade samma totaler. Ett separat prov med tre lokala processer och
+avsiktligt långsam verifiering kunde återskapa detta: fullständiga bevis blev
+lika först efter tidsgränsen. Detta är en möjlig förklaring, inte en mätning
+av Linux- eller Termux-enhetens hårdvara.
+
+LAN-panelen visar nu vilka villkor som saknades vid den sista beviskontrollen
+före deadline: rätt prov, stoppad producent, korrekt stoppstatus, giltigt
+bevis, blockmängd, tillstånd och räknare per producent. Matchning vid senare
+städning visas separat och kan aldrig göra ett underkänt prov godkänt.
+Den publika resultatexporten innehåller dessa skillnader utan råa nycklar,
+run-ID eller bevisdigester.
+
+Varje autentiserad nod rapporterar sina senaste faktiska jobb: lokalt
+signerings- och valideringsarbete, samt reläets verifierade TX, trådens CPU-tid
+och förfluten antagningstid. Förfluten tid omfattar väntan på lås och
+schemaläggning. Detta är observationer av avslutade jobb, inte kalibrerad
+kapacitet eller ett löfte om TX/s. Samma publika uppgifter visas i CLI och
+Desktop. Ingen verifieringsregel eller kryptografisk leverantör byts.
+CPU-tiden använder operativsystemets trådklocka; mycket korta jobb kan ha
+begränsad mätupplösning.
 
 ## Vad som överförs
 

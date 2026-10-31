@@ -200,7 +200,7 @@ start=find(popup,'lanDagStressStart');stop=find(popup,'lanDagStressStop')
 duration=find(popup,'lanDagStressDuration');transactions=find(popup,'lanDagStressTransactions');interval=find(popup,'lanDagStressInterval')
 assert start.isEnabled() and not stop.isEnabled()
 click(popup,'lanDagStressStart')
-assert actions[-1]==('lan_dag_stress_start',{'duration_ms':10000,'transactions_per_block':1,'interval_ms':250})
+assert actions[-1]==('lan_dag_stress_start',{'duration_ms':10000,'transactions_per_block':1,'interval_ms':1000})
 for field,valid,invalid in [(duration,'10',['','0','61','1.5']),
         (transactions,'1',['','0','129','-1','1.5']),
         (interval,'250',['','99','60001','100.5'])]:
@@ -323,7 +323,7 @@ def click(name):assert js(root,'fixtureClick('+json.dumps(name)+')'),name
 for name in ['dagStart','dagLanProduce']:
     put(ready);assert enabled(name) and 'DAG-prov' in text(name)
     click(name)
-    assert actions[-1]==('lan_dag_stress_start',{'duration_ms':10000,'transactions_per_block':1,'interval_ms':250})
+    assert actions[-1]==('lan_dag_stress_start',{'duration_ms':10000,'transactions_per_block':1,'interval_ms':1000})
 assert not popup.findChild(QQuickItem,'lanProduce').isEnabled()
 assert not popup.findChild(QQuickItem,'lanPause').isEnabled()
 assert 'tidsbegränsat prov' in popup.findChild(QQuickItem,'lanProducerModeNote').property('text')
@@ -334,7 +334,7 @@ assert len(actions)==before,'V3 cannot call the legacy producer API even while i
 clamped=copy.deepcopy(ready)
 clamped['dag_stress']['limits'].update(max_duration_ms=5000,max_tx_per_block=8,min_interval_ms=250)
 put(clamped);click('dagStart')
-assert actions[-1]==('lan_dag_stress_start',{'duration_ms':5000,'transactions_per_block':1,'interval_ms':250})
+assert actions[-1]==('lan_dag_stress_start',{'duration_ms':5000,'transactions_per_block':1,'interval_ms':1000})
 for key,value in [('can_start',False),('local_opt_in',False),('role','PARTICIPANT')]:
     denied=copy.deepcopy(ready);denied['dag_stress'][key]=value;put(denied)
     assert not enabled('dagStart') and not enabled('dagLanProduce'),key

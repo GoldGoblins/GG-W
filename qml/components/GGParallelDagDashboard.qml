@@ -94,7 +94,7 @@ Item {
     function defaultDagStressArguments(){
         var bounds=dagStress.limits||({}),values=[bounds.min_duration_ms,bounds.max_duration_ms,bounds.min_interval_ms,bounds.max_interval_ms,bounds.max_tx_per_block]
         if(!values.every(function(value,index){return Number.isSafeInteger(value)&&value>=(index===2?0:1)})||bounds.min_duration_ms>bounds.max_duration_ms||bounds.min_interval_ms>bounds.max_interval_ms)return null
-        return {duration_ms:Math.max(bounds.min_duration_ms,Math.min(bounds.max_duration_ms,10000)),transactions_per_block:1,interval_ms:Math.max(bounds.min_interval_ms,Math.min(bounds.max_interval_ms,250))}
+        return {duration_ms:Math.max(bounds.min_duration_ms,Math.min(bounds.max_duration_ms,10000)),transactions_per_block:1,interval_ms:Math.max(bounds.min_interval_ms,Math.min(bounds.max_interval_ms,1000))}
     }
     function producerName(index){
         var identities=lan.producer_identities||graph.producer_identities||[]

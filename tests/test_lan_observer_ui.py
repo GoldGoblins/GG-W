@@ -73,6 +73,36 @@ dag['dag_stress'].update(role='COORDINATOR',all_peers_synced=True,acknowledged_b
 assert root.property('liveLabel')=='DAG-prov · COMPLETE'
 assert 'nätkvittens från alla tre' in root.findChild(QQuickItem,'dagOperationNotice').property('text')
 
+work={'local':{'transactions':32,'sign_ms':12.5,'verify_ms':44.5,'wall_ms':58.0,'age_seconds':.2},
+      'relay':{'transactions':32,'cpu_ms':300.0,'wall_ms':450.0,'age_seconds':.3},'private_key':'MUST_NOT_EXPORT'}
+dag['dag_stress'].update(state='TIME_BUDGET',all_peers_synced=False,workload=work,
+    participants=[{'label':'Linux','local':True,'state':'COMPLETE','workload':work},
+                  {'label':'Termux','state':'COMPLETE','workload':work}],
+    convergence={'before_deadline':{'remaining_ms':42.0,'peers':[{'label':'Termux','matched':False,
+        'blocks':99,'transactions':3168,'pending':['state_root','worker','MUST_NOT_EXPORT']}]},
+        'cleanup':{'peers':[{'label':'Termux','matched':True}]}});put()
+assert 'saknade tillstånd, stoppad producent' in popup.findChild(QQuickItem,'lanDagConvergenceChecks').property('text')
+assert 'vid städning matchade' in popup.findChild(QQuickItem,'lanDagConvergenceChecks').property('text')
+assert 'CPU 300' in popup.findChild(QQuickItem,'lanDagNodeWorkloads').property('text')
+exported=json.loads(js(popup,'JSON.stringify(stressResultDocument())'))
+assert exported['convergence']['peers'][0]['pending']==['state_root','worker']
+assert exported['convergence']['peers'][0]['cleanup_matched'] is True
+assert exported['acknowledgement']['confirmed'] is False
+assert exported['workload']['relay']['transactions']==32
+assert 'MUST_NOT_EXPORT' not in json.dumps(exported)
+assert len(json.dumps(exported,ensure_ascii=False,separators=(',',':')))<4000
+saved_stress=json.loads(json.dumps(dag['dag_stress']))
+names=[('Very long public node name '+str(i)+' ')*3 for i in range(3)]
+names=[name[:64] for name in names]
+pending=['observation','run','worker','state','peer_error','proof_format','chain_id','blocks','transactions','blockset_digest','state_root','producer_blocks','producer_transactions']
+dag['dag_stress']['participants']=[{'label':name,'state':'COMPLETE','workload':work} for name in names]
+dag['dag_stress']['convergence']={'before_deadline':{'remaining_ms':99999.123,'peers':[
+    {'label':name,'matched':False,'blocks':4095,'transactions':123456789,'pending':pending} for name in names]},
+    'cleanup':{'peers':[{'label':name,'matched':True} for name in names]}}
+put();largest=js(popup,'JSON.stringify(stressResultDocument())')
+assert len(largest)<=4000,len(largest)
+dag['dag_stress']=saved_stress;put()
+
 dag['lan']['last_error']='GG_LAN_READ_DEADLINE';put()
 assert root.property('activeTransportError') is False
 assert 'Senaste transportfel:' in root.property('notice')

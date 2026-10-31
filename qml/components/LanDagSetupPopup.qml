@@ -309,18 +309,65 @@ Item {
     function stressTransportText(){return diagnosticParts(resultTransport()).join(" · ")}
     function resultPeerLabel(value){return typeof value==="string"&&/^[A-Za-zÅÄÖåäöÉé][A-Za-zÅÄÖåäöÉé0-9 _-]{0,63}$/.test(value)&&!/[0-9a-f]{16,}/i.test(value)&&!/[A-Za-z0-9]{24,}/.test(value)&&!/[0-9a-f]{8}-[0-9a-f]{4}-/i.test(value)?value:""}
     function resultLabel(value,index){return resultPeerLabel(value)||"Apparat "+(index+1)}
+    function resultWorkload(value){
+        var result={local:null,relay:null},source=value||({})
+        ;["local","relay"].forEach(function(name){
+            var row=source[name]
+            if(!row||resultNumber(row.transactions,true,50000)===null)return
+            var sample={transactions:resultNumber(row.transactions,true,50000)}
+            ;(name==="local"?["sign_ms","verify_ms","wall_ms","age_seconds"]:["wall_ms","cpu_ms","age_seconds"]).forEach(function(key){sample[key]=resultNumber(row[key],false,1000000000)})
+            if(name==="relay")sample.cpu_sample_resolved=typeof row.cpu_sample_resolved==="boolean"?row.cpu_sample_resolved:null
+            result[name]=sample
+        })
+        return result
+    }
+    function resultConvergence(){
+        var source=stress.convergence||({}),before=source.before_deadline
+        if(!before||!Array.isArray(before.peers))return null
+        var allowed=["observation","run","worker","state","peer_error","proof_format","chain_id","blocks","transactions","blockset_digest","state_root","producer_blocks","producer_transactions"]
+        var cleanup=Array.isArray((source.cleanup||{}).peers)?source.cleanup.peers.slice(0,3):[]
+        return {remaining_ms:resultNumber(before.remaining_ms,false,600000),peers:before.peers.slice(0,3).map(function(row,index){
+            row=row&&typeof row==="object"?row:({})
+            var label=resultLabel(row.label,index),after=cleanup.filter(function(peer){return peer.label===row.label})[0]
+            return {label:label,matched:row.matched===true,blocks:resultNumber(row.blocks,true,Number.MAX_SAFE_INTEGER),transactions:resultNumber(row.transactions,true,Number.MAX_SAFE_INTEGER),
+                pending:(Array.isArray(row.pending)?row.pending.slice(0,allowed.length):[]).filter(function(name){return allowed.indexOf(name)>=0}),
+                cleanup_matched:after?after.matched===true:null}
+        })}
+    }
+    function convergenceText(){
+        var result=resultConvergence()
+        if(!result)return ""
+        var names={observation:"observation",run:"rätt prov",worker:"stoppad producent",state:"stoppstatus",peer_error:"felfri peer",proof_format:"giltigt bevis",chain_id:"samma nät",blocks:"blockantal",transactions:"TX-antal",blockset_digest:"blockmängd",state_root:"tillstånd",producer_blocks:"block per producent",producer_transactions:"TX per producent"}
+        return "Senaste beviskontroll före deadline · "+measuredNumber(result.remaining_ms)+" ms kvar\n"+result.peers.map(function(peer){
+            return peer.label+": "+(peer.matched?"bevis matchade":"saknade "+(peer.pending.length?peer.pending.map(function(name){return names[name]}).join(", "):"fullständigt bevis"))+
+                (peer.cleanup_matched!==null?" · vid städning "+(peer.cleanup_matched?"matchade":"matchade inte"):"")
+        }).join("\n")
+    }
+    function workloadText(){
+        var rows=[{label:"Den här noden",workload:stress.workload}],peers=Array.isArray(stress.participants)?stress.participants.slice(0,3):[]
+        peers.forEach(function(peer){if(peer.local!==true&&peer.workload)rows.push(peer)})
+        var lines=[]
+        rows.slice(0,3).forEach(function(row,index){
+            var work=resultWorkload(row.workload),parts=[]
+            if(work.local)parts.push("eget "+work.local.transactions+" TX · sign "+measuredNumber(work.local.sign_ms)+" ms · val "+measuredNumber(work.local.verify_ms)+" ms")
+            if(work.relay)parts.push("relä "+work.relay.transactions+" TX · "+(work.relay.cpu_sample_resolved===false?"CPU ej upplöst":"CPU "+measuredNumber(work.relay.cpu_ms)+" ms")+" · tid "+measuredNumber(work.relay.wall_ms)+" ms")
+            if(parts.length)lines.push(resultLabel(row.label,index)+": "+parts.join(" · "))
+        })
+        return lines.length?"Senast observerade jobb per nod · ingen kapacitetsmätning\n"+lines.join("\n"):""
+    }
     function stressResultDocument(){
         var status=resultState(stress.state)
         if(!stressSupported||stress.enabled!==true||status===null)return null
         var blocks=resultNumber(stress.acknowledged_blocks,true,Number.MAX_SAFE_INTEGER),transactions=resultNumber(stress.acknowledged_transactions,true,Number.MAX_SAFE_INTEGER)
         var confirmed=stress.all_peers_synced===true&&blocks!==null&&transactions!==null,participants=[],source=Array.isArray(stress.participants)?stress.participants:[]
-        for(var i=0;i<Math.min(3,source.length);i++){var peer=source[i]||({});participants.push({label:resultLabel(peer.label,i),state:resultState(peer.state)})}
+        for(var i=0;i<Math.min(3,source.length);i++){var peer=source[i]||({});participants.push({label:resultLabel(peer.label,i),state:resultState(peer.state),workload:resultWorkload(peer.workload)})}
         return {schema:"gg.lan-dag-stress.result.v1",state:status,
             parameters:{duration_ms:resultNumber(stress.duration_ms,true,600000),transactions_per_block:resultNumber(stress.transactions_per_block,true,Number.MAX_SAFE_INTEGER),interval_ms:resultNumber(stress.interval_ms,true,60000)},
             local:{blocks:resultNumber(stress.blocks,true,Number.MAX_SAFE_INTEGER),transactions:resultNumber(stress.transactions,true,Number.MAX_SAFE_INTEGER),elapsed_ms:resultNumber(stress.elapsed_ms,false,600000)},
             acknowledgement:{confirmed:confirmed,basis:confirmed?resultEnum(stress.acknowledgement_basis,["STOP_OBSERVATIONS","STOP_AND_STATUS_OBSERVATIONS"]):null,blocks:confirmed?blocks:null,transactions:confirmed?transactions:null,bps:confirmed?resultNumber(stress.acknowledged_bps,false,Number.MAX_SAFE_INTEGER):null,tps:confirmed?resultNumber(stress.acknowledged_tps,false,Number.MAX_SAFE_INTEGER):null},
             failure:{code:resultCode(stress.last_error),reason:resultEnum(stress.stop_reason,["DURATION","CANCELLED","SOFTWARE_PROFILE_LIMIT","FAILED"]),phase:resultPhase(stress.failure_phase),transport:resultTransport()},
-            phase_ms:resultPhaseTimes(),status_polls:resultNumber(stress.status_polls,true,1000000),participants:participants,transport_diagnostics:transportDiagnostics()}
+            phase_ms:resultPhaseTimes(),status_polls:resultNumber(stress.status_polls,true,1000000),participants:participants,
+            convergence:resultConvergence(),workload:resultWorkload(stress.workload),transport_diagnostics:transportDiagnostics()}
     }
     function copyStressResult(){
         var result=stressResultDocument()
@@ -477,7 +524,7 @@ Item {
                             }
                             Column {width:(parent.width-14)/3;spacing:3
                                 Label {text:"Intervall · ms · 0 = auto";font.pixelSize:9}
-                                CryptoField {id:stressInterval;objectName:"lanDagStressInterval";property string uiColorScope:"ui.lan.dag.stress.interval";width:parent.width;height:27;text:"250";maximumLength:7;inputMethodHints:Qt.ImhDigitsOnly;enabled:stressDuration.enabled;Accessible.name:"DAG-producenternas målintervall i millisekunder"}
+                                CryptoField {id:stressInterval;objectName:"lanDagStressInterval";property string uiColorScope:"ui.lan.dag.stress.interval";width:parent.width;height:27;text:"1000";maximumLength:7;inputMethodHints:Qt.ImhDigitsOnly;enabled:stressDuration.enabled;Accessible.name:"DAG-producenternas målintervall i millisekunder"}
                             }
                         }
                         Flow {objectName:"lanDagStressActions";width:parent.width;spacing:7
@@ -493,6 +540,8 @@ Item {
                         Label {objectName:"lanDagStressPhaseSummary";colorKey:"ui.lan.dag.stress.phase.summary";width:parent.width;text:root.stressPhaseSummary();visible:text.length>0;color:root.resultPhase(root.stress.failure_phase)?RuntimeTheme.GGTheme.negative:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
                         Label {objectName:"lanDagStressPhaseTimings";colorKey:"ui.lan.dag.stress.phase.timings";width:parent.width;text:root.stressPhaseTimings();visible:text.length>0;color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
                         Label {objectName:"lanDagStressTransport";colorKey:"ui.lan.dag.stress.transport";width:parent.width;text:root.stressTransportText();visible:text.length>0;color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
+                        Label {objectName:"lanDagConvergenceChecks";width:parent.width;text:root.convergenceText();visible:text.length>0;color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
+                        Label {objectName:"lanDagNodeWorkloads";width:parent.width;text:root.workloadText();visible:text.length>0;color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
                     }
                 }
                 Section {height:tokenBody.height+18;visible:root.tokens.enabled===true

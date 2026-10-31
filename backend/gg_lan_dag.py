@@ -15,6 +15,7 @@ from copy import deepcopy
 import errno
 import ipaddress
 import json
+import math
 import re
 import secrets
 import select
@@ -532,7 +533,7 @@ class LanDagPeer:
                 state['transactions']=max(0,evidence['transactions']-plan['baseline']['transactions'])
                 if state['state'] in ('STARTING','RUNNING','STOPPING'):
                     state['elapsed_ms']=round((time.monotonic()-plan['started'])*1000)
-            return {**state,'evidence':evidence,'run_id':plan['body']['run_id'] if plan else '',
+            return {**state,'evidence':evidence,'workload':engine.workload_observation(),'run_id':plan['body']['run_id'] if plan else '',
                 'worker_active':bool(self._dag_worker and self._dag_worker.is_alive())}
 
     @staticmethod
@@ -540,6 +541,42 @@ class LanDagPeer:
         return (isinstance(status,dict) and status.get('run_id')==run_id
             and status.get('worker_active') is False and status.get('state') in ('COMPLETE','STOPPING')
             and status.get('last_error')=='' and LanDagPeer._dag_same_evidence(evidence,status.get('evidence')))
+
+    @staticmethod
+    def _dag_public_workload(value):
+        result={'basis':'RECENT_JOBS_NOT_CAPACITY','local':None,'relay':None}
+        if not isinstance(value,dict):return result
+        for name,fields in (('local',('sign_ms','verify_ms','wall_ms','age_seconds')),
+                            ('relay',('wall_ms','cpu_ms','age_seconds'))):
+            row=value.get(name)
+            if not isinstance(row,dict) or type(row.get('transactions')) is not int or not 0<=row['transactions']<=DAG_STRESS_MAX_TX:continue
+            result[name]={'transactions':row['transactions']}
+            for key in fields:
+                number=row.get(key)
+                result[name][key]=number if type(number) in (int,float) and math.isfinite(number) and 0<=number<=10**9 else None
+            if name=='relay':
+                resolved=row.get('cpu_sample_resolved')
+                result[name]['cpu_sample_resolved']=resolved if type(resolved) is bool else None
+                if resolved is False:result[name]['cpu_ms']=None
+        return result
+
+    @staticmethod
+    def _dag_evidence_check(status,evidence,run_id):
+        """Describe the unchanged ACK predicate without exposing IDs/digests."""
+        status=status if isinstance(status,dict) else {}
+        observed=status.get('evidence');observed=observed if isinstance(observed,dict) else {}
+        pending=[]
+        for name,ok in (('observation',bool(status)),('run',status.get('run_id')==run_id),
+                ('worker',status.get('worker_active') is False),('state',status.get('state') in ('COMPLETE','STOPPING')),
+                ('peer_error',status.get('last_error')==''),('proof_format',LanDagPeer._dag_same_evidence(observed,observed) and LanDagPeer._dag_same_evidence(evidence,evidence))):
+            if not ok:pending.append(name)
+        for key in ('chain_id','blocks','transactions','blockset_digest','state_root','producer_blocks','producer_transactions'):
+            if observed.get(key)!=evidence.get(key):pending.append(key)
+        def count(key):
+            value=observed.get(key)
+            return value if type(value) is int and 0<=value<=2**53-1 else None
+        return {'matched':LanDagPeer._dag_stopped_observation_matches(status,evidence,run_id),
+            'blocks':count('blocks'),'transactions':count('transactions'),'pending':pending}
 
     def _dag_stress_command(self,peer,kind,payload):
         """Authenticated coordinator-only, idempotent two-phase finite controls."""
@@ -589,7 +626,7 @@ class LanDagPeer:
                     self._dag_stress.update(state='STARTING',duration_ms=body['duration_ms'],transactions_per_block=body['transactions_per_block'],
                         interval_ms=body['interval_ms'],elapsed_ms=0,blocks=0,transactions=0,all_peers_synced=False,
                         acknowledged_blocks=None,acknowledged_transactions=None,acknowledged_bps=None,acknowledged_tps=None,
-                        stop_reason='',last_error='',last_error_details={},failure_phase='',phase_ms={},status_polls=0,
+                        stop_reason='',last_error='',last_error_details={},failure_phase='',phase_ms={},status_polls=0,convergence={},
                         acknowledgement_basis='',participants=[])
                 return self._dag_status()
             if kind in ('DAG_STRESS_BEGIN','DAG_STRESS_STOP') and set(payload)=={'run_id'}:
@@ -677,7 +714,16 @@ class LanDagPeer:
         attempted=[];statuses={};cleanup_statuses={};terminal='TIME_BUDGET';reason='DURATION';error='';synced=False
         deadline=plan['deadline'];run_id=plan['body']['run_id']
         phase='PREPARE';phase_started=time.monotonic();phase_ms={};details={};failure_phase='';status_polls=0
-        acknowledgement_basis='';observed_before_deadline=False
+        acknowledgement_basis='';observed_before_deadline=False;last_check=None
+        def check_observations(evidence,observations):
+            return [{'label':self._roster[peer]['label'],**self._dag_evidence_check(observations.get(peer),evidence,run_id)}
+                    for peer in attempted]
+        def remember_check(evidence):
+            nonlocal last_check
+            now=time.monotonic()
+            if now<deadline:
+                peers=check_observations(evidence,statuses);now=time.monotonic()
+                if now<deadline:last_check={'remaining_ms':round((deadline-now)*1000,3),'peers':peers}
         def enter_phase(name):
             nonlocal phase,phase_started
             now=time.monotonic();phase_ms[phase]=round(phase_ms.get(phase,0)+(now-phase_started)*1000,3)
@@ -711,6 +757,7 @@ class LanDagPeer:
                 # joining that peer's worker. Reuse its complete proof when it
                 # matches the fresh local set; request only missing observations.
                 local=self._dag_status();evidence=local['evidence'];unmatched=[]
+                remember_check(evidence)
                 for peer in attempted:
                     status=statuses.get(peer,{});peer_error=peer_failure(status)
                     if peer_error:
@@ -727,7 +774,7 @@ class LanDagPeer:
                     statuses[peer]=self._token_rpc(peer,'DAG_STRESS_STATUS',{},deadline=deadline)
                 # Check newly received matching evidence before a poll pause
                 # can consume the last part of the original signed budget.
-                fresh=self._dag_status()
+                fresh=self._dag_status();remember_check(fresh['evidence'])
                 if fresh.get('worker_active') is False and all(
                         self._dag_stopped_observation_matches(statuses.get(peer),fresh['evidence'],run_id)
                         for peer in attempted):continue
@@ -786,12 +833,17 @@ class LanDagPeer:
                 proof=status.get('evidence',{})
                 rows.append({'label':roster['label'],'local':peer==self.public_key,'opted_in':roster.get('allow_dag_transactions') is True,
                     'state':terminal if peer==self.public_key else status.get('state','UNCONFIRMED'),'blocks':proof.get('blocks'),'transactions':proof.get('transactions'),
-                    'protocol_fault':proof.get('protocol_fault',''),'blockset_digest':proof.get('blockset_digest'),'state_root':proof.get('state_root')})
+                    'protocol_fault':proof.get('protocol_fault',''),'blockset_digest':proof.get('blockset_digest'),'state_root':proof.get('state_root'),
+                    'workload':self._dag_public_workload(status.get('workload'))})
             with self._lock:
                 self._dag_stress.update(state=terminal,stop_reason=reason,last_error=error,elapsed_ms=round(elapsed*1000),
                     blocks=local['blocks'],transactions=local['transactions'],participants=rows,all_peers_synced=synced,
                     last_error_details=details,failure_phase=failure_phase,phase_ms=phase_ms,status_polls=status_polls,
                     acknowledgement_basis=acknowledgement_basis if synced else '',
+                    workload=self._dag_public_workload(local.get('workload')),
+                    convergence={'before_deadline':last_check,
+                        'cleanup':{'within_deadline':time.monotonic()<deadline,
+                            'peers':check_observations(local['evidence'],cleanup_statuses)}},
                     acknowledged_blocks=local['blocks'] if synced else None,acknowledged_transactions=local['transactions'] if synced else None,
                     acknowledged_bps=round(local['blocks']/elapsed,3) if synced else None,acknowledged_tps=round(local['transactions']/elapsed,3) if synced else None)
 
@@ -813,7 +865,7 @@ class LanDagPeer:
         if self._dag_enabled:
             try:
                 current=self._dag_status()
-                for key in ('blocks','transactions','elapsed_ms'):state[key]=current[key]
+                for key in ('blocks','transactions','elapsed_ms','workload'):state[key]=current[key]
                 state['worker_active']=current['worker_active']
             except ValueError:
                 if self._dag_enabled and not self._cancel.is_set():raise

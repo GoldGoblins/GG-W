@@ -14,7 +14,8 @@ class ConvergenceBudgetTests(unittest.TestCase):
 
     def coordinate(self,*,duration_ms=1000,status_delay=.15):
         coordinator=self.peers[0];body=self.plan()['body']
-        body.update(duration_ms=duration_ms,expires_at_ns=time.time_ns()+duration_ms*1000000)
+        wall=time.time_ns()
+        body.update(duration_ms=duration_ms,expires_at_ns=wall+duration_ms*1000000)
         signed=lan._signed(coordinator._identity,lan._DAG_STRESS,body)
         clock=[100.0];stops={};polls=[]
         lookup={p.public_key:p for p in self.peers}
@@ -42,7 +43,8 @@ class ConvergenceBudgetTests(unittest.TestCase):
             return result
         def advance(delay):clock[0]+=max(0,delay);return False
         coordinator._token_rpc=rpc
-        with patch.object(lan.time,'monotonic',side_effect=lambda:clock[0]):
+        with (patch.object(lan.time,'monotonic',side_effect=lambda:clock[0]),
+              patch.object(lan.time,'time_ns',return_value=wall)):
             coordinator._dag_stress_command(coordinator.public_key,'DAG_STRESS_PREPARE',{'plan':signed})
             plan=coordinator._dag_plan
             if duration_ms==1000:plan['production_deadline']=100.0
