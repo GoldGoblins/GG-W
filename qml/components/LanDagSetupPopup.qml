@@ -6,8 +6,15 @@ import "."
 import "." as RuntimeTheme
 
 // Explicit pairing controls. Public documents never include producer/wallet keys.
-Popup {
+Item {
     id:root;objectName:"lanDagSetupPopup"
+    visible:false
+    focus:visible
+    z:9999
+    property Item placementAnchor:null
+    property bool positioned:false
+    property color frameBorder:RuntimeTheme.GGTheme.dim
+    property int frameRadius:4
     property var state:({})
     property var setupCapabilities:({})
     property var surfaceHost:null
@@ -19,17 +26,21 @@ Popup {
     readonly property bool owned:setup.active===true
     readonly property bool coordinator:setup.coordinator===true
     readonly property bool ready:lan.state==="READY"
+    readonly property bool transportExhausted:!!lan.transport&&lan.transport.state==="EXHAUSTED"
     readonly property bool producing:!!state.live&&state.live.enabled===true
     readonly property var candidates:setup.invites||[]
     readonly property var tokens:state.test_tokens||({})
     readonly property var circle:state.token_circle||({})
-    readonly property var stress:state.dag_stress||(!owned?setupCapabilities:({}))
+    // Resolve capability fallback after the owner has bound both snapshots.
+    property bool bindingsReady:false
+    Component.onCompleted:bindingsReady=true
+    readonly property var stress:bindingsReady?(state.dag_stress||(!owned?setupCapabilities:({}))):({})
     readonly property var stressLimits:stress.limits||({})
     readonly property bool stressSupported:stress.supported===true
     readonly property bool stressRunning:["STARTING","RUNNING","STOPPING"].indexOf(String(stress.state||""))>=0
     readonly property bool stressParticipantsReady:(stress.participants||[]).length===3&&(stress.participants||[]).every(function(peer){return peer.opted_in===true})
     readonly property bool stressSettingsValid:boundedInteger(stressDuration.text,stressLimits.min_duration_ms,stressLimits.max_duration_ms,1000)&&boundedInteger(stressTransactions.text,1,stressLimits.max_tx_per_block,1)&&boundedInteger(stressInterval.text,stressLimits.min_interval_ms,stressLimits.max_interval_ms,1)
-    readonly property bool canStartStress:root.canAct&&root.ready&&root.coordinator&&root.stressSupported&&stress.enabled===true&&stress.local_opt_in===true&&stress.role==="COORDINATOR"&&stress.can_start===true&&stressParticipantsReady&&!stressRunning&&!circleRunning&&stressSettingsValid
+    readonly property bool canStartStress:root.canAct&&root.ready&&!root.transportExhausted&&root.coordinator&&root.stressSupported&&stress.enabled===true&&stress.local_opt_in===true&&stress.role==="COORDINATOR"&&stress.can_start===true&&stressParticipantsReady&&!stressRunning&&!circleRunning&&stressSettingsValid
     readonly property bool circleRunning:["RUNNING","STOPPING"].indexOf(String(circle.state||""))>=0
     readonly property bool circleFinished:["COMPLETE","STOPPED","ERROR","TIME_BUDGET","NO_TRANSFERS"].indexOf(String(circle.state||""))>=0
     readonly property bool circleSettingsValid:/^[0-9]{1,2}$/.test(circleBatch.text)&&Number(circleBatch.text)>=1&&Number(circleBatch.text)<=16&&/^[0-9]{1,2}$/.test(circleDuration.text)&&Number(circleDuration.text)>=1&&Number(circleDuration.text)<=60
@@ -41,13 +52,72 @@ Popup {
     signal actionRequested(string name,var args)
     signal priorityStopRequested()
     signal refreshRequested()
-    width:Math.min(720,parent?parent.width-16:720)
-    height:Math.min(650,parent?parent.height-16:650)
-    x:parent?(parent.width-width)/2:0;y:parent?(parent.height-height)/2:0
-    modal:true;focus:true;padding:12
-    closePolicy:Popup.CloseOnEscape|Popup.CloseOnPressOutside
-    background:Rectangle {color:RuntimeTheme.GGTheme.base;border.color:RuntimeTheme.GGTheme.line;border.width:1;radius:3}
-    function run(name,args){if(!canAct)return;if((name==="lan_produce"||name==="lan_pause")&&stress.enabled===true)return;if(name==="lan_dag_stress_start"&&!canStartStress)return;if(name==="lan_dag_stress_stop"&&(!stressSupported||stress.role!=="COORDINATOR"||!stressRunning))return;formError="";actionRequested(name,args||{})}
+    width:Math.min(720,parent?Math.max(0,parent.width-24):720)
+    height:Math.min(650,parent?Math.max(0,parent.height-32):650)
+    function keepWithinParent(){
+        if(!positioned||!parent)return
+        x=Math.max(0,Math.min(x,parent.width-width))
+        y=Math.max(12,Math.min(y,Math.max(12,parent.height-height-12)))
+    }
+    function open(){
+        if(!positioned){
+            var anchor=placementAnchor||parent
+            var origin=anchor&&parent?anchor.mapToItem(parent,0,0):Qt.point(0,0)
+            x=origin.x+(anchor?anchor.width-width:0)/2
+            y=origin.y+(anchor?anchor.height-height:0)/2
+            positioned=true
+        }
+        keepWithinParent()
+        visible=true
+        forceActiveFocus()
+    }
+    function close(){visible=false}
+    Keys.onEscapePressed:root.close()
+    onWidthChanged:keepWithinParent()
+    onHeightChanged:keepWithinParent()
+    Connections {
+        target:root.parent
+        function onWidthChanged(){root.keepWithinParent()}
+        function onHeightChanged(){root.keepWithinParent()}
+    }
+    Rectangle {anchors.fill:parent;anchors.margins:1;color:RuntimeTheme.GGTheme.panel;radius:Math.max(0,root.frameRadius-1)}
+    LedgerBorder {
+        anchors.fill:parent;color:root.frameBorder;radius:root.frameRadius
+        topGaps:[{start:title.x,end:title.x+title.width},{start:frameControls.x-3,end:frameControls.x+frameControls.width+3}]
+    }
+    MouseArea {anchors.fill:parent;acceptedButtons:Qt.LeftButton;onClicked:{}}
+    GGText {
+        id:title;objectName:"lanSetupTitle";colorKey:"ui.lan.title"
+        x:12;y:-8;width:Math.min(implicitWidth,Math.max(0,root.width-frameControls.width-36));height:18
+        text:"DAGoblin · privat LAN-session";font.family:"monospace";font.pixelSize:12;font.bold:true
+        color:RuntimeTheme.GGTheme.bright;elide:Text.ElideRight;verticalAlignment:Text.AlignVCenter
+    }
+    Row {
+        id:frameControls;z:3;anchors.right:parent.right;anchors.rightMargin:9;y:-12;spacing:3
+        Item {
+            objectName:"lanDragBar";width:26;height:26
+            Accessible.name:"Flytta LAN-panel"
+            Grid {
+                anchors.centerIn:parent;columns:2;spacing:3
+                Repeater {model:6;Rectangle {width:2;height:2;radius:1;color:RuntimeTheme.GGTheme.dim}}
+            }
+            MouseArea {
+                objectName:"lanDragHandle";anchors.fill:parent
+                drag.target:root;drag.smoothed:false
+                drag.minimumX:0;drag.minimumY:12
+                drag.maximumX:root.parent?Math.max(0,root.parent.width-root.width):4096
+                drag.maximumY:root.parent?Math.max(12,root.parent.height-root.height-12):4096
+                cursorShape:pressed?Qt.ClosedHandCursor:Qt.OpenHandCursor
+            }
+        }
+        CryptoButton {
+            id:closeButton;objectName:"lanSetupCloseButton";property string uiColorScope:"ui.lan.close"
+            width:26;height:26;padding:0;text:"×";Accessible.name:"Stäng LAN-panel"
+            background:Rectangle {color:closeButton.hovered||closeButton.down||closeButton.visualFocus?RuntimeTheme.GGTheme.raised:"transparent";border.width:closeButton.visualFocus?1:0;border.color:root.frameBorder}
+            onClicked:root.close()
+        }
+    }
+    function run(name,args){if(!canAct)return;if((name==="lan_produce"||name==="lan_pause")&&stress.enabled===true)return;if(name==="lan_circle_start"&&transportExhausted)return;if(name==="lan_dag_stress_start"&&!canStartStress)return;if(name==="lan_dag_stress_stop"&&(!stressSupported||stress.role!=="COORDINATOR"||!stressRunning))return;formError="";actionRequested(name,args||{})}
     function copy(value){if(surfaceHost&&surfaceHost.tmogCopy)surfaceHost.tmogCopy(String(value||""))}
     function wholeTokenAtomic(){var d=Number(root.tokens.decimals);return Number.isInteger(d)&&d>=0&&d<=18?"1"+"0".repeat(d):""}
     function tokenAmount(value){
@@ -75,8 +145,9 @@ Popup {
         return parts
     }
     function transportErrorText(){
-        var error=circleCode(root.lan.last_error)
-        return error?["Senaste transportfel: "+error].concat(diagnosticParts(root.lan.last_error_details)).join(" · "):""
+        var error=root.lan.last_error?(resultCode(root.lan.last_error)||"Okänd orsak"):""
+        var age=diagnosticAge(root.lan.last_error_at)
+        return error?["Senast registrerat transportfel"+(age?" ("+age+")":"")+": "+error].concat(diagnosticParts(root.lan.last_error_details)).join(" · "):""
     }
     function circleDetails(){
         var error=circleCode(root.circle.last_error),reason=circleCode(root.circle.stop_reason)
@@ -110,6 +181,94 @@ Popup {
         if(reason)parts.push("Stopporsak: "+reason)
         return parts.join(" · ")
     }
+    function resultEnum(value,allowed){return typeof value==="string"&&allowed.indexOf(value)>=0?value:null}
+    function resultNumber(value,integer,maximum){return typeof value==="number"&&isFinite(value)&&value>=0&&value<=maximum&&(!integer||Number.isSafeInteger(value))?value:null}
+    function resultCode(value){return typeof value==="string"&&/^GG_[A-Z0-9_]{1,80}$/.test(value)&&!/[0-9a-f]{16,}/i.test(value)?value:null}
+    function resultTime(value){return resultNumber(value,false,4102444800)}
+    function diagnosticAge(value){
+        var at=resultTime(value),now=Date.now()/1000
+        if(at===null||at<=0||at>now)return ""
+        var seconds=Math.floor(now-at)
+        return seconds<60?seconds+" s sedan":seconds<3600?Math.floor(seconds/60)+" min sedan":Math.floor(seconds/3600)+" h sedan"
+    }
+    function transportOperation(value){return resultEnum(value,["PAGE","GET","INCOMING","TOKEN_STATUS","TOKEN_SYNC","TOKEN_SUBMIT","TOKEN_APPLY","CIRCLE_SIGN","CIRCLE_END","DAG_STRESS_PREPARE","DAG_STRESS_BEGIN","DAG_STRESS_STOP","DAG_STRESS_STATUS"])}
+    function transportStage(value){return resultEnum(value,["ACCEPT","CHECK","WAIT","CONNECT","AUTH","SEND","RECEIVE","VALIDATE","EXECUTE"])}
+    function transportDiagnostics(){
+        var source=root.lan.transport
+        if(!source||typeof source!=="object"||Array.isArray(source))return null
+        var counters=source.counters||({}),drops=counters.admission_drops||({}),history=[],rows=Array.isArray(source.history)?source.history:[]
+        for(var i=Math.max(0,rows.length-32);i<rows.length;i++){
+            var row=rows[i]
+            if(!row||typeof row!=="object"||Array.isArray(row))continue
+            var code=resultCode(row.code),at=resultTime(row.at)
+            if(code===null||at===null)continue
+            history.push({at:at,operation:transportOperation(row.operation),stage:transportStage(row.stage),code:code,peer_label:resultPeerLabel(row.peer_label),expected:typeof row.expected==="boolean"?row.expected:null,reason:resultEnum(row.reason,["","RATE","HANDLERS","SESSION","BYTES"])})
+        }
+        var details=root.lan.last_error_details||({})
+        return {state:resultEnum(source.state,["ACTIVE","EXHAUSTED","STOPPED"]),exhausted_reason:resultEnum(source.exhausted_reason,["","SESSION","BYTES","FRAMES"]),
+            connections_admitted:resultNumber(source.connections_admitted,true,Number.MAX_SAFE_INTEGER),active_handlers:resultNumber(source.active_handlers,true,4),
+            counters:{failures:resultNumber(counters.failures,true,Number.MAX_SAFE_INTEGER),expected_closures:resultNumber(counters.expected_closures,true,Number.MAX_SAFE_INTEGER),successes:resultNumber(counters.successes,true,Number.MAX_SAFE_INTEGER),
+                admission_drops:{RATE:resultNumber(drops.RATE,true,Number.MAX_SAFE_INTEGER),HANDLERS:resultNumber(drops.HANDLERS,true,Number.MAX_SAFE_INTEGER),SESSION:resultNumber(drops.SESSION,true,Number.MAX_SAFE_INTEGER),BYTES:resultNumber(drops.BYTES,true,Number.MAX_SAFE_INTEGER)}},
+            last_failure:{code:resultCode(root.lan.last_error),at:resultTime(root.lan.last_error_at),transport:{operation:transportOperation(details.operation),stage:transportStage(details.stage),error_class:resultEnum(details.error_class,["TimeoutError","ConnectionResetError","ConnectionRefusedError","BrokenPipeError","OSError","ValueError","TypeError","JSONDecodeError","Exception"])}},history:history}
+    }
+    function transportSummaryText(){
+        var value=transportDiagnostics()
+        if(value===null||value.state===null)return ""
+        var title=value.state==="EXHAUSTED"?"sessionsgräns nådd · "+(value.exhausted_reason||"orsak saknas")+" · nya prov spärrade":value.state==="STOPPED"?"stoppad":"mottagning aktiv"
+        return "Transport · "+title+" · anslutningar "+measuredNumber(value.connections_admitted)+" · hanterare "+measuredNumber(value.active_handlers)+"\nRegistrerat: fel "+measuredNumber(value.counters.failures)+" · väntade stängningar "+measuredNumber(value.counters.expected_closures)+" · lyckade anrop "+measuredNumber(value.counters.successes)
+    }
+    function transportHistoryText(){
+        var value=transportDiagnostics()
+        if(value===null)return ""
+        var parts=[],drops=value.counters.admission_drops
+        for(var name in drops)if(drops[name]!==null&&drops[name]>0)parts.push(name+" "+drops[name])
+        var lines=parts.length?["Avvisade anslutningar · "+parts.join(" · ")]:[]
+        for(var i=Math.max(0,value.history.length-3);i<value.history.length;i++){
+            var row=value.history[i],age=diagnosticAge(row.at),kind=row.expected===true?"Väntad stängning":row.expected===false?"Registrerat fel":"Registrerad händelse"
+            lines.push(kind+" · "+[row.operation,row.stage,row.code,row.peer_label,age].filter(function(part){return !!part}).join(" · "))
+        }
+        return lines.join("\n")
+    }
+    function resultPhase(value){return resultEnum(value,["PREPARE","BEGIN","PRODUCE","STOP","CONVERGENCE","CLEANUP","FINALIZE","FINAL_EVIDENCE"])}
+    function resultState(value){return resultEnum(value,["IDLE","STARTING","RUNNING","STOPPING","STOPPED","COMPLETE","ERROR","TIME_BUDGET","LIMIT_REACHED","UNOBSERVED"])}
+    function resultTransport(){
+        var details=stress.last_error_details||({})
+        return {operation:resultEnum(details.operation,["DAG_STRESS_PREPARE","DAG_STRESS_BEGIN","DAG_STRESS_STOP","DAG_STRESS_STATUS"]),stage:resultEnum(details.stage,["CHECK","WAIT","CONNECT","AUTH","SEND","RECEIVE","VALIDATE","EXECUTE"]),error_class:resultEnum(details.error_class,["TimeoutError","ConnectionResetError","ConnectionRefusedError","BrokenPipeError","OSError","ValueError","TypeError","JSONDecodeError","Exception"])}
+    }
+    function resultPhaseTimes(){
+        var result={},source=stress.phase_ms||({}),names=["PREPARE","BEGIN","PRODUCE","STOP","CONVERGENCE","CLEANUP","FINALIZE"]
+        for(var i=0;i<names.length;i++)result[names[i]]=resultNumber(source[names[i]],false,600000)
+        return result
+    }
+    function phaseTitle(value){var names={PREPARE:"Förberedelse",BEGIN:"Start",PRODUCE:"Produktion",STOP:"Stopp",CONVERGENCE:"Samstämmighet",CLEANUP:"Städning",FINALIZE:"Avslut",FINAL_EVIDENCE:"Slutkontroll"};return resultPhase(value)?names[value]:""}
+    function stressPhaseSummary(){
+        var parts=[],phase=resultPhase(stress.failure_phase),polls=resultNumber(stress.status_polls,true,1000000)
+        if(phase)parts.push("Fel i fas: "+phaseTitle(phase))
+        if(polls!==null)parts.push("Statusfrågor: "+polls)
+        return parts.join(" · ")
+    }
+    function stressPhaseTimings(){
+        var parts=[],times=resultPhaseTimes()
+        for(var name in times)if(times[name]!==null)parts.push(phaseTitle(name)+" "+times[name].toFixed(1)+" ms")
+        return parts.length?"Faser · "+parts.join(" · "):""
+    }
+    function stressTransportText(){return diagnosticParts(resultTransport()).join(" · ")}
+    function resultPeerLabel(value){return typeof value==="string"&&/^[A-Za-zÅÄÖåäöÉé][A-Za-zÅÄÖåäöÉé0-9 _-]{0,63}$/.test(value)&&!/[0-9a-f]{16,}/i.test(value)&&!/[A-Za-z0-9]{24,}/.test(value)&&!/[0-9a-f]{8}-[0-9a-f]{4}-/i.test(value)?value:""}
+    function resultLabel(value,index){return resultPeerLabel(value)||"Apparat "+(index+1)}
+    function stressResultDocument(){
+        var status=resultState(stress.state)
+        if(!stressSupported||stress.enabled!==true||status===null)return null
+        var blocks=resultNumber(stress.acknowledged_blocks,true,Number.MAX_SAFE_INTEGER),transactions=resultNumber(stress.acknowledged_transactions,true,Number.MAX_SAFE_INTEGER)
+        var confirmed=stress.all_peers_synced===true&&blocks!==null&&transactions!==null,participants=[],source=Array.isArray(stress.participants)?stress.participants:[]
+        for(var i=0;i<Math.min(3,source.length);i++){var peer=source[i]||({});participants.push({label:resultLabel(peer.label,i),state:resultState(peer.state)})}
+        return {schema:"gg.lan-dag-stress.result.v1",state:status,
+            parameters:{duration_ms:resultNumber(stress.duration_ms,true,60000),transactions_per_block:resultNumber(stress.transactions_per_block,true,Number.MAX_SAFE_INTEGER),interval_ms:resultNumber(stress.interval_ms,true,60000)},
+            local:{blocks:resultNumber(stress.blocks,true,Number.MAX_SAFE_INTEGER),transactions:resultNumber(stress.transactions,true,Number.MAX_SAFE_INTEGER),elapsed_ms:resultNumber(stress.elapsed_ms,false,600000)},
+            acknowledgement:{confirmed:confirmed,basis:confirmed?resultEnum(stress.acknowledgement_basis,["STOP_OBSERVATIONS","STOP_AND_STATUS_OBSERVATIONS"]):null,blocks:confirmed?blocks:null,transactions:confirmed?transactions:null,bps:confirmed?resultNumber(stress.acknowledged_bps,false,Number.MAX_SAFE_INTEGER):null,tps:confirmed?resultNumber(stress.acknowledged_tps,false,Number.MAX_SAFE_INTEGER):null},
+            failure:{code:resultCode(stress.last_error),reason:resultEnum(stress.stop_reason,["DURATION","CANCELLED","SOFTWARE_PROFILE_LIMIT","FAILED"]),phase:resultPhase(stress.failure_phase),transport:resultTransport()},
+            phase_ms:resultPhaseTimes(),status_polls:resultNumber(stress.status_polls,true,1000000),participants:participants,transport_diagnostics:transportDiagnostics()}
+    }
+    function copyStressResult(){var result=stressResultDocument();if(result!==null)copy(JSON.stringify(result,null,2))}
     function startOptions(options){if(stressSupported&&dagOptIn.checked)options.allow_dag_transactions=true;return options}
     function sessionOptions(){var options={label:"GG LAN",distribute:true,enable_test_tokens:root.setup.allow_dag_transactions!==true&&root.allTokenOptedIn};if(root.setup.allow_dag_transactions===true&&root.allDagOptedIn)options.enable_dag_transactions=true;return options}
     function command(label){return (label==="Termux"?'python':'python3')+' gg-cli.py --foreground --command "lan.start label='+label+' auto_produce=false'+(root.setup.allow_test_tokens===true?' allow_test_tokens=true':'')+(root.setup.allow_dag_transactions===true?' allow_dag_transactions=true':'')+'" --bootstrap-file gg-lan-bootstrap.json'}
@@ -119,10 +278,9 @@ Popup {
     component Action:CryptoButton {height:27;font.pixelSize:10;enabled:root.canAct}
     component Section:Rectangle {color:"transparent";border.width:1;border.color:RuntimeTheme.GGTheme.line;width:body.width;radius:2}
     component Line:Rectangle {width:parent.width;height:1;color:RuntimeTheme.GGTheme.line}
-    contentItem:Item {
-        Label {id:title;objectName:"lanSetupTitle";colorKey:"ui.lan.title";width:parent.width-36;text:"DAGoblin · privat LAN-session";font.pixelSize:14;font.bold:true}
-        Action {anchors.right:parent.right;y:-3;width:28;text:"×";enabled:true;onClicked:root.close()}
-        ScrollView {y:32;width:parent.width;height:Math.max(0,parent.height-y);clip:true;contentWidth:availableWidth
+    Item {
+        anchors.fill:parent;anchors.margins:12;anchors.topMargin:20
+        ScrollView {anchors.fill:parent;clip:true;contentWidth:availableWidth
             Column {id:body;width:parent.width;spacing:8
                 Label {colorKey:"ui.lan.scope";width:parent.width;text:"Tre parade peers · två egna producenter per apparat. Riktiga signerade förslag över TCP; ingen kanonisk finalitet eller finansiell handel.";color:RuntimeTheme.GGTheme.dim}
                 Row {width:parent.width;spacing:8
@@ -131,6 +289,8 @@ Popup {
                     Action {objectName:"lanPriorityStop";width:100;text:root.stopPending?"Stoppar…":"■ Stoppa";enabled:root.owned&&!root.stopPending;onClicked:root.priorityStopRequested()}
                 }
                 Label {objectName:"lanSetupError";colorKey:"ui.lan.error";width:parent.width;visible:text.length>0;text:root.formError||root.operationError||String(root.setup.announcement_error||"")||root.transportErrorText();color:RuntimeTheme.GGTheme.negative}
+                Label {objectName:"lanTransportStatus";colorKey:"ui.lan.transport.status";width:parent.width;visible:text.length>0;text:root.transportSummaryText();color:root.transportExhausted?RuntimeTheme.GGTheme.negative:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
+                Label {objectName:"lanTransportHistory";colorKey:"ui.lan.transport.history";width:parent.width;visible:text.length>0;text:root.transportHistoryText();color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
                 Section {height:startBody.height+18
                     Column {id:startBody;x:9;y:9;width:parent.width-18;spacing:7
                         Label {colorKey:"ui.lan.step.start";text:"1 · Starta koordinator eller anslut den här datorn";font.bold:true}
@@ -225,12 +385,16 @@ Popup {
                         Flow {objectName:"lanDagStressActions";width:parent.width;spacing:7
                             Action {objectName:"lanDagStressStart";text:"▷ Kör DAG-prov · 3 apparater";tip:"Kör ett tidsbegränsat DAG-prov med tre uttryckligen anslutna apparater";enabled:root.canStartStress;onClicked:root.run("lan_dag_stress_start",{duration_ms:Number(stressDuration.text)*1000,transactions_per_block:Number(stressTransactions.text),interval_ms:Number(stressInterval.text)})}
                             Action {objectName:"lanDagStressStop";text:"■ Stoppa DAG-prov";enabled:root.canAct&&root.stressSupported&&root.stress.role==="COORDINATOR"&&root.stressRunning;onClicked:root.run("lan_dag_stress_stop",{})}
+                            Action {objectName:"lanDagStressCopyResult";text:"Kopiera provresultat";enabled:root.stressSupported&&root.stress.enabled===true&&root.resultState(root.stress.state)!==null&&!!root.surfaceHost&&!!root.surfaceHost.tmogCopy;onClicked:root.copyStressResult()}
                         }
                         Label {objectName:"lanDagStressStatus";colorKey:"ui.lan.dag.stress.status";width:parent.width;text:"DAG-prov · "+String(root.stress.state||"IDLE")+" · "+root.measuredNumber(root.stress.elapsed_ms)+" ms";color:root.stress.last_error?RuntimeTheme.GGTheme.negative:RuntimeTheme.GGTheme.cyan}
                         Label {objectName:"lanDagStressLocal";colorKey:"ui.lan.dag.stress.local";width:parent.width;text:"Lokalt verifierat under provet: "+root.measuredNumber(root.stress.blocks)+" förslag · "+root.measuredNumber(root.stress.transactions)+" DAG-TX"}
                         Label {objectName:"lanDagStressRates";colorKey:"ui.lan.dag.stress.rates";width:parent.width;text:"DAG · senaste mätfönstret: "+root.measuredRate((root.state.block_graph||{}).metrics?root.state.block_graph.metrics.bps:undefined)+" förslag/s · "+root.measuredRate((root.state.block_graph||{}).metrics?root.state.block_graph.metrics.tps:undefined)+" TX/s · lokal validering";color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
                         Label {objectName:"lanDagStressAcknowledged";colorKey:"ui.lan.dag.stress.acknowledged";width:parent.width;text:root.stressAckText();color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
                         Label {objectName:"lanDagStressDetails";colorKey:"ui.lan.dag.stress.details";width:parent.width;text:root.stressDetails();visible:text.length>0;color:root.stress.last_error?RuntimeTheme.GGTheme.negative:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
+                        Label {objectName:"lanDagStressPhaseSummary";colorKey:"ui.lan.dag.stress.phase.summary";width:parent.width;text:root.stressPhaseSummary();visible:text.length>0;color:root.resultPhase(root.stress.failure_phase)?RuntimeTheme.GGTheme.negative:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
+                        Label {objectName:"lanDagStressPhaseTimings";colorKey:"ui.lan.dag.stress.phase.timings";width:parent.width;text:root.stressPhaseTimings();visible:text.length>0;color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
+                        Label {objectName:"lanDagStressTransport";colorKey:"ui.lan.dag.stress.transport";width:parent.width;text:root.stressTransportText();visible:text.length>0;color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
                     }
                 }
                 Section {height:tokenBody.height+18;visible:root.tokens.enabled===true
@@ -251,7 +415,7 @@ Popup {
                             CryptoField {id:circleBatch;objectName:"lanCircleBatch";property string uiColorScope:"ui.lan.field.circle.batch";width:48;height:27;text:"1";maximumLength:2;inputMethodHints:Qt.ImhDigitsOnly;enabled:circleDuration.enabled;Accessible.name:"Överföringar per batch, 1 till 16"}
                         }
                         Row {spacing:7
-                            Action {objectName:"lanCircleStart";text:"▷ Cirkulera "+circleDuration.text+" s · batch "+circleBatch.text;enabled:root.canAct&&root.ready&&root.coordinator&&!root.circleRunning&&root.circleSettingsValid&&root.wholeTokenAtomic().length>0;onClicked:root.run("lan_circle_start",{duration_ms:Number(circleDuration.text)*1000,batch:Number(circleBatch.text),amount_atomic:root.wholeTokenAtomic()})}
+                            Action {objectName:"lanCircleStart";text:"▷ Cirkulera "+circleDuration.text+" s · batch "+circleBatch.text;enabled:root.canAct&&root.ready&&!root.transportExhausted&&root.coordinator&&!root.circleRunning&&root.circleSettingsValid&&root.wholeTokenAtomic().length>0;onClicked:root.run("lan_circle_start",{duration_ms:Number(circleDuration.text)*1000,batch:Number(circleBatch.text),amount_atomic:root.wholeTokenAtomic()})}
                             Action {objectName:"lanCircleStop";text:"■ Stoppa prov";enabled:root.canAct&&root.circleRunning;onClicked:root.run("lan_circle_stop",{})}
                         }
                         Label {objectName:"lanCircleStatus";colorKey:"ui.lan.token.circle";width:parent.width;text:String(root.circle.state||"Redo")+" · "+String(root.circle.transactions===undefined?"—":root.circle.transactions)+" TX · "+(typeof root.circle.tps==="number"?root.circle.tps.toFixed(1):"—")+" TX/s · "+String(root.circle.completed_rounds===undefined?"—":root.circle.completed_rounds)+" varv";color:root.circle.last_error?RuntimeTheme.GGTheme.negative:RuntimeTheme.GGTheme.cyan}

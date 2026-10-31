@@ -97,16 +97,16 @@ state({'state':'IDLE'},coordinator=False)
 assert not start.isEnabled() and not duration.isEnabled() and not batch.isEnabled()
 setup_error=find('lanSetupError')
 js('state={lan:{state:"READY",last_error:"GG_LAN_TOKEN_RPC",last_error_details:{operation:"CIRCLE_SIGN",stage:"read_frame",error_class:"TimeoutError"}},token_circle:{state:"ERROR",last_error:"GG_LAN_CIRCLE_FAILED",stop_reason:"FAILED"}}')
-assert setup_error.property('text')=='Senaste transportfel: GG_LAN_TOKEN_RPC · Operation: CIRCLE_SIGN · Steg: read_frame · Felklass: TimeoutError'
+assert setup_error.property('text')=='Senast registrerat transportfel: GG_LAN_TOKEN_RPC · Operation: CIRCLE_SIGN · Steg: read_frame · Felklass: TimeoutError'
 assert 'Fel: GG_LAN_CIRCLE_FAILED' in details.property('text')
 js('formError="Kontrollera längden";operationError="Operationen misslyckades"')
 assert setup_error.property('text')=='Kontrollera längden'
 js('formError=""')
 assert setup_error.property('text')=='Operationen misslyckades'
 js('operationError="";state={lan:{last_error:"<img>\\nsecret=example",last_error_details:{operation:"<img>",stage:"read\\nsecret=example",error_class:"X".repeat(49)}}}')
-assert setup_error.property('text')=='Senaste transportfel: Okänd orsak'
+assert setup_error.property('text')=='Senast registrerat transportfel: Okänd orsak'
 js('state={lan:{last_error:"GG_LAN_WIRE"}}')
-assert setup_error.property('text')=='Senaste transportfel: GG_LAN_WIRE'
+assert setup_error.property('text')=='Senast registrerat transportfel: GG_LAN_WIRE'
 js('state={lan:{}}')
 assert setup_error.property('text')==''
 root.deleteLater();engine.deleteLater();app.processEvents();assert not warnings,warnings

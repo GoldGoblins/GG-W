@@ -365,7 +365,7 @@ Item {
         }
     }
     Loader {x:root.mainWidth;y:toolbar.height;width:root.railWidth;height:Math.max(0,root.height-y);active:root.railVisible;visible:active;sourceComponent:factsComponent}
-    LanDagSetupPopup {id:lanPopup;parent:root;state:root.dag;setupCapabilities:(root.state.lan_dag||({})).dag_stress||({});surfaceHost:root.surfaceHost;canAct:root.canAct;localRunning:root.running&&!root.lanOwned;stopPending:root.stopRequested;operationError:root.stopError||String(root.operation.error||"");onActionRequested:function(name,args){root.run(name,args)};onPriorityStopRequested:root.run("dag_stop",{});onRefreshRequested:root.refreshRequested()}
+    LanDagSetupPopup {id:lanPopup;parent:root.Window.window?root.Window.window.contentItem:root;placementAnchor:root;state:root.dag;setupCapabilities:(root.state.lan_dag||({})).dag_stress||({});surfaceHost:root.surfaceHost;canAct:root.canAct;localRunning:root.running&&!root.lanOwned;stopPending:root.stopRequested;operationError:root.stopError||String(root.operation.error||"");onActionRequested:function(name,args){root.run(name,args)};onPriorityStopRequested:root.run("dag_stop",{});onRefreshRequested:root.refreshRequested()}
     Popup {id:factsDrawer;objectName:"dagFactsDrawer";x:Math.max(0,root.width-width);y:toolbar.height;width:Math.min(360,root.width);height:Math.max(0,root.height-y);padding:0;modal:true;focus:true;closePolicy:Popup.CloseOnEscape|Popup.CloseOnPressOutside
         background:Frame {property string uiColorScope:"ui.widget.dag.drawer";color:RuntimeTheme.GGTheme.base}
         contentItem:Item {Action {property string uiColorScope:"ui.control.dag.drawer.close";anchors.right:parent.right;y:3;width:28;text:"×";enabled:true;onClicked:factsDrawer.close()}

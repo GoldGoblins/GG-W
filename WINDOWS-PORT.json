@@ -2440,7 +2440,7 @@
     },
     "qml/components/GGParallelDagDashboard.qml": {
       "upstream_sha256": null,
-      "windows_sha256": "980f270f5974ae5f8634a886368bc5b91b4472c18bde6a175f55061ba7fbce08"
+      "windows_sha256": "77c093432283cf307d611c4801f2db5246c3bbdd203e1852e3185c8b0586af9d"
     },
     "qml/components/GGTheme.qml": {
       "upstream_sha256": null,
@@ -2656,7 +2656,7 @@
     },
     "backend/gg_lan_dag.py": {
       "upstream_sha256": null,
-      "windows_sha256": "6a97ab081a2eb82c4e7e4813412baca273efe23faad0ba6b4dff1355ce51f8d3"
+      "windows_sha256": "038e83a3ed79ad25415a82068a36a35e28b2cea125327c34279c8b08e9efe905"
     },
     "backend/lan_dag_runtime.py": {
       "upstream_sha256": null,
@@ -2680,7 +2680,7 @@
     },
     "qml/components/LanDagSetupPopup.qml": {
       "upstream_sha256": null,
-      "windows_sha256": "35ef2d3e341b836f7f1e65da443f1e562a767ece3ae10987cfae3ae40baf947d"
+      "windows_sha256": "001aac1c40b8ff7a3f185349d027dba57ec9079128b92e62eef325b58c5b6c0f"
     },
     "tests/test_activity_color_bindings.py": {
       "upstream_sha256": null,
@@ -2816,7 +2816,7 @@
     },
     "tests/test_lan_circle_ui_controls.py": {
       "upstream_sha256": null,
-      "windows_sha256": "7b60b207f7cbdf9bc7bb3dff05eec3f2ec6511127839e97bc191502e3c569f45"
+      "windows_sha256": "14548b3d7b160aaddeff4618a76dd32dc01757994ebca5bafd9a80a091c92ca4"
     },
     "tests/test_lan_deadline_transport.py": {
       "upstream_sha256": null,
