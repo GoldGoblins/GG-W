@@ -579,7 +579,9 @@ class LanDagPeer:
                 now=time.monotonic();duration=min(remaining,body['duration_ms']/1000)
                 # Reserve a bounded portion of the same global budget for drain
                 # and authenticated evidence; this is not additional run time.
-                deadline=now+duration;drain=min(30.0 if body['transactions_per_block']>64 else 2.0,body['duration_ms']/3000)
+                # STOP and fresh evidence use the same authenticated transport
+                # as setup. Low payloads still need time for those round trips.
+                deadline=now+duration;drain=min(30.0,body['duration_ms']/2000)
                 self._dag_cancel=threading.Event()
                 self._dag_plan={'body':deepcopy(body),'signed':deepcopy(signed),'deadline':deadline,
                     'production_deadline':deadline-drain,'started':now,'baseline':baseline,'begun':False}
@@ -723,6 +725,12 @@ class LanDagPeer:
                 for peer in unmatched:
                     status_polls+=1
                     statuses[peer]=self._token_rpc(peer,'DAG_STRESS_STATUS',{},deadline=deadline)
+                # Check newly received matching evidence before a poll pause
+                # can consume the last part of the original signed budget.
+                fresh=self._dag_status()
+                if fresh.get('worker_active') is False and all(
+                        self._dag_stopped_observation_matches(statuses.get(peer),fresh['evidence'],run_id)
+                        for peer in attempted):continue
                 # Status RPCs share the connection gate with PAGE traffic. Leave
                 # one control interval for the actual block exchange needed to
                 # converge. Keep the original deadline and lifetime cancellation.

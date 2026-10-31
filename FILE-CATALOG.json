@@ -15,7 +15,7 @@
     "interface": 291,
     "native-engine": 1188,
     "shared-support": 93,
-    "tests": 569,
+    "tests": 570,
     "tools": 38
   },
   "files": [
@@ -91,8 +91,8 @@
       "path": "SOURCE-MANIFEST.json",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 576820,
-      "sha256": "b306c7b0c339272eaac7d36d834e98f4da7a2cf1ee8c916cec1f197ed1ccb717",
+      "bytes": 576994,
+      "sha256": "0c656c94a57ae9c372b0d0ebf41b1d2ab1d72c560b745fee5f198af10c07e25a",
       "mode": "0o644"
     },
     {
@@ -100,7 +100,7 @@
       "category": "entrypoints-and-guidance",
       "kind": "file",
       "bytes": 1578358,
-      "sha256": "4d0bd2f257d72a2768ea08cd3ddbf74260c75c5a6f50fd468a521b7f7c13017f",
+      "sha256": "ab4cdf2f18ede36bcfbfacd6840205123316570361cf80f06fab7a1d611fc330",
       "mode": "0o644"
     },
     {
@@ -2419,8 +2419,8 @@
       "path": "backend/gg_lan_dag.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 119042,
-      "sha256": "62decd73812a75b838eb27ec8d4a8fa2864662e5f8b7ba7df084cd1a6a16cb81",
+      "bytes": 119583,
+      "sha256": "5ce87563b3f7284d4f3fdbda96906bd5889eba3b68b3079d6f315ad9f66ca56f",
       "mode": "0o644"
     },
     {
@@ -4675,8 +4675,8 @@
       "path": "knowledge/dagoblin-lan.md",
       "category": "gpt-knowledge",
       "kind": "file",
-      "bytes": 18260,
-      "sha256": "6972cdb53da008a53467d47fbd8fc8274e1db366959acee9f9ac9f9a3caea227",
+      "bytes": 19473,
+      "sha256": "785cf89dc667edbbe4daa3fbe527cfab87891df1aea65720139903b5673a7c58",
       "mode": "0o644"
     },
     {
@@ -15835,8 +15835,8 @@
       "path": "qml/components/GGParallelDagDashboard.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 54477,
-      "sha256": "c1b53e08d6686d4369b7fe61aa47a2d7e442174794aba490e03de8dd9aec3bd0",
+      "bytes": 54606,
+      "sha256": "80ab546a40b878fc6eb9e4e55f9ec87f087fbac464b783055e5d0fa9c4b6d334",
       "mode": "0o644"
     },
     {
@@ -16259,8 +16259,8 @@
       "path": "qml/components/LanDagSetupPopup.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 56536,
-      "sha256": "c006add14d6fe67c4ce9863db03fa99be83b40caddd58b908314c045703836d0",
+      "bytes": 56671,
+      "sha256": "dc16b9562aace234d021b4c917bbd79840b905847f23ce3aae3ce21f19df07a7",
       "mode": "0o644"
     },
     {
@@ -21568,6 +21568,14 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_lan_dag_convergence_budget.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 4397,
+      "sha256": "017982c26798e88f09bcfe2fa52984e6a6b46cbba1ae1cbb1566e6caae330206",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_lan_dag_runtime.py",
       "category": "tests",
       "kind": "file",
@@ -21667,8 +21675,8 @@
       "path": "tests/test_lan_observer_ui.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 6220,
-      "sha256": "612b00066c1b6286b55cd268a4e52c0d7e6e7c72da83b49f6af923985c1e50e3",
+      "bytes": 6962,
+      "sha256": "d064de9565c785e5af0e69bd535fa40dfd494accf29c6c694525a2383dc00e0e",
       "mode": "0o644"
     },
     {

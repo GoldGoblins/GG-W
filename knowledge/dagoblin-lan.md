@@ -41,6 +41,17 @@ text, tooltip och detaljvy. Namnen är de som valdes vid parningen; de är inte
 en fristående attestering av operativsystem eller fysisk hårdvara. Okända
 mappningar visas som okända och gissas aldrig från ett löpnummer.
 
+En producentnyckel hör till exakt en nod i den signerade sessionen. Nod- och
+producentnycklar måste vara unika när sessionen skapas och installeras.
+Varje block har en signerande producent. Andra noder verifierar och lagrar
+kopior av samma block utan att överta dess skaparidentitet eller nodens
+kontrollnyckel. Producentnamn är inte en lista över verifierande noder.
+
+En deltagares avslutade produktion visas som **Lokal del klar**. Det betyder
+inte att koordinatorn har bekräftat gemensam blockmängd och tillstånd.
+Den gemensamma nätkvittensen redovisas separat och kräver fortfarande
+autentiserad, run-bunden evidens från samtliga tre före provets deadline.
+
 ## Transport vid ojämn fördröjning
 
 Den 31 oktober visade de fysiska proven fel under PREPARE och BEGIN mot
@@ -59,6 +70,13 @@ protokollram är fortfarande ett fel.
 
 Standardknappen startar ett 10-sekundersprov med **1 TX/block och 250 ms**.
 Högre belastning väljs uttryckligen i LAN-panelen efter en fungerande baslinje.
+De fysiska omproven nådde produktion men inte gemensam kvittens: 140 lokala
+block/TX vid 250 ms och 36 vid 1000 ms. Ett stopp tog 1,68 sekunder av den
+tidigare fasta tvåsekundersreserven för små block. Provet reserverar nu
+högst halva den signerade totaltiden, begränsat till 30 sekunder, för stopp
+och synkning även vid låg belastning. Nya matchande statusbevis kontrolleras
+innan en pollpaus får förbruka den återstående tiden. Den ursprungliga
+deadlinen och beviskraven för nätkvittens förlängs eller försvagas inte.
 Regressionsproven omfattar verklig signerad autentisering över en injicerad
 1,8-sekunderslucka och tre separata lokala processer. De ersätter inte det
 nya fysiska provet efter att alla tre apparater har uppdaterats och startats

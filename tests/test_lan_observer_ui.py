@@ -64,6 +64,15 @@ graph=root.findChild(QQuickItem,'dagBlockRelationsGraph');assert graph is not No
 js(graph,'refresh()');app.processEvents()
 assert js(graph,'producerName(4)')=='Linux · 1 · egen'
 assert js(graph,'_allRows.filter(function(b){return b.hash==="'+h1+'"})[0].transaction_count')==5000
+dag['dag_stress'].update(state='COMPLETE',blocks=1,transactions=5000,all_peers_synced=False);put()
+assert root.property('liveLabel')=='DAG-prov · Lokal del klar'
+assert 'Lokal del klar' in popup.findChild(QQuickItem,'lanDagStressStatus').property('text')
+assert 'Lokal del klar' in root.findChild(QQuickItem,'dagOperationNotice').property('text')
+assert 'nätkvittens ej bekräftad' in root.findChild(QQuickItem,'dagOperationNotice').property('text')
+dag['dag_stress'].update(role='COORDINATOR',all_peers_synced=True,acknowledged_blocks=1,acknowledged_transactions=5000);put()
+assert root.property('liveLabel')=='DAG-prov · COMPLETE'
+assert 'nätkvittens från alla tre' in root.findChild(QQuickItem,'dagOperationNotice').property('text')
+
 dag['lan']['last_error']='GG_LAN_READ_DEADLINE';put()
 assert root.property('activeTransportError') is False
 assert 'Senaste transportfel:' in root.property('notice')

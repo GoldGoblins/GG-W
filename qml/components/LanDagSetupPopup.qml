@@ -88,6 +88,7 @@ Item {
     property bool bindingsReady:false
     Component.onCompleted:bindingsReady=true
     readonly property var stress:bindingsReady?(state.dag_stress||(!owned?setupCapabilities:({}))):({})
+    readonly property string stressStateLabel:stress.role==="PARTICIPANT"&&stress.state==="COMPLETE"?"Lokal del klar":String(stress.state||"IDLE")
     readonly property var stressLimits:stress.limits||({})
     readonly property bool stressSupported:stress.supported===true
     readonly property bool stressRunning:["STARTING","RUNNING","STOPPING"].indexOf(String(stress.state||""))>=0
@@ -484,7 +485,7 @@ Item {
                             Action {objectName:"lanDagStressStop";text:"■ Stoppa DAG-prov";enabled:root.canAct&&root.stressSupported&&root.stress.role==="COORDINATOR"&&root.stressRunning;onClicked:root.run("lan_dag_stress_stop",{})}
                             Action {objectName:"lanDagStressCopyResult";text:"Kopiera provresultat";enabled:root.stressSupported&&root.stress.enabled===true&&root.resultState(root.stress.state)!==null&&!!root.surfaceHost&&!!root.surfaceHost.tmogCopy;onClicked:root.copyStressResult()}
                         }
-                        Label {objectName:"lanDagStressStatus";colorKey:"ui.lan.dag.stress.status";width:parent.width;text:"DAG-prov · "+String(root.stress.state||"IDLE")+" · "+root.measuredNumber(root.stress.elapsed_ms)+" ms";color:root.stress.last_error?RuntimeTheme.GGTheme.negative:RuntimeTheme.GGTheme.cyan}
+                        Label {objectName:"lanDagStressStatus";colorKey:"ui.lan.dag.stress.status";width:parent.width;text:"DAG-prov · "+root.stressStateLabel+" · "+root.measuredNumber(root.stress.elapsed_ms)+" ms";color:root.stress.last_error?RuntimeTheme.GGTheme.negative:RuntimeTheme.GGTheme.cyan}
                         Label {objectName:"lanDagStressLocal";colorKey:"ui.lan.dag.stress.local";width:parent.width;text:"Lokalt verifierat under provet: "+root.measuredNumber(root.stress.blocks)+" förslag · "+root.measuredNumber(root.stress.transactions)+" DAG-TX"}
                         Label {objectName:"lanDagStressRates";colorKey:"ui.lan.dag.stress.rates";width:parent.width;text:"DAG · senaste mätfönstret: "+root.measuredRate((root.state.block_graph||{}).metrics?root.state.block_graph.metrics.bps:undefined)+" block/s · "+(root.stress.blocks>0?(root.stress.transactions/root.stress.blocks).toFixed(1):"—")+" TX/block under provet · "+root.measuredRate((root.state.block_graph||{}).metrics?root.state.block_graph.metrics.tps:undefined)+" TX/s · lokal validering";color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
                         Label {objectName:"lanDagStressAcknowledged";colorKey:"ui.lan.dag.stress.acknowledged";width:parent.width;text:root.stressAckText();color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}

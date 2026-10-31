@@ -56,7 +56,8 @@ Item {
         }
         return result
     }
-    readonly property string liveLabel:dagTransactionMode?"DAG-prov · "+String(dagStress.state||"IDLE"):lanOwned&&!running?String(lan.state||"STARTING"):liveRunning?"Löpande":liveLimited?"Kvot nådd":live.state==="ERROR"?"Fel":running?"Pausad":"Stoppad"
+    readonly property string dagStressLabel:dagStress.role==="PARTICIPANT"&&dagStress.state==="COMPLETE"?"Lokal del klar":String(dagStress.state||"IDLE")
+    readonly property string liveLabel:dagTransactionMode?"DAG-prov · "+dagStressLabel:lanOwned&&!running?String(lan.state||"STARTING"):liveRunning?"Löpande":liveLimited?"Kvot nådd":live.state==="ERROR"?"Fel":running?"Pausad":"Stoppad"
     readonly property string notice:stopError||operation.error||dag.error||(lanOwned&&lan.last_error?((connectionState==="CONNECTED"||connectionState==="STALE"?"Senaste transportfel: ":"")+String(lan.last_error)):lanOwned&&dagStress.last_error?String(dagStress.last_error):liveLimited?"Kvot nådd · förslag bevarade · "+(lanOwned?"stoppa LAN-peer för en ny session":"Stoppa/Starta för en ny session"):live.state==="ERROR"?String(live.stop_reason||"Löpande körning stoppades vid fel"):busy?"Arbetar · "+String(operation.name||""):sequenceRunning&&!lanOwned?"Våg "+sequenceSent+" / 3 · minst 2 s mellan jobb":sequenceResult&&!lanOwned?sequenceResult:lanOwned?lan.state!=="READY"?"LAN · "+String(lan.state||"STARTING")+" · väntar på godkänd session":dagTransactionMode?dagStress.state&&dagStress.state!=="IDLE"?stressResultText():"DAG-TX-session · kör ett tidsbegränsat prov med tre apparater; inställningar finns under DAG-stressprov & LAN":liveRunning?"2 egna producenter · förslag och DAG-TX räknas vid lokal validering":"Egna 2 pausade · mottagning och verifiering fortsätter":liveRunning?asynchronous?producerCount+" oberoende producenter · mål "+number(live.target_proposal_bps)+" förslag/s":"Löpande · "+number(live.blocks)+" förslag / "+number(live.interval_ms)+" ms · "+number(live.transactions_per_block)+" TX / förslag":"Lokal testdata · godtagande är inte finalitet")
     readonly property var rows:(graph.blocks||[]).slice().sort(function(a,b){return asynchronous?Number(b.admission_index)-Number(a.admission_index):Number(b.rank)-Number(a.rank)||Number(b.producer_sequence)-Number(a.producer_sequence)||Number(a.proposer_index)-Number(b.proposer_index)})
     readonly property var events:(dag.events||[]).slice(-48).reverse()
@@ -109,7 +110,7 @@ Item {
     readonly property string connectionState:observation.stale===true?"STALE":String(lan.connection_state||"")
     readonly property bool activeTransportError:lanOwned&&!!lan.last_error&&connectionState!=="CONNECTED"&&connectionState!=="STALE"
     readonly property string connectionDetails:(lan.peer_status||[]).map(function(peer){return String(peer.label)+": "+connectionLabel(peer.state)+(typeof peer.age_seconds==="number"?" · senast "+peer.age_seconds.toFixed(1)+" s":"")}).join("\n")
-    function stressResultText(){return "DAG-prov · "+String(dagStress.state)+" · "+number(dagStress.blocks)+" förslag / "+number(dagStress.transactions)+" DAG-TX lokalt · "+(hasDagAcknowledgement?"nätkvittens från alla tre":"nätkvittens ej bekräftad")}
+    function stressResultText(){return "DAG-prov · "+dagStressLabel+" · "+number(dagStress.blocks)+" förslag / "+number(dagStress.transactions)+" DAG-TX lokalt · "+(hasDagAcknowledgement?"nätkvittens från alla tre":"nätkvittens ej bekräftad")}
     function wave(){if(running&&canAct&&validJob&&!sequenceRunning&&!liveRunning)run("dag_wave",{blocks:Number(blockCount.text),transactions_per_block:Number(txPerBlock.text)})}
     function toggleLive(){
         if(!canAct||!running||sequenceRunning||lanOwned)return
