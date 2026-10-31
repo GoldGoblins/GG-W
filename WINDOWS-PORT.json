@@ -2656,7 +2656,7 @@
     },
     "backend/gg_lan_dag.py": {
       "upstream_sha256": null,
-      "windows_sha256": "845a7234b0c78f67b96728e413257de2728f882407310176c2a70ded13cf94eb"
+      "windows_sha256": "6a97ab081a2eb82c4e7e4813412baca273efe23faad0ba6b4dff1355ce51f8d3"
     },
     "backend/lan_dag_runtime.py": {
       "upstream_sha256": null,

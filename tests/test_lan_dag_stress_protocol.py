@@ -230,4 +230,130 @@ class DagStressProtocolTests(unittest.TestCase):
         self.assertEqual(len(receiver._orphans),0);self.assertEqual(receiver._last_error,'GG_DAG_TX_ACCOUNT')
 
 
+    def _duplicate_fixture(self):
+        source,receiver,_=self.peers
+        first=ParallelDag.produce_lan_test_block(source._engine,0,16,lan.MAX_WIRE)
+        second=ParallelDag.produce_lan_test_block(source._engine,0,32,lan.MAX_WIRE)
+        return source,receiver,first,second
+
+    def _duplicate_state(self,peer):
+        engine=peer._engine
+        return deepcopy({'evidence':engine.lan_evidence(),'stats':engine._stats,
+            'peer_bytes':engine._peer_bytes,'stored_bytes':engine._stored_bytes,
+            'traffic':peer._traffic,'raw_received':peer._raw_received,'total_bytes':peer._total_bytes,
+            'rejected':peer._rejected,'orphans':peer._orphans,'orphan_bytes':peer._orphan_bytes,'sync_gap':peer._sync_gap})
+
+    def test_exact_admitted_16_32tx_duplicates_skip_inspection_without_accounting_changes(self):
+        source,receiver,first,second=self._duplicate_fixture()
+        for item in (first,second):
+            self.assertEqual(len(json.loads(item['wire'])['body']['transactions']),item['transactions'])
+            self.assertEqual(receiver._ingest(item['wire'],source.public_key,item['hash']),'ADMITTED_UNFINALIZED')
+        before=self._duplicate_state(receiver)
+        with (patch.object(receiver._engine,'inspect_empty_proposal',side_effect=AssertionError('duplicate inspected')),
+              patch.object(receiver._engine,'admit_relayed',side_effect=AssertionError('duplicate admitted')),
+              patch.object(receiver._engine,'reconcile',side_effect=AssertionError('duplicate reconciled')),
+              patch.object(receiver,'_drain_orphans',side_effect=AssertionError('duplicate drained orphans'))):
+            for item in (first,second):
+                self.assertEqual(receiver._ingest(item['wire'],source.public_key,item['hash']),'DUPLICATE')
+        self.assertEqual(before,self._duplicate_state(receiver))
+        self.assertEqual(before['evidence'],source._engine.lan_evidence())
+        self.assertEqual((before['evidence']['blocks'],before['evidence']['transactions']),(2,48))
+
+    def test_first_arrival_with_valid_unknown_claim_keeps_full_validation_and_credit(self):
+        source,receiver,first,_=self._duplicate_fixture()
+        with (patch.object(receiver._engine,'inspect_empty_proposal',wraps=receiver._engine.inspect_empty_proposal) as inspect,
+              patch.object(receiver._engine,'admit_relayed',wraps=receiver._engine.admit_relayed) as admit,
+              patch.object(receiver._engine,'reconcile',wraps=receiver._engine.reconcile) as reconcile,
+              patch.object(receiver,'_drain_orphans',wraps=receiver._drain_orphans) as drain):
+            self.assertEqual(receiver._ingest(first['wire'],source.public_key,first['hash']),'ADMITTED_UNFINALIZED')
+            self.assertEqual([call.call_count for call in (inspect,admit,reconcile,drain)],[1,1,1,1])
+        stats=receiver._engine._stats
+        self.assertEqual((stats['attempts'],stats['signature_checks'],stats['transactions_validated']),(1,17,16))
+        self.assertEqual(stats['charged_bytes'],len(first['wire']))
+
+    def test_duplicate_absent_unknown_invalid_and_false_claims_keep_existing_validation(self):
+        source,receiver,first,second=self._duplicate_fixture()
+        receiver._ingest(first['wire'],source.public_key,first['hash'])
+        cases=[(first['wire'],None),(first['wire'],'0'*64),(first['wire'],''),
+            (first['wire'],'A'*64),(first['wire'],[]),(first['wire'],{}),
+            (first['wire'],False),(first['wire'],b'0'*64),(second['wire'],first['hash'])]
+        for raw,claim in cases:
+            with self.subTest(claim_type=type(claim).__name__,missing=claim is None):
+                before=self._duplicate_state(receiver)
+                with patch.object(receiver._engine,'inspect_empty_proposal',wraps=receiver._engine.inspect_empty_proposal) as inspect:
+                    if claim is None:self.assertEqual(receiver._ingest(raw,source.public_key,claim),'DUPLICATE')
+                    else:
+                        with self.assertRaisesRegex(ValueError,'^GG_LAN_PROPOSAL_HASH$'):
+                            receiver._ingest(raw,source.public_key,claim)
+                    self.assertEqual(inspect.call_count,1)
+                self.assertEqual(before,self._duplicate_state(receiver))
+
+    def test_mutated_duplicate_bytes_and_proposal_signature_still_fail_validation(self):
+        source,receiver,first,_=self._duplicate_fixture()
+        receiver._ingest(first['wire'],source.public_key,first['hash'])
+        altered=json.loads(first['wire']);altered['body']['created_at_ns']+=1
+        bad_signature=json.loads(first['wire']);bad_signature['signature']='0'*128
+        cases=[(pack(altered),'GG_DAG_SIGNATURE'),(pack(bad_signature),'GG_DAG_SIGNATURE'),
+            (first['wire']+b'\n','GG_DAG_WIRE_CANONICAL')]
+        altered['signature']=source._local_keys[0].sign_message(b'GG-DAG-PROPOSAL-SIGN-v1\0'+pack(altered['body'])).hex()
+        cases.append((pack(altered),'GG_LAN_PROPOSAL_HASH'))
+        for raw,code in cases:
+            with self.subTest(code=code):
+                before=self._duplicate_state(receiver)
+                with patch.object(receiver._engine,'inspect_empty_proposal',wraps=receiver._engine.inspect_empty_proposal) as inspect:
+                    with self.assertRaisesRegex(ValueError,'^'+code+'$'):
+                        receiver._ingest(raw,source.public_key,first['hash'])
+                    self.assertEqual(inspect.call_count,1)
+                self.assertEqual(before,self._duplicate_state(receiver))
+
+    def test_bad_transaction_signature_with_valid_new_claim_reaches_full_admission(self):
+        source,receiver,first,_=self._duplicate_fixture()
+        value=json.loads(first['wire']);value['body']['transactions'][0]['signature']='0'*128
+        value['body']['payload_root']=_tree(value['body']['transactions'],b'GG-DAG-PAYLOAD-v1\0')[-1][0]
+        value['signature']=source._local_keys[0].sign_message(b'GG-DAG-PROPOSAL-SIGN-v1\0'+pack(value['body'])).hex()
+        claimed=lan.digest(value['body'],b'GG-DAG-BLOCK-v1\0');before=receiver._engine.lan_evidence()
+        with (patch.object(receiver._engine,'inspect_empty_proposal',wraps=receiver._engine.inspect_empty_proposal) as inspect,
+              patch.object(receiver._engine,'admit_relayed',wraps=receiver._engine.admit_relayed) as admit):
+            with self.assertRaisesRegex(ValueError,'^GG_DAG_SIGNATURE$'):
+                receiver._ingest(pack(value),source.public_key,claimed)
+            self.assertEqual((inspect.call_count,admit.call_count),(1,1))
+        self.assertEqual(before,receiver._engine.lan_evidence())
+        stats=receiver._engine._stats
+        self.assertEqual((stats['attempts'],stats['accepted'],stats['rejected'],stats['signature_checks']),(1,0,1,2))
+        self.assertEqual(stats['charged_bytes'],len(pack(value)))
+
+    def test_duplicate_peer_and_wire_guards_precede_lookup(self):
+        source,receiver,first,_=self._duplicate_fixture()
+        receiver._ingest(first['wire'],source.public_key,first['hash'])
+        cases=[(first['wire'],'0'*64,'GG_LAN_UNKNOWN_PEER'),
+            (first['wire'],receiver.public_key,'GG_LAN_UNKNOWN_PEER'),
+            (b'',source.public_key,'GG_LAN_WIRE_SIZE'),
+            (bytearray(first['wire']),source.public_key,'GG_LAN_WIRE_SIZE'),
+            (b'x'*(lan.MAX_WIRE+1),source.public_key,'GG_LAN_WIRE_SIZE')]
+        before=self._duplicate_state(receiver)
+        with (patch.object(receiver._engine,'public_proposal',side_effect=AssertionError('guard bypassed')),
+              patch.object(receiver._engine,'inspect_empty_proposal',side_effect=AssertionError('guard bypassed'))):
+            for raw,peer,code in cases:
+                with self.subTest(code=code):
+                    with self.assertRaisesRegex(ValueError,'^'+code+'$'):
+                        receiver._ingest(raw,peer,first['hash'])
+        self.assertEqual(before,self._duplicate_state(receiver))
+
+    def test_unadmitted_orphan_duplicates_still_inspect_then_drain_after_parent(self):
+        source,receiver,first,second=self._duplicate_fixture()
+        self.assertEqual(receiver._ingest(second['wire'],source.public_key,second['hash']),'PENDING_PARENTS')
+        before=self._duplicate_state(receiver)
+        with (patch.object(receiver._engine,'inspect_empty_proposal',wraps=receiver._engine.inspect_empty_proposal) as inspect,
+              patch.object(receiver._engine,'admit_relayed',side_effect=AssertionError('orphan admitted')),
+              patch.object(receiver._engine,'reconcile',side_effect=AssertionError('orphan reconciled'))):
+            self.assertEqual(receiver._ingest(second['wire'],source.public_key,second['hash']),'PENDING_PARENTS')
+            self.assertEqual(inspect.call_count,1)
+        self.assertEqual(before,self._duplicate_state(receiver))
+        self.assertEqual((len(receiver._orphans),receiver._orphan_bytes),(1,len(second['wire'])))
+        self.assertEqual(receiver._ingest(first['wire'],source.public_key,first['hash']),'ADMITTED_UNFINALIZED')
+        self.assertEqual((len(receiver._orphans),receiver._orphan_bytes),(0,0))
+        self.assertEqual(receiver._engine.lan_evidence(),source._engine.lan_evidence())
+        self.assertEqual(receiver._engine._stats['transactions_validated'],48)
+
+
 if __name__=='__main__':unittest.main()

@@ -1121,6 +1121,10 @@ class LanDagPeer:
     def _ingest(self,raw,peer,claimed_hash=None):
         if peer not in self._roster or peer==self.public_key:raise ValueError('GG_LAN_UNKNOWN_PEER')
         if not isinstance(raw,bytes) or not 1<=len(raw)<=MAX_WIRE:raise ValueError('GG_LAN_WIRE_SIZE')
+        # Only exact bytes already admitted may bypass inspection.
+        if isinstance(claimed_hash,str) and _HEX.fullmatch(claimed_hash):
+            existing=self._engine.public_proposal(claimed_hash)
+            if existing is not None and existing==raw:return 'DUPLICATE'
         info=self._engine.inspect_empty_proposal(raw);identifier=info['hash']
         if claimed_hash is not None and claimed_hash!=identifier:raise ValueError('GG_LAN_PROPOSAL_HASH')
         existing=self._engine.public_proposal(identifier)
