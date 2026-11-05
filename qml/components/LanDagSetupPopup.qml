@@ -24,6 +24,8 @@ Item {
     readonly property var lan:state.lan||({})
     readonly property var setup:state.lan_setup||({})
     readonly property var consensus:state.dag_consensus||({})
+    readonly property bool protocolSource:!!state.protocol_network
+    function consensusValue(value){return value===null||value===undefined?"—":String(value)}
     readonly property bool profileControls:setup.windows_profile_controls===true
     readonly property bool owned:setup.active===true
     readonly property bool coordinator:setup.coordinator===true
@@ -531,11 +533,11 @@ Item {
                                 Action {objectName:"lanValidatorStop";text:"Stoppa";visible:root.profileControls;enabled:root.canAct&&modelData.owned_native_process===true;onClicked:root.run("lan_validator_stop",{profile:String(modelData.profile)})}
                             }
                         }
-                        Label {objectName:"lanConsensusStatus";width:parent.width;text:root.consensus.anchor_bound===true?String(root.consensus.validator_count)+" validatoridentiteter · kvorum "+String(root.consensus.quorum_required)+" · "+String(root.consensus.state):String(root.setup.validator_invite_count||0)+" publika inbjudningar · genesis ännu inte bunden";color:RuntimeTheme.GGTheme.cyan}
+                        Label {objectName:"lanConsensusStatus";width:parent.width;text:root.consensus.anchor_bound===true?String(root.consensus.validator_count)+" validatoridentiteter · kvorum "+root.consensusValue(root.protocolSource?root.consensus.quorum_voting_power_required:root.consensus.quorum_required)+" · "+String(root.consensus.state):String(root.setup.validator_invite_count||0)+" publika inbjudningar · genesis ännu inte bunden";color:RuntimeTheme.GGTheme.cyan}
                         Repeater {model:root.consensus.members||[]
                             Label {required property var modelData;objectName:"lanConsensusMember";width:consensusBody.width;text:String(modelData.label)+" · ägare "+String(modelData.owner_label)+(modelData.local_owner?" · egen":"")+" · "+String(modelData.state);font.pixelSize:9}
                         }
-                        Label {objectName:"lanConsensusCertificateStatus";width:parent.width;text:root.consensus.certificate_height!==null&&root.consensus.certificate_height!==undefined?"SDK-verifierat certifikat · höjd "+String(root.consensus.certificate_height)+" · "+String(root.consensus.certified_dag_blocks)+" DAG-block · "+String(root.consensus.certified_dag_transactions)+" TX":"Inget verifierat certifikat tillgängligt";font.pixelSize:9}
+                        Label {objectName:"lanConsensusCertificateStatus";width:parent.width;text:root.consensus.certificate_height!==null&&root.consensus.certificate_height!==undefined?"SDK-verifierat certifikat · höjd "+String(root.consensus.certificate_height)+" · "+root.consensusValue(root.protocolSource?root.state.certified_blocks:root.consensus.certified_dag_blocks)+" DAG-block · "+root.consensusValue(root.protocolSource?root.state.certified_transactions:root.consensus.certified_dag_transactions)+" TX":"Inget verifierat certifikat tillgängligt";font.pixelSize:9}
                         Label {width:parent.width;text:(root.profileControls?"Lokala Windows-profiler skyddas av ditt Windows-konto. ":"Profiler skapas och låses upp privat i nodens CLI. ")+"Antalet nycklar visar kommittén; det bevisar inte oberoende operatörer. Lokalt godtagna DAG-block får finalitet först genom verifierat medlemsbevis.";font.pixelSize:9;color:RuntimeTheme.GGTheme.dim}
                     }
                 }

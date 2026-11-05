@@ -15,13 +15,14 @@ import tempfile
 import threading
 from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock,patch
 
 from backend import gg_protocol_runtime as runtime,gg_protocol_producer as producer
 from backend import gg_financial_protocol as protocol,gg_financial_economy as economy
 from backend import gg_financial_dag as financial,gg_financial_wire as wire
 from backend.gg_financial_pool import PoolBook
 from backend.gg_node_store import pack,unpack
+from backend.gg_consensus_process import BroadcastPreviouslySeen
 from tests.test_protocol_integrated_profiles import public_protocol_pin
 from tests.test_financial_general_clients import public_key
 
@@ -132,6 +133,38 @@ class PoolStaleWorkTests(unittest.TestCase):
                 self.assertEqual(result['state'],'DURABLE_NETWORK_WORK');self.assertFalse(result['SDK_selected'])
                 raw=self.db.execute('SELECT wire FROM protocol_work WHERE identifier=?',(self.identifier,)).fetchone()[0]
                 self.assertEqual(unpack(raw),{**self.core,'work':self.solution})
+
+    def ready_submission(self):
+        self.engine.attach_work(self.identifier,self.solution)
+        self.live['state']['financial_dag']['checkpoint']='0'
+        self.engine.submit_pending=producer.ProtocolProducer.submit_pending.__get__(self.engine)
+
+    def test_cached_broadcast_preserves_original_and_work_without_selection_claim(self):
+        self.ready_submission()
+        originals=list(self.db.execute('SELECT * FROM protocol_cores'));work=list(self.db.execute('SELECT * FROM protocol_work'))
+        state=deepcopy(self.profile._meta)
+        with patch.object(self.node,'_rpc',side_effect=BroadcastPreviouslySeen()):
+            result=self.engine.submit_pending(self.key)
+        self.assertEqual(result,{'state':'BROADCAST_PREVIOUSLY_SEEN','blocks':1,'SDK_selected':False,'payments_executed_asserted':False})
+        self.assertEqual(list(self.db.execute('SELECT * FROM protocol_cores')),originals)
+        self.assertEqual(list(self.db.execute('SELECT * FROM protocol_work')),work)
+        self.assertEqual(self.profile._meta,state)
+        for error in (ValueError('GG_VALIDATOR_RPC_UNAVAILABLE'),ValueError('GG_VALIDATOR_BROADCAST_PREVIOUSLY_SEEN')):
+            with patch.object(self.node,'_rpc',side_effect=error),self.assertRaises(ValueError) as failure:
+                self.engine.submit_pending(self.key)
+            self.assertIs(failure.exception,error)
+
+    def test_cached_broadcast_allows_next_bounded_mining_reconciliation(self):
+        self.ready_submission();controller=self.controller;controller.owner=self.profile
+        controller._schedule_inbox=lambda:None;controller._fill_drain=lambda key:None
+        self.engine.mine=Mock();self.engine.reconcile=Mock(wraps=self.engine.reconcile)
+        with patch.object(self.node,'_rpc',side_effect=BroadcastPreviouslySeen()) as broadcast, \
+                patch.object(controller._mine_cancel,'wait',side_effect=[False,True]):
+            controller._mine(self.key,5)
+        self.assertEqual(broadcast.call_count,2);self.assertEqual(self.engine.reconcile.call_count,4)
+        self.assertEqual(controller._mine_error,'');self.assertIsNone(controller._mine_until)
+        self.assertIsNotNone(self.db.execute('SELECT core FROM protocol_cores').fetchone()[0])
+        self.assertEqual(self.db.execute('SELECT count(*) FROM protocol_work').fetchone()[0],1)
 
     def test_attach_private_job_and_immutable_core_binding_cannot_be_forged(self):
         with self.assertRaisesRegex(ValueError,'CERTIFIED_CONTEXT_REQUIRED'):

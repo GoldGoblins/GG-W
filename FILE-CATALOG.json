@@ -92,7 +92,7 @@
       "category": "entrypoints-and-guidance",
       "kind": "file",
       "bytes": 710481,
-      "sha256": "fff8269ed58eac8faec49ed0675be01d69097db775c8dab751f05faa300ccdfa",
+      "sha256": "5e201db255801e27e1033f5cb9f6a8425a0378b70f09c062c9a9cdfebde4b17c",
       "mode": "0o644"
     },
     {
@@ -100,7 +100,7 @@
       "category": "entrypoints-and-guidance",
       "kind": "file",
       "bytes": 1666359,
-      "sha256": "617fbdd33d0433cd942f17269e735fe65100d70fc313780e8888963221f6e1c0",
+      "sha256": "5ae57cc5e55668be50bf887b4af3726e295831e030030782f858e89bfdeeb18a",
       "mode": "0o644"
     },
     {
@@ -2411,8 +2411,8 @@
       "path": "backend/gg_consensus_process.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 19423,
-      "sha256": "31878b831b28acef884572878914175384fbfda7538627aab9b8c5a2138ee8bf",
+      "bytes": 19944,
+      "sha256": "5bea44a17db1b9ee8e592c30cd7b9218a0397bdaa6b5eac73c3cf8b435af65b3",
       "mode": "0o644"
     },
     {
@@ -2907,8 +2907,8 @@
       "path": "backend/gg_protocol_producer.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 32161,
-      "sha256": "9d6a916092e7798c02a8eb9b39e46b3935d497758b2633a13de9f3685a2ed2e7",
+      "bytes": 32412,
+      "sha256": "9d9b70036fedf1e8da5e81e4ba09a128b20c18d0ca0187146344961e7b52998e",
       "mode": "0o644"
     },
     {
@@ -16979,8 +16979,8 @@
       "path": "qml/components/GGParallelDagDashboard.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 92741,
-      "sha256": "e714eb25560bb306f27e698c304fc1959707218cd639682844aabc69014b85f6",
+      "bytes": 93543,
+      "sha256": "b2277d1a35471efb0c394cb885682923e7e949f016fd3adf8c99a625861655f0",
       "mode": "0o644"
     },
     {
@@ -17403,8 +17403,8 @@
       "path": "qml/components/LanDagSetupPopup.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 73141,
-      "sha256": "84510cb3143146baa9d69cdebee5c85f823b4bb796f0896742f08c83a9d9b4b0",
+      "bytes": 73510,
+      "sha256": "62a355cb89405398c84831e2c3d57adce3b9db0e51e63fa742f749232cab5477",
       "mode": "0o644"
     },
     {
@@ -24811,8 +24811,8 @@
       "path": "tests/test_lan_validator_ui.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 6714,
-      "sha256": "8658369371007ef27bdaa976b6467fbed0ad7d53aac61a2c059db4f0e737e2b2",
+      "bytes": 8966,
+      "sha256": "73af9bd6b7d23f696effaccfc5048275c6b673f6e8d6da6b565680fb8a30bb38",
       "mode": "0o644"
     },
     {
@@ -25323,8 +25323,8 @@
       "path": "tests/test_native_pipe_lifecycle.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 45929,
-      "sha256": "410a5e17475ba8db29c962b723171a0ac0f12327d1fe6bfb0af4a40dc4ba9639",
+      "bytes": 47556,
+      "sha256": "8b3dd2433ab3fd5b7501735a13ddf33e3d60f2169cc1de83ef9b633e042ef695",
       "mode": "0o644"
     },
     {
@@ -25843,8 +25843,8 @@
       "path": "tests/test_protocol_pool_stale.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 12102,
-      "sha256": "a4722221d134c0f10fc4b2f205505ffee26da33f96a88246a61db67002473590",
+      "bytes": 14512,
+      "sha256": "5deb7e76ee94fc19630945a41305b673e603e634f7c6186e08de16b32f31baa5",
       "mode": "0o644"
     },
     {

@@ -2440,7 +2440,7 @@
     },
     "qml/components/GGParallelDagDashboard.qml": {
       "upstream_sha256": null,
-      "windows_sha256": "e714eb25560bb306f27e698c304fc1959707218cd639682844aabc69014b85f6"
+      "windows_sha256": "b2277d1a35471efb0c394cb885682923e7e949f016fd3adf8c99a625861655f0"
     },
     "qml/components/GGTheme.qml": {
       "upstream_sha256": null,
@@ -2680,7 +2680,7 @@
     },
     "qml/components/LanDagSetupPopup.qml": {
       "upstream_sha256": null,
-      "windows_sha256": "84510cb3143146baa9d69cdebee5c85f823b4bb796f0896742f08c83a9d9b4b0"
+      "windows_sha256": "62a355cb89405398c84831e2c3d57adce3b9db0e51e63fa742f749232cab5477"
     },
     "tests/test_activity_color_bindings.py": {
       "upstream_sha256": null,
@@ -2836,7 +2836,7 @@
     },
     "backend/gg_consensus_process.py": {
       "upstream_sha256": null,
-      "windows_sha256": "31878b831b28acef884572878914175384fbfda7538627aab9b8c5a2138ee8bf"
+      "windows_sha256": "5bea44a17db1b9ee8e592c30cd7b9218a0397bdaa6b5eac73c3cf8b435af65b3"
     },
     "backend/gg_consensus_profile.py": {
       "upstream_sha256": null,
@@ -3060,7 +3060,7 @@
     },
     "backend/gg_protocol_producer.py": {
       "upstream_sha256": null,
-      "windows_sha256": "9d6a916092e7798c02a8eb9b39e46b3935d497758b2633a13de9f3685a2ed2e7"
+      "windows_sha256": "9d9b70036fedf1e8da5e81e4ba09a128b20c18d0ca0187146344961e7b52998e"
     },
     "backend/gg_protocol_provisioning.py": {
       "upstream_sha256": null,
@@ -4388,7 +4388,7 @@
     },
     "tests/test_lan_validator_ui.py": {
       "upstream_sha256": null,
-      "windows_sha256": "8658369371007ef27bdaa976b6467fbed0ad7d53aac61a2c059db4f0e737e2b2"
+      "windows_sha256": "73af9bd6b7d23f696effaccfc5048275c6b673f6e8d6da6b565680fb8a30bb38"
     },
     "tests/test_lan_wire_capacity.py": {
       "upstream_sha256": null,
@@ -4420,7 +4420,7 @@
     },
     "tests/test_native_pipe_lifecycle.py": {
       "upstream_sha256": null,
-      "windows_sha256": "410a5e17475ba8db29c962b723171a0ac0f12327d1fe6bfb0af4a40dc4ba9639"
+      "windows_sha256": "8b3dd2433ab3fd5b7501735a13ddf33e3d60f2169cc1de83ef9b633e042ef695"
     },
     "tests/test_native_process_policy.py": {
       "upstream_sha256": null,
@@ -4536,7 +4536,7 @@
     },
     "tests/test_protocol_pool_stale.py": {
       "upstream_sha256": null,
-      "windows_sha256": "a4722221d134c0f10fc4b2f205505ffee26da33f96a88246a61db67002473590"
+      "windows_sha256": "5deb7e76ee94fc19630945a41305b673e603e634f7c6186e08de16b32f31baa5"
     },
     "tests/test_protocol_protected_restore.py": {
       "upstream_sha256": null,

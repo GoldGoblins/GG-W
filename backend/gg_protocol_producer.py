@@ -15,6 +15,7 @@ from backend import gg_financial_protocol as protocol,gg_financial_economy as ec
 from backend import gg_financial_dag as financial,gg_financial_wire as wire
 from backend.gg_node_store import NodeProfile,SCHEMA_V7,PROTOCOL_ACTIVE_INDEX,pack,unpack
 from backend.gg_dag_checkpoint import certificate_tip
+from backend.gg_consensus_process import BroadcastPreviouslySeen
 
 SCHEMA='gg.protocol.own-producer.v1'
 DOMAIN=b'GG-PROTOCOL-OWN-PRODUCER-v1\0'
@@ -364,7 +365,9 @@ class ProtocolProducer:
             commitment=packet['state']['financial_dag'];batch={'blocks':blocks,'genesis_hash':self.anchor['genesis_hash'],
                 'previous':_hash(financial.DOMAIN+b'DAG-COMMITMENT\0'+pack(commitment)),'schema':'gg.financial-dag.batch.v2',
                 'sequence':str(int(commitment['checkpoint'])+1),'source_hash':financial.source_hash(self.anchor['genesis']['financial_dag'])}
-            response=self.node._rpc('broadcast_tx_sync',pack(batch))
+            try:response=self.node._rpc('broadcast_tx_sync',pack(batch))
+            except BroadcastPreviouslySeen:
+                return {'state':'BROADCAST_PREVIOUSLY_SEEN','blocks':len(blocks),'SDK_selected':False,'payments_executed_asserted':False}
             return {'state':'MEMPOOL_ACCEPTED' if int(response.get('code',1))==0 else 'MEMPOOL_REJECTED','blocks':len(blocks),'SDK_selected':False,'payments_executed_asserted':False}
 
     def close(self):self._closed=True

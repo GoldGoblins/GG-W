@@ -4,6 +4,7 @@ Fake process outcomes below are explicitly lifecycle policy seams. Windows
 cases use actual benign base-Python children and borrowed kernel handles.
 """
 import os
+import json
 from collections import OrderedDict
 from contextlib import ExitStack
 from pathlib import Path
@@ -31,6 +32,32 @@ from backend import gg_native_process_policy as native_policy
 def process_double():
     return SimpleNamespace(returncode=73,poll=Mock(return_value=73),kill=Mock(),terminate=Mock(),
         stdin=SimpleNamespace(close=Mock()),stdout=SimpleNamespace(close=Mock()))
+
+
+class NativeBroadcastResponseTests(unittest.TestCase):
+    def rpc(self,method,value):
+        class Transport(rpc_transport.OwnedNativeRPC):
+            def _owner_stopped(self):return False
+            def _start_cancelled(self):return False
+            def _unchanged(self):pass
+            def _owned(self):return True
+        node=Transport();node.rpc_port=1
+        connection=Mock(sock=None);node._connection=connection
+        connection.getresponse.return_value=SimpleNamespace(status=200,will_close=False,read=lambda maximum:json.dumps(value).encode())
+        return node._rpc(method,b'PUBLIC exact batch' if method=='broadcast_tx_sync' else None)
+
+    def test_only_exact_broadcast_cache_error_has_typed_unknown_outcome(self):
+        error={'code':-32603,'message':'Internal error','data':'tx already exists in cache'}
+        with self.assertRaises(rpc_transport.BroadcastPreviouslySeen) as seen:
+            self.rpc('broadcast_tx_sync',{'error':error})
+        self.assertIsInstance(seen.exception,ValueError)
+        for method,changed in [('status',error),('broadcast_tx_sync',{**error,'code':-32602}),
+                ('broadcast_tx_sync',{**error,'message':'Other error'}),
+                ('broadcast_tx_sync',{**error,'data':'unrelated internal failure'}),
+                ('broadcast_tx_sync',{**error,'code':-32603.0})]:
+            with self.subTest(method=method,error=changed),self.assertRaisesRegex(ValueError,'^GG_VALIDATOR_RPC_UNAVAILABLE$'):
+                self.rpc(method,{'error':changed})
+        self.assertEqual(self.rpc('broadcast_tx_sync',{'result':{'code':0}}),{'code':0})
 
 
 class FixedNativePipeOwnershipTests(unittest.TestCase):

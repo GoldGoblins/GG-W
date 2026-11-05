@@ -88,6 +88,36 @@ assert js(graph,'lookup("'+h1+'").canonical_membership_verified===true')
 assert item('dagCanonicalFinality').property('value')=='SDK-verifierat medlemskap'
 dag['block_graph']['canonical_certificate_height']=0;put()
 assert js(graph,'lookup("'+h1+'").canonical_membership_verified===false')
+# Protocol snapshots carry voting-power quorum and exact certified counters.
+dag['protocol_network']={}
+dag['dag_consensus']={'anchor_bound':True,'validator_count':4,'state':'CONNECTED',
+ 'certificate_height':1137,'quorum_voting_power_required':'3'}
+dag['certified_blocks']='0';dag['certified_transactions']='0';put()
+assert 'kvorum 3' in item('lanConsensusStatus').property('text')
+assert item('lanConsensusCertificateStatus').property('text')=='SDK-verifierat certifikat · höjd 1137 · 0 DAG-block · 0 TX'
+dag['certified_blocks']='9007199254740993';dag['certified_transactions']='9223372036854775807';put()
+assert '9007199254740993 DAG-block · 9223372036854775807 TX' in item('lanConsensusCertificateStatus').property('text')
+dag['certified_blocks']=None;del dag['certified_transactions'];put()
+assert '— DAG-block · — TX' in item('lanConsensusCertificateStatus').property('text')
+dag['protocol_network']['node_role']='VALIDATOR';put()
+assert item('dagParticipationRole').property('value')=='Validator'
+dag['protocol_network']['node_role']='REPLICA';put()
+assert item('dagParticipationRole').property('value')=='Replika · full verifiering'
+dag['protocol_network']['node_role']='LIGHT';put()
+assert item('dagParticipationRole').property('value')=='Lättklient · SDK-bevis'
+del dag['protocol_network']['node_role'];dag['role']='VALIDATOR';put()
+assert item('dagParticipationRole').property('value')=='Validator'
+dag['mode']='FINANCIAL_SDK_CERTIFIED_VIEW';dag['state_root']='c'*64
+dag['dag_proofs']={'canonical_finality':True};put()
+assert item('dagConsensusCertifiedBlocks').property('name')=='Certifierad tillståndsrot'
+assert item('dagConsensusCertifiedBlocks').property('value')=='cccccccc…ccccc'
+dag['dag_proofs']['canonical_finality']=False;put()
+assert item('dagConsensusCertifiedBlocks').property('value')=='Saknas'
+dag['dag_proofs']['canonical_finality']=True;dag['dag_consensus']['state']='FAULT';put()
+assert item('dagConsensusCertifiedBlocks').property('value')=='Saknas'
+del dag['protocol_network'];dag['lan']['participation']={'producer':True,'replica':True};put()
+assert item('dagParticipationRole').property('value')=='Producent + replika'
+assert item('dagConsensusCertifiedBlocks').property('name')=='Certifierad DAG-rot'
 root.setParentItem(None);root.deleteLater();window.deleteLater();engine.deleteLater();app.processEvents()
 assert not warnings,warnings
 print('PASS')

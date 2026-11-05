@@ -24,6 +24,11 @@ from backend.gg_native_start import NativeStartReservation,native_start_budget,n
 START_SECONDS=12
 
 
+class BroadcastPreviouslySeen(ValueError):
+    """The exact broadcast is cached; selection and execution remain unknown."""
+    def __init__(self):super().__init__('GG_VALIDATOR_BROADCAST_PREVIOUSLY_SEEN')
+
+
 def _reserve_p2p_endpoint(host,port):
     reserve=socket.socket(socket.AF_INET6 if ':' in host else socket.AF_INET,socket.SOCK_STREAM)
     try:
@@ -105,6 +110,9 @@ class OwnedNativeRPC(ABC):
             check_connection()
             if response.status!=200 or len(raw)>512*1024:raise ValueError('GG_VALIDATOR_RPC_RESPONSE')
             value=json.loads(raw)
+            if (method=='broadcast_tx_sync' and isinstance(value,dict) and 'result' not in value
+                    and value.get('error')=={'code':-32603,'message':'Internal error','data':'tx already exists in cache'}
+                    and type(value['error']['code']) is int):raise BroadcastPreviouslySeen()
             if not isinstance(value,dict) or 'error' in value or 'result' not in value:raise ValueError('GG_VALIDATOR_RPC_UNAVAILABLE')
             if response.will_close:self._drop_connection(connection)
             return value['result']
