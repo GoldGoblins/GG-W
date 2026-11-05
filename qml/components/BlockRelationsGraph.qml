@@ -30,9 +30,11 @@ Item {
     property real refreshMaxMillis: 0
     property var refreshLastStages: ({})
     readonly property bool motionActive: animateChanges && visible && (!root.Window.window || root.Window.window.visible && root.Window.window.visibility !== Window.Minimized)
-    readonly property bool dagMode: graph.topology === "MULTIPARENT_DAG"
-    readonly property bool validProducerCount: graph.producer_count===undefined || Number.isInteger(graph.producer_count) && graph.producer_count>=1 && graph.producer_count<=16
-    readonly property int producerCount: Number.isInteger(graph.producer_count) && graph.producer_count>=1 && graph.producer_count<=16 ? graph.producer_count : 4
+    readonly property bool certifiedSummaryWindow: graph.topology === "SDK_CERTIFIED_DAG_SUMMARY_WINDOW"
+    readonly property bool certifiedWindow: graph.topology === "CERTIFIED_ORIGINAL_DAG_WINDOW" || certifiedSummaryWindow
+    readonly property bool dagMode: graph.topology === "MULTIPARENT_DAG" || certifiedWindow
+    readonly property bool validProducerCount: graph.producer_count===undefined || Number.isInteger(graph.producer_count) && graph.producer_count>=1 && graph.producer_count<=(certifiedWindow?32:16)
+    readonly property int producerCount: Number.isInteger(graph.producer_count) && graph.producer_count>=1 && graph.producer_count<=(certifiedWindow?32:16) ? graph.producer_count : 4
     readonly property var producerIndices: {var result=[];for(var i=0;i<producerCount;i++)result.push(i);return result}
     readonly property bool supportedTopology: (!graph.topology || graph.topology === "CHAIN" || dagMode) && (!dagMode || validProducerCount)
     readonly property int displayLimit: pointMode ? Math.max(4,Math.min(128,Math.floor((width-24)/5))) : Math.max(4, Math.min(12, Math.floor((width-24)/52)))
@@ -54,7 +56,7 @@ Item {
     property real _coordinateOrigin:0
     property real _coordinateTip:0
     property bool _coordinateInitialized:false
-    readonly property string speedCaption: dagMode ? "Förslag/s " + metric(metrics.proposal_bps) + " · Validerade TX/s " + metric(metrics.tx_validation_rate) : "Block/s " + metric(metrics.bps) + " · TX/s " + metric(metrics.tps) + " · API p95 " + metric(metrics.ttf_p95_ms) + " ms"
+    readonly property string speedCaption: certifiedSummaryWindow ? "Observerade block/s " + metric(metrics.bps) + " · Observerad utförd TX/s " + metric(metrics.tps) : dagMode ? "Förslag/s " + metric(metrics.proposal_bps) + " · Validerade TX/s " + metric(metrics.tx_validation_rate) : "Block/s " + metric(metrics.bps) + " · TX/s " + metric(metrics.tps) + " · API p95 " + metric(metrics.ttf_p95_ms) + " ms"
     function metric(value) { return typeof value === "number" && isFinite(value) && value >= 0 ? value.toFixed(value < 10 ? 2 : 1) : "—" }
     property var _allRows: []
     property var _allByHash: ({})
@@ -63,6 +65,7 @@ Item {
     property var _allEdges: []
     property var _successorsByHash: ({})
     property var _rankGroups: []
+    property var _rankLabels: ({})
     property int _columnCount: 1
     property int _maxRank: 0
     property var _reachable: ({})
@@ -76,10 +79,16 @@ Item {
     property bool _ready: false
     signal copyRequested(string value)
 
+    component PlainTip:ToolTip {id:plainTip;objectName:"blockPlainTooltip";contentItem:Text {objectName:"blockPlainTooltipText";text:plainTip.text;textFormat:Text.PlainText;font:plainTip.font;wrapMode:Text.Wrap;color:RuntimeTheme.GGTheme.text}}
+
     function hash(value) {
         value = String(value || "").toLowerCase().replace(/^0x/, "")
         return /^[0-9a-f]{64}$/.test(value) ? value : ""
     }
+    function exactCounter(value) {
+        return typeof value==="string" && /^(0|[1-9][0-9]{0,18})$/.test(value) && (value.length<19 || value<="9223372036854775807")
+    }
+    function rankLabel(rank) {return _rankLabels[String(rank)] || String(rank)}
     function lookup(value) {
         return _allByHash[value] || null
     }
@@ -109,11 +118,16 @@ Item {
         var source=supportedTopology ? tail(graph.blocks,128) : [], rows=[], seen={}
         for(var i=0;i<source.length;i++) {
             var r=source[i], h=hash(r.hash), p=hash(r.parent_hash)
-            if(!h || seen[h] || typeof r.height!=="number" || r.height<0 || r.height%1!==0) continue
+            if(!h || seen[h] || !certifiedWindow && (typeof r.height!=="number" || r.height<0 || r.height%1!==0)) continue
             var parents=[], rank=r.height, genesis=false, sequence=-1
             if(dagMode) {
-                if(typeof r.rank!=="number" || !Number.isSafeInteger(r.rank) || r.rank<0 || r.rank!==r.height)continue
-                rank=r.rank
+                if(certifiedWindow) {
+                    if(!exactCounter(r.rank) || r.rank==="0" || r.height!==r.rank || !exactCounter(r.producer_sequence) || r.producer_sequence==="0" || !exactCounter(r.canonical_index) || r.canonical_index==="0" || !exactCounter(r.certificate_height) || r.certificate_height==="0" || !Number.isSafeInteger(r.layout_rank) || r.layout_rank<0 || r.layout_rank>127 || (certifiedSummaryWindow?r.sdk_admission_verified!==true||r.canonical_membership_verified!==true:r.payload_authenticated!==true))continue
+                    rank=r.layout_rank
+                } else {
+                    if(typeof r.rank!=="number" || !Number.isSafeInteger(r.rank) || r.rank<0 || r.rank!==r.height)continue
+                    rank=r.rank
+                }
                 if(!r.parent_hashes || typeof r.parent_hashes.length!=="number" || !Number.isInteger(r.parent_hashes.length) || r.parent_hashes.length<0 || r.parent_hashes.length>7)continue
                 var rawParents=tail(r.parent_hashes,7), invalid=false
                 for(var q=0;q<rawParents.length;q++) {
@@ -123,15 +137,16 @@ Item {
                 }
                 if(invalid)continue
                 genesis=rank===0 && r.state==="GENESIS" && parents.length===0
-                if(!genesis && (r.state!=="ADMITTED_UNFINALIZED" || r.signature_verified!==true || parents.length===0 || !Number.isInteger(r.proposer_index) || r.proposer_index<0 || r.proposer_index>=producerCount))continue
+                if(!genesis && (r.state!==(certifiedWindow?"SDK_CERTIFIED":"ADMITTED_UNFINALIZED") || (certifiedSummaryWindow?r.sdk_admission_verified!==true:r.signature_verified!==true) || parents.length===0 || !Number.isInteger(r.proposer_index) || r.proposer_index<0 || r.proposer_index>=producerCount))continue
                 sequence=Number.isSafeInteger(r.producer_sequence) && r.producer_sequence>=0 ? r.producer_sequence : -1
                 if(r.admission_index!==undefined && (!Number.isSafeInteger(r.admission_index) || r.admission_index<0))continue
             }
             seen[h]=true
-            rows.push({hash:h,parent_hash:p,parent_hashes:parents,height:r.height,rank:rank,
+            rows.push({hash:h,parent_hash:p,parent_hashes:parents,height:certifiedWindow?rank:r.height,rank:rank,rank_text:certifiedWindow?r.rank:String(rank),sequence_text:certifiedWindow?r.producer_sequence:String(sequence),
                 transaction_count:typeof r.transaction_count==="number" && isFinite(r.transaction_count) && r.transaction_count>=0 && r.transaction_count<=(dagMode?50000:4096) && r.transaction_count%1===0 ? r.transaction_count : null,
                 timestamp:typeof r.timestamp==="number" ? r.timestamp : null,
                 certificate_verified:!dagMode && r.certificate_verified===true,
+                canonical_membership_verified:dagMode && !genesis && r.canonical_membership_verified===true && (certifiedWindow || Number.isSafeInteger(graph.canonical_certificate_height) && graph.canonical_certificate_height>0 && Number.isSafeInteger(r.canonical_index) && r.canonical_index>0 && r.canonical_index<=graph.canonical_members),
                 signature_verified:dagMode && !genesis && r.signature_verified===true,
                 genesis:genesis,producer_sequence:sequence,
                 admission_index:dagMode ? r.admission_index===undefined ? i : r.admission_index : r.height,
@@ -150,7 +165,7 @@ Item {
             successors[from].push(to)
         }
         _allRows=rows;_allByHash=allByHash;_allEdges=allEdges;_successorsByHash=successors
-        var maxRank=0;for(i=0;i<rows.length;i++)maxRank=Math.max(maxRank,rows[i].rank);_maxRank=maxRank
+        var maxRank=0,rankLabels={};for(i=0;i<rows.length;i++){maxRank=Math.max(maxRank,rows[i].rank);rankLabels[String(rows[i].rank)]=rows[i].rank_text}_maxRank=maxRank;_rankLabels=rankLabels
         if(work)work.parsed=Date.now()
         var flowDelta=0,coordinateReset=false
         if(pointMode && rows.length) {
@@ -205,10 +220,10 @@ Item {
         for(i=0;i<visibleRows.length;i++) {
             r=visibleRows[i];var found=nodeOrder[i]===r.hash ? i : nodeOrder.indexOf(r.hash,i+1)
             if(found>=0 && found!==i){nodeModel.move(found,i,1);nodeOrder.splice(i,0,nodeOrder.splice(found,1)[0])}
-            var data={blockHash:r.hash,blockHeight:r.height,blockRank:r.rank,gridColumn:pointMode ? r.admission_index-_coordinateOrigin : dagMode ? r.grid_column===undefined ? i : r.grid_column : 0,
+            var data={blockHash:r.hash,blockHeight:r.height,blockRank:r.rank,blockRankText:r.rank_text,producerSequenceText:r.sequence_text,gridColumn:pointMode ? r.admission_index-_coordinateOrigin : dagMode ? r.grid_column===undefined ? i : r.grid_column : 0,
                       transactionCount:r.transaction_count===null ? -1 : r.transaction_count,
                       proposerIndex:r.proposer_index,producerSequence:r.producer_sequence,genesis:r.genesis,
-                      signatureChecked:r.signature_verified,verified:r.certificate_verified}
+                      signatureChecked:r.signature_verified,verified:r.certificate_verified||r.canonical_membership_verified}
             if(found<0){nodeModel.insert(i,data);nodeOrder.splice(i,0,r.hash)}
             else {
                 // Header identity and signed proposal fields are immutable.
@@ -356,7 +371,9 @@ Item {
         // Hash-seeded layout motion belongs to an already known block. It
         // changes no traffic, identity, timestamp, parent or production rate.
         var seed=parseInt(String(identifier).slice(vertical?8:0,vertical?16:8),16)/4294967295
-        return (seed*2-1)*(vertical ? Math.min(24,plot.height*.35) : Math.min(12,2*pointPitch))
+        // Adjacent high-rate points may enter from opposite sides. Bounding
+        // each to .75 pitch keeps their gap <=2.5 pitches instead of5.
+        return (seed*2-1)*(vertical ? Math.min(24,plot.height*.35) : coherentFlow ? Math.min(8,.75*pointPitch) : Math.min(12,2*pointPitch))
     }
     function horizontalMotionMs(index) {
         // Every retained point uses the same flow cadence. Different clocks
@@ -422,9 +439,9 @@ Item {
     ListModel {id:nodeModel}
     ListModel {id:edgeModel}
     NumberAnimation {id:flowAnimation;target:root;property:"_flowOffset";to:0;duration:32;easing.type:Easing.OutCubic}
-    GGText { colorKey: "ui.BlockRelationsGraph.1";
+    GGText { objectName:"blockRelationsScope";colorKey: "ui.BlockRelationsGraph.1";
         anchors.left:parent.left;anchors.right:countCaption.left;anchors.rightMargin:8;height:18
-        text:!root.supportedTopology ? "OKÄND BLOCKTOPOLOGI" : root.stale ? "BLOCKRELATIONER · ÄLDRE DATA" : root.dagMode ? "PARALLELL DAG · EJ FINALISERAD" : "BLOCKRELATIONER · BLOCK / TX"
+        text:!root.supportedTopology ? "OKÄND BLOCKTOPOLOGI" : root.stale ? "BLOCKRELATIONER · ÄLDRE DATA" : root.certifiedSummaryWindow ? "PARALLELL DAG · SDK-SUMMERINGAR" : root.certifiedWindow ? "PARALLELL DAG · SDK-BEVIS" : root.dagMode ? "PARALLELL DAG · EJ FINALISERAD" : "BLOCKRELATIONER · BLOCK / TX"
         color:root.stale ? RuntimeTheme.GGTheme.warning : RuntimeTheme.GGTheme.muted;font.family:"monospace";font.pixelSize:9
         elide:Text.ElideRight;textFormat:Text.PlainText
     }
@@ -433,8 +450,7 @@ Item {
         text:(root.width>=650 ? root.speedCaption+" · " : "")+root.shownCount+" / "+root.retainedCount+" hämtade"+(typeof root.graph.tip_height==="number" ? " · "+(root.dagMode?"R":"H")+root.graph.tip_height:"")+" · "+(root.graph.partial_history || root.shownCount<root.retainedCount ? "DELVY · " : "")+(root.dagMode ? "DAG" : "KEDJA")
         color:RuntimeTheme.GGTheme.dim;font.family:"monospace";font.pixelSize:9;textFormat:Text.PlainText
         HoverHandler {id:metricsHover}
-        ToolTip.visible:metricsHover.hovered
-        ToolTip.text:root.speedCaption+"\nObservationsfönster: "+root.metric(root.metrics.window_seconds)+" s\n"+(root.dagMode ? "Signerade lokala förslag och validerade testposter. Ingen global ordning eller finalitet." : "TX/s: inkluderade transaktioner, inte garanterat lyckad exekvering.\nAPI-tid: "+String(root.metrics.ttf_basis || "ej uppmätt"))
+        PlainTip {visible:metricsHover.hovered;text:root.speedCaption+"\nObservationsfönster: "+root.metric(root.metrics.window_seconds)+" s\n"+(root.certifiedSummaryWindow?"Ökningen i verifierade SDK-räknare per lokal sekund, inklusive eventuell ikapphämtning. Detta är observationshastighet, inget kapacitetsprov. Grafen visar ett valt bevisfönster, ingen full historikreplay.":root.dagMode ? "Signerade lokala förslag och validerade testposter. Ingen global ordning eller finalitet." : "TX/s: inkluderade transaktioner, inte garanterat lyckad exekvering.\nAPI-tid: "+String(root.metrics.ttf_basis || "ej uppmätt"))}
     }
     Item {
         id:plot;x:0;y:20;width:parent.width;height:Math.max(22,parent.height-44);clip:true
@@ -458,7 +474,7 @@ Item {
                 x:root.gridX(modelData.column)-20+(root.pointMode ? flowLayer.x : 0);y:0
                 width:Math.max(40,root.gridX(modelData.column+modelData.columns-1)-root.gridX(modelData.column)+40);height:10
                 Rectangle {x:0;y:9;width:parent.width;height:1;color:RuntimeTheme.GGTheme.line}
-                GGText { colorKey: "ui.BlockRelationsGraph.4";anchors.fill:parent;text:root.pointMode ? "R"+parent.modelData.rank : "R"+parent.modelData.rank+" · "+parent.modelData.count+" parallella";font.family:"monospace";font.pixelSize:8;color:RuntimeTheme.GGTheme.dim;horizontalAlignment:Text.AlignHCenter;textFormat:Text.PlainText;elide:Text.ElideRight}
+                GGText { colorKey: "ui.BlockRelationsGraph.4";anchors.fill:parent;text:root.pointMode ? "R"+root.rankLabel(parent.modelData.rank) : "R"+root.rankLabel(parent.modelData.rank)+" · "+parent.modelData.count+" parallella";font.family:"monospace";font.pixelSize:8;color:RuntimeTheme.GGTheme.dim;horizontalAlignment:Text.AlignHCenter;textFormat:Text.PlainText;elide:Text.ElideRight}
             }
         }
         Item {
@@ -506,6 +522,8 @@ Item {
                 required property string blockHash
                 required property int blockHeight
                 required property int blockRank
+                required property string blockRankText
+                required property string producerSequenceText
                 required property int gridColumn
                 required property int transactionCount
                 required property int proposerIndex
@@ -524,14 +542,14 @@ Item {
                 // The fixed right margin exceeds the shared slide (<=8px)
                 // plus the new block entrance (<=12px). No all-node clamp
                 // may depend on the moving parent: that dirties every path.
-                x:root.nodeX(index,gridColumn)-width/2+arrivalOffset
+                x:root.nodeX(index,gridColumn)-width/2+(root.coherentFlow?Math.max(-.75*root.pointPitch,Math.min(.75*root.pointPitch,arrivalOffset)):arrivalOffset)
                 y:Math.max(0,Math.min(plot.height-height,root.nodeY(proposerIndex,index,blockHeight,producerSequence)-height/2+arrivalYOffset))
                 // Live-follow highlights data without moving keyboard focus
                 // away from a transfer field. selectBlock() focuses only an
                 // explicit user-selected point for keyboard navigation.
                 opacity:1;activeFocusOnTab:true;z:1
                 Accessible.role:Accessible.Button
-                Accessible.name:root.dagMode ? genesis ? "Publikt genesisankare" : "Ofinaliserat signerat förslag, rank "+blockRank+", "+root.producerName(proposerIndex)+", sekvens "+producerSequence : "Block "+blockHeight+", "+(transactionCount<0 ? "okänt antal" : transactionCount)+" transaktioner"
+                Accessible.name:root.dagMode ? genesis ? "Publikt genesisankare" : (verified?"SDK-verifierat kanoniskt block, rank ":"Ofinaliserat signerat förslag, rank ")+blockRankText+", "+root.producerName(proposerIndex)+", sekvens "+producerSequenceText : "Block "+blockHeight+", "+(transactionCount<0 ? "okänt antal" : transactionCount)+" transaktioner"
                 function finishMotion(){moveX.complete();moveY.complete();appear.complete();birth.complete();enterX.complete();enterY.complete()}
                 onIndexChanged:if(index<root.shownCount-24){enterX.complete();enterY.complete()}
                 Behavior on x {enabled:root.motionActive && !root.pointMode;NumberAnimation {id:moveX;duration:node.horizontalDuration;easing.type:Easing.OutCubic}}
@@ -548,7 +566,7 @@ Item {
                     height:root.pointMode ? width : parent.height
                     radius:root.pointMode?width/2:1
                     color:root.pointMode ? root.proposerColor(node.proposerIndex) : root.dagMode ? Qt.darker(root.proposerColor(node.proposerIndex),root.selectedHash===node.blockHash ? 3.5 : 5.5-node.birthPulse) : Qt.rgba(root.proposerColor(node.proposerIndex).r,root.proposerColor(node.proposerIndex).g,root.proposerColor(node.proposerIndex).b,root.selectedHash===node.blockHash ? .24 : node.isTip ? .16+.25*node.birthPulse : .04+.18*node.birthPulse)
-                    border.width:1;border.color:root.selectedHash===node.blockHash ? RuntimeTheme.GGTheme.bright : node.verified || node.isTip || root.dagMode && node.signatureChecked ? root.proposerColor(node.proposerIndex) : root._reachable[node.blockHash] ? RuntimeTheme.GGTheme.cyan : RuntimeTheme.GGTheme.edge
+                    border.width:root.dagMode&&node.verified?2:1;border.color:root.selectedHash===node.blockHash ? RuntimeTheme.GGTheme.bright : root.dagMode&&node.verified?RuntimeTheme.GGTheme.positive:node.verified || node.isTip || root.dagMode && node.signatureChecked ? root.proposerColor(node.proposerIndex) : root._reachable[node.blockHash] ? RuntimeTheme.GGTheme.cyan : RuntimeTheme.GGTheme.edge
                     GGColorTarget {colorKey:"ui.graph.block.producer."+Math.max(0,node.proposerIndex)}
                 }
                 // Points have no caption. Do not allocate and shape a hidden
@@ -558,7 +576,7 @@ Item {
                     anchors.fill:parent;active:!root.pointMode
                     sourceComponent:GGText { colorKey: "ui.BlockRelationsGraph.5";
                         anchors.fill:parent;leftPadding:2;rightPadding:2
-                        text:root.dagMode ? node.genesis ? "GEN" : "P"+(node.proposerIndex+1)+"·"+(node.producerSequence<0 ? "?" : node.producerSequence)+(node.height>=20 ? "\nR"+node.blockRank+" · "+(node.transactionCount<0 ? "?" : node.transactionCount) : "") : "H "+String(node.blockHeight)+"\n"+(node.transactionCount<0 ? "?" : node.transactionCount)+" tx"
+                        text:root.dagMode ? node.genesis ? "GEN" : "P"+(node.proposerIndex+1)+"·"+(node.producerSequenceText==="-1" ? "?" : node.producerSequenceText)+(node.height>=20 ? "\nR"+node.blockRankText+" · "+(node.transactionCount<0 ? "?" : node.transactionCount) : "") : "H "+String(node.blockHeight)+"\n"+(node.transactionCount<0 ? "?" : node.transactionCount)+" tx"
                         horizontalAlignment:Text.AlignHCenter;verticalAlignment:Text.AlignVCenter
                         color:node.isTip || root.selectedHash===node.blockHash ? RuntimeTheme.GGTheme.bright : RuntimeTheme.GGTheme.text
                         font.family:"monospace";font.pixelSize:root.dagMode ? 8 : 9;textFormat:Text.PlainText;elide:Text.ElideRight
@@ -571,8 +589,9 @@ Item {
                 Keys.onLeftPressed:if(index>0)root.selectBlock(root._rows[index-1].hash)
                 Keys.onRightPressed:if(index+1<root._rows.length)root.selectBlock(root._rows[index+1].hash)
                 Keys.onPressed:function(event){if(event.key===Qt.Key_C){root.copySelected();event.accepted=true}}
-                ToolTip.visible:hit.containsMouse
-                ToolTip.text:root.dagMode ? genesis ? "Publikt genesisankare, ingen finalitetsstämpel" : root.producerName(proposerIndex)+" · rank "+blockRank+" · sekvens "+producerSequence+"\n"+(transactionCount<0 ? "Okänt antal" : transactionCount)+" lokala testposter\nSignatur kontrollerad · EJ FINALISERAT" : "Block "+blockHeight+" · "+(transactionCount<0 ? "okänt" : transactionCount)+" tx\n"+(proposerIndex>=0 ? "Validator "+(proposerIndex+1)+"\n" : "Lokal nod\n")+(verified ? "SDK-verifierat certifikat" : "Observerad noddata")
+                Loader {objectName:"blockPlainTooltipLoader";active:hit.containsMouse
+                    sourceComponent:PlainTip {parent:node;visible:true;text:root.dagMode ? node.genesis ? "Publikt genesisankare, ingen finalitetsstämpel" : root.producerName(node.proposerIndex)+" · rank "+node.blockRankText+" · sekvens "+node.producerSequenceText+"\n"+(node.transactionCount<0 ? "Okänt antal" : node.transactionCount)+(root.certifiedSummaryWindow?" TX i SDK-summering\n":" lokala testposter\n")+(node.verified?"SDK-verifierat kanoniskt medlemskap":"Signatur kontrollerad · EJ FINALISERAT") : "Block "+node.blockHeight+" · "+(node.transactionCount<0 ? "okänt" : node.transactionCount)+" tx\n"+(node.proposerIndex>=0 ? "Validator "+(node.proposerIndex+1)+"\n" : "Lokal nod\n")+(node.verified ? "SDK-verifierat certifikat" : "Observerad noddata")}
+                }
             }
         }
         }
@@ -585,7 +604,7 @@ Item {
     }
     GGText { colorKey: "ui.BlockRelationsGraph.7";
         x:0;anchors.bottom:parent.bottom;width:Math.max(0,parent.width-detailButton.width-liveButton.width-12);height:20
-        text:root.width<650 ? root.speedCaption : root.selectedBlock ? (root.dagMode ? "R" : "H")+root.selectedBlock.height+" · "+root.selectedHash.slice(0,8)+"… · "+Math.max(0,root.highlightedCount-1)+" efterföljare" : root.dagMode ? "Verkliga föräldrar · högst 7 efterföljarled · ej finalitet" : "Verkliga länkar · högst 7 efterföljare"
+        text:root.width<650 ? root.speedCaption : root.selectedBlock ? (root.dagMode ? "R" : "H")+(root.certifiedWindow?root.selectedBlock.rank_text:root.selectedBlock.height)+" · "+root.selectedHash.slice(0,8)+"… · "+Math.max(0,root.highlightedCount-1)+" efterföljare" : root.dagMode ? (root.certifiedSummaryWindow?"SDK-summeringar · verifierade föräldrareferenser":root.certifiedWindow?"Verifierade original · begränsat historikfönster":"Verkliga föräldrar · högst 7 efterföljarled · ej finalitet") : "Verkliga länkar · högst 7 efterföljare"
         color:RuntimeTheme.GGTheme.muted;font.family:"monospace";font.pixelSize:9;elide:Text.ElideRight;textFormat:Text.PlainText
     }
     CryptoButton { property string uiColorScope: "ui.control.BlockRelationsGraph.1";
@@ -613,14 +632,14 @@ Item {
             active:details.visible
             sourceComponent:Column {
             width:details.availableWidth;spacing:7
-            GGText { colorKey: "ui.BlockRelationsGraph.8";text:root.selectedBlock ? (root.dagMode ? "FÖRSLAG R" : "BLOCK ")+root.selectedBlock.height+(root.dagMode ? " · EJ FINALISERAT" : "") : "BLOCK";color:RuntimeTheme.GGTheme.bright;font.family:"monospace";font.pixelSize:12;textFormat:Text.PlainText}
+            GGText { colorKey: "ui.BlockRelationsGraph.8";text:root.selectedBlock ? (root.dagMode ? "FÖRSLAG R" : "BLOCK ")+(root.certifiedWindow?root.selectedBlock.rank_text:root.selectedBlock.height)+(root.dagMode ? root.certifiedWindow?" · SDK-BEVIS":" · EJ FINALISERAT" : "") : "BLOCK";color:RuntimeTheme.GGTheme.bright;font.family:"monospace";font.pixelSize:12;textFormat:Text.PlainText}
             TextArea {
                 objectName:"blockRelationsFullHash";width:parent.width;height:52;readOnly:true;selectByMouse:true
                 text:root.selectedHash;wrapMode:TextEdit.WrapAnywhere;color:RuntimeTheme.GGTheme.text;font.family:"monospace";font.pixelSize:10
                 background:Rectangle {color:RuntimeTheme.GGTheme.canvas;border.color:RuntimeTheme.GGTheme.line}
             }
             GGText { colorKey: "ui.BlockRelationsGraph.9";
-                width:parent.width;text:root.selectedBlock ? root.dagMode ? (root.selectedBlock.genesis?"":root.producerName(root.selectedBlock.proposer_index)+"\n")+(root.selectedBlock.transaction_count===null ? "Okänt antal" : root.selectedBlock.transaction_count)+" lokalt validerade testposter\n"+(root.selectedBlock.genesis ? "Publikt genesisankare" : "Signatur kontrollerad, ingen global finalitet")+"\n"+root.selectedBlock.parent_hashes.length+" verkliga föräldrareferenser" : (root.selectedBlock.transaction_count===null ? "Okänt antal" : root.selectedBlock.transaction_count)+" inkluderade transaktioner\n"+(root.selectedBlock.certificate_verified ? "SDK-verifierat certifikat" : "Observerad noddata, separat från SDK-bevis") : ""
+                width:parent.width;text:root.selectedBlock ? root.dagMode ? (root.selectedBlock.genesis?"":root.producerName(root.selectedBlock.proposer_index)+"\n")+(root.selectedBlock.transaction_count===null ? "Okänt antal" : root.selectedBlock.transaction_count)+(root.certifiedSummaryWindow?" TX i certifierad summering\n":root.certifiedWindow?" TX i certifierat original\n":" lokalt validerade testposter\n")+(root.selectedBlock.genesis ? "Publikt genesisankare" : root.selectedBlock.canonical_membership_verified ? "SDK-verifierat kanoniskt medlemskap" : "Signatur kontrollerad, ingen global finalitet")+"\n"+root.selectedBlock.parent_hashes.length+" verkliga föräldrareferenser" : (root.selectedBlock.transaction_count===null ? "Okänt antal" : root.selectedBlock.transaction_count)+" inkluderade transaktioner\n"+(root.selectedBlock.certificate_verified ? "SDK-verifierat certifikat" : "Observerad noddata, separat från SDK-bevis") : ""
                 color:RuntimeTheme.GGTheme.muted;font.family:"monospace";font.pixelSize:10;wrapMode:Text.WordWrap;textFormat:Text.PlainText
             }
             Row {spacing:8

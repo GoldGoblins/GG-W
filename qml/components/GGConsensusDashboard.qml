@@ -30,12 +30,13 @@ Item {
     readonly property bool approvalPending: operation.state === "approval_required"
     readonly property bool canAct: !busy && !approvalPending
     readonly property bool stopped: consensus.state === "STOPPED"
-    readonly property bool nodeOwned: ["RUNNING", "DEGRADED", "NO_QUORUM", "READ_FAILED"].indexOf(consensus.state) >= 0
+    readonly property bool nodeOwned: ["RUNNING", "DEGRADED", "NO_QUORUM", "READ_FAILED", "SAFETY_FAULT"].indexOf(consensus.state) >= 0
     readonly property int onlineCount: validators.filter(function(v) { return v.alive === true && v.identity_verified === true }).length
     readonly property bool proofReady: proof.verified === true && proof.validator_count === 4 && proof.quorum_required === 3 && validators.length === 4 && validHash(proof.state_root) && validHash(proof.account_root) && typeof proof.state_height === "number" && proof.state_height >= 0 && proof.state_height % 1 === 0 && proof.state_height === consensus.state_height && proof.certificate_height === proof.state_height + 1
     readonly property bool quorumReady: onlineCount >= 3 && Number(consensus.online) >= 3 && consensus.quorum_required === 3
     readonly property bool running: ["RUNNING", "DEGRADED"].indexOf(consensus.state) >= 0 && quorumReady && proofReady
     readonly property bool readFailed: consensus.state === "READ_FAILED"
+    readonly property bool safetyFault: consensus.state === "SAFETY_FAULT"
     readonly property bool hasReview: !!review
     readonly property int reviewedSenderIndex: review ? accounts.findIndex(function(a) { return a.address === review.sender }) : -1
     readonly property int reviewedRecipientIndex: review ? accounts.findIndex(function(a) { return a.address === review.recipient }) : -1
@@ -53,7 +54,7 @@ Item {
     readonly property real mainWidth: Math.max(0, width - (railVisible ? railWidth : 0))
     readonly property bool compactDensity: width < 1200 || height < 760
     readonly property var accountChoices: accounts.map(function(a, i) { return { name: "Konto " + (i + 1), address: a.address } })
-    readonly property string stateLabel: ({ STOPPED: "Stoppat", RUNNING: "Igång", DEGRADED: "Reducerat · quorum finns", NO_QUORUM: "Quorum saknas", READ_FAILED: "Läsfel · äldre data" })[consensus.state] || "Inväntar status"
+    readonly property string stateLabel: ({ STOPPED: "Stoppat", RUNNING: "Igång", DEGRADED: "Reducerat · quorum finns", NO_QUORUM: "Quorum saknas", READ_FAILED: "Läsfel · äldre data", SAFETY_FAULT: "Säkerhetsfel · certifikat" })[consensus.state] || "Inväntar status"
     readonly property var resourceSummary: {
         var bytes = 0, cpu = 0, memorySamples = 0, cpuSamples = 0
         for (var i = 0; i < validators.length; i++) {
@@ -79,7 +80,7 @@ Item {
     function timeText(value) { return value ? new Date(Number(value) * 1000).toLocaleTimeString(Qt.locale(), "HH:mm:ss") : "—" }
     function accountName(value) { for (var i = 0; i < accounts.length; i++) if (accounts[i].address === value) return "Konto " + (i + 1); return "Okänt konto" }
     function stateText(value) { return ({ FINALIZED: "Slutförd", SUBMITTED: "Inskickad", BROADCAST_UNKNOWN: "Utfall okänt", REJECTED: "Avvisad", PASS: "Godkänd", FAIL: "Underkänd", RUNNING: "Pågår" })[value] || String(value || "—") }
-    function statusColor(value) { return /FAIL|ERROR|REJECT|INVALID/.test(value) ? RuntimeTheme.GGTheme.negative : /UNKNOWN|SUBMITTED|QUORUM|DEGRADED|RUNNING/.test(value) ? RuntimeTheme.GGTheme.accent : /FINALIZED|PASS|VERIFIED|READY/.test(value) ? RuntimeTheme.GGTheme.positive : RuntimeTheme.GGTheme.muted }
+    function statusColor(value) { return /FAIL|ERROR|REJECT|INVALID|FAULT/.test(value) ? RuntimeTheme.GGTheme.negative : /UNKNOWN|SUBMITTED|QUORUM|DEGRADED|RUNNING/.test(value) ? RuntimeTheme.GGTheme.accent : /FINALIZED|PASS|VERIFIED|READY/.test(value) ? RuntimeTheme.GGTheme.positive : RuntimeTheme.GGTheme.muted }
     function sampleSeries(value) { return value.state === "FAIL" ? "error" : value.operation === "transfer" ? "transfer" : value.operation === "verify" ? "verify" : "other" }
     function sampleColor(value) { return RuntimeTheme.GGColorContext.colorFor("ui.chart.consensus."+sampleSeries(value), value.state === "FAIL" ? RuntimeTheme.GGTheme.negative : value.operation === "transfer" ? RuntimeTheme.GGTheme.cyan : value.operation === "verify" ? RuntimeTheme.GGTheme.purple : RuntimeTheme.GGTheme.muted) }
     function copyPublic(value) { value = String(value || ""); if (canAct && validHash(value) && surfaceHost && surfaceHost.tmogCopy) surfaceHost.tmogCopy(value) }

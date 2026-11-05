@@ -211,7 +211,7 @@ GGConsensusDashboard {objectName:'consensusDashboard';anchors.fill:parent;state:
     before=len(host.calls);js(root,'send()');assert len(host.calls)==before, 'Expiry must be checked at the click, without an idle timer'
     unresolved=deepcopy(reviewed);unresolved['consensus']['unresolved']=True;push(unresolved)
     assert not named('consensusSend').isEnabled() and not named('consensusPrepare').isEnabled()
-    for mode in ('NO_QUORUM','READ_FAILED'):
+    for mode in ('NO_QUORUM','READ_FAILED','SAFETY_FAULT'):
         blocked=deepcopy(payload);blocked['consensus']['state']=mode
         if mode=='NO_QUORUM':
             blocked['consensus']['online']=2

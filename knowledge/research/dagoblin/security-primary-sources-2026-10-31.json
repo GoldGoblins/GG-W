@@ -1,0 +1,24 @@
+{
+  "schema": "gg.dagoblin.security-primary-sources.v1",
+  "review_date": "2026-10-31",
+  "scope": "Selected primary sources; not a complete protocol or binary audit",
+  "sources": [
+    {"topic":"Ed25519 standard","url":"https://www.rfc-editor.org/rfc/rfc8032.html"},
+    {"topic":"Native provider security patch","url":"https://pynacl.readthedocs.io/en/latest/changelog/"},
+    {"topic":"Prime-subgroup point validation","url":"https://doc.libsodium.org/advanced/point-arithmetic"},
+    {"topic":"Mixed-order validation fix","url":"https://github.com/jedisct1/libsodium/commit/ad3004ec8731730e93fcfbbc824e67eadc1c1bae"},
+    {"topic":"Native uncofactored verification","url":"https://raw.githubusercontent.com/jedisct1/libsodium/1.0.20-RELEASE/src/libsodium/crypto_sign/ed25519/ref10/open.c"},
+    {"topic":"Go native verification","url":"https://raw.githubusercontent.com/golang/go/go1.27.3/src/crypto/internal/fips140/ed25519/ed25519.go"},
+    {"topic":"External signature vectors","url":"https://github.com/C2SP/wycheproof/blob/main/testvectors_v1/ed25519_test.json"},
+    {"topic":"CometBFT ordering and quorum","url":"https://github.com/cometbft/cometbft/blob/v0.40.0/spec/consensus/consensus.md"},
+    {"topic":"Consensus timestamp vulnerability","url":"https://github.com/cometbft/cometbft/security/advisories/GHSA-c32p-wcqj-j677","applicability":"GG pins later v0.40.0; not an assertion this advisory affects the pinned branch"},
+    {"topic":"Bitcoin monetary validation","url":"https://raw.githubusercontent.com/bitcoin/bitcoin/v29.0/src/validation.cpp"},
+    {"topic":"Bitcoin duplicate-spend inflation disclosure","url":"https://bitcoincore.org/en/2018/09/20/notice/"},
+    {"topic":"Kaspa issuance and DAG rewards","url":"https://raw.githubusercontent.com/kaspanet/rusty-kaspa/v2.1.0/consensus/src/processes/coinbase.rs"},
+    {"topic":"Pool job declaration","url":"https://stratumprotocol.org/specification/06-job-declaration-protocol/"},
+    {"topic":"Mining transport security","url":"https://stratumprotocol.org/specification/04-protocol-security/"},
+    {"topic":"Nomad unproven-root acceptance","url":"https://medium.com/nomad-xyz-blog/nomad-bridge-hack-root-cause-analysis-875ad2e5aacd"},
+    {"topic":"Binance October follow-up","url":"https://www.binance.com/en/support/announcement/detail/d3306d9dca5243548c813b605e1d1751","retrieval_limit":"Official indexed text; direct open redirected to listing; not a final independently retrieved root-cause report"},
+    {"topic":"Delegated-account authorization boundaries","url":"https://eips.ethereum.org/EIPS/eip-7702"}
+  ]
+}

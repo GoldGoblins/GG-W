@@ -13,6 +13,7 @@ from unittest.mock import patch
 import psutil
 
 from backend import gg_testnet_process as limits
+from backend.gg_native_resources import LOW
 
 
 class TestnetProcessTests(unittest.TestCase):
@@ -33,7 +34,7 @@ class TestnetProcessTests(unittest.TestCase):
         self.addCleanup(lease.close)
         self.assertEqual(lease.facts, {"provider": "WINDOWS_JOB_OBJECT", "verified": True,
             "memory_bytes": 512 * 1024 * 1024, "cpu_seconds": 300,
-            "active_process_limit": 1, "kill_on_close": True})
+            "active_process_limit": 1, "kill_on_close": True, "resource_profile": LOW.wire()})
         self.assertIsNone(child.poll())
         # Facts are copied, never a mutable authority/control object.
         facts = lease.facts

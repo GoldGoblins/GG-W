@@ -26,11 +26,14 @@ def snapshot():
     from backend import gg_parallel_dag,lan_dag_runtime
     result['lan_dag']=lan_dag_runtime.snapshot()
     result['parallel_dag']=result['lan_dag'] if lan_dag_runtime.active_manager() is not None else gg_parallel_dag.snapshot()
-    if lan_dag_runtime.active_manager() is None:
-        from backend.local_node_observation import active_source
-        observer=active_source()
-        observed=observer.snapshot() if observer is not None else None
-        if observed is not None:result['parallel_dag']=observed;result['lan_dag']=observed
+    from backend.local_node_observation import source_reader
+    observation=source_reader().view()
+    available=lan_dag_runtime.active_manager() is None
+    result['local_node_sources']={**observation['local_node_sources'],'view_available':available}
+    if available and (observation['local_node_sources']['sources'] or observation['local_node_sources']['selection']=='EXPLICIT'):
+        # A required/vanished explicit choice must never fall through to a
+        # different local engine or leave the preceding account visible.
+        result['parallel_dag']=observation['parallel_dag'];result['lan_dag']=observation['parallel_dag']
     result['consensus_sample']=_consensus_sample if _consensus_sample and _consensus_sample['genesis']['chain_id']==result['consensus']['chain_id'] else None
     from backend import omni_wallet
     result['wallet_overview']=omni_wallet.snapshot(result,result['lab'])
@@ -38,6 +41,12 @@ def snapshot():
     result['wallet_transfer']=solana_transfers.snapshot(store.preference('selected_transfer') or '')
     result['wallet_transfers']=solana_transfers.list_snapshot()
     return result
+
+
+def select_observation_source(handle):
+    """Read-only UI choice: no general action, profile, wallet or node command."""
+    from backend.local_node_observation import select_observation_source as select_source
+    return select_source(handle)
 
 
 def action(name,raw='{}'):
@@ -59,7 +68,7 @@ def _action(name,raw='{}',*,refresh_price=False):
     if name in {'reveal_mnemonic','export_mnemonic'}:raise ValueError('OMNI_PRIVATE_WALLET_OPERATION_REQUIRED')
     if name.startswith('lan_'):
         from backend import lan_dag_runtime,gg_parallel_dag
-        if name in {'lan_start','lan_join_file'} and gg_parallel_dag.snapshot().get('state')!='STOPPED':raise ValueError('GG_LAN_STOP_LOCAL_DAG_FIRST')
+        if name in {'lan_start','lan_join_file','lan_resume'} and gg_parallel_dag.snapshot().get('state')!='STOPPED':raise ValueError('GG_LAN_STOP_LOCAL_DAG_FIRST')
         lan_dag_runtime.action(name,args)
     elif name=='select_asset':
         store.asset(args['id']); store.preference('selected_asset',args['id'])

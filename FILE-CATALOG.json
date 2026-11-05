@@ -4,18 +4,18 @@
   "source_root": ".",
   "dependency_catalog": "config/dependencies.json",
   "categories": {
-    "application-code": 526,
+    "application-code": 595,
     "configuration": 13,
     "contracts": 6,
     "documentation": 8,
     "entrypoints-and-guidance": 37,
     "gg-skills": 9,
-    "gpt-knowledge": 161,
+    "gpt-knowledge": 235,
     "installation-and-packaging": 6,
     "interface": 291,
     "native-engine": 1188,
-    "shared-support": 93,
-    "tests": 572,
+    "shared-support": 271,
+    "tests": 681,
     "tools": 38
   },
   "files": [
@@ -91,16 +91,16 @@
       "path": "SOURCE-MANIFEST.json",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 577330,
-      "sha256": "e1591f6bf48d36a5a0a38751b2cbb02886a2d650ce5af5b84b3380983ee61f5b",
+      "bytes": 710481,
+      "sha256": "fff8269ed58eac8faec49ed0675be01d69097db775c8dab751f05faa300ccdfa",
       "mode": "0o644"
     },
     {
       "path": "WINDOWS-PORT.json",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 1578358,
-      "sha256": "72c8bc827408a239c35939e03994f462e0fbf1cd9dae6a28ce0345e1b0013953",
+      "bytes": 1666359,
+      "sha256": "617fbdd33d0433cd942f17269e735fe65100d70fc313780e8888963221f6e1c0",
       "mode": "0o644"
     },
     {
@@ -315,8 +315,8 @@
       "path": "backend/chat_surface_host.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 283199,
-      "sha256": "3a4264613380a5682030dc6477fec3ee2c42ddadb4641e68ba561152b03c052c",
+      "bytes": 283668,
+      "sha256": "f17804cb20619b4d9ac0350b8876f47612b5b061af03bc4c2174796a79302139",
       "mode": "0o600"
     },
     {
@@ -2376,19 +2376,83 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/gg_committee_history.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 12850,
+      "sha256": "a382552b86c3cca70408facc13a449083a78af5164e4828aeedba2bd8f584c91",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/gg_consensus.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 44641,
-      "sha256": "509271e8c4cf4185140985a644695d66bb1116bb49627469ee9dcfdc96318f6e",
+      "bytes": 52832,
+      "sha256": "428efc0fcc2fc577b6e8f2f60f112bb92ad86d7c0cb3097ba78b2c0d25473a8c",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_consensus_membership.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 11167,
+      "sha256": "502e4754d1fe0c1dccace068505e16be56d2cc8dd7bc48d463ac453ede6f92f2",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_consensus_node.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 21843,
+      "sha256": "f3bad7e50e738a9433e426c317e36e985a92887c2a55ae48d5039e1b03a78434",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_consensus_process.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 19423,
+      "sha256": "31878b831b28acef884572878914175384fbfda7538627aab9b8c5a2138ee8bf",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_consensus_profile.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 31753,
+      "sha256": "6f4b03a65162221d7e5c56a1d3526c44cf162a233cf57bc57e432d958cbbfc04",
       "mode": "0o644"
     },
     {
       "path": "backend/gg_consensus_web.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 10138,
-      "sha256": "9ed722a4591afc8cf219f77064a3e3db9b7d914259ee8f20b032b80ea26f0b0f",
+      "bytes": 12198,
+      "sha256": "ee7b04be5b68ce20b0f9a3090ee0e53274e75019d21c288ff38a281679a2a9a8",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_dag_archive.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 10484,
+      "sha256": "670885730dd2e8b84771b83ce529acce2dd3f0857ec1ac4d9203ed0b0f6fd2a1",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_dag_checkpoint.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 12955,
+      "sha256": "1bc556b43866a71a7310a99af25a6f9626c1b4960229c67ad6d02eccd1c466c4",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_dag_execution_policy.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 2458,
+      "sha256": "c661fc721a9cc7b2ad97505ae71e66b2532ce32ebe8207b24bf12b0a7434ab4b",
       "mode": "0o644"
     },
     {
@@ -2400,43 +2464,531 @@
       "mode": "0o644"
     },
     {
+      "path": "backend/gg_dag_json.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 2940,
+      "sha256": "5ae0ababe9977b2fd8b61c42424ea0e7ce810f0a586b47faa5d33a9a9340b641",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_dag_order_history.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 5532,
+      "sha256": "84eb93e970ea3d09d3d9fa74d9aa26b06dd2c4b843b15d955c304a6bbc6ec44c",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_dag_payloads.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 15568,
+      "sha256": "5d90cc379cd854cd781b9ab5906a29cf4691828c2bed31a411111fbea33c5db0",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_dag_producer_archive.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 9448,
+      "sha256": "6ad68f01a7c05e93151e0f8f2046d05e5a20b6da97b2d8af53309c375f5b9885",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_dag_producer_journal.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 23468,
+      "sha256": "3cf0a53b51878250b1d0b329bc6bbf6c3f8ae309d0f60ac4c94d3c57bd5a52e1",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_dag_proof_sync.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 20320,
+      "sha256": "3d12e1d6b6e694acbdae2468846009661255adb4b0b00dfdaf0a148aac189adb",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_dag_segmented.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 30998,
+      "sha256": "3965af3b033303319ad1a325c6670b540860fd79343773587a76989f67507433",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_dag_segmented_runtime.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 8556,
+      "sha256": "da5deb563d2edd195ee0088d457f83a12e45b125179296fe40edf63f2d1878da",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_dag_segmented_session.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 6778,
+      "sha256": "d16b600c7f1a80ed0a7f75532fea74ca3d6cf24a7365f5c9c80d3e58f5af074b",
+      "mode": "0o644"
+    },
+    {
       "path": "backend/gg_dag_wire.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 5794,
-      "sha256": "97f096fea45692de118c3f635f98e2c54ec555063d3db90c9b610743282dfef8",
+      "bytes": 8270,
+      "sha256": "bf9265f145ed50927a63113f3a5ada23932876cbcd9bfba3e1d8cab31a827994",
       "mode": "0o644"
     },
     {
       "path": "backend/gg_ed25519.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 1034,
-      "sha256": "1061f6c6b088770f5b1d6e682c9127d57d066c1332c02b8230b84ed112d376b1",
+      "bytes": 5394,
+      "sha256": "03e3083f97a16fbeb0da2d96a695d7b023455575ddd0ec45c8f4715592336f92",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_financial_account.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 53180,
+      "sha256": "e999f46417866c45c56dc6928fc0f4b8c3f08babed140d0eed9cff1595672e28",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_financial_archive.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 9781,
+      "sha256": "4e6d8695b44a30ffcbe6f58f73c79868deb597e4eba8d34b25454f28fcc4af9a",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_financial_authority.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 19179,
+      "sha256": "2d6b82a878c80f4070fe69b2ebdd7cb652cbf5dbc7529bd55da5f27c09beb069",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_financial_dag.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 13764,
+      "sha256": "7d58688062c7158487f27a96b94fa528fdc0a5a6f1686cb673b91cb40f459cb4",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_financial_economy.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 15376,
+      "sha256": "ab7ab43f08a48855499b2b3e99a188ea879761348a42e25fe845ea81c2770a58",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_financial_own_archive.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 11468,
+      "sha256": "c5fb95fb927252e5afd7a2063d7d92436040e4290d12ee917f59dcaf71b5b002",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_financial_pool.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 53670,
+      "sha256": "eab076744600495ba367c822e8721b62bf7312185691ba6fa1d74fcce20b02f9",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_financial_producer.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 44530,
+      "sha256": "6237c841fda579e870060b284a86cacc8d321a4721ec29b16fa55d0899adbaa7",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_financial_proof_sync.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 36133,
+      "sha256": "e95cb6a8dc3eee4242b706985a63e5f1c8514703072dbd09fd764aef4d89c73b",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_financial_protocol.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 19826,
+      "sha256": "e2aef1870c176e6e46da8350d4cba182ed9ae9379427154fd512865bbdf268ec",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_financial_relay.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 12637,
+      "sha256": "b11539dd4e8dffaf2bd1c801accc814cb66b63db2f4c71e55cbc099eb23b6927",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_financial_retry.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 4234,
+      "sha256": "4fcaedb5d972e7d024f560958310da4049d5ac958513b08bf21c4af1b74c504f",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_financial_session.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 6263,
+      "sha256": "06323eee7b3cc65aacc3253abb1fc8e22ada78348c3ffce055c9331e5b7cb2a8",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_financial_wire.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 19136,
+      "sha256": "386706daf8694670843be99e1755cbe80a029f9766117ffd835c15d7d6e3848f",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_lan_admission.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 3440,
+      "sha256": "f5f0ee7c605754b342302d3fd15bdbfd26ad2af86eacd02593c955ade420519f",
       "mode": "0o644"
     },
     {
       "path": "backend/gg_lan_dag.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 125790,
-      "sha256": "49512c2224f7635369a9f01e4fdc92fe441c29126b78d034c59caede25795d14",
+      "bytes": 184376,
+      "sha256": "b4438c98792aa01fee8ac3b8ec40c020641e376c34c849062e9f898bf95787c1",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_lan_resume.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 11341,
+      "sha256": "58d61b867f2fc91ff06c989b2888b1cafd8d4f7215c9f8f94e95289fb4445d75",
       "mode": "0o644"
     },
     {
       "path": "backend/gg_lan_test_tokens.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 12788,
-      "sha256": "7b6db2b814acccdb87f104121767393fc0bf038703a029b20b474503205c1768",
+      "bytes": 13547,
+      "sha256": "299830ec03d1a9e7a2e5ed2800986a2004f646913aacab110262d67867abcae2",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_local_history_status.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 6694,
+      "sha256": "3cfbf1d353e3d46ec6637d670913482bac8e64ac7dd9426b8c23accd4c67c4ef",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_lossless_wire.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 7866,
+      "sha256": "585135121cfb343338758c669cf8e813f8769818223e8f81e944a4326b80b938",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_native_observer.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 7137,
+      "sha256": "1789dfb28d0fcebf838427ba59e4a506c12070ce79a91bf7a8121587c36c368e",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_native_pipe_lifecycle.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 14415,
+      "sha256": "2b2878e38fd78ae7d88f87ef13ff827611bcb086bab7b828b7ae921fb57cf374",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_native_process_policy.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 12267,
+      "sha256": "b16d3b6fb523a0107bcc0060c03806440adc63e68a081e83380f4b65bc79b589",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_native_resources.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 12184,
+      "sha256": "f2ae90003937314737987d8c4dbe959d5d4b9cd920a433a0dedda1f3e7ea2073",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_native_start.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 10939,
+      "sha256": "bce3483e1683c6ff1b22da24c1c0b1673ff6ab0d1fc54c8c6df1bc97ab3c3507",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_network_archive.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 13322,
+      "sha256": "0e9946dc527119c459db9bfbd869da329df47d6d99457cc993475dec6be67fac",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_network_transition.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 20575,
+      "sha256": "a6a22166f8bb232987f99c7e699b8ef9844dd788b8e405a65564bc30a181b323",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_node_store.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 56895,
+      "sha256": "336d5ca222e62dd6f66497d3cf66a5b88be4180831bd8cb83a1e291010cbdd70",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_node_vault.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 2687,
+      "sha256": "193be5f315587c57b7a9b346567cd91da443061b08495e1f50ddac54c69b81e1",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_observer_control.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 15542,
+      "sha256": "8d0c57f99a1e12855945eca227618f509b3b69a00fed95412444c8c2ec63d5ba",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_observer_enrollment.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 9089,
+      "sha256": "0b5596516b629a9b3358ec3860b1eca2437a9553bc85a04916e9519362472e6c",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_observer_node.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 16080,
+      "sha256": "dfbcb2f2b37d95c2518a6e0883ad71dad98a3510f2b9508648c37ea7ee56e3c4",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_observer_profile.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 24558,
+      "sha256": "1d94c9a4a8e511fd7cfb4141d0f509e7f59c045c8757cd8dd7165f2b1d86bb9c",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_observer_recovery.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 4245,
+      "sha256": "fa2ecdecbdccef113f451b8a79f76001b05efb2ffd30e8b8ca78a067058f28e0",
       "mode": "0o644"
     },
     {
       "path": "backend/gg_parallel_dag.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 91875,
-      "sha256": "2839132d8298529c72505486f4be4bdec689a546b8378dc0c8cb30c4a0fa09fa",
+      "bytes": 122678,
+      "sha256": "c031124f42199b96db39ba9b371976638bd455fa6151b7350904e9140c73c34b",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_peer_scan.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 3542,
+      "sha256": "7afaa000a92546f0eda656f2573d59fd4fbe0eb239cdf9f4e98b23508fc9a9e6",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_posix_native.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 9669,
+      "sha256": "49abcf59f5c4a1fcf51f29e0397124f0dcf99241812572329188a38a8dd05bee",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_process_termination.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 1439,
+      "sha256": "03cb591201f9525cf3d72095d3d2950470ebcb2e56406dd511e60d3da617f7b4",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_protected_journal.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 31172,
+      "sha256": "4a46c634b5744f5d900139e751fc19008d6d92455ad1a6d856edbd1982779e68",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_protected_restore.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 36002,
+      "sha256": "3d81182a7e8feb5622b8815a13b6d9d5b52a3e7ecbf4fe91454fd08ae84e388b",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_protocol_inbox.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 18971,
+      "sha256": "9cbfd8d5d0577381287ca08df5c456d3281d5b6340e453e5db303ab332b752b4",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_protocol_light.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 10480,
+      "sha256": "c4f929ea2381747e27a5d135104c46216453f293505f20233607b99824a6c662",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_protocol_node.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 24986,
+      "sha256": "090fb9c522333d31702b623741653c63b8272b0c7dde48a434f1863c7bcd3e6c",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_protocol_operations.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 19803,
+      "sha256": "60e32a83602a27efc316fc3aa57b6923389c0ba231c33a40eeeba28e8612210a",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_protocol_producer.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 32161,
+      "sha256": "9d6a916092e7798c02a8eb9b39e46b3935d497758b2633a13de9f3685a2ed2e7",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_protocol_provisioning.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 17706,
+      "sha256": "4fd8931894aef848d7e24eb7b55edf5d8d890c4a35a1cb4751c5948670ba2a33",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_protocol_runtime.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 134867,
+      "sha256": "75b1f8f04ba1efebad32e9e3fe6b9414172468b9c86da8830141203d41d60e7a",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_protocol_setup.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 29049,
+      "sha256": "30ed7d397222c99f044cace2c8b6b4b78114612847d050778889742d78630fd3",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_protocol_transport.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 19164,
+      "sha256": "212bb044ff2b710b3f9f02017fdcdf888a4b03d7e3afb5e50c1f0511de784662",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_segmented_authority.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 21465,
+      "sha256": "6fe34c520d451b06c8660cb290689b601cfda6705e86a1a2265fd21c85c3223b",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_segmented_index_transition.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 7048,
+      "sha256": "dd6fb469d4b81f1fbf21dfdfd9fa63bfc19de9108926ed8f94e1b1fbcb05e680",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_segmented_payloads.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 18474,
+      "sha256": "4986e18065479bc51da1d1bf303190aaef7aeb95950a169017573bcffce0fd17",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_segmented_production.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 9318,
+      "sha256": "dbcdbd1508a0a5aee8af633c7cdd5385478e30771c8b09fa3a0afa11efb1286f",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_segmented_proof_sync.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 21742,
+      "sha256": "a11f07431b35e5bb909ee323155421d29ab102bf0eaaa0e129a737833ecc922b",
+      "mode": "0o644"
+    },
+    {
+      "path": "backend/gg_segmented_submission.py",
+      "category": "application-code",
+      "kind": "file",
+      "bytes": 14100,
+      "sha256": "0f75c155df94edd92025ec7c74678fb40d9d081bddc457adc3955314feca787a",
       "mode": "0o644"
     },
     {
@@ -2451,8 +3003,8 @@
       "path": "backend/gg_testnet_process.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 7868,
-      "sha256": "01f3c36900210d14507eda202a40e48b71249c40a0bf7e30e5bd906e264f161a",
+      "bytes": 8830,
+      "sha256": "2c0fa1e24050500f6f91504981706ec3799c5d8f1905abb27fd236bfc8811c8e",
       "mode": "0o644"
     },
     {
@@ -2627,8 +3179,8 @@
       "path": "backend/lan_dag_runtime.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 21836,
-      "sha256": "b79164e065150aa65745f7ac1f717be8dd1ab88e2e20c843b9481f4d320fe0dd",
+      "bytes": 75099,
+      "sha256": "275c414a1baae41e15433c1fdc2d333e95989cee7441003eba2a8d51cd8346b7",
       "mode": "0o644"
     },
     {
@@ -2947,8 +3499,8 @@
       "path": "backend/local_node_observation.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 9786,
-      "sha256": "1050cf2454b01b55947638f8b337a8a1e18669052894ba591149407abb03575d",
+      "bytes": 24404,
+      "sha256": "0ed00878fe74accf1b7c510be796b2bf292cf7391f7e0a3a08285257f5738955",
       "mode": "0o644"
     },
     {
@@ -3523,8 +4075,8 @@
       "path": "backend/network_telemetry.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 7776,
-      "sha256": "e66b89c823937eec318d5ac0900c3abd8944804359bbe954e73e8f5726665346",
+      "bytes": 8265,
+      "sha256": "d36ea0f49d033ee5ef459bc3e986e764d25d159aec8f122a02a3e0f14e364114",
       "mode": "0o644"
     },
     {
@@ -3595,8 +4147,8 @@
       "path": "backend/omni_service.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 13936,
-      "sha256": "5fc55db403f49f37ad2e662b430e28854160c8b4801a684e598d0ad08e3bba89",
+      "bytes": 14524,
+      "sha256": "8341f5c42a8e2c27946dd80552c4261052577695a4e27a9b7eb384fad9b85489",
       "mode": "0o644"
     },
     {
@@ -4035,8 +4587,8 @@
       "path": "backend/terminal_cli.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 52208,
-      "sha256": "251c9c5e581329d354e29025ff0e9a789f3a773785159665c389462bc2d2e80c",
+      "bytes": 71436,
+      "sha256": "c40c9110d28bef94909491c97e206765df6efbe4b8a0fbdfc8d26589e9991708",
       "mode": "0o644"
     },
     {
@@ -4051,8 +4603,8 @@
       "path": "backend/terminal_service.py",
       "category": "application-code",
       "kind": "file",
-      "bytes": 27162,
-      "sha256": "5fda2058b63690f55bce5d294fa6830dec4fc9588c0a38e4684f1cbe3595c4f7",
+      "bytes": 31015,
+      "sha256": "8575cd4f15a4801aff3633046f19f84d2dd48eb08bb9ce1afb5961f985fa617b",
       "mode": "0o644"
     },
     {
@@ -4339,8 +4891,8 @@
       "path": "config/dependencies.json",
       "category": "configuration",
       "kind": "file",
-      "bytes": 19527,
-      "sha256": "bdc2b60478a4d1a3823accc1cae76e00236235c9ddd656240f8aa5a38f32a4ac",
+      "bytes": 21203,
+      "sha256": "e4f67bca875cc3b31e229992a5f388995574c5d9d2ee264a5ac781e208137eda",
       "mode": "0o644"
     },
     {
@@ -4499,8 +5051,8 @@
       "path": "gg-cli.py",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 2285,
-      "sha256": "e042bafbd87940bb672ccd4208f2ba62590db02958c9e20f188d1e36f98c505a",
+      "bytes": 2293,
+      "sha256": "516580b55979426516acf88b3f8ba89849fe6a1e6a140d1c7502b9164a340c8a",
       "mode": "0o644"
     },
     {
@@ -4675,16 +5227,24 @@
       "path": "knowledge/dagoblin-lan.md",
       "category": "gpt-knowledge",
       "kind": "file",
-      "bytes": 22744,
-      "sha256": "a2664321e5fd408e863f8a42abed7b5b73873bafdb9135735aade3ed1003329f",
+      "bytes": 27452,
+      "sha256": "b177d3ac2f98494203ae9651cd16f66c36aee7c2257a8e1facd56001eae41a75",
       "mode": "0o644"
     },
     {
       "path": "knowledge/dagoblin-launch-readiness.md",
       "category": "gpt-knowledge",
       "kind": "file",
-      "bytes": 5064,
-      "sha256": "320c6e977503cbd5dd19298c64e1961826622fcda049e544aa4bbe753f166031",
+      "bytes": 6405,
+      "sha256": "a21dbec19a91b39b378d7ac37cfe49be0e125b3558e36e33249535b4d6a5477d",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/dagoblin-protocol-operators.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 17500,
+      "sha256": "a6e78c72e5d033cf039face358f5075639b83b15427d104ed2f8ee827361885b",
       "mode": "0o644"
     },
     {
@@ -4899,16 +5459,16 @@
       "path": "knowledge/gg-consensus-web/index.html",
       "category": "gpt-knowledge",
       "kind": "file",
-      "bytes": 2873,
-      "sha256": "4e850780a2bf8a26b82095dfdf4e56e3d8a0c016706543dd1a7066cf842b074a",
+      "bytes": 2970,
+      "sha256": "462573455f6234601a836189bf1bb879505c3a7cba3384f7aab3aadeba4537cc",
       "mode": "0o644"
     },
     {
       "path": "knowledge/gg-consensus-web/proof-policy.js",
       "category": "gpt-knowledge",
       "kind": "file",
-      "bytes": 4816,
-      "sha256": "63e24dd9ff5101ec603398d2ebc9f345d8f55f00d64e278cddf3113940e3b38c",
+      "bytes": 7249,
+      "sha256": "813b0aa62d86060a20cb78fd2dbef0b3cd05005989813a5c75eb767ccd54ae90",
       "mode": "0o644"
     },
     {
@@ -4931,8 +5491,8 @@
       "path": "knowledge/gg-consensus-web/viewer.js",
       "category": "gpt-knowledge",
       "kind": "file",
-      "bytes": 5233,
-      "sha256": "8a1288c195f83a883656fbd03342114e4b50faa1bcddc2b364e08a4761284b6d",
+      "bytes": 6475,
+      "sha256": "ea4bbbdb2633fc346134b7e6867451bb54e5c61d17e52c96293942ffdd472f31",
       "mode": "0o644"
     },
     {
@@ -5075,16 +5635,16 @@
       "path": "knowledge/research/dagoblin/README.md",
       "category": "gpt-knowledge",
       "kind": "file",
-      "bytes": 5175,
-      "sha256": "633f2c4c840882d570e12d5e95b099ebd8b8a4e3050a99285e8c7f3dfb38445b",
+      "bytes": 6884,
+      "sha256": "d32b815b06ebe955e12fe7702bc62ffa7259c8e1336e07494cd2e3b09328c708",
       "mode": "0o644"
     },
     {
       "path": "knowledge/research/dagoblin/benchmark-contract.json",
       "category": "gpt-knowledge",
       "kind": "file",
-      "bytes": 4020,
-      "sha256": "b5bcf6a6c2e2d3c57f1cbbe10c31d958c4b5c48d79bcf5f6e27f59b54a5d9539",
+      "bytes": 97854,
+      "sha256": "e634bd611323f6d094f00389dab99d4ac2093c105b0eedb7ba57b6116b55a83c",
       "mode": "0o644"
     },
     {
@@ -5096,6 +5656,38 @@
       "mode": "0o644"
     },
     {
+      "path": "knowledge/research/dagoblin/candidate-retention-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 6141,
+      "sha256": "d5376141316c809eeeedebab5908cec895d505b0ae605fa3f26d17d41cb8e04f",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/canonical-checkpoint-flow-review-2026-10-31.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 6337,
+      "sha256": "348a663480c201380de4d2264e99c916f1542d3e3d51bb837a40750fb11f13fe",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/certified-conflict-review-2026-10-31.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 4868,
+      "sha256": "9b9a25265e9d26d581bd39b9319390227d09150fa88cda9eef10eab6903fbefc",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/cli-validator-review-2026-10-31.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5675,
+      "sha256": "0271964b6c016316be66825252c45df49b48b38deacbe5f4194f139f934f00cd",
+      "mode": "0o644"
+    },
+    {
       "path": "knowledge/research/dagoblin/consensus-comparison.md",
       "category": "gpt-knowledge",
       "kind": "file",
@@ -5104,11 +5696,227 @@
       "mode": "0o644"
     },
     {
+      "path": "knowledge/research/dagoblin/dag-consensus-binding-review-2026-10-31.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 8168,
+      "sha256": "3be4c824d95af057cd4c5775636a20c4c6f0692961267031be771f22e948bde1",
+      "mode": "0o644"
+    },
+    {
       "path": "knowledge/research/dagoblin/dagoblin-v0-spec.md",
       "category": "gpt-knowledge",
       "kind": "file",
       "bytes": 9641,
       "sha256": "701b2cc98caaf46d1c0a3956d15062c963c25dcdb7d480b1ad70b2b67899046e",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/delivery-contract.json",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 116372,
+      "sha256": "0f868a9ef205123376665e4610730b5dc2e3f48cf7c1dc672114b55706b1e195",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/dependency-security-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 4762,
+      "sha256": "71e5b4d7d90783fa351f815654f074112b49e581544d388bc6b45bce1ee7c0f1",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/durable-node-review-2026-10-31.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5270,
+      "sha256": "8a7a6a25d0269bd0c767a5f5e398e7dabdc5a46b246841cdfc24f0163e083b0f",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/exact-equation-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5106,
+      "sha256": "2db04242f9f740ccf8d4f47308197edab326a3e85330248df63aa5e09f3db202",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/execution-policy-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 3622,
+      "sha256": "ee02e4779d17fcdccd6851cd1ba72ede7b358a134f7c3d1c77fe5bb0786f2a99",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/financial-dag-review-2026-11-03.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 7295,
+      "sha256": "26a81ba03eaad6e2219f4f5c90efa523ccc89850e91567a5f8b499e646b2e9a4",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/financial-execution-review-2026-11-02.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 6297,
+      "sha256": "3eaca0f1b552f898dc0331e9d6ac09bf795c35782afde7514838f676b38c5e87",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/financial-history-review-2026-11-03.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5745,
+      "sha256": "000cf82e08c44143504177da3ac8510f267e83729371e5a38b77db8af007983f",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/financial-late-original-review-2026-11-03.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 6660,
+      "sha256": "decc72292a22f80ebc4da4f68991b46df956aa7c00b491917f50be805493ab41",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/financial-node-recovery-review-2026-11-03.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 6044,
+      "sha256": "4d484d40431baa2387ed5218397efad89be2bec6f0f06a35730b5bcad0150363",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/financial-own-archive-review-2026-11-03.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5034,
+      "sha256": "0d5ff792b5fc3555aacfc25cadcd7359682d5dc1bb8bbaff56afc5b34a00033d",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/financial-pipeline-review-2026-11-03.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 7405,
+      "sha256": "e0fa3deff8ed60dc4e54d5918e373b2a3facd3f0c3ed30ea778e8d3461801f89",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/financial-production-review-2026-11-03.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 8639,
+      "sha256": "75790e1b065f10794841417cbd51bd17189e7a1d19ad138036c3edc78c831afd",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/financial-slow-producer-review-2026-11-03.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5683,
+      "sha256": "da78b80984f8bd9cbe65f050b5ca268455f96ad557633b7f1fcc70122d72bf3a",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/financial-storage-endurance-review-2026-11-03.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 7272,
+      "sha256": "79db515fb0c268643d75507335bd054c07dfdd112f1f46dad3366fd91ebbb4de",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/general-account-application-review-2026-11-03.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 6184,
+      "sha256": "11da85cbdd55e7676fb528df9d2d30ba31ea6eae8f9791de444fe4b4db80ca7d",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/general-account-client-review-2026-11-03.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5168,
+      "sha256": "3ccbd97c3b5aff97e6a9f7abfbefb1207bda5f1a9bfed6683b7cb32d8f75aef7",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/general-account-kernel-review-2026-11-03.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 7221,
+      "sha256": "3e256128f28026cf005bb437cc91baf4d084634d1d12f646a42b151b97f143e4",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/general-account-recovery-review-2026-11-03.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 2498,
+      "sha256": "07e50e4cce37596f19b780de0cffcf4584067b77a61011434f95e50356dd779f",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/history-byte-boundary-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5977,
+      "sha256": "ad8ffdb721a3d0228e048ccbabfdd0ba71afdbe9c713ea38abe32acc0131f756",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/history-cut-core-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 2988,
+      "sha256": "9f361f82dd56f079f66fdc866957288287cb6e47f5c53607db69b6fc790e7483",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/history-segment-archive-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 4556,
+      "sha256": "cf6cd6e27de39bc584bd872b2475d16ddf40fc51f64cc8161f548016227e2855",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/incremental-transition-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 6133,
+      "sha256": "0e7f4e207718143ea405cac468476ce0b9e09be969e899ae10aaad9fde621155",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/index-transition-review-2026-11-02.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 6336,
+      "sha256": "0e084a372aed3feae6d36fa1057d9c4716f73e67fc372c7938179f588abdad53",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/indexed-replay-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 6157,
+      "sha256": "e51d595d1bc98185f308c234ce5ff7ad6350f1c35c463111e005077f77143a86",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/integrated-network-implementation-2026-11-03.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 60384,
+      "sha256": "25c684734c574f2001050758cd444782fd6534d66e26298016b55c0cfe0db716",
       "mode": "0o644"
     },
     {
@@ -5128,11 +5936,219 @@
       "mode": "0o644"
     },
     {
+      "path": "knowledge/research/dagoblin/lan-consensus-anchor-review-2026-10-31.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 7317,
+      "sha256": "1c775f2ab558a36d44e750b4d9c7be2843e7c9859f39f419a283319e2f873144",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/lan-resume-storage-boundary-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 8154,
+      "sha256": "2ee7c4a5dade33b570d89b8c8c5abc28a0811364bf9ea0e7da21741cf27413ba",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/merkle-query-index-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5288,
+      "sha256": "04ffbdea1c7816e027971a0ae45486fef51257aa21f7c95b46709c476d0c825e",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/native-history-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5592,
+      "sha256": "28ad0e09928eea268bbca195b1eafce1b38e0b4e646794d0f0765ad1080e175f",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/native-metadata-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5726,
+      "sha256": "bc731f0272da7af8625e8574e5df66bc4af5a17143ce86dc53409130e7a8be58",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/native-observer-review-2026-11-02.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 7352,
+      "sha256": "d278fc03ca92ec00530a30ef485f7ff2cb52f2ca42d1142b1ef1a4668677bf01",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/native-proof-index-review-2026-10-31.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5253,
+      "sha256": "4db03e04914ea60fbb925d7fc8f4f321d886b37a0093bb5e940eb87802ce0b23",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/native-start-review-2026-11-02.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 6768,
+      "sha256": "67fcd953668bca30944d9b20a574508d393fe70208cd48713725cf06ea579425",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/network-profile-transition-review-2026-11-02.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 6647,
+      "sha256": "73f952f334333c653cdbfb20c1ae70873c3e1de2e698a85b8395967c73605f97",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/nonwindows-process-review-2026-11-02.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5687,
+      "sha256": "750b2f4aafe18fabb6bf1264431f634b4ef7d15ecd04626f3b5eda6579badfc9",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/observer-control-review-2026-11-02.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 4370,
+      "sha256": "5e65beb90d40d709b895ec0233820a72da718d87f1e11bf1d650ec0191445de5",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/observer-enrollment-sdk-lifecycle-review-2026-11-02.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 8150,
+      "sha256": "5dd71f6401ce71612d65421b975f0f0111f0c9b783f330dffbdb5949c06a458c",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/order-history-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5685,
+      "sha256": "dba384464d3fe03b7826149f2f3d25fb896b68828d2726a496f5c5f86fba4f18",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/order-stream-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 2760,
+      "sha256": "6b82f5c17b0e0ee5b9ce80fd05318767a7eab7ebd49b57698ca86f5720897739",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/parallel-tx-verification-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5610,
+      "sha256": "2214108af8ff759ab90c935e60e051fd8e6e2f14e587132a7a2a2a719b251216",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/payload-archive-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5051,
+      "sha256": "2b52da5f13f79e3ff01751b35c7bf472eb822d93c693b02e0fa4a70fe8deb12c",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/producer-branch-review-2026-10-31.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 6645,
+      "sha256": "f6385c5c4b75f51466ff1251ebe64f36b9f0aed50568d4d7893f5d10a826c54a",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/protected-account-signing-review-2026-11-03.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5343,
+      "sha256": "4a5e6000dfe4ecf714b1a626c2dfe37c526d895ff663ee3d44009d72e713a763",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/public-archive-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5575,
+      "sha256": "ac407726c54e15df62e349086ce1456c3421c985b9d5a90b722841bcd3c0b556",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/public-history-import-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 2633,
+      "sha256": "f98302559ca2cfb0cd6138021352764460e7ace8d472f594a904d320a6c4565d",
+      "mode": "0o644"
+    },
+    {
       "path": "knowledge/research/dagoblin/quantum-and-layers.md",
       "category": "gpt-knowledge",
       "kind": "file",
       "bytes": 5427,
       "sha256": "0efc3229368fde7098c3b14b01fa1fef4f4f7aaebfb972f0a3a97520ba2a0066",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/replica-light-proof-review-2026-10-31.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 7336,
+      "sha256": "7769e6ae0321d90dbebbdfe04ed82b935d98a1868aa3f8bf5afa26dcc6b81880",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/resource-isolation-review-2026-10-31.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 6743,
+      "sha256": "84b0b9bc18a6a9971f882f10ac7561fb07c65e4ed868100c8ccb3a6e7c46e126",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/resource-recovery-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5885,
+      "sha256": "2bd0fa9383c9e93136e331ce5b157b81304ea4504da7a5fab5bf2d8957253744",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/role-and-checkpoint-review-2026-10-31.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5925,
+      "sha256": "56544e643f023c50f2daddb5f6992b9f9a7ae9ce45adccd51f6269d53c9de1d2",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/sdk-log-memory-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 4789,
+      "sha256": "c8c15ae92dc42b53b7ee38246f637278028de8374a0529223123ea5dbaf0b63e",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/sdk-payload-availability-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 6527,
+      "sha256": "1adc08eb883b4ea7ce6ce2061f63a9f06af4707251b0ad2947af0c5e88d7007d",
       "mode": "0o644"
     },
     {
@@ -5144,11 +6160,139 @@
       "mode": "0o644"
     },
     {
+      "path": "knowledge/research/dagoblin/security-primary-sources-2026-10-31.json",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 2595,
+      "sha256": "bea7ff9028a1e1c699cf8ee45ee00c68c15711bb45257930e46b5facb5928e38",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/security-review-2026-10-31.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 15591,
+      "sha256": "3fc34c5e180f9d2527b0f1186db15e7b4af08d87409820357fb363da52793efa",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/segmented-authority-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5162,
+      "sha256": "77a0a180b230f6cca0b2967b63e2cc52bc3c0ad7d9ec361032430cb818ea790a",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/segmented-base-proof-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 7153,
+      "sha256": "3fe9ccc57254c74523b7ac93c8bfc404333931838587c798f2f0ff68fce3409b",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/segmented-closed-history-review-2026-11-02.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 6864,
+      "sha256": "ce6441869b8bbd4e3bc8543342ad6b308d1c2e39852ee1501568f50bc5b82067",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/segmented-lan-runtime-review-2026-11-02.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 8215,
+      "sha256": "b9e9a981ad95d5a762cb38849a420f4dc8da5f7c0f9b39aa598f194ef7067976",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/segmented-membership-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5734,
+      "sha256": "69365d516bfe8b1c6e772b0ca39012dc43411ad5c2ca19d1b67b434c77421777",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/segmented-payload-graph-review-2026-11-02.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 6083,
+      "sha256": "6f4f47e1b5a15c6dfd61861e5fcee1dd8a1e15b1f32db6c9e754da92058132d6",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/segmented-producer-journal-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 8853,
+      "sha256": "fbcad427857791fc15146d7a6f91a40c68d484d0df30538dfe509b14efeb2274",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/segmented-public-archive-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5951,
+      "sha256": "3a1cd4af6eb6c59dac47c64e736d87a5a662951f2d9f18565929114e1c7e0744",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/segmented-python-engine-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 7753,
+      "sha256": "e5e307d0a92469da7c1b7b6994f0088c71eff63779b5b197228c42dad646b3a3",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/segmented-sdk-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5591,
+      "sha256": "cdcd432943de2ef87235481dcc23e853099fde46485bdf6f65e19339250fa957",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/segmented-session-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 5924,
+      "sha256": "98942e1e895ada0203041bba17615d08e599f336302194b09b65f61a14311227",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/selection-index-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 6023,
+      "sha256": "4e3df060b2b3a3fb9c6bd0d8c5d74dc0ddba7ae0fddc1b99176f576b15ea54c3",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/strict-json-memory-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 2683,
+      "sha256": "434333b7047f7fa93f6002f994b38f9dd551982e3472563a2c5b923ac2d23f89",
+      "mode": "0o644"
+    },
+    {
       "path": "knowledge/research/dagoblin/tooling-code-audit.md",
       "category": "gpt-knowledge",
       "kind": "file",
       "bytes": 11115,
       "sha256": "d14ee78749b2315588c2a7d5ef2a513406ee06f6695bccf728dacea582ee78aa",
+      "mode": "0o644"
+    },
+    {
+      "path": "knowledge/research/dagoblin/verification-cost-review-2026-11-01.md",
+      "category": "gpt-knowledge",
+      "kind": "file",
+      "bytes": 3683,
+      "sha256": "ccbba2fe8b2478b56a33992b8122416a3cff812e9f6bb83d4041a71e534eef9a",
       "mode": "0o644"
     },
     {
@@ -15563,8 +16707,8 @@
       "path": "qml/components/BlockRelationsGraph.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 45168,
-      "sha256": "ca8d61c700468e989caa3812c8a1b7a15a0ab7ea36b2de297d77609e85bb45cf",
+      "bytes": 49939,
+      "sha256": "4b7c3b5c0dbf2591e875a957c1823a49e0f475591e7c6d1875132746f6f3f3f7",
       "mode": "0o644"
     },
     {
@@ -15795,8 +16939,8 @@
       "path": "qml/components/GGConsensusDashboard.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 61892,
-      "sha256": "20e9204fdb3d61b4c7cbf6554c1e326470005d011abdb01c8de9b837252bd1df",
+      "bytes": 62034,
+      "sha256": "3c639236c3d10ffe17825f2d6a1c6c674d2eeaed4be20eca117a2d37d4705847",
       "mode": "0o644"
     },
     {
@@ -15835,8 +16979,8 @@
       "path": "qml/components/GGParallelDagDashboard.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 55209,
-      "sha256": "cf1f77a4d2c8dd06cb2fd3b7be052a9956ca4025c837c7d6d731ead4a3ecf2c3",
+      "bytes": 92741,
+      "sha256": "e714eb25560bb306f27e698c304fc1959707218cd639682844aabc69014b85f6",
       "mode": "0o644"
     },
     {
@@ -16259,8 +17403,8 @@
       "path": "qml/components/LanDagSetupPopup.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 62770,
-      "sha256": "e1d4b6d2a6821408536ccf17a103f24e7f034847c893d76d2ed2e4ddcb4b0a83",
+      "bytes": 73141,
+      "sha256": "84510cb3143146baa9d69cdebee5c85f823b4bb796f0896742f08c83a9d9b4b0",
       "mode": "0o644"
     },
     {
@@ -16531,8 +17675,8 @@
       "path": "qml/components/OmniSurface.qml",
       "category": "interface",
       "kind": "file",
-      "bytes": 31353,
-      "sha256": "695bde3ba6d67f5a2df08aab7513431946aebc70b97e981a3223c1e9d46a07b6",
+      "bytes": 33826,
+      "sha256": "a90e40e5284e8436099e39b7b4e8eca16487f16a8f7dba359efb1e925b631cb6",
       "mode": "0o644"
     },
     {
@@ -17819,8 +18963,8 @@
       "path": "requirements.txt",
       "category": "entrypoints-and-guidance",
       "kind": "file",
-      "bytes": 431,
-      "sha256": "265bbe8f2820aa5c4339a936d66579740eb3041c6500a745797c6d9d12d4e1d7",
+      "bytes": 473,
+      "sha256": "656558c733ed1f107bb449e9a4a905743d840196ba964bc970638304a8281736",
       "mode": "0o644"
     },
     {
@@ -18144,11 +19288,27 @@
       "mode": "0o644"
     },
     {
+      "path": "support/dagoblin/prepare_protocol_ceremony.py",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 11192,
+      "sha256": "aa10535a4d4b783b416619e5d12630e7513a67ad2ee04cbb1d6f977ea2e4b4c8",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/dagoblin/protocol-testnet-policy.example.json",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 1154,
+      "sha256": "c94f2d9f0ffb47f6eddca579ac54eddec2f4b22ef2d1fe4213e3f09c1e9e07da",
+      "mode": "0o644"
+    },
+    {
       "path": "support/gg-cli/README.md",
       "category": "shared-support",
       "kind": "file",
-      "bytes": 21084,
-      "sha256": "87c6071d1efc50076fa002ac1f0cc7d4ff2b97188a8779120e01525ac19fabcb",
+      "bytes": 24072,
+      "sha256": "ab7d550aae9719701cea05f40994196bbbc79e9b89d19e066c565ccb965f7dce",
       "mode": "0o644"
     },
     {
@@ -18163,8 +19323,8 @@
       "path": "support/gg-cli/build_release.py",
       "category": "shared-support",
       "kind": "file",
-      "bytes": 9054,
-      "sha256": "6e205c8abf21e95d5d3f1a9202d7da64c6a3dab8f640605617f98202e4fd623e",
+      "bytes": 15099,
+      "sha256": "3ade8d6ccb257e9583f0bcf86aae9f8cfd299d78c91963f44f3eb50b9e6220ac",
       "mode": "0o644"
     },
     {
@@ -18203,8 +19363,8 @@
       "path": "support/gg-cli/repository-README.md",
       "category": "shared-support",
       "kind": "file",
-      "bytes": 7893,
-      "sha256": "a51c4f877e0a7ab0b64276a520c42130d65eaee96fbc053358287072448caec2",
+      "bytes": 9062,
+      "sha256": "1d535149bc7e05fd16cb75c157421a25331949675e9a59196a171d9574840413",
       "mode": "0o644"
     },
     {
@@ -18227,16 +19387,16 @@
       "path": "support/gg-cli/requirements.txt",
       "category": "shared-support",
       "kind": "file",
-      "bytes": 260,
-      "sha256": "81f0343b1af3f09b599e64868a01525391dc933e3aa5a80351daa7d8ba2cd8bc",
+      "bytes": 382,
+      "sha256": "b3f7e33de078ee8a01f0144b3c5a90b7e4fd18614caf2bfe357e43aaefe40195",
       "mode": "0o644"
     },
     {
       "path": "support/gg-cli/test_install.py",
       "category": "shared-support",
       "kind": "file",
-      "bytes": 3504,
-      "sha256": "ecba121b62f09a948e1c3a206ec42afb919bb6ed972a3ade14eb6e8e797ed8af",
+      "bytes": 3614,
+      "sha256": "4fde265c219dbef00f46a71893b7ec7b87465bfce07b473afc4eecab1443e505",
       "mode": "0o644"
     },
     {
@@ -18264,43 +19424,1211 @@
       "mode": "0o644"
     },
     {
+      "path": "support/gg-consensus/canonical_financial_hex.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 484,
+      "sha256": "f5d8a304b67c3afc71dda347a7192c3f3e6cd53c5973a1b277c264d11035613b",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/canonical_financial_hex_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 918,
+      "sha256": "8a69d38ac9de7b6ff4fdc9b722f753025ad9a43289a921b0a3025a58e2a5ad2c",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/canonical_stream.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 2328,
+      "sha256": "c2a40dd4d389f879621081af89492e8de15696d15a8afb685b4896ff49e9a8fb",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/canonical_stream_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 2800,
+      "sha256": "b5ee190be3e31a3a230e51c015641f309921b9258a05991edaf563d87b91bf69",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_archive_work.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 6807,
+      "sha256": "748b361b2c96520f04f0424d8dddb68720f8f13e48c3f866ef1f60cc538c95e4",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_candidates.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 4668,
+      "sha256": "da6cd678c1502d2e0732a966f17a2eb1817f21aed3fdb7cafe34f4de572976a2",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_candidates_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 19815,
+      "sha256": "b62386e725c17edc8bb955e50786041bd007eae0ec096b31ed40e74de629108a",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_execution.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 23645,
+      "sha256": "ff693a6847d64dcef3ace58bf7c1ba7c5c76c4af0bdbe9fcb96abf9128b4d0c0",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_execution_policy.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 3046,
+      "sha256": "d6acb6c89db4423ef967a1c432e210968c6473ba128276484600c95a2c55cf43",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_execution_policy_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 6089,
+      "sha256": "47a83f33da1cbe16ac0f6533bda0dfe47ecdb5a28e7377ce1512135ad99d124b",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_execution_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 8628,
+      "sha256": "d53eebaec8e80d16f167daf002c264483b49362b4f5c4b3930714a9e6dfb881b",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_history.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 11986,
+      "sha256": "97f7a726c7778bb038f0ff6a2636d1af0f3b2b30f73cef035f56ce1f11ef8e46",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_history_store.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 6168,
+      "sha256": "cdc943d3b500d771ee7b58e00e2c3c973c707cb8fa476478cd6c8db3e11a932a",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_history_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 15642,
+      "sha256": "51de0ee1740b3bd2f6f110a1fe18c59843e5a50916619b2749a12185a2cc6b63",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_index_transition.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 7504,
+      "sha256": "db715e967a7233cb4193cbb5a94f33449d2561d55ff8d276a6c2df0c7e585f1b",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_index_transition_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 17286,
+      "sha256": "9cc47ae4c0c2920ff2ab724b3570821edc7b526923f2f2ead4e61afc6433b134",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_indexed_replay.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 17215,
+      "sha256": "b647b0035a403dba13557436ff43b2d797e8695023802ec41affe7e2b4ca0e83",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_indexed_replay_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 15953,
+      "sha256": "b5b52da848105b62eaec35428b499aa9286d0dd174badf1ccfa692ae765f3101",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_ledger_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 11263,
+      "sha256": "a926be3eb74f3c1e516c2e1112bda57c8f2fd2622ea9363ef067a49f613d9763",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_merkle_index.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 2664,
+      "sha256": "89462032bd190c4a5d79580ea5db11d0a3664bcffa72332c469260712eddf188",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_merkle_index_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 12090,
+      "sha256": "00ea2cb3951c42ecd7208cda25b93c4ebe865713fb2dc22f2a6129d38f8b9196",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_order_root.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 1534,
+      "sha256": "f45b9492dbeaa5cfab96c8fc44907df42589790c3f91484e3745a8377f0af99e",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_order_root_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 1674,
+      "sha256": "5c2c05728dd49960e27b5b6824bb1d7f0ecea3521332d15adb29acffa2e43ece",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_order_stream_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 5475,
+      "sha256": "296199483702f48f6517967fcc961681a5ff8820d46f405e520c6e2bf7bc4dd3",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_order_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 6637,
+      "sha256": "0bff1bc86b677bafd3684118d63ebedbcd27ffc99882ea632db20b56e582bcab",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_payload_archive.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 4660,
+      "sha256": "b4c561eb8584ea706c729b109a081d10b376cfa7ecf910f22f1fdfeae9f6ae16",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_payload_archive_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 9977,
+      "sha256": "97bb180850ccea54058e0ad2f3e5bcb97724df205da929bcdcd6181ccfcc5333",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_payloads_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 7523,
+      "sha256": "410ba261535ba58c196d46a800328b93fab67b8e5b97e55ad7716c5423e8944c",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_proof.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 8552,
+      "sha256": "f5b77a82b7d6bb8e77a5579422bf44ad903c8ba2bd0a06b0ee9e749acbe9cde8",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_proof_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 10487,
+      "sha256": "9fd29336dc831d7cd6d1970ec7b23ee79dacd4ed75ca39ba8845fb1580522b56",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_public_archive.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 17569,
+      "sha256": "670e3c0bd145aca8d944b721b0b2b757f1b92669373d056427a7aca5477311ea",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_public_archive_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 16366,
+      "sha256": "b4595f01acf9faea4ecf85c4987206245172506538f8f133ca0695edba2d7459",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_public_index.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 15087,
+      "sha256": "0b988612f5ee09dc6897c86e9136722b154208758da6cdf1140583452b11c6e8",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_public_index_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 20226,
+      "sha256": "ca3977fe6c785dda81bdff1c3f24c5fa83ba55dd61ee8ede8615513262f92511",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_public_queries.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 6529,
+      "sha256": "e738f4d325d378943cd27407c7ccadd30c8e355668fc1d85d681cb5b36954911",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_query_client.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 3483,
+      "sha256": "b7616591369ac3aea0c45a63a67028c4cfe6f2a75fb8b5bb0e2a8e4d818b2e52",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_query_client_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 1768,
+      "sha256": "88c383fcb6e0ed40285e6f9eebf768e54fd9830d5da37657141678ca16c3fcd3",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_segment_archive.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 19698,
+      "sha256": "cbf7b37d809311f4bb8e4a13ce6235ebb69e95731011a40b7c9d98e251ce2cc8",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_segment_archive_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 19961,
+      "sha256": "22fb310bddf18bc85f193f50e1796155136a6efe07f130448626345d583560ba",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_segment_store.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 26988,
+      "sha256": "8c1798e2d36841229d6339dd71de6dd8788efbd169494b9fcc3eada335bcf145",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_segmented_base_proof.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 6464,
+      "sha256": "648adaa9bedf6521d5fbbdcd51789de20ae84649701d55b0aa52fa2406c037c7",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_segmented_base_proof_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 11399,
+      "sha256": "63836dbceabb7ef90d7f3763715aea182e7de254af8822264c9c4f7dcdfe0a84",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_segmented_closed_index.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 7490,
+      "sha256": "b18a2d0d3d68279a5eeda7c122a58e462d17e750218b1c6058cde44089625be3",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_segmented_closed_proof.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 4982,
+      "sha256": "ee652159123cfb140dc1197949d3feb268e21844c9854dd9cf746ec7918988f5",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_segmented_closed_public.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 10551,
+      "sha256": "63102f3773c1f9083dc814377d01ca4e4062e554241b78930b2ddce15ebea9f1",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_segmented_closed_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 18679,
+      "sha256": "28c08ae25d0f76c6cd1807791c9efb8273e4f562a6977538a83cc0e65e6d2397",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_segmented_domain_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 3800,
+      "sha256": "ba6865d739ec054bb5ba65ecf1d31c8f7b3b61ee9ae76d74eac5382c4d63a942",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_segmented_execution.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 17782,
+      "sha256": "ba43f889fda961ec11d6958f30e2e26a3fea53a22cf68b13bd9de09876e31e1f",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_segmented_execution_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 11699,
+      "sha256": "580f6b7ce4c4976ebdbe12a49e1ffd996f8aaa0f0d91a9296a848af0e75ebdae",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_segmented_ledger.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 8912,
+      "sha256": "cc3da3f46478066678c568754717e7164656ed0cb23519d8cf9431c42f4dbe94",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_segmented_ledger_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 19474,
+      "sha256": "5f399d262dc173c4c9d9157e7158e5c52212a95d3dbeec1f08d648f2b973db5d",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_segmented_payload.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 3256,
+      "sha256": "838d24f507affc1d04f547967536452d37e36f2ff8f88035e2c02c51ddbde802",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_segmented_payload_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 8405,
+      "sha256": "d977653dc1641fd7a4aba910c35d477d922b23f18085246519449270836765f8",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_segmented_proof.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 7176,
+      "sha256": "2c18f62144d38f994edd0a45567b3699eb5fe925c698b3bdc08d45872383e07f",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_segmented_proof_store.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 7622,
+      "sha256": "52e7ff434160c7680215d0be82d00a94e6778f5ffdb641ce90e7ae450e5523a2",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_segmented_proof_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 13362,
+      "sha256": "5980da61768236388099f54a6d2bca34fffeb4e2bb4c22c9c1a29904ae743db7",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_segmented_public_archive.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 12400,
+      "sha256": "10a8d0fa16f302380b3c3904f24b2d17a174c2fedf6c3b83e7e82b00bf2882fb",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_segmented_public_archive_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 14178,
+      "sha256": "89c4acba31340e9d85a4a75bdb7a210362cf5d71b3dbb262fd1ca78bdc2e01ee",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_segmented_state.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 6614,
+      "sha256": "945d0e12001c06467d993fb9e36ddb37fe0cfcca4158fd7321206831e52c1817",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_segmented_state_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 3009,
+      "sha256": "24fb8d097b0e9a18a9ebbef04240b71fb64b259f4d7496d8dbdef338e5e4b9a0",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_selection.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 6184,
+      "sha256": "074b8072aa2d47b96efa5291e047ce164cdc735008a2ef179194d5e1ce6ee3a0",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_selection_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 17880,
+      "sha256": "cc5314be0c4b4310ee40259ab434ce806fab56e2ad3b8198c2c4228f5ce7bdfc",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_store.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 25064,
+      "sha256": "dd35de0cea2de459f08681ae021d71f86935f17611a6df0b808c05f6d5698160",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_store_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 5225,
+      "sha256": "8937ad99b1b6222a87eb3cc9978d014a0ed1d6a65dabe08e13c313816471fe76",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_transition.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 7761,
+      "sha256": "86b7d1e0a64cd6de2e5da85e568d6872a4a12261a51a936fef08c6a255445e20",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_transition_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 12297,
+      "sha256": "fb89cfff98ddbd5144cb2f3472b125b6ce5314d1eabeb6ae475c2b0518ecd783",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_tx_verify.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 2805,
+      "sha256": "811250a59ddc2f1b28da54ec62818bded5f956b9b19d45b829db3bce49b0bda7",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/dag_tx_verify_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 12830,
+      "sha256": "521f19f455e5d806fab910ea3b367209f01eab573b8d0a9fd7b462227e7915ba",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_account_application_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 31302,
+      "sha256": "130716faf2d2a6b443f83d449722ffc135554da73bea582aa90dc24255714831",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_account_limit_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 1345,
+      "sha256": "25b35e185a0c05a43ce4961b2d74f7bc7f32882de7a1f051d7464a6b3a79e191",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_account_model.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 10414,
+      "sha256": "ab8ce246527b96a03472293d8209b538ecaa4787f1f0a25c09b54b0efeb8d7e0",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_account_proof.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 1267,
+      "sha256": "c090549e9980913ca48d9523d894078b1532f3735c459dd3df0a84069756398c",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_account_store.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 13641,
+      "sha256": "4ddb13ed74c5d21184ddb435b63d3be40f8fd0ca3cc19486b5b8ce2708913711",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_accounts.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 24571,
+      "sha256": "377e0324ac95775f3c5b0c5947fd54dc23523054f23aa525a4518e55ca5262b6",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_accounts_baseline_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 22363,
+      "sha256": "5ec364e4e7c152dbdf33292cfd354bd697e4fddd40af23d17270712c0513c44a",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_accounts_owned_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 10229,
+      "sha256": "a00d5f57d90472c8d3103cf885e6d604976bb026cd7afc86ee92d88d31bc9ce4",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_accounts_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 18729,
+      "sha256": "4ae0a18676d1556121b7eca9f1fc460a2bd27f978ccc050a4d8599181d5e2072",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_accounts_workspace.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 16924,
+      "sha256": "78273173a600d47b88b2292aa93a290524ca36103294ea547fba457ee76af8c2",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_accounts_workspace_edges_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 15035,
+      "sha256": "f5a9bf160a56e4058cb110660aba37d8117905fbeb67734be3b403ef214047fc",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_accounts_workspace_parallel_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 2157,
+      "sha256": "93c138f1c85be8dae1fcdedca99016893737ff57724cecf0e38050eda394444c",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_accounts_workspace_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 21624,
+      "sha256": "7a25c7b61ce98ba095d048881936e18e4551f86a0a007c8192818d7fd6883109",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_admission.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 5068,
+      "sha256": "537ecc3470262c0985805498355bfbfa7290d72a2cbff99278c01a625c9fb30e",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_candidate_cache.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 8272,
+      "sha256": "5f158494f5c11a5c6f1e8282deeac1a6ddbf459862542959f8f0fce87f194f2f",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_candidate_cache_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 12471,
+      "sha256": "3fd80e15ea6bc9dc34621019ca683abcd1e31f2a8d14ecf03684f6f33f905e31",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_capacity_cache_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 5365,
+      "sha256": "b631afe0306fe91d80e8ebc775eb66f3d4a4df836171b81ef91cfa1184ec2854",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_committee_proof.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 6273,
+      "sha256": "dcd43350d8160f7519309158e21db8ed9b2553c28c00b454af24b3c7ba607e9c",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_committee_stream_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 5266,
+      "sha256": "4bfe48d2ee3b395ecbd15be2f78f81430812833ee5714777e5b0b1735420e09b",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_committee_trust_store.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 5463,
+      "sha256": "52e7fc8b20093b17e400a53cb137bf8d3604aaa06fdb9c62b804fcab9c2a363a",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_dag.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 32751,
+      "sha256": "f7520d2fac64bb9977b82052d9bed1f6ed1f911ce5938604c19af8450c03a426",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_dag_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 28373,
+      "sha256": "3f9b8a575d840f393e9bb12534732241035d2b93b12a10295b4691283658d6f2",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_decoded_payments.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 2040,
+      "sha256": "270909899a5ad91f5cfff0289e3ba8ec2f86272208cbd1a4098dee98ea9b8b48",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_decoded_payments_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 4824,
+      "sha256": "b1222e28ad7402ecd9b70adf82b9c76445d422eaf081f496f705ab6e4efe156f",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_economy.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 9709,
+      "sha256": "373d3a474edd855241fc7d67df2919c10445240375cbecc3e90b898838010bd9",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_execution.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 16937,
+      "sha256": "fd24b5a05005f3038b3358bfea6f1a2a70a4d482bc06659304823d210a8c0a9b",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_execution_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 16762,
+      "sha256": "c1d22abf005127e68622c0dea63d84ea33b50c44b6fce684cfbaa2cc5ab21794",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_fixture.py",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 4661,
+      "sha256": "83adfb6af9d1c51b8e3ee0069158ec9ccaff2a7778247a1606e105a2c4cd59cb",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_history_directory_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 1051,
+      "sha256": "3bbd6f2ad9428062155f1b8e746f8a8058298905658ddc67c6a15c45f16b2a2d",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_history_files_unix.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 5800,
+      "sha256": "d3634342696ba9be0e9dba5917f1214aaf7165e489b253334cf5fc5c210ef935",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_history_files_windows.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 13191,
+      "sha256": "ca2f6ad9f9d83acd62bb2b1bd317c27545fc00d03927fb52f406371713fae286",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_history_files_windows_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 9858,
+      "sha256": "9f645c828cff77aacc5a37b12aca58472d8ac1485d50af9d827a87e40c92bcbc",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_history_restore.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 11145,
+      "sha256": "31a324a812fa0724d63e2e61e0b8d8c6e8a51a4d1052d9d7e133715a96fbb184",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_history_segments.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 48031,
+      "sha256": "dc1bf8af44e966526bb312af4f8f507f14cc9c211efeacf34b0d330f331c3363",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_history_segments_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 83779,
+      "sha256": "c50805580997af5bb09f0257ad5467e340b28314eb0d4f09e027ed167531b8cf",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_history_status.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 3405,
+      "sha256": "fa45e7b64bf0eb9226c03de2490ea9051aa8ec7813f38259c4b5ab8cf66eb935",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_ledger.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 14007,
+      "sha256": "3ad6d53cff652a6962da0290b932b9b40e69d27c5d9886b9b36bcc8218dd1360",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_ledger_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 12181,
+      "sha256": "cd5ac5c1fccbc6a49106e20c8af6d573225d682eeb4b6aac114178f7de15a439",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_lineage_store.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 7661,
+      "sha256": "a4dde08a5a4d18a9a4afc03974b4b877e1c991494d83cfbc538229c5c4774ac6",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_lineage_store_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 8808,
+      "sha256": "96150e4f2cba2e4640ec6b1ec9ea44ce5a9222d21538012197664227d3e61268",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_lineage_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 9826,
+      "sha256": "26b982fe1fba1c5bf385a8593baaad1ad56b49f62b868ddac8dd5b6fd91c05b5",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_mining.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 7933,
+      "sha256": "4817861017e96767e1c90a550aad333f5bd7e2a0b7bd63536a5ea9ad61c7fcea",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_observer_restore.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 27895,
+      "sha256": "45eb4e0665fac2f56c04343192a753ac38f311af0b4d4ba0fabd30801b36be25",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_observer_restore_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 42060,
+      "sha256": "b37703abbde7f436151cfc104ff74f0a622496edd1831ce58a3e61e26606e276",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_owned_restore.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 15678,
+      "sha256": "48e77d38ccbc7dddff7bd9d90a92dfd30e513b79a2446fcb71980e29eaf53c20",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_owned_restore_other_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 114,
+      "sha256": "4ee71c4de8a5ab3ba779b1d8ddffb0eec5f108c5717c21931a424a10e7904022",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_owned_restore_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 23953,
+      "sha256": "726fbc73fc7d0ecde00083d4e084d2842f1323988bcbbfccb571c86c51d315bd",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_owned_restore_windows_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 253,
+      "sha256": "3ea757209c1c1444e9e3825fd45d396d18e592e391b1bba47291e359000bec0b",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_payment_codec.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 2264,
+      "sha256": "da14aa412d91c8e567241a251a7816264e1ab26e06a396df9e03c13036251cd1",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_producer.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 10392,
+      "sha256": "28cb1b675688fdcbf5b69d4d0cfcc3dbd09954a4e994524410054e00b982f4d8",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_producer_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 9675,
+      "sha256": "3aeaa78f8632ea2a6e758190281eb11e9aaa00e7510c75678c4a954586f0cbe1",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_protocol.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 26265,
+      "sha256": "ad90ecc159513c2b3a928b366aa3cfcd26b75c894fa08177e62a53c5b9909146",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_protocol_block.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 5608,
+      "sha256": "0fe6f96b87e846bed7049d638eabc484658717b42e61f3c4354b72161a4fe306",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_protocol_block_proof.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 3007,
+      "sha256": "2ec4269f87957517bfa0215bddd2954b2e9e93e85c1396edd4dc7bab5ca1c515",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_protocol_money.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 15103,
+      "sha256": "50f3071cfc0d8c8dcc42fb6ff0f9b1ca211b1ba54b740d690cb5a2b12af7662b",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_protocol_money_batch.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 4674,
+      "sha256": "a4ec96a009b24097c1312fa7d6fc6d68bed8b2e836bea256cb5c2fb996e5bbde",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_protocol_operations.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 18506,
+      "sha256": "4179e934df8ad7d725f6ddcc1cdfd29c21b2d26d3df469348603ef6271a05ad7",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_protocol_proof.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 4151,
+      "sha256": "ec62e06a3b549702a0695e94614febfdaeecc144ac3d65933f92f7d1581a8902",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_protocol_query.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 12485,
+      "sha256": "dfd10c7777f1672ef127f73f803a8ed72f7b886abb596f6610f42919771267d6",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_protocol_reward.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 3634,
+      "sha256": "4a560d71920404b6442ac99b5d6f37968147756156dcdb858c4381faf4f5f8de",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_protocol_store.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 12006,
+      "sha256": "c222b8a58e19d4d108491f488af94ca7dbeaf7bf3038b640704054dd0c9e8a0a",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_protocol_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 26777,
+      "sha256": "c408b9d428bc1f9d5b49931fa4b6c68cbfc8a0fe6bef5b259963fe893124e7f9",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_public_archive.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 23729,
+      "sha256": "d757a0cc1d6a7211f58ff9bbac0700ad8278c7576b1d8c56d20a7474dc679c3e",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_public_archive_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 19808,
+      "sha256": "521a1df9494729b50aa6530c76a4ae5268426733bc08d995b622f9d9486bf748",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_query_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 3242,
+      "sha256": "22ef0eb9e4fd183771a649e095275907bb5c79df5041cd1b7e2a2de303a2fef9",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_receipt.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 5026,
+      "sha256": "cafe81cbf642b7108263b9408ce4595463d560c47761ff86ee6d7b30725b92b7",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_receipt_store.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 14107,
+      "sha256": "8c538e16bc93f5b6c04e009b97d845ad444e45ce08812718a0ca51c4c9f09a9c",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_receipt_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 8440,
+      "sha256": "08e9cc75752bf4d2cc4c00359f787632d77ed916470549777665d33fc7462f19",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_registry.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 21043,
+      "sha256": "35cf0e1e0f5aa80d9215b7d68dd89b676161ea5e39b19e1cec5ab2c7b57674eb",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_registry_capacity_reference_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 18315,
+      "sha256": "b8d65bbdb02c57306f3efd8c8aebc4dea0903bf926cbd59cb60533e267caa371",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_registry_owned_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 12012,
+      "sha256": "bc5c6e562b46d7dca9bbec9cc7662fa7fb3553075cbe347c1145405b903760b1",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_sdk_history.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 8451,
+      "sha256": "2e9856d025c2d41715ac20ecf32b14bcbedf42096136c7158c90106c475dfd08",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_sdk_recovery.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 5135,
+      "sha256": "1de8a9305917a5d996ddf216dcec2b04c7293e0a8860b2b457b782d9e8736209",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_selection.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 8416,
+      "sha256": "a9cb0a4c20579c67240fc940697b518ecf534e0271829ce5f9d9a293d1235984",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_selection_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 10916,
+      "sha256": "432cff0d37799d5dd5a810af57f65686cc3480ed3fd2effde4770f8e2635b6b6",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_state.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 6277,
+      "sha256": "4c9ba338f4b977aa585e45f44a17207ec768dd06f518e997757315fed2ec8652",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/financial_store.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 31026,
+      "sha256": "cc8984cf4a74d5715d75912dfeb4fccdcf4ecafdaff6c01e76c4245d4b57d431",
+      "mode": "0o644"
+    },
+    {
       "path": "support/gg-consensus/go.mod",
       "category": "shared-support",
       "kind": "file",
-      "bytes": 7227,
-      "sha256": "0e3845c6fe64f7767f9f6e8346105b7ba4a6244c49593a4697c387c594f9c9a6",
+      "bytes": 7048,
+      "sha256": "cf5f734360913848d52206387f37308c2de11107d3738122fa0532a0d81eaf3e",
       "mode": "0o644"
     },
     {
       "path": "support/gg-consensus/go.sum",
       "category": "shared-support",
       "kind": "file",
-      "bytes": 52721,
-      "sha256": "254f956e002ba248d2be5c814e0b7a530e85fe74626a65ee9e4c10c3dd0acf9d",
+      "bytes": 85097,
+      "sha256": "80a164ee478f04b3c35e600227350ae6ffc12f0ad4b43e76f1444992c55870bc",
       "mode": "0o644"
     },
     {
       "path": "support/gg-consensus/install_toolchain.py",
       "category": "shared-support",
       "kind": "file",
-      "bytes": 15082,
-      "sha256": "35175f12226470e158573c8848c1129f799d025ace720cbc86435cc58e45a54c",
+      "bytes": 18411,
+      "sha256": "dcdfb1bc472e3add7e938779049c8f2cd99d323e462bfa366eecacd250133242",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/json_strict_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 7595,
+      "sha256": "3130e179b5287a04a016f0fbf7cd0ea32ed727917bbf519d2380ed2d80c4eec8",
       "mode": "0o644"
     },
     {
       "path": "support/gg-consensus/ledger.go",
       "category": "shared-support",
       "kind": "file",
-      "bytes": 18307,
-      "sha256": "7eb3ffb3c7b82565d5f9c693db8cb75d9c0917d2512a414f8ddbe911cc026e04",
+      "bytes": 50736,
+      "sha256": "e10daae026807afffb24daacdbe51923bad29e763079c3d0b531818c32625fc0",
       "mode": "0o644"
     },
     {
       "path": "support/gg-consensus/ledger_test.go",
       "category": "shared-support",
       "kind": "file",
-      "bytes": 14010,
-      "sha256": "6b5cdcfd6a5e454fbdbd6f9b21229956a9695530253f29e3b16456726661948a",
+      "bytes": 14017,
+      "sha256": "8aa4cad3b31c92f006e713145032da962e4a5f2f3a1662861acbadd9afaa9049",
       "mode": "0o644"
     },
     {
@@ -18339,16 +20667,256 @@
       "path": "support/gg-consensus/light/wasm_main.go",
       "category": "shared-support",
       "kind": "file",
-      "bytes": 1480,
-      "sha256": "0d1fd071babb954331a32ff064efd431f1400ad20b213a74258eb16603cb8457",
+      "bytes": 1692,
+      "sha256": "ddd489ec8a2b4305c4e96f9ea7df89ae5bb503a1023c10235339905127c072a9",
       "mode": "0o644"
     },
     {
       "path": "support/gg-consensus/main.go",
       "category": "shared-support",
       "kind": "file",
-      "bytes": 11922,
-      "sha256": "44032c0714775384b1d856c65717acbab3b041fb8f4e412bb0f78003c1205890",
+      "bytes": 33076,
+      "sha256": "db360387840a9da583eeb1641f897b53fc7b40ecc22718a42561bea2ad3900a9",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/membership.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 6621,
+      "sha256": "a4a7b2b3208391739cb8e97b7961ba4f699b1990981f378d92b30842bb864454",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/membership_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 6797,
+      "sha256": "9450879f160c27065cb0e4f99b6fc7080e3f1ac30f70f08b2d695b8dd7c7f3cd",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/monetary_invariants_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 2310,
+      "sha256": "a7ec2b650b144efb2a312f32569b2d6b73fde35c5cc492fed338024315ac5afa",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/native_observer.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 9868,
+      "sha256": "30673b9762c9d5a72f0401fc78494fb8b59b5103da997cc76c91771ea7825c0b",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/native_observer_bootstrap.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 5522,
+      "sha256": "cba898ccc4875b540032a64e1f83fe0942f60751d0a44b7412249a0219286fcb",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/native_observer_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 12589,
+      "sha256": "373cfe9722155831c6dd6857e40c45c76bc0628fee9fb9bcb3f4373251e50308",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/native_protocol_provisioning.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 3539,
+      "sha256": "d3bd254e62d53feeaf74eca4e0fffaeaa2d7f3ace1a60aa4c59696a2b16e9289",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/native_protocol_provisioning_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 9631,
+      "sha256": "4bb78f663c90b51c976d0ba823f496bb2f81e95a620dd50e74a6155f23fe006b",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/native_public_bootstrap.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 7327,
+      "sha256": "34c686cf7fc935fac214e38431656ea049dcf69a62f7c4347c9e48db5d367c31",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/native_resources.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 8114,
+      "sha256": "810f03cf7589d5d24d38351da239567f54848b3c1b406889044a83f8233dd9de",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/native_resources_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 18737,
+      "sha256": "eb47979b2a3d16ebff7f20622957904c5d28c35bb33b8cf4f264b9997a64ffc8",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/native_resources_transport_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 11983,
+      "sha256": "801a90a8e96adc9c0a950aff35123639c7ba00c6ff3d5a3a83c8fdec91a53337",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/owned_recovery.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 19608,
+      "sha256": "58c016aa7bf41c476d32cb6e0c2aea0206614a277a0a1a0ba3504bb689b8a50b",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/owned_recovery_floor.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 11435,
+      "sha256": "a2618b464db42684689a1a00aa92dfc5823b3621021636e0a8b09d8ab5e80454",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/owned_recovery_floor_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 17016,
+      "sha256": "888f9b5bb08228e91069197aafcb65474a58ecb524423f7f434f4912e78f67f9",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/owned_recovery_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 12750,
+      "sha256": "f7e579cf6bac31483f790b41d923e5ed2caf25ed6717e1dd41239796d9c51dd9",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/owned_sdk_context_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 6354,
+      "sha256": "cb895f09036b41b889ee21dd7c93512af23abaf4c8566dc0584ec9a3123d84bc",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/protocol_transport.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 15408,
+      "sha256": "b3105f13d4c7641b1f9b6ad4c9bfaf08cb98ee478631c53a28e39beefd32277b",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/protocol_transport_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 7714,
+      "sha256": "05595f7c85461124d79f730a063f79385d8df3e828098796e34a6d493373e3c2",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/sdk_overlay.py",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 9417,
+      "sha256": "79759e203f537ddef0c32c9f119526ebbddd64132274555380f0a82792aca120",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/sdk_patches.json",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 6136,
+      "sha256": "b718fa853bc8fe176a046465edb514765437842ba43dac381ad8c82e38d173d6",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/sdk_peer_lifecycle_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 2532,
+      "sha256": "9d537af1f3304efb292ffd6ebf91192ec3bbf8481baff2a4d32966767dddb19f",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/sdk_receive_buffer_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 1982,
+      "sha256": "a37c410627d06c35b08eb1dbea44a06277ee9a6f19b79d7a16b37aa669ea0dc8",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/sdk_reconnect_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 2772,
+      "sha256": "e70a3277f8b4c49ffa358400bef6bef7833268fcdda731b97f7c598e04e95e14",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/signature_cache_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 2802,
+      "sha256": "ed37ee47ab6c1e59a9889750c65cc92ea8ed93e626035d06348cbda2ced42f65",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/signature_cache_working_set_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 5437,
+      "sha256": "e854261ea7ea29782cfca8a7d67560df099a7c81b4d9414284f06f8080e33d58",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/signature_equation_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 4703,
+      "sha256": "ff584226ee58518bce3173bbf721334d1802f95243b36e5625e82c07ae7a27c0",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/signature_profile.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 4064,
+      "sha256": "a6414736d9911647af0109227dff3d5f3e31e167ab85bb58268629d70a42b277",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/signature_profile_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 1988,
+      "sha256": "0cec4f4be944b310b425c2cdaaca573cf4a56d640be457c178720b9d02dcf2f8",
+      "mode": "0o644"
+    },
+    {
+      "path": "support/gg-consensus/signer_state_test.go",
+      "category": "shared-support",
+      "kind": "file",
+      "bytes": 3345,
+      "sha256": "a18d96dca9644e92894c7a4c181c3a21fd40784cd9a8fcbdb47bf59a25fbbd06",
       "mode": "0o644"
     },
     {
@@ -18363,8 +20931,8 @@
       "path": "support/gg-consensus/verify.go",
       "category": "shared-support",
       "kind": "file",
-      "bytes": 7138,
-      "sha256": "2dee9e9e986e44de2a7d4a2757e5894ec73c1d066475560f3aff9a44595b8a2a",
+      "bytes": 20038,
+      "sha256": "92c87ea70be9e5c0a4d638d46aed1e8a3d272c01d59faac76ab4c4360e08a45a",
       "mode": "0o644"
     },
     {
@@ -18768,6 +21336,38 @@
       "mode": "0o600"
     },
     {
+      "path": "tests/data/dag_producer_journal_vectors.json",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 180238,
+      "sha256": "11b4947079bb1f24ee03a832eb69aa2f66935658bc297c5d5149eaa05ee2a0f1",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/data/dag_segmented_base_vectors.json",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 105336,
+      "sha256": "deedbea59df31f50bb2c62c46b1946a4ad3177d2cab2807f74c9fea755b01887",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/data/dag_segmented_closed_vectors.json",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 63126,
+      "sha256": "c984392798947ecb5ca42815a94851339bc0cb299f166e696b37f0b35c0d71fa",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/data/dag_segmented_membership_vectors.json",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 67797,
+      "sha256": "548c5c0c43a58bf45dabf2b7f70e1cdc3482a2fe04db6dc6037ffb2f79ee3058",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/engine_source_provenance.py",
       "category": "tests",
       "kind": "file",
@@ -18960,6 +21560,14 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_certified_conflict.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 12954,
+      "sha256": "750bb159ca6b6fb5a6bd56feee86b5ba9b810a51964b4d3a7ead32761622364a",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_chat_activity_event.py",
       "category": "tests",
       "kind": "file",
@@ -19024,6 +21632,14 @@
       "mode": "0o600"
     },
     {
+      "path": "tests/test_cli_signature_environment.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 2544,
+      "sha256": "2678cd7260966519427f24e5e3b6097848dc8f1d9121356f82c8a47dda4d07a9",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_codex_image_storage.py",
       "category": "tests",
       "kind": "file",
@@ -19045,6 +21661,22 @@
       "kind": "file",
       "bytes": 9238,
       "sha256": "00ede076770e2c8251b81bc174107b7576e2cc75aed31f224bf4a7c448dec665",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_consensus_node.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 24196,
+      "sha256": "556c74f2a88be493269547d9a8567f81b6753aacac525d69cf49b89ba83484a4",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_consensus_profile.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 7155,
+      "sha256": "f4f0c82b9775bdaba063a08f671548cc3503ccceb64ee720508271b69aa7528f",
       "mode": "0o644"
     },
     {
@@ -19504,6 +22136,38 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_dag_archive_import.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 14897,
+      "sha256": "0c186516e0261ac4505065cb45e5dcf981d7cc2d427820ffe69cc57a6bec787a",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_dag_checkpoint_core.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 6190,
+      "sha256": "309506d721e7ce35d91d2d601a79ef8c109a2826ef0dc15b2d8a2cad1205c0d7",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_dag_checkpoint_selection.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 4802,
+      "sha256": "937d32cb03c4c38ca638da9a1eefa48bcdae3ed1f4364786b790cd3c201a6c9d",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_dag_execution_policy.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11799,
+      "sha256": "54b5566db1b516b9dd719c2259678a2783949048851a8b313b44a0f99cdf953a",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_dag_hardware_budget.py",
       "category": "tests",
       "kind": "file",
@@ -19520,11 +22184,51 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_dag_json_shape.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 3437,
+      "sha256": "3a2f1d44036f28dea3ca8d74b883e4cc04f4d77216e74c48b81b4e463b741e66",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_dag_large_blocks.py",
       "category": "tests",
       "kind": "file",
       "bytes": 3945,
       "sha256": "5437f852c3a4f528d425a7143bcb974e1bab56bdda3d0e0a6000807686d0f256",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_dag_order_history.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 5612,
+      "sha256": "40ceefb7ac5c0100f8ed35763ee6bf5a5f1c0f855939589f41fcf8c20b329102",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_dag_payload_archive.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 10748,
+      "sha256": "61cb13ef2017455d444072768af1ed110007d0637c7264085cdea252fc889a86",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_dag_payloads.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 38230,
+      "sha256": "42e932f425d4e2de75976ca64e06e9a016d9abd7f9a7f81824417ff7219aa8f2",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_dag_producer_journal.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 24963,
+      "sha256": "473323a5837e7a1627c810bf2a03d0c4611057474c8572e8466d0eab9e3c6fd8",
       "mode": "0o644"
     },
     {
@@ -19552,11 +22256,35 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_dag_segmented.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11574,
+      "sha256": "d13f89e2625e74b574965e2ff81ddbc527c36a4ce71dcdf2941566ba8def4c7c",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_dag_segmented_base.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 8884,
+      "sha256": "d2f752693153b78190150a619ae2504970243bfc26b5d5ad12c0fd10325ecb09",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_dag_segmented_engine.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 15402,
+      "sha256": "4ceaa9c016658b9b63a22d70cae868a6c3a6439846cdd4cb8a3078a68ce3e93a",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_dag_wire.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 2857,
-      "sha256": "bb558919b8c7d1b6700ce87f83b3d3829698c457a864e5125a3dfc52ab1c6429",
+      "bytes": 3702,
+      "sha256": "40f0bb38b2b877cdcf489b4e5d481dfcc7b666ce382d2ffcaa1471d3d81f8fdb",
       "mode": "0o644"
     },
     {
@@ -19648,11 +22376,179 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_durable_lan_node.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11402,
+      "sha256": "2f251e0c8f741a69a96bc3e350314f41ca7c213a81ac65ec721d7e9f3a020c01",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_durable_node_process.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 9809,
+      "sha256": "0835da40b213ba6188941b739a487a7b504ad372dd635ff4d9b1ffdde884b90c",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_durable_node_runtime.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 5733,
+      "sha256": "05f107ad156359cea4f5844458e370edfc1be95daa11a0b44ef7242edb6e2455",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_durable_node_store.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11359,
+      "sha256": "1976f83dc9b6a7ec400d25c63a77d103702ab78dffe896385201a9927460daed",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_durable_order_cache.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 6551,
+      "sha256": "5616bf28ab6d5425af96a075e6c97538fc890df639c404bc35b215868a9bc364",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_ed25519_admission_profile.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 5855,
+      "sha256": "7486d3349452a68429635cfb52bbbcc8d89b88880f5197911160737375169abe",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_engine_routing_precedence.py",
       "category": "tests",
       "kind": "file",
       "bytes": 6736,
       "sha256": "b22d565d857527620bc7da2fc0e066f481204ebfeff43401575de5da70c1c8b5",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_financial_account.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 18168,
+      "sha256": "eb6b05bf2d7335d80ec46a80f1871f14bd4a47104b0e3655482b7c704e333c13",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_financial_account_runtime.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11825,
+      "sha256": "832261ccc625bc50d629d9acf02f98d21ef004a57ec0e845759c8312fd41a36f",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_financial_authority.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 9952,
+      "sha256": "789585ae53af8676b321a5063242fca03a5f545d99231d43a23b4273a8431cb7",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_financial_dag.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 4021,
+      "sha256": "cbab74751851e196da4855cba9f931759435dff3c9028cb49d1539a3e70ddbe6",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_financial_dashboard_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 7679,
+      "sha256": "a6721ca20452bfbb8f08ec624541bc29f9607d98418ee76411b921a2a19f1c99",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_financial_general_clients.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 19454,
+      "sha256": "203775aafb5f96aa819665f527e62bb58855d46d20d6b82da3471e9404abe797",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_financial_history.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 9847,
+      "sha256": "4f01e97f91062e981b729ec29f0fec4063d7cb3e618a457e8d7d851d7e319306",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_financial_lineage.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 9844,
+      "sha256": "937ce2b693ec3ede2e35c1b4e96cc874bb5b90b0ae0bab3b170410f828782e00",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_financial_own_archive.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 14199,
+      "sha256": "bab72f03bc7f4b7e4a77c4d5a67a412fac7daaec4574d2023dd471f460c02746",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_financial_producer.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 24219,
+      "sha256": "65a9ed4f1616d04392cfd158287f0e88ffecc55326a97e6f01882b102da045d9",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_financial_proof_sync.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 12189,
+      "sha256": "cf578abb8c819b0e38920ba90475065efa4ae6d44c9668101436dc284f87f84c",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_financial_retry.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 3949,
+      "sha256": "cf9342da1f2944c0e68101fdc93196b1506c267b80a5d49482bf2015e4f0d2ef",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_financial_runtime.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 9265,
+      "sha256": "836033fb851f0eda62e0e7e85951d05d9a5f0db4519be83d120615914f7c8527",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_financial_session.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 5216,
+      "sha256": "55ed3660c73c55e0181ee750efc886c3845d11b1234260276ebc34942c469d2a",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_financial_wire.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 8924,
+      "sha256": "a79a25120638f2f02a8ef765d4aa809803944e2702bc41f7ffd715328626e4c6",
       "mode": "0o644"
     },
     {
@@ -21320,35 +24216,59 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_gg_consensus_build_graph.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 7441,
+      "sha256": "f59e3271d9982b24b9da6c4a2262b68caba02ebcf3c4a5dc749dfac09dc7b715",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_gg_consensus_dashboard_ui.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 19188,
-      "sha256": "75c5c5c35ef16feddb9b2d052a8b39b330c766af7c7d4f602575e8f00894a9f0",
+      "bytes": 19203,
+      "sha256": "5463a92f0ef9ca6354ebb4827376a3cc6782794a47f3bad9ff5d4aede21431f3",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_gg_consensus_freshness.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 3564,
+      "sha256": "112d724648eb3a21813d352dd9eba74a6d168ee7f9db96411dda5f729297fa12",
       "mode": "0o644"
     },
     {
       "path": "tests/test_gg_consensus_light.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 11128,
-      "sha256": "bf0e6b33e59aa09c6882740e5df7da6f86a22c6bc2434a755f4c5cabc68c7079",
+      "bytes": 18979,
+      "sha256": "e5034bd381a6bf23ef634832effe67797ac3f18af11af18361be9297074057d4",
       "mode": "0o644"
     },
     {
       "path": "tests/test_gg_consensus_ownership.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 2471,
-      "sha256": "a8cd4305b85a40482f8e47d85eb4322aa6d47b25c971b9809eb69d73f04171e2",
+      "bytes": 6485,
+      "sha256": "28fcd99b2fe620decfe53763a253b7400b86190bb3462c72b4176c2fb719bfb9",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_gg_consensus_sdk_patches.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 1911,
+      "sha256": "1e9e60ae7bc4464c65723c43d86e21da811379f701fbf8b79417c4c116bb7b13",
       "mode": "0o644"
     },
     {
       "path": "tests/test_gg_consensus_service.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 21265,
-      "sha256": "367ee3cc0bbf91245564b562c62fe41e032cb53e7a5ff222dc8366a156f3a20e",
+      "bytes": 26496,
+      "sha256": "a36a6256858c737e11387c25e613f5e85520441403834f6492f73b2f11180b9d",
       "mode": "0o644"
     },
     {
@@ -21395,8 +24315,8 @@
       "path": "tests/test_gg_testnet_process.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 6514,
-      "sha256": "eb160882bdb067e3b0b31927196ac218b2b2e19b832a9d17aece83682d0228ed",
+      "bytes": 6590,
+      "sha256": "bef09030ea1adbb84649dbda8f81e542066f6abae1726b9f31bf4156b33a805d",
       "mode": "0o644"
     },
     {
@@ -21552,11 +24472,27 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_lan_admission.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 2046,
+      "sha256": "72a12648f825301e9a7217915fa73da13d7074028c09488fbc9c32db6342291b",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_lan_circle_ui_controls.py",
       "category": "tests",
       "kind": "file",
       "bytes": 7641,
       "sha256": "14548b3d7b160aaddeff4618a76dd32dc01757994ebca5bafd9a80a091c92ca4",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_consensus_anchor.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 5650,
+      "sha256": "779f33544151b51549760c302012466daa1469b451fb5fe9c7d4474fbab39d72",
       "mode": "0o644"
     },
     {
@@ -21579,48 +24515,48 @@
       "path": "tests/test_lan_dag_runtime.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 11183,
-      "sha256": "15f6212c3c90cae3a804b919a39528f2d8569aaaac00ff37b9802695c29d012b",
+      "bytes": 11442,
+      "sha256": "96bec2a5b12f851a8275b422aa0d8d01be0c41cd827a73b25c45983cd74718aa",
       "mode": "0o644"
     },
     {
       "path": "tests/test_lan_dag_stress_process.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 20400,
-      "sha256": "407d9c8916c47a1b5d82b64bc3f8f2d5a73bb817ac8f16e39177431ae324d975",
+      "bytes": 24032,
+      "sha256": "9523f11138082a4ee60a4b8a7d67d096c5fc42fbb8c0f7757e3441c8efd3afca",
       "mode": "0o644"
     },
     {
       "path": "tests/test_lan_dag_stress_protocol.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 24275,
-      "sha256": "e93ebbd756902126931203f76c28812ec5f9c057277c57178bea7d6764ff33ae",
+      "bytes": 25912,
+      "sha256": "df255f1079dc0cc8375d1c6994df34ac49413dca6fd98c0c5bc3b7051721b843",
       "mode": "0o644"
     },
     {
       "path": "tests/test_lan_dag_stress_routing.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 6336,
-      "sha256": "48184c2dbfd70a2b8243436cd04dcbb5da0e767550d04e6fa4a4b010450d61fc",
+      "bytes": 6589,
+      "sha256": "715eba32f18659ae6cdf068ab2e3efddb82cf4dde78f7dfc7278e78949cf2d40",
       "mode": "0o644"
     },
     {
       "path": "tests/test_lan_dag_transactions_v2.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 5587,
-      "sha256": "6cc399021fa531fb82ead4ff1c35f2f41a46f82e90ab3f88a6e06c5ae3c7f9d5",
+      "bytes": 5841,
+      "sha256": "afc5ec8647f031296713320e7cb5b2d32083d083a1f0ae87f829f9729550299e",
       "mode": "0o644"
     },
     {
       "path": "tests/test_lan_dag_transport_health.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 30696,
-      "sha256": "4d410c670747335917a924b4d563bc23c58a97d5e392297d82254d86d6b5d3d3",
+      "bytes": 30807,
+      "sha256": "dbd894e70c8d5dcebe2dcb8e4816ea5146edde6d02519505f5fd0f60a52e2f7d",
       "mode": "0o644"
     },
     {
@@ -21667,16 +24603,80 @@
       "path": "tests/test_lan_foreground_diagnostics.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 10126,
-      "sha256": "20461ae8a3a12be4577ef76bb7a9f9525fb00f4e5f1ef771b742cd77fecadca2",
+      "bytes": 11779,
+      "sha256": "e9493fd403d2af2f67e6b3a7488208daf522873edce9cb028cdaff6ef60f088d",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_foreground_owned.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 3977,
+      "sha256": "170a462ccd6bb95652e2e48f50fd1903f77d91daabd04ef57bcb4b98566964c8",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_get_resume.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 18275,
+      "sha256": "509edcc8a32e52d6f02c0d178c32053360ca64c86d3e2a370bd31b690987be16",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_light_role.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 2980,
+      "sha256": "1109a6c0ba33767b800148e768d2dc2c5bc1a9e756d0dc3f175199d8571c940f",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_light_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 4780,
+      "sha256": "835084c3d90d0b3e1188bbb1e823eeadf062037bbc26db9a7d5206fcc20ea509",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_listener_lifetime.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 1847,
+      "sha256": "2c4091be6dd208053c426c6081ef3da193bbba373f2fe7a06a00859322b9c16b",
       "mode": "0o644"
     },
     {
       "path": "tests/test_lan_node_identity.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 4777,
-      "sha256": "389f4d29c64045104af99a3bbf0c5e3cead2fe593b1ed99d0cddbdb88eace3ac",
+      "bytes": 4818,
+      "sha256": "e343a6aafc578b5d0cbe7c79aea6da3a01f0eec644d354b3bcd5bc8442b7c672",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_node_production.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 7162,
+      "sha256": "d3784aa57f263ff7faa2670bfe1a66c9a2bb6e841d09cacc3d99cddedb68a8f9",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_node_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 8092,
+      "sha256": "817769de5ae5645b1441d6ae2409a80465d45de3134df820b81aec501a879f23",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_observer_control.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 14409,
+      "sha256": "da384da53be227d336d89192d1166db51f4d5009af9f201477d039f349253e1b",
       "mode": "0o644"
     },
     {
@@ -21704,11 +24704,51 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_lan_proof_sync.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 7377,
+      "sha256": "57ec475689617eb10554d73d47824b6d72a4d2131444909accc043f2524413ce",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_replica_role.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 5435,
+      "sha256": "ee20c062e4d573807e59c7129bffe84cd46df4346573f804a67129fdd5ea611e",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_lan_retransmission_auth.py",
       "category": "tests",
       "kind": "file",
       "bytes": 2114,
       "sha256": "c5181f06f04c2cb42a56e896607be1f596c2f8d53588f1337227abfd9e2498e3",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_segmented_runtime.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 7784,
+      "sha256": "7a020bfee13c6de9cbbd48935375086d7385db9f0a68d55da3e974324178983c",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_segmented_session.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 12818,
+      "sha256": "20713e1c07f3eff46687732db227207bcd7a63b7335c1f97e242a185ceba4a0c",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_segmented_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 5776,
+      "sha256": "7b2818a6888893c725642fda7fd9a48b6393952630d82c6af43dd3ff1dcc15ab",
       "mode": "0o644"
     },
     {
@@ -21757,6 +24797,30 @@
       "kind": "file",
       "bytes": 14005,
       "sha256": "7c2360b078d7567e7a75956c5e5ee37aec608eaee3a03a4e024f20cdeb75acbd",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_validator_runtime.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 14800,
+      "sha256": "48aa9be8ad5fdcae40b120532fb5c0860382437b8b0dd388d354815f0609fca8",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_validator_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 6714,
+      "sha256": "8658369371007ef27bdaa976b6467fbed0ad7d53aac61a2c059db4f0e737e2b2",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lan_wire_capacity.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 8053,
+      "sha256": "9e57fa4c0d5cf56f32e6433771cd406c702f167699d274b777c76778d89c7163",
       "mode": "0o644"
     },
     {
@@ -21840,11 +24904,19 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_local_history_status.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 9919,
+      "sha256": "ed6d47f77b79b199d117e47884f4f6f440304459a47686a17afc482c793c0b5b",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_local_node_observation.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 9577,
-      "sha256": "07cd1a8659e4eb6d2a9d26f1310e2b7b8f749a1d1aff28185624a384946efc63",
+      "bytes": 13419,
+      "sha256": "831f1e05d36dab6acdb39ff35804f4887cd11a757c30f9eaf4b8e763509054a1",
       "mode": "0o644"
     },
     {
@@ -21853,6 +24925,14 @@
       "kind": "file",
       "bytes": 5565,
       "sha256": "cafa7b7bbecd79d31a5554cfb994064769680e945d7e1fe3b964dd873ad8bb0a",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_lossless_wire.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 21089,
+      "sha256": "664556530e2844d002c25e28bd4986c5823d08886dc358e89abdc3594a0a6125",
       "mode": "0o644"
     },
     {
@@ -22216,6 +25296,86 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_native_observer_node.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11854,
+      "sha256": "dc48d1d340957db3bcdf59f3f6f1e22e82723c4b9836936f0009ab81bbcd7d15",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_native_observer_profile.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 12667,
+      "sha256": "9d1a1fd2a709f29972e4bcd420d65fe612ed8908ee9d47d30b34fb8459a378a2",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_native_owner_end.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 7404,
+      "sha256": "ab763ce343c15a421d870a9fbd4a489c42d4c14c3ae9dd5dde448450bcb5150c",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_native_pipe_lifecycle.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 45929,
+      "sha256": "410a5e17475ba8db29c962b723171a0ac0f12327d1fe6bfb0af4a40dc4ba9639",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_native_process_policy.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 13669,
+      "sha256": "70bde223d5bc8164efb9658f1028afc96b25020c4d26749594a624570e30e0f1",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_native_resource_policy.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 4661,
+      "sha256": "39c2d4c1370e6cf217f67c1d78d4ccbe8fe2b9ccfe76aa782a6ea554db8fcbfe",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_native_resource_transport.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 6126,
+      "sha256": "78b706656bbdd4a3b5bd6e4ca492f70dccdbcfc073f837fcf9b26bec066d6d66",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_native_resources.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 17630,
+      "sha256": "0ef46f9c0a4f6af202b75f6101ddb44deaff2abb4e6674e5c3c0bfb1c7d95831",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_native_start.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 12334,
+      "sha256": "9383e5aa56a909eb50eb1654222571599cbffd7446579787887e5803c05b1a03",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_native_start_transport.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 15432,
+      "sha256": "4a7199e800c54848a4e79f2321de375eea64b90ab295e51a3fda6b4f0b572a3a",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_natural_safe_tool.py",
       "category": "tests",
       "kind": "file",
@@ -22229,6 +25389,14 @@
       "kind": "file",
       "bytes": 12230,
       "sha256": "94f3243531d3170b10df95424b2f766695235bbbd589ce59c5000e5194944b47",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_network_archive.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 7679,
+      "sha256": "86a7c40eb9c3d7a3b2112a4698abcaf009a39c577cde55ce18cbecc44301892c",
       "mode": "0o644"
     },
     {
@@ -22283,8 +25451,24 @@
       "path": "tests/test_network_telemetry_lifecycle.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 14893,
-      "sha256": "f5cfe5ee1a483154838c381e047d5655c8498241ca5dc24cec28ff4c1c873583",
+      "bytes": 15804,
+      "sha256": "e96b727eb08f7a20e90201b3c3d9196ef933edc4de97ec8e1822934f8b620c25",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_network_transition.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 14183,
+      "sha256": "f89a438273493c94270a63cd8eac3f7133d4dabd80b2775f2f1af8b92ca4f782",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_network_transition_runtime.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 8046,
+      "sha256": "5c52cb5968297d94076bd2fc553754ac7bf266ce948d5f596f305249f7e5b8a8",
       "mode": "0o644"
     },
     {
@@ -22293,6 +25477,30 @@
       "kind": "file",
       "bytes": 2733,
       "sha256": "d98fd76e9973cc95185bf7cd820a5bcb5cd82df86eca7d44098189472b40e2a9",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_observer_cli_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 9712,
+      "sha256": "e6546e7bb16b60f63e6b774b7b1963f508c3daa6f26d0c8aa99331d62b3bd155",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_observer_enrollment.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11521,
+      "sha256": "346d2b8f686674d38b12e833ed40af1876ccd46f18afa295f65526cc2db442cb",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_observer_recovery.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 14272,
+      "sha256": "df7e17f692192348ebe5a60b95b9c74bb209d8dab9a30f8ce71c9a02947896d0",
       "mode": "0o644"
     },
     {
@@ -22392,6 +25600,30 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_owned_continuous_recovery.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 22351,
+      "sha256": "0cdb3b1fdf5bf81a2c83bb257ced813d52e5d435463aa32768e54a9e347fcf20",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_owned_ingress.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 15397,
+      "sha256": "17026ef6a9a72cb7032625d18c7d52b21b14f1aecf86f50cb521ac32089e5360",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_owned_operation_cancel.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 2742,
+      "sha256": "2de83f2aa3fb7717096ddf0ab45118ec9a161882af21fdcaf8629d857de630b9",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_parallel_dag_async.py",
       "category": "tests",
       "kind": "file",
@@ -22429,6 +25661,14 @@
       "kind": "file",
       "bytes": 4483,
       "sha256": "03f80887d23f976dd2333cd9703b3ace1d81c0834fe13ec4b81d11f85576f182",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_peer_scan.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 1964,
+      "sha256": "25e935ede0b5c8a4ed413a3778f4e8827f4ec79113b0efa015f09c5ed6ee8923",
       "mode": "0o644"
     },
     {
@@ -22472,6 +25712,14 @@
       "mode": "0o644"
     },
     {
+      "path": "tests/test_posix_native.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 3032,
+      "sha256": "81ff06e40f4fb7fe5e05f3389a821477cb8f8e5ee30cead007d0b7c31cce3f9c",
+      "mode": "0o644"
+    },
+    {
       "path": "tests/test_post_draft_coordinator.py",
       "category": "tests",
       "kind": "file",
@@ -22501,6 +25749,134 @@
       "kind": "file",
       "bytes": 16098,
       "sha256": "ea8da00e92c150f44f4fd4093105b290028c6a568327d64ed572afbdf4ee3274",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_process_termination.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 15463,
+      "sha256": "1d7e9440deea0a39bc887b35f453b8fef5ace542aca8c47d027eadaad77c39aa",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_producer_branches.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 11780,
+      "sha256": "984aa67b31f6ee6eb9de4338522ffd0962bc09132d4abf3cb713a2cdc0daa5bf",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_protected_journal_projection.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 5354,
+      "sha256": "1772fc3cd46eeda6c7cf0cf47df798affc40b6b160137f7d568459a910213a39",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_protected_journal_rotation.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 44072,
+      "sha256": "8303a099f4ee0de956644e7a1fc5ebc011dcb45a29324549b66a1047326855c7",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_protocol_codec_resources.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 24612,
+      "sha256": "823d00079f9ab8a4087843e4b9b4a03ce0a02d6c785f99c965dc477c2d1bdc2e",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_protocol_inbox_drain.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 22951,
+      "sha256": "99fdb62461a0c8130eebe57d21931274ca5aac1c862dd04c42a45b262541c334",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_protocol_integrated_profiles.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 31355,
+      "sha256": "82bf4f7db0ebb44998f60de04c1b6d0e0e23741756e0e2d9381d15e23623bb26",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_protocol_native_ports.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 5479,
+      "sha256": "44b79ea7851dba100d559902099d948abd3ff8ce68e93592ce350604b9f58c13",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_protocol_observation_projection.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 29795,
+      "sha256": "acdd46c417f197ffe750ea791cf907769f21bf87a63b58424ac38872aafd8797",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_protocol_observation_sources.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 26246,
+      "sha256": "37db865dac5e145cd8badf53576e4d146bc2a70c4d8abe609704a64b7f0e0766",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_protocol_operator_setup.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 42085,
+      "sha256": "57c6596d3ebefdad761d826d23cf94beb99d86d90e6dccefadff53e8f8632985",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_protocol_pool_stale.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 12102,
+      "sha256": "a4722221d134c0f10fc4b2f205505ffee26da33f96a88246a61db67002473590",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_protocol_protected_restore.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 42901,
+      "sha256": "258b7083043de4332ab114935d65c415e2ad3ed5aa1833b8d8c8baad5e468b2e",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_protocol_provisioning.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 18861,
+      "sha256": "79790b66368308e1caf79c9cc7bc3818c44d25b763899dae4ab0d353db8ccaab",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_protocol_shutdown_lifecycle.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 35581,
+      "sha256": "58bbad89f9066ef2abc59805a79e6dd301e3d4d674de55729d002bcedea0208d",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_protocol_transport_history.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 15184,
+      "sha256": "40d48b777b9b3fb7f515d54b37b0d511bbee279f45cc651ce1203c5f055d4a0d",
       "mode": "0o644"
     },
     {
@@ -22645,6 +26021,70 @@
       "kind": "file",
       "bytes": 5295,
       "sha256": "7f3e6f37674f6242eb43014d726398a5d0386ebd7af146db6320364bcbb3b82f",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_segmented_authority.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 17183,
+      "sha256": "58e728faa156933904576195fe439f268db90a7b1e9a3f3d5e86fae49173b306",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_segmented_closed_history.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 9846,
+      "sha256": "b0c52736526dd8a6056e4e1d5d94ab25e91c79836b611332c5e477aae2df32b1",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_segmented_graph_ui.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 3839,
+      "sha256": "0d4c90cc1264b8f9c4033f9137a58c5c3d5e49ecbe306de2842999758bfd7119",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_segmented_index_transition.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 10577,
+      "sha256": "5e9a38b075e5233434eedb6c99fbffee39a10bcf4b8b84095d43c80029dd114c",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_segmented_payloads.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 12095,
+      "sha256": "9d93cce28499d0f7d027383c0541665c2dc2b1dc0c98d7615dc70431428335e6",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_segmented_production.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 8792,
+      "sha256": "6f6fe1b8a9558385010892ca95c040422c9d33ce9b21e96199609e45ddfc7e64",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_segmented_proof_sync.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 10723,
+      "sha256": "364f1121e783dc412d74057d21a976728563349fd4ee14315fb7c87fe701cace",
+      "mode": "0o644"
+    },
+    {
+      "path": "tests/test_segmented_submission.py",
+      "category": "tests",
+      "kind": "file",
+      "bytes": 9849,
+      "sha256": "fba3acb5521274e023f982e0cf4753221f3c2edef6b4697d511f037fa8c008cf",
       "mode": "0o644"
     },
     {
@@ -22803,8 +26243,8 @@
       "path": "tests/test_terminal_cli.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 19646,
-      "sha256": "b529af7d3a161525718d678a5c963962b8c5077eebb464a2982c3832ecbd4b07",
+      "bytes": 20793,
+      "sha256": "d4537fd48beb615bda233c645725379c906d45d5846fbe016104205a12e889f3",
       "mode": "0o644"
     },
     {
@@ -22851,8 +26291,8 @@
       "path": "tests/test_terminal_service.py",
       "category": "tests",
       "kind": "file",
-      "bytes": 9249,
-      "sha256": "3a8322c861ec3fd92e5909e4711045aa4b48e202a51e48eb9268a48e3689d185",
+      "bytes": 10429,
+      "sha256": "41af00c2bf4d398551a7cda6d0981523fc07d748903b9c7b7296587bcc4e484f",
       "mode": "0o644"
     },
     {

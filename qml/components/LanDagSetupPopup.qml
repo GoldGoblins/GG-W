@@ -23,9 +23,12 @@ Item {
     property bool stopPending:false
     readonly property var lan:state.lan||({})
     readonly property var setup:state.lan_setup||({})
+    readonly property var consensus:state.dag_consensus||({})
+    readonly property bool profileControls:setup.windows_profile_controls===true
     readonly property bool owned:setup.active===true
     readonly property bool coordinator:setup.coordinator===true
     readonly property bool ready:lan.state==="READY"
+    readonly property bool replicaOnly:!!lan.participation&&lan.participation.producer===false&&(lan.participation.replica===true||lan.participation.light_client===true)
     readonly property bool transportExhausted:!!lan.transport&&lan.transport.state==="EXHAUSTED"
     readonly property bool producing:!!state.live&&state.live.enabled===true
     readonly property var candidates:setup.invites||[]
@@ -88,19 +91,23 @@ Item {
     property bool bindingsReady:false
     Component.onCompleted:bindingsReady=true
     readonly property var stress:bindingsReady?(state.dag_stress||(!owned?setupCapabilities:({}))):({})
+    readonly property var ownNode:state.dag_production||({})
+    readonly property bool ownRunning:ownNode.worker_active===true
+    readonly property bool ownSettingsValid:boundedInteger(stressDuration.text,(ownNode.limits||{}).min_duration_ms,(ownNode.limits||{}).max_duration_ms,1000)&&boundedInteger(stressTransactions.text,1,(ownNode.limits||{}).max_tx_per_block,1)&&boundedInteger(stressInterval.text,(ownNode.limits||{}).min_interval_ms,(ownNode.limits||{}).max_interval_ms,1)
+    readonly property bool canStartOwn:root.canAct&&root.ready&&ownNode.supported===true&&ownNode.enabled===true&&ownNode.can_start===true&&!ownRunning&&!stressRunning&&!hardwareTesting&&ownSettingsValid
     readonly property string stressStateLabel:stress.role==="PARTICIPANT"&&stress.state==="COMPLETE"?"Lokal del klar":String(stress.state||"IDLE")
     readonly property var stressLimits:stress.limits||({})
     readonly property bool stressSupported:stress.supported===true
     readonly property bool stressRunning:["STARTING","RUNNING","STOPPING"].indexOf(String(stress.state||""))>=0
     readonly property bool stressParticipantsReady:(stress.participants||[]).length===3&&(stress.participants||[]).every(function(peer){return peer.opted_in===true})
     readonly property bool stressSettingsValid:boundedInteger(stressDuration.text,stressLimits.min_duration_ms,stressLimits.max_duration_ms,1000)&&boundedInteger(stressTransactions.text,1,stressLimits.max_tx_per_block,1)&&boundedInteger(stressInterval.text,stressLimits.min_interval_ms,stressLimits.max_interval_ms,1)
-    readonly property bool canStartStress:root.canAct&&root.ready&&!root.transportExhausted&&root.coordinator&&root.stressSupported&&stress.enabled===true&&stress.local_opt_in===true&&stress.role==="COORDINATOR"&&stress.can_start===true&&stressParticipantsReady&&!stressRunning&&!hardwareTesting&&!circleRunning&&stressSettingsValid&&["MEMORY_LIMIT","PAUSED"].indexOf(resourcePreview.state)<0
+    readonly property bool canStartStress:root.canAct&&root.ready&&!root.transportExhausted&&root.coordinator&&root.stressSupported&&stress.enabled===true&&stress.local_opt_in===true&&stress.role==="COORDINATOR"&&stress.can_start===true&&stressParticipantsReady&&!stressRunning&&!ownRunning&&!hardwareTesting&&!circleRunning&&stressSettingsValid&&["MEMORY_LIMIT","PAUSED"].indexOf(resourcePreview.state)<0
     readonly property bool circleRunning:["RUNNING","STOPPING"].indexOf(String(circle.state||""))>=0
     readonly property bool circleFinished:["COMPLETE","STOPPED","ERROR","TIME_BUDGET","NO_TRANSFERS"].indexOf(String(circle.state||""))>=0
     readonly property bool circleSettingsValid:/^[0-9]{1,2}$/.test(circleBatch.text)&&Number(circleBatch.text)>=1&&Number(circleBatch.text)<=16&&/^[0-9]{1,2}$/.test(circleDuration.text)&&Number(circleDuration.text)>=1&&Number(circleDuration.text)<=60
     readonly property bool allTokenOptedIn:candidates.length===3&&candidates.every(function(peer){return peer.allow_test_tokens===true})
     readonly property bool allDagOptedIn:candidates.length===3&&candidates.every(function(peer){return peer.allow_dag_transactions===true})
-    readonly property bool canStart:root.canAct&&!root.owned&&!root.localRunning&&labelField.text.trim().length>0&&/^[0-9]{4,5}$/.test(portField.text)&&Number(portField.text)>=1024&&Number(portField.text)<=65535
+    readonly property bool canStart:root.canAct&&!root.owned&&!root.localRunning&&labelField.text.trim().length>0&&(!root.profileControls||nodeProfileField.text.length===0||/^[A-Za-z][A-Za-z0-9_-]{0,31}$/.test(nodeProfileField.text))&&/^[0-9]{4,5}$/.test(portField.text)&&Number(portField.text)>=1024&&Number(portField.text)<=65535
     property string formError:""
     property string operationError:""
     signal actionRequested(string name,var args)
@@ -126,6 +133,13 @@ Item {
         forceActiveFocus()
     }
     function close(){visible=false}
+    function peerSyncText(){
+        return (root.lan.peer_status||[]).map(function(peer){
+            var sync=peer.sync||({})
+            var admission=typeof sync.validated_prefix==="number"?" lästa · "+sync.validated_prefix+" sammanhängande validerade"+(sync.unresolved_records>0?" · "+sync.unresolved_records+" ej validerade":""):" poster hämtade vid senaste kontroll"
+            return String(peer.label)+": "+(typeof sync.remote_records==="number"&&typeof sync.received_records==="number"?sync.received_records+" / "+sync.remote_records+admission+(sync.state==="BLOCK_EXCEEDS_LOCAL_LIMIT"?" · nästa block över lokal gräns":sync.pending_records>0?" · "+sync.pending_records+" kvar":""):"hämtning ej observerad")
+        }).join("\n")
+    }
     Keys.onEscapePressed:root.close()
     onWidthChanged:keepWithinParent()
     onHeightChanged:keepWithinParent()
@@ -171,7 +185,7 @@ Item {
             onClicked:root.close()
         }
     }
-    function run(name,args){if(!canAct)return;if((name==="lan_produce"||name==="lan_pause")&&stress.enabled===true)return;if(name==="lan_circle_start"&&transportExhausted)return;if(name==="lan_dag_stress_start"&&!canStartStress)return;if(name==="lan_dag_stress_stop"&&(!stressSupported||stress.role!=="COORDINATOR"||!stressRunning))return;formError="";actionRequested(name,args||{})}
+    function run(name,args){if(!canAct)return;if((name==="lan_produce"||name==="lan_pause")&&(stress.enabled===true||replicaOnly))return;if(name==="lan_circle_start"&&transportExhausted)return;if(name==="lan_dag_produce_start"&&!canStartOwn)return;if(name==="lan_dag_produce_stop"&&(!ownRunning||ownNode.state==="STOPPING"))return;if(name==="lan_dag_stress_start"&&!canStartStress)return;if(name==="lan_dag_stress_stop"&&(!stressSupported||stress.role!=="COORDINATOR"||!stressRunning))return;formError="";actionRequested(name,args||{})}
     function copy(value){if(surfaceHost&&surfaceHost.tmogCopy)surfaceHost.tmogCopy(String(value||""))}
     function wholeTokenAtomic(){var d=Number(root.tokens.decimals);return Number.isInteger(d)&&d>=0&&d<=18?"1"+"0".repeat(d):""}
     function tokenAmount(value){
@@ -396,8 +410,8 @@ Item {
         if(text.length>4000){formError="Provresultatet är för stort för att kopieras säkert (4000 tecken).";return}
         copy(text)
     }
-    function startOptions(options){if(stressSupported&&dagOptIn.checked)options.allow_dag_transactions=true;return options}
-    function sessionOptions(){var options={label:"GG LAN",distribute:true,enable_test_tokens:root.setup.allow_dag_transactions!==true&&root.allTokenOptedIn};if(root.setup.allow_dag_transactions===true&&root.allDagOptedIn)options.enable_dag_transactions=true;return options}
+    function startOptions(options){if(stressSupported&&dagOptIn.checked)options.allow_dag_transactions=true;if(profileControls&&nodeProfileField.text.length>0)options.profile=nodeProfileField.text;return options}
+    function sessionOptions(){var options={label:"GG LAN",distribute:true,enable_test_tokens:root.setup.allow_dag_transactions!==true&&root.allTokenOptedIn};if(root.setup.allow_dag_transactions===true&&root.allDagOptedIn){options.enable_dag_transactions=true;if(consensusOptIn.checked&&root.setup.validator_invite_count===4)options.enable_consensus=true}return options}
     function command(label){return (label==="Termux"?'python':'python3')+' gg-cli.py --foreground --command "lan.start label='+label+' auto_produce=false'+(root.setup.allow_test_tokens===true?' allow_test_tokens=true':'')+(root.setup.allow_dag_transactions===true?' allow_dag_transactions=true':'')+'" --bootstrap-file gg-lan-bootstrap.json'}
     function addPasted(){try{var value=JSON.parse(inviteInput.text);run("lan_peer_add",{invite:value});inviteInput.text=""}catch(error){formError="Klistra in en signerad publik inbjudan som JSON."}}
     function joinBootstrap(path){if(root.canStart)root.run("lan_join_file",startOptions({path:String(path),label:labelField.text.trim(),port:Number(portField.text),bind_host:"auto",allow_test_tokens:tokenOptIn.checked}))}
@@ -427,7 +441,7 @@ Item {
         anchors.fill:parent;anchors.margins:12;anchors.topMargin:20
         ScrollView {anchors.fill:parent;clip:true;contentWidth:availableWidth
             Column {id:body;width:parent.width;spacing:8
-                Label {colorKey:"ui.lan.scope";width:parent.width;text:"Tre parade peers · två egna producenter per apparat. Riktiga signerade förslag över TCP; ingen kanonisk finalitet eller finansiell handel.";color:RuntimeTheme.GGTheme.dim}
+                Label {colorKey:"ui.lan.scope";width:parent.width;text:"Tre parade LAN-peers · egna signerade producentförslag över TCP. "+(root.consensus.anchor_bound===true?"Kanoniskt medlemskap visas först efter SDK-verifierat bevis. ":"Kanonisk konsensus saknas i denna session. ")+"Ingen finansiell handel.";color:RuntimeTheme.GGTheme.dim}
                 Label {objectName:"lanObserverSource";width:parent.width;visible:(root.state.observation||{}).read_only===true;text:"Visar den redan körande CLI-noden. Start, stopp och nodinställningar styrs i dess CLI.";color:RuntimeTheme.GGTheme.cyan}
                 Row {width:parent.width;spacing:8
                     Label {objectName:"lanSetupStatus";colorKey:"ui.lan.status";width:parent.width-146;text:root.owned?String(root.lan.state||"STARTING")+" · "+String(root.lan.endpoint?root.lan.endpoint.host+":"+root.lan.endpoint.port:"")+" · "+(root.lan.authenticated_peers||[]).length+" autentiserade peers":"Ingen LAN-peer startad";color:root.ready?RuntimeTheme.GGTheme.positive:RuntimeTheme.GGTheme.dim}
@@ -436,6 +450,8 @@ Item {
                 }
                 Label {objectName:"lanSetupError";colorKey:"ui.lan.error";width:parent.width;visible:text.length>0;text:root.formError||root.operationError||String(root.setup.announcement_error||"")||root.transportErrorText();color:RuntimeTheme.GGTheme.negative}
                 Label {objectName:"lanTransportStatus";colorKey:"ui.lan.transport.status";width:parent.width;visible:text.length>0;text:root.transportSummaryText();color:root.transportExhausted?RuntimeTheme.GGTheme.negative:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
+                Label {objectName:"lanParticipationRole";width:parent.width;visible:root.lan.participation!==undefined;text:root.lan.participation?(root.lan.participation.light_client===true?"Roll: lättklient · konto-/blockbevis":root.lan.participation.producer===true?"Roll: producent och replika":root.lan.participation.replica===true?"Roll: fullreplika":"Roll ännu inte aktiv")+(root.lan.participation.consensus_validator===true?" · äger aktiv SDK-validator":"")+" · ingen mining":"Roll ännu inte aktiv";color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
+                Label {objectName:"lanPeerSyncStatus";width:parent.width;visible:text.length>0;text:root.peerSyncText();color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
                 Label {objectName:"lanTransportHistory";colorKey:"ui.lan.transport.history";width:parent.width;visible:text.length>0;text:root.transportHistoryText();color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
                 Section {height:startBody.height+18
                     Column {id:startBody;x:9;y:9;width:parent.width-18;spacing:7
@@ -444,6 +460,10 @@ Item {
                             CryptoField {id:labelField;objectName:"lanLabel";property string uiColorScope:"ui.lan.field.label";width:Math.max(70,parent.width-229);height:27;text:Qt.platform.os==="linux"?"GG Linux":"GG Windows";maximumLength:64;enabled:root.canAct&&!root.owned&&!root.localRunning;placeholderText:"Nodnamn"}
                             CryptoField {id:portField;objectName:"lanPort";property string uiColorScope:"ui.lan.field.port";width:75;height:27;text:"16120";maximumLength:5;enabled:labelField.enabled;inputMethodHints:Qt.ImhDigitsOnly;Accessible.name:"Privat TCP-port"}
                             Action {objectName:"lanStart";width:140;text:"Starta LAN · auto";enabled:root.canStart;onClicked:root.run("lan_start",root.startOptions({label:labelField.text.trim(),port:Number(portField.text),bind_host:"auto",allow_test_tokens:tokenOptIn.checked}))}
+                        }
+                        Row {width:parent.width;spacing:7;visible:root.profileControls
+                            CryptoField {id:nodeProfileField;objectName:"lanNodeProfile";width:Math.max(80,parent.width-160);height:27;maximumLength:32;placeholderText:"Beständig nodprofil (valfritt)";enabled:labelField.enabled;Accessible.name:"Nodprofilens lokala namn"}
+                            Action {objectName:"lanProfileResume";text:"Återuppta profil";enabled:root.canAct&&!root.owned&&!root.localRunning&&/^[A-Za-z][A-Za-z0-9_-]{0,31}$/.test(nodeProfileField.text);onClicked:root.run("lan_resume",{profile:nodeProfileField.text})}
                         }
                         CryptoToggle {id:tokenOptIn;objectName:"lanAllowTestTokens";property string uiColorScope:"ui.lan.token.optin";width:parent.width;text:"Tillåt privata GG-LAN-testtokens och koordinatorstyrt cirkelprov";enabled:labelField.enabled;checked:false;onCheckedChanged:if(checked)dagOptIn.checked=false}
                         CryptoToggle {id:dagOptIn;objectName:"lanAllowDagTransactions";property string uiColorScope:"ui.lan.dag.optin";width:parent.width;visible:root.stressSupported;text:"Tillåt signerade DAG-testtransaktioner och koordinatorstyrt, tidsbegränsat prov med tre apparater";enabled:labelField.enabled&&root.stressSupported;checked:false;onCheckedChanged:if(checked)tokenOptIn.checked=false}
@@ -466,7 +486,7 @@ Item {
                             Action {objectName:"lanLinuxCommand";text:"Linux CLI (valfritt)";enabled:root.owned&&root.coordinator;onClicked:root.copy(root.command("Linux"))}
                             Action {objectName:"lanTermuxCommand";text:"Kopiera Termux-kommando";enabled:root.owned&&root.coordinator;onClicked:root.copy(root.command("Termux"))}
                         }
-                        Label {colorKey:"ui.lan.bootstrap.keys";width:parent.width;text:"Endast publika inbjudningar och konfiguration delas. Varje peer behåller sina egna två producentnycklar i RAM. Omstart kräver ny parning; walletnycklar berörs inte.";color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
+                        Label {colorKey:"ui.lan.bootstrap.keys";width:parent.width;text:root.setup.ephemeral_keys===false?"Beständig nodprofil: krypterade producentnycklar och verifierad historik. Återstart behåller identitet och signerad roster; produktion startas uttryckligen.":"Endast publika inbjudningar och konfiguration delas. Varje peer behåller sina egna två producentnycklar i RAM. Omstart kräver ny parning; walletnycklar berörs inte.";color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
                     }
                 }
                 Section {height:peersBody.height+18
@@ -479,12 +499,13 @@ Item {
                             Column {required property var modelData;width:peersBody.width;spacing:3
                                 Row {width:parent.width;spacing:6
                                     Rectangle {width:5;height:5;radius:3;y:4;color:RuntimeTheme.GGTheme.cyan}
-                                    Label {colorKey:"ui.lan.peer.label";width:Math.max(40,parent.width-160);text:String(modelData.label)+(modelData.local?" · den här apparaten":" · kandidat")+(modelData.allow_test_tokens===true?" · testtokens":"")+(modelData.allow_dag_transactions===true?" · DAG-TX":"")}
+                                    Label {colorKey:"ui.lan.peer.label";width:Math.max(40,parent.width-160);text:String(modelData.label)+(modelData.node_role==="replica"?" · replika":"")+(modelData.local?" · den här apparaten":" · kandidat")+(modelData.allow_test_tokens===true?" · testtokens":"")+(modelData.allow_dag_transactions===true?" · DAG-TX":"")+(modelData.validator_invite_count>0?" · "+modelData.validator_invite_count+" validatorer":"")}
                                     Label {colorKey:"ui.lan.peer.endpoint";width:148;text:String(modelData.host)+":"+String(modelData.port);horizontalAlignment:Text.AlignRight;color:RuntimeTheme.GGTheme.dim}
                                 }
                                 Line {}
                             }
                         }
+                        CryptoToggle {id:consensusOptIn;objectName:"lanConsensusOptIn";width:parent.width;text:"Bind fyra signerade validatoridentiteter till denna DAG-genesis";visible:root.setup.allow_dag_transactions===true&&!root.ready;enabled:root.canAct&&root.coordinator&&root.setup.validator_invite_count===4&&root.allDagOptedIn}
                         Row {spacing:7
                             Action {objectName:"lanInviteOpen";text:"Läs publik inbjudan…";enabled:root.canAct&&root.owned&&root.coordinator&&!root.ready;onClicked:inviteFile.open()}
                             Action {objectName:"lanCreateSession";text:root.setup.allow_dag_transactions===true&&!root.allDagOptedIn?"Väntar på 3 DAG-TX-val":root.setup.allow_dag_transactions!==true&&root.setup.allow_test_tokens===true&&!root.allTokenOptedIn?"Väntar på 3 testtokenval":"Godkänn 3 · skapa och distribuera";enabled:root.canAct&&root.owned&&root.coordinator&&!root.ready&&root.candidates.length===3&&(root.setup.allow_dag_transactions===true||root.setup.allow_test_tokens!==true||root.allTokenOptedIn)&&(root.setup.allow_dag_transactions!==true||root.allDagOptedIn);onClicked:root.run("lan_session_create",root.sessionOptions())}
@@ -492,21 +513,44 @@ Item {
                         }
                         Label {colorKey:"ui.lan.roster.trust";width:parent.width;text:"En annonserad inbjudan är en kandidat. Sessionens roster binds först när koordinatorn uttryckligen godkänner alla tre. Fysiskt skilda apparater är ännu inte verifierade.";color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
                         TextArea {id:inviteInput;objectName:"lanInvitePaste";property string uiColorScope:"ui.lan.field.invite";width:parent.width;height:48;wrapMode:TextEdit.Wrap;font.family:"monospace";font.pixelSize:9;placeholderText:"Valfritt: klistra in signerad publik inbjudan som JSON";enabled:root.canAct&&root.owned&&root.coordinator&&!root.ready;selectByMouse:true;color:RuntimeTheme.GGTheme.text;background:Rectangle {color:RuntimeTheme.GGTheme.canvas;border.width:1;border.color:RuntimeTheme.GGTheme.line}}
-                        Action {objectName:"lanInviteAdd";text:"Lägg till publik inbjudan";enabled:inviteInput.enabled&&inviteInput.text.length>0&&inviteInput.length<=4096;onClicked:root.addPasted()}
+                        Action {objectName:"lanInviteAdd";text:"Lägg till publik inbjudan";enabled:inviteInput.enabled&&inviteInput.text.length>0&&inviteInput.length<=16384;onClicked:root.addPasted()}
                     }
                 }
-                Section {height:produceBody.height+18
+                Section {objectName:"lanConsensusSection";height:consensusBody.height+18;visible:root.consensus.anchor_bound===true||root.setup.validator_invite_count>0||root.owned&&root.profileControls&&root.setup.ephemeral_keys===false&&root.setup.allow_dag_transactions===true
+                    Column {id:consensusBody;x:9;y:9;width:parent.width-18;spacing:7
+                        Label {text:"Validatorer · signerad LAN-kommitté";font.bold:true}
+                        Row {width:parent.width;spacing:7;visible:root.profileControls&&root.setup.ephemeral_keys===false&&(root.lan.participation||{}).light_client!==true
+                            CryptoField {id:validatorProfileField;objectName:"lanValidatorProfile";width:Math.max(80,parent.width-230);height:27;maximumLength:32;placeholderText:"Validatorprofilens namn";enabled:root.canAct;Accessible.name:"Validatorprofilens lokala namn"}
+                            Action {objectName:"lanValidatorCreate";text:"Skapa profil";enabled:root.canAct&&root.owned&&!root.ready&&/^[A-Za-z][A-Za-z0-9_-]{0,31}$/.test(validatorProfileField.text);onClicked:root.run("lan_validator_create",{profile:validatorProfileField.text})}
+                            Action {objectName:"lanValidatorOpen";text:"Öppna profil";enabled:root.canAct&&root.owned&&/^[A-Za-z][A-Za-z0-9_-]{0,31}$/.test(validatorProfileField.text);onClicked:root.run("lan_validator_open",{profile:validatorProfileField.text})}
+                        }
+                        Repeater {model:root.consensus.profiles||[]
+                            Row {required property var modelData;width:consensusBody.width;spacing:7
+                                Label {width:Math.max(80,parent.width-185);text:String(modelData.profile)+" · "+String(modelData.state);font.pixelSize:9}
+                                Action {objectName:"lanValidatorStart";text:"Starta";visible:root.profileControls;enabled:root.canAct&&root.consensus.anchor_bound===true&&modelData.state!=="STARTING"&&modelData.owned_native_process!==true;onClicked:root.run("lan_validator_start",{profile:String(modelData.profile)})}
+                                Action {objectName:"lanValidatorStop";text:"Stoppa";visible:root.profileControls;enabled:root.canAct&&modelData.owned_native_process===true;onClicked:root.run("lan_validator_stop",{profile:String(modelData.profile)})}
+                            }
+                        }
+                        Label {objectName:"lanConsensusStatus";width:parent.width;text:root.consensus.anchor_bound===true?String(root.consensus.validator_count)+" validatoridentiteter · kvorum "+String(root.consensus.quorum_required)+" · "+String(root.consensus.state):String(root.setup.validator_invite_count||0)+" publika inbjudningar · genesis ännu inte bunden";color:RuntimeTheme.GGTheme.cyan}
+                        Repeater {model:root.consensus.members||[]
+                            Label {required property var modelData;objectName:"lanConsensusMember";width:consensusBody.width;text:String(modelData.label)+" · ägare "+String(modelData.owner_label)+(modelData.local_owner?" · egen":"")+" · "+String(modelData.state);font.pixelSize:9}
+                        }
+                        Label {objectName:"lanConsensusCertificateStatus";width:parent.width;text:root.consensus.certificate_height!==null&&root.consensus.certificate_height!==undefined?"SDK-verifierat certifikat · höjd "+String(root.consensus.certificate_height)+" · "+String(root.consensus.certified_dag_blocks)+" DAG-block · "+String(root.consensus.certified_dag_transactions)+" TX":"Inget verifierat certifikat tillgängligt";font.pixelSize:9}
+                        Label {width:parent.width;text:(root.profileControls?"Lokala Windows-profiler skyddas av ditt Windows-konto. ":"Profiler skapas och låses upp privat i nodens CLI. ")+"Antalet nycklar visar kommittén; det bevisar inte oberoende operatörer. Lokalt godtagna DAG-block får finalitet först genom verifierat medlemsbevis.";font.pixelSize:9;color:RuntimeTheme.GGTheme.dim}
+                    }
+                }
+                Section {height:produceBody.height+18;visible:(root.lan.participation||{}).light_client!==true
                     Column {id:produceBody;x:9;y:9;width:parent.width-18;spacing:7
                         Label {colorKey:"ui.lan.step.produce";text:root.stress.enabled===true?"4 · DAG-TX-session · tidsbegränsade prov":"4 · Kör den här apparatens två producenter";font.bold:true}
                         Row {spacing:7;visible:root.stress.enabled!==true
                             CryptoField {id:cadence;objectName:"lanInterval";property string uiColorScope:"ui.lan.field.interval";width:80;height:27;text:"250";maximumLength:5;inputMethodHints:Qt.ImhDigitsOnly;enabled:root.canAct&&root.ready&&!root.producing&&!root.stressRunning&&root.stress.enabled!==true;Accessible.name:"Producentintervall i millisekunder, 100 till 60000"}
-                            Action {objectName:"lanProduce";text:"▷ Producera lokalt";enabled:cadence.enabled&&/^[0-9]{3,5}$/.test(cadence.text)&&Number(cadence.text)>=100&&Number(cadence.text)<=60000;onClicked:root.run("lan_produce",{interval_ms:Number(cadence.text)})}
+                            Action {objectName:"lanProduce";text:"▷ Producera lokalt";enabled:!root.replicaOnly&&cadence.enabled&&/^[0-9]{3,5}$/.test(cadence.text)&&Number(cadence.text)>=100&&Number(cadence.text)<=60000;onClicked:root.run("lan_produce",{interval_ms:Number(cadence.text)})}
                             Action {objectName:"lanPause";text:"Ⅱ Pausa lokalt";enabled:root.canAct&&root.ready&&root.producing&&!root.stressRunning&&root.stress.enabled!==true;onClicked:root.run("lan_pause",{})}
                         }
                         Label {objectName:"lanProducerModeNote";colorKey:"ui.lan.produce.note";width:parent.width;text:root.stress.enabled===true?"Använd DAG-provet nedan eller Starta-knappen. Koordinatorn styr ett gemensamt, tidsbegränsat prov med tre apparater. Varje apparat använder sina egna signerare; Stoppa LAN-peer avslutar den här apparatens LAN-peer.":"Paus stoppar bara lokal produktion; verifiering och relä fortsätter. Stoppa avslutar denna ägda peer. MAINNET är inte aktiverat, trafiken är inte krypterad och protokollet är ännu ett privat LAN-experiment.";color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
                     }
                 }
-                Section {objectName:"lanDagStressSection";height:stressBody.height+18;visible:root.stressSupported&&root.owned
+                Section {objectName:"lanDagStressSection";height:stressBody.height+18;visible:root.stressSupported&&root.owned&&(root.lan.participation||{}).light_client!==true
                     Column {id:stressBody;x:9;y:9;width:parent.width-18;spacing:7
                         Label {colorKey:"ui.lan.dag.stress.title";text:"5 · DAG-stressprov · tre apparaters egna signerare";font.bold:true}
                         Label {objectName:"lanDagStressScope";colorKey:"ui.lan.dag.stress.scope";width:parent.width;text:root.stress.enabled===true?"Varje apparat producerar i egen takt. Grafen visar lokalt verifierade block och TX. Produktion mäts under nodens egen arbetsperiod. Synkprovet mäter separat hur snabbt alla tre får identiska kopior; den tiden är inte nätets kapacitet eller finalitet. Testtokenkvitton räknas inte som DAG-TX.":"Den här sessionen saknar uttryckligt DAG-TX-val från alla tre. Starta en ny parning med DAG-testtransaktioner valda på varje apparat.";color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}
@@ -544,11 +588,14 @@ Item {
                             }
                         }
                         Flow {objectName:"lanDagStressActions";width:parent.width;spacing:7
+                            Action {objectName:"lanOwnProductionStart";visible:root.ownNode.supported===true;text:"▷ Kör bara denna nod";enabled:root.canStartOwn;onClicked:root.run("lan_dag_produce_start",{duration_ms:Number(stressDuration.text)*1000,transactions_per_block:Number(stressTransactions.text),interval_ms:Number(stressInterval.text)})}
+                            Action {objectName:"lanOwnProductionStop";visible:root.ownNode.supported===true;text:"Ⅱ Pausa denna nod";enabled:root.canAct&&root.ownRunning&&root.ownNode.state!=="STOPPING";onClicked:root.run("lan_dag_produce_stop",{})}
                             Action {objectName:"lanDagStressStart";text:"▷ Kör DAG-prov · 3 apparater";tip:"Kör ett tidsbegränsat DAG-prov med tre uttryckligen anslutna apparater";enabled:root.canStartStress;onClicked:root.run("lan_dag_stress_start",{duration_ms:Number(stressDuration.text)*1000,transactions_per_block:Number(stressTransactions.text),interval_ms:Number(stressInterval.text)})}
                             Action {objectName:"lanDagStressStop";text:"■ Stoppa DAG-prov";enabled:root.canAct&&root.stressSupported&&root.stress.role==="COORDINATOR"&&root.stressRunning;onClicked:root.run("lan_dag_stress_stop",{})}
                             Action {objectName:"lanDagStressCopyResult";text:"Kopiera provresultat";enabled:root.stressSupported&&root.stress.enabled===true&&root.resultState(root.stress.state)!==null&&!!root.surfaceHost&&!!root.surfaceHost.tmogCopy;onClicked:root.copyStressResult()}
                         }
                         Label {objectName:"lanDagStressStatus";colorKey:"ui.lan.dag.stress.status";width:parent.width;text:"DAG-prov · "+root.stressStateLabel+" · "+root.measuredNumber(root.stress.elapsed_ms)+" ms";color:root.stress.last_error?RuntimeTheme.GGTheme.negative:RuntimeTheme.GGTheme.cyan}
+                        Label {objectName:"lanOwnProductionStatus";visible:root.ownNode.supported===true;width:parent.width;text:"Egen nod · "+String(root.ownNode.state||"IDLE")+" · "+root.measuredNumber((root.ownNode.production||{}).blocks)+" egna block · "+root.measuredNumber((root.ownNode.production||{}).transactions)+" TX · "+root.measuredRate((root.ownNode.production||{}).tps)+" TX/s under egen arbetsperiod. Start/stopp påverkar bara denna nod.";color:RuntimeTheme.GGTheme.cyan;font.pixelSize:9}
                         Label {objectName:"lanDagStressLocal";colorKey:"ui.lan.dag.stress.local";width:parent.width;text:"Lokalt verifierat under provet: "+root.measuredNumber(root.stress.blocks)+" förslag · "+root.measuredNumber(root.stress.transactions)+" DAG-TX"}
                         Label {objectName:"lanDagNodeProduction";width:parent.width;text:root.productionText();visible:text.length>0;color:RuntimeTheme.GGTheme.cyan;font.pixelSize:9}
                         Label {objectName:"lanDagStressRates";colorKey:"ui.lan.dag.stress.rates";width:parent.width;text:"DAG · senaste mätfönstret: "+root.measuredRate((root.state.block_graph||{}).metrics?root.state.block_graph.metrics.bps:undefined)+" block/s · "+(root.stress.blocks>0?(root.stress.transactions/root.stress.blocks).toFixed(1):"—")+" TX/block under provet · "+root.measuredRate((root.state.block_graph||{}).metrics?root.state.block_graph.metrics.tps:undefined)+" TX/s · lokal validering";color:RuntimeTheme.GGTheme.dim;font.pixelSize:9}

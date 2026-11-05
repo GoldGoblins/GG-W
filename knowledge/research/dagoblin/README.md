@@ -53,18 +53,31 @@ källkodsgranskning. Det är inte en fullständig formell revision av alla syste
 | [Breda primärkällor](broader-primary-sources.json) | Källor och avgränsad läsomfattning utöver Kaspa. |
 | [Körbar kapacitetsmodell](../../../support/dagoblin/analyze.py) | Exakta byte-/tidsberäkningar; inga nätanrop eller kryptografiska löften. |
 | [Nuvarande prototyp](../../gg-parallel-dag.md) | Faktisk körbar implementation och dess hårda lokala gränser. |
+| [Replika och lättklient](replica-light-proof-review-2026-10-31.md) | Lokalt verifierad verklig SDK-finalitet, kontobevis och olika valideringsomfattning. |
+| [Historiskt bevisindex](native-proof-index-review-2026-10-31.md) | Atomisk indexering, konsensusisolering, återställning och begränsad frågelast. |
+| [Certifierade konfliktbevis](certified-conflict-review-2026-10-31.md) | Båda signerade certifikaten bevaras, SDK-verifieras och stoppar berörda validatorer beständigt. |
+| [Producentgrenar och återhämtning](producer-branch-review-2026-10-31.md) | Beständiga kandidater, karantän per producent och faktisk payloadexekvering av SDK-vald gren. |
+| [Ingressisolering och läst logg](resource-isolation-review-2026-10-31.md) | Krediter per peer, avvisade poster utan falska valideringskvitton och beständig återhämtning. |
+| [Kandidatcache och determinism](candidate-retention-review-2026-11-01.md) | Begränsad native-cache, oförändrad committad historik och återexekvering av beslutade block. |
+| [Alternativ SDK-payloadkälla](sdk-payload-availability-review-2026-11-01.md) | Verkliga committade bytes, isolerad frågeväg och full validering när en LAN-peer undanhåller data. |
+| [Leveranskontrakt](delivery-contract.json) | Aktuell status per accepterat krav; lokal kod, fysisk acceptans och publik aktivering skiljs åt. |
 
 ## Beslut för detta arbete
 
 **DAGoblin** betecknar utvecklingsspåret. Den nuvarande signerade förslags-DAG:en
 är en lokal protokollprototyp. Hardhat och CometBFT behåller sina egna regler.
 Ingen lokal förhandsberäkning eller animation ommärks till ekonomisk slutlighet.
-Prototypens `canonical_finalized` är fortfarande noll.
+Den tidigare publicerade prototypens `canonical_finalized` är noll. Senare
+ännu opublicerad kod har i lokala processprov bundit verklig DAG-exekvering
+och ordning till SDK-certifikat och verifierat medlemskap. Fullreplikans
+lokala kanoniska räknare och lättklientens certifierade nätrot skiljs åt;
+lättklienten påstår inte full lokal transaktionsverifiering.
 
 Kapacitetsmodellen får planera högre takt, men ändrar inte testmotorns
 resursgränser eller startar last. Detta skyddar den delade datorn. Produktion
-behöver en validerad admission-/konsensusintegration innan högre takt kan
-aktiveras. Ingen publik nätverkslansering eller GitHub-publicering är utförd.
+behöver fortsatt fysisk lastacceptans och adversariell verifiering innan
+kapacitetsmålet kan godkännas. Den samlade nya ändringen har inte pushats och
+ingen publik nätverkslansering är utförd.
 
 ## Antaganden och öppna frågor
 

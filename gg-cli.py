@@ -23,7 +23,7 @@ def main():
     # A terminal started inside the desktop must still use its own state.
     os.environ['GG_DESKTOP_STATE_ROOT'] = os.environ.get('GG_TERMINAL_STATE_ROOT', str(home/'state'))
     os.environ['GG_DESKTOP_DATA_ROOT'] = os.environ.get('GG_TERMINAL_DATA_ROOT', str(home/'data'))
-    required = ('prompt_toolkit', 'wcwidth', 'psutil', 'Crypto', 'bech32', 'mnemonic')
+    required = ('prompt_toolkit', 'wcwidth', 'psutil', 'Crypto', 'bech32', 'mnemonic', 'nacl')
     if any(importlib.util.find_spec(name) is None for name in required):
         candidates = ([ROOT/'.venv-windows/Scripts/python.exe'] if os.name == 'nt' else [])
         candidates.append(home/'venv'/('Scripts/python.exe' if os.name == 'nt' else 'bin/python'))

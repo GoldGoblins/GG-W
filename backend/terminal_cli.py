@@ -19,7 +19,7 @@ import time
 import unicodedata
 
 VIEWS=('WALLET','MARKETPLACE','NETWORK')
-FOREGROUND_COMMANDS=frozenset({'network.start','dag.live_start','lan.start','lan.join_file'})
+FOREGROUND_COMMANDS=frozenset({'network.start','dag.live_start','lan.start','lan.join_file','lan.resume','protocol.run','protocol.node_start','protocol.light_start','protocol.replica_restore_start'})
 SENSITIVE={'password','passphrase','mnemonic','words','answers','privatekey','private_key','secret','seed','seed_phrase',
            'validator_seed','node_seed','signing_key'}
 _ESCAPE=re.compile(r'\x1b(?:\][^\x07\x1b]*(?:\x07|\x1b\\)|\[[0-?]*[ -/]*[@-~]|[PX^_][^\x1b]*(?:\x1b\\)|[@-_])')
@@ -120,8 +120,8 @@ def parse_command(text,extra=None):
             if not separator or not re.fullmatch(r'[a-z][a-z0-9_]{0,63}',key) or key in args:
                 raise ValueError('TERMINAL_ARGUMENT_INVALID')
             # Financial values remain exact strings, never binary floats.
-            if key in {'sender','index','count','blocks','transactions_per_block','max_transactions_per_block','interval_ms','producer_count','port','duration_ms','batch'} and re.fullmatch(r'-?\d+',value):args[key]=int(value)
-            elif key in {'auto_produce','distribute','allow_test_tokens','enable_test_tokens','allow_dag_transactions','enable_dag_transactions'} and value in {'true','false'}:args[key]=value=='true'
+            if key in {'sender','index','count','blocks','transactions_per_block','max_transactions_per_block','interval_ms','producer_count','port','p2p_port','producer_slot','duration_ms','duration_seconds','batch','timeout'} and re.fullmatch(r'-?\d+',value):args[key]=int(value)
+            elif key in {'auto_produce','distribute','allow_test_tokens','enable_test_tokens','allow_dag_transactions','enable_dag_transactions','enable_consensus','enable_segmented'} and value in {'true','false'}:args[key]=value=='true'
             else:args[key]=value
     if extra:
         for key,value in extra.items():
@@ -712,12 +712,61 @@ def _foreground_production(value):
     return result
 
 
+def _foreground_peer_sync(lan):
+    """Authenticated per-peer log observations, never global finality/ACK."""
+    result=[];source=lan.get('peer_status',[])
+    if not isinstance(source,list):return result
+    for index,row in enumerate(source[:2]):
+        row=_object(row);sync=_object(row.get('sync'));label=row.get('label')
+        if (not isinstance(label,str) or not re.fullmatch(r'[A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ0-9 _-]{0,63}',label)
+                or re.search(r'[0-9a-f]{16,}|[A-Za-z0-9]{24,}|secret|password|bearer|api[_ -]?key|token',label,re.I)):
+            label='Peer '+str(index+1)
+        state=sync.get('state')
+        if state not in {'UNOBSERVED','CAUGHT_UP','CATCHING_UP','BLOCK_EXCEEDS_LOCAL_LIMIT','SCANNED_WITH_REFUSALS'}:state='UNOBSERVED'
+        counts={key:sync.get(key) if type(sync.get(key)) is int and 0<=sync[key]<=4095 else None
+                for key in ('received_records','remote_records','pending_records')}
+        if (any(value is None for value in counts.values()) or
+                counts['remote_records']-counts['received_records']!=counts['pending_records'] or
+                state in ('CAUGHT_UP','SCANNED_WITH_REFUSALS') and counts['pending_records']!=0 or
+                state=='CATCHING_UP' and counts['pending_records']==0):
+            counts={key:None for key in counts};state='UNOBSERVED'
+        extra_keys=('validated_prefix','declined_records','unresolved_records');extra={}
+        if any(key in sync for key in extra_keys) or state=='SCANNED_WITH_REFUSALS':
+            extra={key:sync.get(key) for key in extra_keys}
+            if (counts['received_records'] is None or any(type(value) is not int or not 0<=value<=4095 for value in extra.values())
+                    or not 0<=extra['validated_prefix']<=counts['received_records']
+                    or not extra['unresolved_records']<=extra['declined_records']<=counts['received_records']
+                    or extra['unresolved_records']>counts['received_records']-extra['validated_prefix']
+                    or state=='CAUGHT_UP' and extra['unresolved_records']!=0
+                    or state=='SCANNED_WITH_REFUSALS' and extra['unresolved_records']==0):
+                extra={key:None for key in extra_keys};counts={key:None for key in counts};state='UNOBSERVED'
+        result.append({'label':label,'state':state,'node_role':row.get('node_role') if row.get('node_role') in ('producer','replica','light') else None,
+            **counts,**extra,'basis':'AUTHENTICATED_PEER_LOG_NOT_FINALITY'})
+    return result
+
+
 def foreground_summary(command, body):
     """Bounded public observations; no wallet refresh, peer or signing input."""
     body=_object(body)
-    if command in {'lan.start','lan.join_file'}:
+    if command in {'protocol.run','protocol.node_start','protocol.light_start','protocol.replica_restore_start'}:
+        network=_object(body.get('protocol_network'));lan=_object(body.get('lan'))
+        return {'schema':'gg.terminal.foreground.v1','engine':'DAGOBLIN_NATIVE_PROTOCOL','scope':'LOCAL_TESTNET_ACCEPTANCE',
+            'state':body.get('state'),'node_role':network.get('node_role'),'connection_state':lan.get('connection_state','UNOBSERVED'),
+            'authenticated_peers':len(lan.get('authenticated_peers',[])),'certificate_height':body.get('certificate_height'),
+            'certified_blocks':body.get('certified_blocks'),'applied_payments':body.get('certified_transactions'),'rejected_payments':body.get('rejected_transactions'),
+            'registered_producers':body.get('producer_count'),'producer_records':[{key:row.get(key) for key in ('display_name','producer_key','owner_peer_key','node_key','platform','proposals','transactions','record_height')}
+                for row in body.get('producers',[])[:32]],'own_accounts':body.get('own_financial_accounts',[])[:16],
+            'economy':body.get('economic_state'),'fee_pot_atomic':body.get('fee_pot_atomic'),'worker_active':network.get('worker_active') is True,
+            'own_journals':_object(network.get('own_journals')),'pools':network.get('pools',[])[:4],
+            'local_history':body.get('local_history'),'archive_startup':network.get('archive_startup'),
+            'recovery_startup':network.get('recovery_startup'),'node_ready':body.get('node_ready') is True,
+            'consensus_signing':body.get('consensus_signing') is True,
+            'resources':network.get('resources'),'proof_relay_resources':_object(network.get('proof_relay')).get('resources'),
+            'payments_executed_from_transport_ack':False,'certificate_is_network_liveness':False,'last_error':network.get('last_error','')}
+    if command in {'lan.start','lan.join_file','lan.resume'}:
         lan=_object(body.get('lan'));setup=_object(body.get('lan_setup'))
         tokens=_object(body.get('test_tokens'));circle=_object(body.get('token_circle'))
+        participation=_object(lan.get('participation'))
         stress=_object(body.get('dag_stress'))
         stress_summary={key:stress[key] for key in (
             'state','role','elapsed_ms','duration_ms','transactions_per_block','interval_ms',
@@ -730,21 +779,81 @@ def foreground_summary(command, body):
             for row in stress.get('participants',[])[:3] if isinstance(row,dict) and isinstance(row.get('workload'),dict)]
         summary={'schema':'gg.terminal.foreground.v1','engine':'DAGOBLIN_PRIVATE_LAN',
                 'scope':'PRIVATE_LAN_SESSION_EXPERIMENT','state':lan.get('state'),
-                'endpoint':lan.get('endpoint'),'producer_count':body.get('producer_count',0),
+                'endpoint':lan.get('endpoint'),'producer_count':lan.get('producer_count',body.get('producer_count',0)),
+                'producer_slot_count':lan.get('producer_slot_count',body.get('producer_count',0)),
                 'local_producer_indices':lan.get('local_producer_indices',[]),
                 'candidate_peers':setup.get('invite_count',0),'configured_peers':lan.get('configured_peers',0),
                 'authenticated_peers':len(lan.get('authenticated_peers',[])),
                 'connection_state':lan.get('connection_state','UNOBSERVED'),'node_label':lan.get('label',''),
-                'proposals':body.get('blocks_admitted',0),'canonical_finalized':0,
+                'peer_sync':_foreground_peer_sync(lan),
+                'participation':{**{key:participation.get(key) if type(participation.get(key)) is bool else None
+                    for key in ('producer','replica','consensus_validator','native_full_observer','light_client','mining','financial_execution')},
+                    'role':participation.get('role') if participation.get('role') in ('producer','replica','light') else None,
+                    'verification_scope':participation.get('verification_scope') if participation.get('verification_scope') in
+                        {'ALL_ADMITTED_DAG_TEST_TX','EMPTY_PROPOSALS_ONLY','SDK_CERTIFICATES_AND_RELEVANT_MEMBERSHIP',
+                         'SDK_CERTIFICATES_ACCOUNT_STATE_AND_REQUESTED_MONETARY_RECEIPTS'} else None},
+                'proposals':body.get('blocks_admitted',0),'canonical_finalized':body.get('canonical_finalized',0),
                 'validated_dag_transactions':body.get('transactions_validated',0),
                 'dag_test_transactions_enabled':stress.get('enabled') is True,
                 'dag_stress':stress_summary,
+                'dag_production':{**{key:_object(body.get('dag_production')).get(key) for key in
+                    ('scope','state','duration_ms','transactions_per_block','interval_ms','elapsed_ms','worker_active','selected','stop_reason','last_error')},
+                    'production':_foreground_production(_object(body.get('dag_production')).get('production'))},
                 'test_tokens':tokens,'token_circle':circle,
-                'ephemeral_keys':True,'new_pairing_after_restart':True,
+                'dag_consensus':_object(body.get('dag_consensus')),
+                'native_observers':_object(body.get('native_observers')),
+                'ephemeral_keys':setup.get('ephemeral_keys',True),'new_pairing_after_restart':setup.get('new_pairing_after_restart',True),
+                'storage':{key:_object(lan.get('storage')).get(key) for key in
+                    ('enabled','profile','state','keys_encrypted_at_rest','restored','records','bytes','counts','record_limit','byte_limit','kind_limits','canonical_finality','whole_disk_rollback_protection')},
                 'physical_hosts_verified':False,'transactions_enabled':lan.get('transactions_enabled') is True,
                 'financial_transactions_enabled':False,'mainnet_enabled':False}
         if isinstance(lan.get('transport'),dict):summary['local_transport']=_foreground_lan_transport(lan)
         if isinstance(body.get('desktop_observation'),dict):summary['desktop_observation']=body['desktop_observation']
+        if body.get('mode')=='SEGMENTED_SDK_CERTIFIED_VIEW':
+            def exact_counter(value):
+                return value if type(value) is str and re.fullmatch(r'0|[1-9][0-9]{0,18}',value) and int(value)<2**63 else None
+            summary['segmented']={'certified_blocks':exact_counter(body.get('certified_blocks')),
+                'certified_transactions':exact_counter(body.get('certified_transactions')),
+                'client_full_history_replayed':body.get('local_full_history_replayed') is True,
+                'scope':'SDK_CERTIFIED_ACTIVE_MEMBERSHIP'}
+        if body.get('mode')=='FINANCIAL_SDK_CERTIFIED_VIEW':
+            def financial_counter(value):
+                return value if type(value) is str and re.fullmatch(r'0|[1-9][0-9]{0,18}',value) and int(value)<2**63 else None
+            summary.update(scope='PRIVATE_LAN_FINANCIAL_SDK_EXPERIMENT',financial_transactions_enabled=True)
+            summary['financial']={'certified_blocks':financial_counter(body.get('certified_blocks')),
+                'applied_payments':financial_counter(body.get('certified_transactions')),
+                'rejected_payments':financial_counter(body.get('rejected_transactions')),
+                'own_accounts':[{key:row.get(key) for key in ('address','balance_atomic','nonce','exists','state_height','certificate_height','verification_scope') if key in row}
+                    for row in body.get('own_financial_accounts',[])[:4] if isinstance(row,dict)],
+                'client_full_history_replayed':body.get('local_full_history_replayed') is True,
+                'scope':'SDK_CERTIFIED_ACCOUNT_STATE_AND_REQUESTED_MONETARY_RECEIPTS',
+                'mining':False,'allocation':'FIXED_PRIVATE_TEST_ALLOCATION'}
+            relay=_object(body.get('financial_account_relay'))
+            if relay:
+                summary['financial']['account_relay']={key:relay.get(key) for key in
+                    ('enabled','state','producer_index','transactions_per_block','queued_or_working','receiving','retained_raw_bytes','last_error')}
+                summary['financial']['account_relay']['outbound']=[{key:row.get(key) for key in
+                    ('state','relay_peer','relay_request','relay_transport_accepted','producer_report','producer_report_is_execution_evidence')}
+                    for row in relay.get('outbound',[])[:16] if isinstance(row,dict)]
+        proofs=_object(body.get('dag_proofs'))
+        if proofs:
+            summary['proofs']={key:proofs.get(key) for key in ('state','role','certificate_height','canonical_order_complete',
+                'proof_payload_bytes','durable_floor','last_error','accounts_certificate_height')}
+            payload=_object(proofs.get('payload_recovery'))
+            if type(payload.get('enabled')) is bool:
+                progress={'enabled':payload['enabled'],'state':payload.get('state') if payload.get('state') in
+                    ('IDLE','RECOVERING','STOPPED','FAULT','LIGHT_PROOFS_ONLY') else 'UNOBSERVED'}
+                for key,limit in (('pending',24),('recovered_blocks',4095),('recovered_bytes',512*1024*1024)):
+                    value=payload.get(key);progress[key]=value if type(value) is int and 0<=value<=limit else None
+                phase=payload.get('phase');progress['phase']=phase if phase in ('IDLE','VERIFYING_REFERENCE','DOWNLOADING','VALIDATING') else 'UNOBSERVED'
+                for key,limit in (('partial_records',8),('partial_downloaded_bytes',64*1024*1024),('partial_reserved_bytes',64*1024*1024)):
+                    value=payload.get(key);progress[key]=value if type(value) is int and 0<=value<=limit else None
+                if (progress['partial_downloaded_bytes'] is not None and progress['partial_reserved_bytes'] is not None
+                        and progress['partial_downloaded_bytes']>progress['partial_reserved_bytes']):progress['partial_downloaded_bytes']=None
+                error=payload.get('last_error','');progress['last_error']=error if isinstance(error,str) and re.fullmatch(r'GG_[A-Z0-9_]{1,90}',error) else ''
+                summary['proofs']['payload_recovery']=progress
+            summary['certified_test_accounts']=[{key:row.get(key) for key in ('display_name','balance_atomic','nonce','verification_scope')}
+                for row in body.get('certified_test_accounts',[])[:2] if isinstance(row,dict)]
         resources=_object(body.get('dag_resources'))
         if resources:
             test=_object(resources.get('test'));plan=_object(resources.get('plan'))
@@ -769,7 +878,8 @@ def foreground_summary(command, body):
             'physical_hosts':body.get('physical_hosts',1)}
 
 
-def foreground_session(service, command, started, *, json_output=False):
+def foreground_session(service, command, started, *, json_output=False, own_production=None,validator_profiles=None,
+                       observer_profiles=None,observer_create=None):
     """Keep an explicitly started owned lab or private LAN peer until Ctrl+C.
 
     One small status poll per second; unchanged summaries are not printed.
@@ -780,15 +890,30 @@ def foreground_session(service, command, started, *, json_output=False):
         raise ValueError('TERMINAL_FOREGROUND_LOCAL_START_REQUIRED')
     prior=None
     current=started
+    pending=dict(own_production) if own_production is not None else None
+    pending_validators=list(validator_profiles or [])
+    pending_observers=list(observer_profiles or []);create_observers=set(observer_create or [])
     while True:
+        if pending_validators and _object(current.get('dag_consensus')).get('anchor_bound') is True:
+            requested=pending_validators;pending_validators=[]
+            for profile in requested:current=service.dispatch('lan.validator_start',{'profile':profile})
+        if pending_observers and _object(current.get('dag_consensus')).get('anchor_bound') is True:
+            requested=pending_observers;pending_observers=[]
+            for profile in requested:
+                current=service.dispatch('lan.observer_create' if profile in create_observers else 'lan.observer_open',{'profile':profile})
+                current=service.dispatch('lan.observer_start',{'profile':profile})
+        if pending is not None and _object(current.get('lan')).get('state')=='READY':
+            requested=pending;pending=None  # Consume before dispatch; no retry.
+            current=service.dispatch('lan.dag_produce_start',requested)
         summary=foreground_summary(command,current)
+        if pending is not None:summary['requested_own_production']={'state':'WAITING_FOR_PAIRED_SESSION',**pending}
         encoded=json.dumps(public_value(summary),ensure_ascii=False,allow_nan=False)
         if encoded!=prior:
             if json_output:print(encoded,flush=True)
             else:print('LOCAL · Ctrl+C stoppar den ägda sessionen · '+encoded,flush=True)
             prior=encoded
         time.sleep(1)
-        current=service.dispatch({'dag.live_start':'dag.status','lan.start':'lan.status','lan.join_file':'lan.status'}.get(command,'network.status'),{})
+        current=service.dispatch({'dag.live_start':'dag.status','lan.start':'lan.status','lan.join_file':'lan.status','lan.resume':'lan.status','protocol.run':'protocol.status','protocol.node_start':'protocol.status','protocol.light_start':'protocol.status','protocol.replica_restore_start':'protocol.status'}.get(command,'network.status'),{})
 
 
 def main(argv=None,service_factory=None):
@@ -797,24 +922,55 @@ def main(argv=None,service_factory=None):
     parser.add_argument('--once',action='store_true',help='Skriv aktuell vy en gång utan helskärm.')
     parser.add_argument('--command',help='Kör ett servicekommando; inget skal används.')
     parser.add_argument('--args',default='{}',help='Publika kommandoargument som JSON-objekt; inga lösenord eller nycklar.')
-    parser.add_argument('--foreground',action='store_true',help='Behåll uttryckligt dag.live_start, lan.start, lan.join_file eller lokalt network.start tills Ctrl+C; ingen daemon.')
+    parser.add_argument('--foreground',action='store_true',help='Behåll uttryckligt dag.live_start, lan.start, lan.join_file, lan.resume eller lokalt network.start tills Ctrl+C; ingen daemon.')
+    parser.add_argument('--own-production',metavar='JSON',help='Ett ändligt eget DAG-jobb när den parade LAN-sessionen är redo. JSON: duration_ms, transactions_per_block, interval_ms. Kräver --foreground lan.start/lan.join_file/lan.resume; styr bara denna process.')
     parser.add_argument('--bootstrap-file',help='Signerad publik LAN-bootstrap för lan.start; inga privata nycklar.')
     parser.add_argument('--bootstrap-out',help='Skapa en ny publik LAN-bootstrapfil vid --foreground lan.start; skriver inte över.')
     parser.add_argument('--invite-out',help='Skapa en ny signerad publik LAN-inbjudan vid --foreground lan.start; skriver inte över.')
+    parser.add_argument('--validator-profile',action='append',default=[],metavar='NAMN',help='Öppna en befintlig skyddad validatorprofil och starta den när dess signerade LAN-kommitté är installerad. Kan upprepas, högst fyra.')
+    parser.add_argument('--validator-create',action='append',default=[],metavar='NAMN',help='Skapa en ny skyddad validatorprofil före LAN-genesis och anmäl dess publika inbjudan. Kan upprepas, högst fyra.')
+    parser.add_argument('--observer-profile',action='append',default=[],metavar='NAMN',help='Öppna och starta en befintlig full observer när den signerade LAN-kommittén är installerad. Noll rösträtt; högst två egna profiler.')
+    parser.add_argument('--observer-create',action='append',default=[],metavar='NAMN',help='Skapa och starta en skyddad full observer när den signerade LAN-kommittén är installerad. Kräver beständig nodprofil; högst två.')
+    parser.add_argument('--account-profile',action='append',default=[],metavar='NAMN',help='Öppna en befintlig skyddad kontoprofil för observation i den ägda LAN-sessionen. Signerar eller skickar inga betalningar. Högst sexton.')
     parser.add_argument('--view',choices=('wallet','marketplace','network'),default='wallet')
     parser.add_argument('--width',type=int,default=80)
     parser.add_argument('--height',type=int,default=24)
     args=parser.parse_args(argv)
-    service=None
+    service=None;command=None;arguments={}
     try:
-        foreground_command=None;foreground_arguments=None
+        foreground_command=None;foreground_arguments=None;own_production=None
         public_files=bool(args.bootstrap_file or args.bootstrap_out or args.invite_out)
-        if args.foreground or public_files:
+        validators=args.validator_profile+args.validator_create
+        observers=args.observer_profile+args.observer_create
+        account_profiles=args.account_profile
+        if len(validators)>4 or len(set(validators))!=len(validators):raise ValueError('GG_VALIDATOR_LOCAL_PROFILE_LIMIT')
+        if len(observers)>2 or len(set(observers))!=len(observers):raise ValueError('GG_OBSERVER_LOCAL_PROFILE_LIMIT')
+        if len(account_profiles)>16 or len(set(account_profiles))!=len(account_profiles):raise ValueError('GG_ACCOUNT_LOCAL_PROFILE_LIMIT')
+        if args.foreground or public_files or args.own_production is not None or validators or observers or account_profiles:
             if not args.command or args.once:
                 raise ValueError('TERMINAL_FOREGROUND_LOCAL_START_REQUIRED')
             extra=json.loads(args.args)
             if not isinstance(extra,dict):raise ValueError('TERMINAL_ARGUMENT_OBJECT_REQUIRED')
             foreground_command,foreground_arguments=parse_command(args.command,extra)
+            if validators and (not args.foreground or foreground_command not in {'lan.start','lan.join_file','lan.resume'}):
+                raise ValueError('GG_VALIDATOR_FOREGROUND_LAN_REQUIRED')
+            if observers and (not args.foreground or foreground_command not in {'lan.start','lan.join_file','lan.resume'}):
+                raise ValueError('GG_OBSERVER_FOREGROUND_LAN_REQUIRED')
+            if account_profiles and (not args.foreground or foreground_command not in {'lan.start','lan.join_file','lan.resume'}):raise ValueError('GG_ACCOUNT_FOREGROUND_LAN_REQUIRED')
+            if observers and ('profile' not in foreground_arguments or foreground_arguments.get('node_role')=='light'):
+                raise ValueError('GG_OBSERVER_PERSISTENT_OWNER_REQUIRED')
+            if args.own_production is not None:
+                if not args.foreground or foreground_command not in {'lan.start','lan.join_file','lan.resume'}:raise ValueError('GG_LAN_OWN_PRODUCTION_FOREGROUND_REQUIRED')
+                own_production=json.loads(args.own_production)
+                defaults={'duration_ms':60000,'transactions_per_block':1,'interval_ms':1000}
+                if not isinstance(own_production,dict) or set(own_production)-set(defaults):raise ValueError('GG_LAN_OWN_PRODUCTION_ARGUMENTS')
+                own_production={**defaults,**own_production}
+                for key,low,high in (('duration_ms',1000,600000),('transactions_per_block',1,50000),('interval_ms',0,60000)):
+                    if type(own_production[key]) is not int or not low<=own_production[key]<=high:raise ValueError('GG_LAN_OWN_PRODUCTION_ARGUMENTS')
+                if (foreground_arguments.get('allow_dag_transactions') is False or foreground_arguments.get('allow_test_tokens') is True
+                        or foreground_arguments.get('node_role')=='replica'):
+                    raise ValueError('GG_LAN_OWN_PRODUCTION_CONFLICTING_OPTIONS')
+                if foreground_command!='lan.resume':foreground_arguments['allow_dag_transactions']=True
             if args.foreground and foreground_command not in FOREGROUND_COMMANDS:
                 raise ValueError('TERMINAL_FOREGROUND_LOCAL_START_REQUIRED')
             if public_files and foreground_command!='lan.start':raise ValueError('GG_LAN_BOOTSTRAP_START_REQUIRED')
@@ -834,7 +990,14 @@ def main(argv=None,service_factory=None):
             require_terminal();print(safe_text(summary,4096))
             return input('Godkänn exakt denna åtgärd? Skriv ja: ').strip().casefold() in {'ja','yes'}
         def secret(prompt):
-            require_terminal()
+            protected_profile=(args.foreground and foreground_command in {'lan.start','lan.join_file','lan.resume'}
+                and 'profile' in (foreground_arguments or {}))
+            protected_profile=protected_profile or (command in {'lan.transition_commit','lan.validator_transition_create','lan.transition_invite','lan.transition_prepare',
+                'lan.observer_create','lan.observer_open','lan.observer_start','lan.account_create','lan.account_open'}
+                and ('profile' in arguments or 'owner_profile' in arguments or bool(arguments.get('profiles'))))
+            if protected_profile:
+                if not (sys.stdin.isatty() and sys.stdout.isatty() and sys.stderr.isatty()):raise ValueError('TERMINAL_INTERACTIVE_INPUT_REQUIRED')
+            else:require_terminal()
             import getpass
             return getpass.getpass(safe_text(prompt,512)+' ')
         # The service's default getpass must never read from redirected stdin.
@@ -847,6 +1010,11 @@ def main(argv=None,service_factory=None):
                     if not isinstance(extra,dict):raise ValueError('TERMINAL_ARGUMENT_OBJECT_REQUIRED')
                     command,arguments=parse_command(args.command,extra)
                 result=service.dispatch(command,arguments)
+                for profile in validators:
+                    result=service.dispatch('lan.validator_create' if profile in args.validator_create else 'lan.validator_open',{'profile':profile})
+                for profile in account_profiles:result=service.dispatch('lan.account_open',{'profile':profile})
+                if validators and command in {'lan.start','lan.join_file'} and _object(result.get('lan_setup')).get('coordinator') is not True:
+                    result=service.dispatch('lan.announce',{})
                 if args.bootstrap_out:service.dispatch('lan.export_bootstrap',{'path':args.bootstrap_out})
                 if args.invite_out:service.dispatch('lan.export_invite',{'path':args.invite_out})
             else:result=service.snapshot()
@@ -855,7 +1023,11 @@ def main(argv=None,service_factory=None):
             else:
                 model=TerminalModel(state=public_value(result),view=('wallet','marketplace','network').index(args.view),notice='Lokal status · --command help visar kommandon')
                 print('\n'.join(model.frame(args.width,args.height)))
-            if args.foreground:foreground_session(service,command,result,json_output=args.json)
+            if args.foreground:
+                options={'own_production':own_production} if own_production is not None else {}
+                if validators:options['validator_profiles']=validators
+                if observers:options.update(observer_profiles=observers,observer_create=args.observer_create)
+                foreground_session(service,command,result,json_output=args.json,**options)
             return 0
         if not sys.stdin.isatty() or not sys.stdout.isatty():raise ValueError('TERMINAL_TTY_REQUIRED_USE_ONCE_OR_JSON')
         app=TerminalApp(service);service=None

@@ -59,6 +59,18 @@ class DagWireTests(unittest.TestCase):
         assembler.feed(*frames[0])
         with self.assertRaisesRegex(ValueError, 'END'):assembler.feed(*frames[-1])
 
+    def test_resumed_frames_skip_only_existing_aligned_prefix_and_keep_full_identity(self):
+        record=self.record(100001);frames=list(record_frames(record,resume_offset=CHUNK_BYTES))
+        self.assertEqual(frames[0][1]['offset'],CHUNK_BYTES)
+        self.assertEqual(frames[1][1]['offset'],CHUNK_BYTES)
+        self.assertEqual(frames[-1][1]['size'],len(record['wire']))
+        with self.assertRaisesRegex(ValueError,'CHUNK_START'):RecordAssembler().feed(*frames[0])
+
+    def test_unaligned_out_of_range_or_small_resume_cannot_emit_frames(self):
+        for offset in (-1,True,1,100002):
+            with self.assertRaisesRegex(ValueError,'CHUNK_RESUME'):list(record_frames(self.record(100001),resume_offset=offset))
+        with self.assertRaisesRegex(ValueError,'CHUNK_RESUME'):list(record_frames(self.record(100),resume_offset=100))
+
 
 if __name__ == '__main__':
     unittest.main()

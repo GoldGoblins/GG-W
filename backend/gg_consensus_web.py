@@ -49,33 +49,38 @@ def _pack(value):
 
 
 def _pin(trust):
-    if not isinstance(trust,dict) or set(trust)!={'genesis','genesis_hash'}:
-        raise ValueError('GG_LIGHT_TRUST_REQUIRED')
-    try:
-        value=json.loads(_pack(trust))
-        genesis=value['genesis']
-        expected={'accounts','chain_id','decimals','genesis_time_unix','schema','supply_atomic','symbol','validators'}
-        if (not isinstance(genesis,dict) or set(genesis)!=expected
-            or genesis['schema']!='gg.native.genesis.v1'
-            or not isinstance(genesis['chain_id'],str) or not re.fullmatch(r'ggnet:[0-9a-f]{24}',genesis['chain_id'])
-            or type(genesis['decimals']) is not int or genesis['decimals']!=6
-            or genesis['supply_atomic']!='1000000000000' or genesis['symbol']!='GG-NET-TEST'
-            or type(genesis['genesis_time_unix']) is not int or not 0<genesis['genesis_time_unix']<2**53):
-            raise ValueError('invalid')
-        for name in ('accounts','validators'):
-            entries=genesis[name]
-            if (not isinstance(entries,list) or len(entries)!=4
-                or any(not isinstance(entry,str) or not re.fullmatch('[0-9a-f]{64}',entry) for entry in entries)
-                or len(set(entries))!=4):raise ValueError('invalid')
-        if set(genesis['accounts']) & set(genesis['validators']):raise ValueError('invalid')
-        if value['genesis_hash']!=hashlib.sha256(_pack(genesis)).hexdigest():raise ValueError('invalid')
+    from backend.gg_dag_segmented import validate_native_pin
+    from backend.gg_financial_dag import account_address
+    names={'expected_financial_account','expected_financial_receipt','expected_financial_registry','expected_financial_block','expected_financial_reward'}
+    if not isinstance(trust,dict) or set(trust)-{'genesis','genesis_hash'}-names:raise ValueError('GG_PROOF_PIN_MISMATCH')
+    pinned=validate_native_pin({name:trust[name] for name in ('genesis','genesis_hash') if name in trust})
+    def digest(value):
+        if type(value) is not str or not re.fullmatch(r'[0-9a-f]{64}',value):raise ValueError('GG_PROOF_PIN_MISMATCH')
         return value
-    except (KeyError,ValueError,TypeError,OverflowError,RecursionError):
-        raise ValueError('GG_LIGHT_TRUST_INVALID') from None
+    for name in names&set(trust):
+        value=trust[name]
+        if name=='expected_financial_account':account_address(value)
+        elif name=='expected_financial_block':digest(value)
+        elif name=='expected_financial_receipt':
+            if (not isinstance(value,dict) or set(value)!={'block','index','transaction_id'} or type(value['index']) is not int
+                    or not 0<=value['index']<5000):raise ValueError('GG_PROOF_PIN_MISMATCH')
+            digest(value['block']);digest(value['transaction_id'])
+        elif name=='expected_financial_registry':
+            if (not isinstance(value,dict) or set(value)!={'namespace','key'} or value['namespace'] not in
+                    ('producers','roles','epoch_work','rewards','operations')):raise ValueError('GG_PROOF_PIN_MISMATCH')
+            digest(value['key'])
+        else:
+            if (not isinstance(value,dict) or set(value)!={'index','address'} or type(value['index']) is not str
+                    or not re.fullmatch(r'[1-9][0-9]{0,19}',value['index']) or int(value['index'])>2**64-1):raise ValueError('GG_PROOF_PIN_MISMATCH')
+            account_address(value['address'])
+        pinned[name]=json.loads(_pack(value))
+    return pinned
 
 
 def _light_fingerprint():
-    files=[SOURCES/'go.mod',SOURCES/'go.sum',SOURCES/'toolchain.json',SOURCES/'ledger.go',SOURCES/'verify.go',SOURCES/'light/wasm_main.go']
+    # Match the builder's exact ordered public verifier graph; native-only
+    # transport/store files stay out. Fingerprint serialization stays strict.
+    files=[SOURCES/'go.mod',SOURCES/'go.sum',SOURCES/'toolchain.json',SOURCES/'install_toolchain.py',SOURCES/'sdk_overlay.py',SOURCES/'sdk_patches.json',SOURCES/'ledger.go',SOURCES/'canonical_stream.go',SOURCES/'canonical_financial_hex.go',SOURCES/'financial_decoded_payments.go',SOURCES/'signature_profile.go',SOURCES/'dag_execution.go',SOURCES/'dag_execution_policy.go',SOURCES/'dag_segmented_execution.go',SOURCES/'dag_segmented_state.go',SOURCES/'dag_segmented_proof.go',SOURCES/'dag_segmented_base_proof.go',SOURCES/'dag_segmented_closed_proof.go',SOURCES/'dag_tx_verify.go',SOURCES/'dag_history.go',SOURCES/'dag_order_root.go',SOURCES/'dag_proof.go',SOURCES/'financial_accounts.go',SOURCES/'financial_accounts_workspace.go',SOURCES/'financial_registry.go',SOURCES/'financial_protocol.go',SOURCES/'financial_protocol_money.go',SOURCES/'financial_protocol_money_batch.go',SOURCES/'financial_payment_codec.go',SOURCES/'financial_protocol_block.go',SOURCES/'financial_protocol_operations.go',SOURCES/'financial_protocol_proof.go',SOURCES/'financial_protocol_block_proof.go',SOURCES/'financial_protocol_reward.go',SOURCES/'financial_economy.go',SOURCES/'financial_mining.go',SOURCES/'financial_admission.go',SOURCES/'financial_committee_proof.go',SOURCES/'financial_account_model.go',SOURCES/'financial_account_proof.go',SOURCES/'financial_execution.go',SOURCES/'financial_dag.go',SOURCES/'financial_state.go',SOURCES/'financial_receipt.go',SOURCES/'financial_producer.go',SOURCES/'membership.go',SOURCES/'verify.go',SOURCES/'light/wasm_main.go']
     entries={path.relative_to(SOURCES).as_posix():hashlib.sha256(path.read_bytes()).hexdigest() for path in files}
     return hashlib.sha256(_pack(entries)).hexdigest()
 
@@ -85,6 +90,8 @@ def _checked_artifacts():
     if not manifest_path.is_file() or manifest_path.stat().st_size>8192:
         raise ValueError('GG_LIGHT_BUILD_REQUIRED')
     manifest=json.loads(manifest_path.read_text(encoding='utf-8'))
+    if manifest.get('dependency_patches')!=json.loads((SOURCES/'sdk_patches.json').read_text(encoding='utf-8'))['patches']:
+        raise ValueError('GG_LIGHT_REBUILD_REQUIRED')
     if (manifest.get('schema')!='gg.consensus.light-build.v1' or manifest.get('source_sha256')!=_light_fingerprint()
         or manifest.get('cometbft')!='v0.40.0' or manifest.get('goos')!='js' or manifest.get('goarch')!='wasm'):
         raise ValueError('GG_LIGHT_REBUILD_REQUIRED')

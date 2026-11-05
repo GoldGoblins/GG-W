@@ -1,8 +1,12 @@
-# Headless runtime only. No Qt, browser, Pillow, NumPy or signing SDK.
+# Headless runtime only. No Qt, browser, Pillow, NumPy or blockchain SDK.
 prompt_toolkit==3.0.53
 # Pure Python, Unicode 17; intentionally pinned independently of newer native builds.
 wcwidth==0.2.14
 psutil==7.2.2
 pycryptodome==3.23.0
+# Native signature verification and patched prime-subgroup point validation.
+PyNaCl==1.6.2
+cffi==2.0.0
+pycparser==2.23
 bech32==1.2.0
 mnemonic==0.21

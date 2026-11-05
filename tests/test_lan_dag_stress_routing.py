@@ -20,6 +20,10 @@ def fixture_peer():
         'signature': '4' * 128,
     }
     peer.candidate_invites.return_value = []
+    peer._bundle=None;peer._invite=peer.start_pairing.return_value
+    peer._proof_service=None;peer.node_role='producer'
+    peer.public_invite.return_value=peer._invite
+    peer.create_session.return_value={'body':{'schema':'public routing fixture'}}
     peer.snapshot.return_value = {'lan': {'state': 'READY'},
                                   'dag_stress': {'state': 'IDLE'}}
     return peer

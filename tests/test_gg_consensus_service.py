@@ -63,6 +63,27 @@ class FourProcessConsensusTests(unittest.TestCase):
     def state(self):
         return node._verified_state()[1]
 
+    @staticmethod
+    def certified_tip_available(index,tip):
+        """Fixture barrier only: this survivor can prove the pinned floor.
+
+        A receipt from any one node does not synchronize the other survivors.
+        Read and SDK-verify each survivor's actual certificate/state/proof;
+        never install a cached view or advance/relax the controller's floor.
+        """
+        height,expected_hash=tip
+        if int(node._status(index)['sync_info']['latest_block_height'])<height:return False
+        header=node._rpc(index,'commit',{'height':str(height)})['signed_header']
+        state=node._read_state_at(index,height-1)
+        if (state.get('chain_id')!=node._genesis['chain_id'] or state.get('genesis_hash')!=node._genesis_hash
+                or state.get('height')!=height-1):raise ValueError('CONSENSUS_FIXTURE_SURVIVOR_STATE_IDENTITY')
+        payload=node._proof_payload(state,header)
+        if height>1:
+            payload['account_proof']=node._query(index,'/gg/proof',height-1,bytes.fromhex(node._genesis['accounts'][0]))
+        verified=node._verify(payload)
+        return (verified.get('certificate_height')==height
+                and node.block_hash(header['commit']['block_id']['hash'])==expected_hash)
+
     def test_real_processes_exact_roundtrip_certificates_proofs_and_no_secret_files(self):
         self.assertEqual(self.initial['state'],'RUNNING')
         self.assertEqual(self.initial['online'],4)
@@ -72,7 +93,18 @@ class FourProcessConsensusTests(unittest.TestCase):
         self.assertEqual(len({p.pid for p in self.processes}),4)
         self.assertEqual(len(set(node._genesis['validators'])),4)
         self.assertTrue(all(node._owned(i) for i in range(4)))
-        self.assertTrue(all(v['identity_verified'] and v['peers']>=1 for v in self.initial['validators']))
+        def connected_snapshot():
+            current=node.snapshot()
+            validators=current['validators']
+            if (current['state']=='RUNNING' and current['online']==4
+                    and len(validators)==4
+                    and all(v['identity_verified'] and v['peers'] is not None
+                            and v['peers']>=1 for v in validators)):
+                return current
+
+        connected=self.wait(connected_snapshot)
+        self.assertTrue(all(v['identity_verified'] and v['peers']>=1
+                            for v in connected['validators']))
         self.assertTrue(all(a['quantity']=='250000' for a in self.initial['accounts']))
         before=self.state()
         sent,record=self.transfer(0,1,'1.000001')
@@ -165,6 +197,12 @@ class FourProcessConsensusTests(unittest.TestCase):
         node.stop_node(3)
         self.assertIsNone(node._nodes[3]['process'])
         self.transfer(0,1,'0.000001')
+        # Finalization/reconciliation may have used node2. Before removing it,
+        # prove that BOTH intended survivors possess the controller's exact
+        # certified floor while three voters can still exchange/certify data.
+        # Use the existing bounded fixture wait, not a longer product timeout.
+        tip=node._certified_tip;self.assertIsNotNone(tip)
+        self.wait(lambda:all(self.certified_tip_available(i,tip) for i in (0,1)))
         node.stop_node(2)
         self.assertEqual(sum(node._alive(i) for i in range(4)),2)
         time.sleep(.2)
@@ -200,6 +238,49 @@ class FourProcessConsensusTests(unittest.TestCase):
                          {a['address']:a['balance_atomic'] for a in before['accounts']})
         self.wait(lambda:all(node._read_state_at(i,current['height'])['state_root']==current['state_root'] for i in range(4)))
         self.assertEqual(node.snapshot()['state'],'RUNNING')
+
+
+class QuorumLossFixtureBarrierTests(unittest.TestCase):
+    """Mocked fixture-boundary checks; actual SDK verification is above."""
+    def setUp(self):
+        self.stack=ExitStack();self.addCleanup(self.stack.close)
+        self.tip=(10,'d'*64)
+        self.genesis={'chain_id':'ggnet:'+'a'*24,'accounts':['b'*64]*4}
+        self.stack.enter_context(patch.object(node,'_genesis',self.genesis))
+        self.stack.enter_context(patch.object(node,'_genesis_hash','c'*64))
+        self.stack.enter_context(patch.object(node,'_certified_tip',self.tip))
+        self.last={'height':9};self.stack.enter_context(patch.object(node,'_last_state',self.last))
+        self.header={'commit':{'block_id':{'hash':'d'*64}}}
+        self.state={'height':9,'chain_id':self.genesis['chain_id'],'genesis_hash':'c'*64}
+        self.status=self.stack.enter_context(patch.object(node,'_status',return_value={'sync_info':{'latest_block_height':'10'}}))
+        self.rpc=self.stack.enter_context(patch.object(node,'_rpc',return_value={'signed_header':self.header}))
+        self.read=self.stack.enter_context(patch.object(node,'_read_state_at',return_value=self.state))
+        self.proof=self.stack.enter_context(patch.object(node,'_query',return_value={'PUBLIC':'account witness'}))
+        self.verify=self.stack.enter_context(patch.object(node,'_verify',return_value={'certificate_height':10}))
+
+    def test_lagging_or_unverifiable_survivor_never_satisfies_the_barrier(self):
+        self.status.return_value={'sync_info':{'latest_block_height':'9'}}
+        self.assertFalse(FourProcessConsensusTests.certified_tip_available(0,self.tip))
+        for call in (self.rpc,self.read,self.proof,self.verify):call.assert_not_called()
+        self.status.return_value={'sync_info':{'latest_block_height':'10'}}
+        self.verify.side_effect=ValueError('PUBLIC_FIXTURE_INVALID_CERTIFICATE')
+        with self.assertRaisesRegex(ValueError,'INVALID_CERTIFICATE'):
+            FourProcessConsensusTests.certified_tip_available(0,self.tip)
+        self.assertEqual(node._certified_tip,self.tip);self.assertIs(node._last_state,self.last)
+
+    def test_barrier_reads_exact_survivor_height_and_native_verified_hash(self):
+        self.assertTrue(FourProcessConsensusTests.certified_tip_available(1,self.tip))
+        self.rpc.assert_called_once_with(1,'commit',{'height':'10'})
+        self.read.assert_called_once_with(1,9)
+        self.proof.assert_called_once_with(1,'/gg/proof',9,bytes.fromhex('b'*64))
+        self.verify.assert_called_once()
+        self.assertEqual(self.verify.call_args.args[0]['account_proof'],{'PUBLIC':'account witness'})
+        self.header['commit']['block_id']['hash']='e'*64
+        self.assertFalse(FourProcessConsensusTests.certified_tip_available(1,self.tip))
+        self.state['height']=8
+        with self.assertRaisesRegex(ValueError,'SURVIVOR_STATE_IDENTITY'):
+            FourProcessConsensusTests.certified_tip_available(1,self.tip)
+        self.assertEqual(node._certified_tip,self.tip);self.assertIs(node._last_state,self.last)
 
 
 class ConsensusControllerGuards(unittest.TestCase):
@@ -348,7 +429,7 @@ class ConsensusControllerGuards(unittest.TestCase):
         payload={'genesis':{'chain_id':node._genesis['chain_id']},
                  'state':{'height':1,'state_root':'b'*64}}
         for failure in (subprocess.TimeoutExpired('public-verifier',6),OSError('private-fixture-not-for-output')):
-            with self.subTest(kind=type(failure).__name__),patch.object(node.subprocess,'run',side_effect=failure):
+            with self.subTest(kind=type(failure).__name__),patch.object(node.native_pipes.LEGACY_VERIFY,'run',side_effect=failure):
                 with self.assertRaisesRegex(ValueError,'VERIFY_UNAVAILABLE') as caught:node._verify(payload)
                 self.assertNotIn('private-fixture',str(caught.exception))
 

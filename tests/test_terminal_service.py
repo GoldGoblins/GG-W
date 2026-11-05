@@ -20,6 +20,23 @@ class TerminalServiceTests(unittest.TestCase):
         self.service=terminal_service.TerminalService()
         self.addCleanup(self.service.close)
 
+    def test_independent_account_create_unlocks_explicitly_and_open_does_not_prompt_again(self):
+        from backend import gg_financial_account as accounts
+        self.stack.enter_context(patch.object(accounts,'ROOT',Path(self.tmp.name)/'native-accounts'))
+        prompts=[]
+        def secret(prompt):prompts.append(prompt);return 'PUBLIC account service password fixture'
+        self.service._portable=True;self.service.secret=secret
+        view=self.service.dispatch('lan.account_create',{'profile':'Alice','label':'Public native account'})
+        self.assertEqual(len(prompts),2)
+        self.assertEqual(view['financial_account_profiles']['selected_profile'],'Alice')
+        self.assertEqual(view['financial_account_profiles']['profiles'][0]['role'],'account')
+        self.assertIsNone(self.service._lan()._peer)
+        self.service.dispatch('lan.account_open',{'profile':'Alice'})
+        self.assertEqual(len(prompts),2)
+        self.service.dispatch('lan.stop',{});self.service.dispatch('lan.account_open',{'profile':'Alice'})
+        self.assertEqual(len(prompts),3)
+        self.assertEqual(self.service.dispatch('lan.account_status',{})['signed_batches'],0)
+
     def test_public_watch_receive_catalogue_passport_and_activity(self):
         sol=omni_assets.NATIVE_SOL.rsplit('/native:',1)[0]
         account=self.service.dispatch('wallet.watch',{'chain_id':sol,'address':'11111111111111111111111111111111','label':'Fixture watch'})['account_id']

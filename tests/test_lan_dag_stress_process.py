@@ -38,6 +38,11 @@ def worker(label):
                 elif operation == 'capacity':
                     peer._large_capacity()
                     result={'state':'CONFIGURED','wire_limit':peer._wire_limit}
+                elif operation == 'node_start':
+                    result=peer.start_dag_production(request.get('duration_ms',3000),
+                        request.get('transactions_per_block',1),request.get('interval_ms',250))
+                elif operation == 'node_stop':
+                    result=peer.stop_dag_production()
                 elif operation == 'hold_work':
                     # Test-only independent slow node: hold its own work and
                     # ingestion outside engine locks. Real TCP/auth/validation
@@ -73,6 +78,7 @@ def worker(label):
                               'canonical_finalized': body['canonical_finalized'],
                               'evidence': engine.lan_evidence(),
                               'stress': body['dag_stress'],
+                              'production':body['dag_production'],
                               'transport': body['lan']['transport'],
                               'producer_identities':body['lan']['producer_identities'],
                               'test_accounts':body.get('test_accounts',[]),
@@ -173,6 +179,57 @@ class OwnedProcess:
 
 
 class DagStressProcessTest(unittest.TestCase):
+    def test_independent_workers_survive_slow_peer_and_absent_coordinator(self):
+        peers=[]
+        try:
+            for label in ('Offline coordinator fixture','Independent fast fixture','Independent slow fixture'):
+                peers.append(OwnedProcess(label))
+            coordinator,fast,slow=peers
+            for peer in peers[1:]:peer.call('pin',coordinator=coordinator.invite['body']['peer_key'])
+            bundle=coordinator.call('create',invites=[peer.invite for peer in peers])
+            self.assertTrue(all(row['state']=='READY' for row in coordinator.call('distribute',bundle=bundle)))
+            self.assertEqual(coordinator.call('stop')['owned_threads'],0)
+            slow.call('hold_work')
+            slow.call('node_start',duration_ms=6000,interval_ms=100)
+            fast.call('node_start',duration_ms=6000,interval_ms=100)
+            until=time.monotonic()+3
+            while True:
+                ahead=fast.call('status');behind=slow.call('status')
+                if ahead['blocks']>=6:break
+                self.assertLess(time.monotonic(),until,'Fast owned producer was gated by another node')
+                time.sleep(.05)
+            self.assertTrue(ahead['production']['worker_active'])
+            self.assertEqual(behind['blocks'],0)
+            self.assertEqual(behind['production']['production']['blocks'],0)
+            fast.call('node_stop')
+            stopped=fast.call('status')
+            self.assertFalse(stopped['production']['worker_active'])
+            self.assertTrue(slow.call('status')['production']['worker_active'])
+            fast.call('node_start',duration_ms=1000,interval_ms=100)
+            slow.call('release_work')
+            time.sleep(.25)
+            slow.call('node_stop')
+            until=time.monotonic()+10
+            while True:
+                states=[peer.call('status') for peer in (fast,slow)]
+                if (not states[0]['production']['worker_active'] and
+                        states[0]['evidence']['blockset_digest']==states[1]['evidence']['blockset_digest']):break
+                self.assertLess(time.monotonic(),until,'Independent nodes failed bounded exact catch-up')
+                time.sleep(.1)
+            self.assertGreater(states[0]['blocks'],stopped['blocks'])
+            self.assertGreater(states[1]['production']['production']['blocks'],0)
+            for field in ('blocks','transactions','blockset_digest','state_root','producer_blocks','producer_transactions'):
+                self.assertEqual(states[0]['evidence'][field],states[1]['evidence'][field],field)
+            for state in states:
+                self.assertEqual(state['canonical_finalized'],0)
+                self.assertFalse(state['evidence']['protocol_fault'])
+                coordinator_indices=[row['index'] for row in state['producer_identities']
+                    if row['node_label']=='Offline coordinator fixture']
+                self.assertEqual(len(coordinator_indices),2)
+                self.assertTrue(all(state['evidence']['producer_blocks'][index]==0 for index in coordinator_indices))
+        finally:
+            for peer in reversed(peers):peer.close()
+
     def test_5000_tx_block_crosses_authenticated_chunks_and_all_three_verify(self):
         peers=[]
         try:
@@ -260,7 +317,8 @@ class DagStressProcessTest(unittest.TestCase):
                         self.assertEqual(row['owned_producer_signers'], 2)
                         self.assertTrue(all(count > 0 for count in row['evidence']['producer_blocks']))
                         self.assertEqual(row['last_measurement']['transactions'], transactions_per_block)
-                        self.assertEqual(row['transport']['counters']['failures'], baseline[index])
+                        self.assertEqual(row['transport']['counters']['failures'], baseline[index],
+                                         json.dumps(row['transport']))
                     print(json.dumps({'scope': 'THREE_OWNED_LOOPBACK_PROCESSES_NOT_PHYSICAL_HOSTS',
                                       'transactions_per_block': transactions_per_block,
                                       'state': stress['state'], 'acknowledged_blocks': stress['acknowledged_blocks'],

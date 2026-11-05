@@ -27,13 +27,24 @@ enhetsidentiteter hör till operatörens status/konfiguration, inte källpaketet
   gemensamt oföränderligt genesisankare och tidsbegränsat belastningsprov.
   Det kräver nytt protokoll och deltagarval på alla tre enheter. Testprofilens
   storleks-/tidsgränser är inte ett uppmätt hårdvarutak. Finansiell exekvering
-  och kanonisk finalitet är fortsatt avstängda.
+  är fortsatt avstängd. Utan det separata SDK-ankaret finns ingen kanonisk
+  finalitet. Det valbara privata konsensusläget beskrivs nedan.
 - Ett separat privat GG-LAN(TEST)-prov har signerade testöverföringar och
   koordinatorordnade kvitton. Alla tre peers måste uttryckligen tillåta det
   före parning. Dess saldo och kvitton är en egen testledger; de är inte
   ekonomiska tillgångar eller kanoniskt finaliserade DAG-transaktioner.
 - Gemensamma TESTNET-/MAINNET-deskriptorer och skrivskyddad beredskapsrapport.
   Rapporten skapar ingen genesis, inga nycklar och inga nätanslutningar.
+- Beständiga ägarprofiler återspelar verklig signerad historik före lyssning
+  och bevarar producentidentitet och nonces vid omstart. Replika och lättklient
+  har skilda valideringsomfång. Desktop kan läsa den faktiska CLI-nodens status.
+- Ett separat uttryckligt privat SDK-ankrat läge använder fyra fasta
+  CometBFT-validatorer och certifierar DAG-checkpoints. Fullnoder jämför
+  faktisk payloadexekvering med certifierade konto- och ordningsrötter;
+  lättklienter verifierar relevanta bevis utan att påstå full exekvering.
+  Signerade konfliktbevis stoppar berörda validatorer beständigt. Producentens
+  giltiga konkurrerande kandidater bevaras och sätter bara den producenten i
+  karantän. Detta ger ingen publik eller finansiell driftsberedskap.
 
 ## Befintliga CLI-kommandon
 
@@ -60,15 +71,17 @@ process. Engångskommandon behåller sin tidigare städning vid exit.
 |---|---|---|
 | Enheter | Signerad privat LAN-transport verifieras mellan tre separata lokala processer | Installation, peertrafik och återanslutning mellan de tre faktiska enheterna |
 | Varierad produktion | Åtta verkliga lokala producenttrådar | Separata enheter producerar och överför egna verifierbara förslag |
-| Kanonisk DAG | Ingen global ordning eller finalitet | Specificerad ordning, datatillgänglighet, exekvering och checkpoints |
-| Beständig nod | Lokala sessioner och explicit foregroundläge | Beständig datamapp, återstart och operatörsägd signerare |
+| Kanonisk DAG | Valbart privat SDK-ankare och verklig fullnodsexekvering av certifierad ordning | Undanhållande, kandidatinsamling, historiktillväxt och fysisk acceptans |
+| Beständig nod | Ägarprofiler, signerad journal, återspelning och bevarade nonces | Maximal historikåterställning och fysisk uthållighet |
 | Publika validatorer | Lokalt CometBFT-labb | Oberoende operatörer, identiteter, adresser och antagningsregler |
 | Huvudnät | Ingen godkänd produktionsgenesis | Beslut om fördelning, utbud, avgifter, uppgraderingar och säkerhetsgranskning |
 | Kvantskydd | Ed25519 är klassiskt; PQC saknas | Specificerad och granskad signatur-/migreringsprofil |
 | Termux | Headless-källpaket finns | Installation och verkligt runtimeprov på telefonen |
 
-CometBFT certifierar idag sin egen ledger, inte DAGoblins förslag. Ett
-Comet-certifikat får inte användas som bevis för en ospecificerad DAG-checkpoint.
+CometBFT:s fristående testledger och det valbara SDK-ankrade DAG-läget är
+separata protokoll. Ett certifikat från den fristående ledgern är inget bevis
+för DAG-data. DAG-läget kräver sin egen pinnade genesis, ordnings- och
+kontorötter, datatillgänglighet och rollens verifiering.
 Aktuellt `PUBLIC_NOT_READY`, `runnable_public: false` och `mainnet_enabled:
 false` gäller även för syntaktiskt giltig offentlig konfiguration. En
 konfigurationsfil ersätter inte protokoll, implementation eller verifiering.
@@ -81,3 +94,8 @@ aktiveras först efter separat beslut och granskade testnätresultat.
 [Privat LAN-prov](dagoblin-lan.md) ·
 [Prototypens verifieringsgräns](gg-parallel-dag.md) ·
 [Primärkällor och protokollstudier](research/dagoblin/README.md)
+
+Detaljer och kvarvarande begränsningar:
+[Replika/lättklient](research/dagoblin/replica-light-proof-review-2026-10-31.md),
+[producentgrenar](research/dagoblin/producer-branch-review-2026-10-31.md) och
+[ingressisolering](research/dagoblin/resource-isolation-review-2026-10-31.md).

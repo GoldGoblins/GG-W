@@ -1,0 +1,30 @@
+{
+  "schema": "gg.protocol.operator-test-policy.v1",
+  "economics": {
+    "schema": "gg.financial.economic-policy.v1",
+    "epoch_reward_atomic": "64000",
+    "epoch_seconds": "10",
+    "fee_per_byte_atomic": "1",
+    "halving_epochs": "100",
+    "initial_supply_atomic": "1000000000000",
+    "max_supply_atomic": "2000000000000",
+    "min_fee_atomic": "10",
+    "tail_reward_atomic": "1",
+    "treasury_account": "",
+    "treasury_bps": 0
+  },
+  "protocol": {
+    "expected_blocks_per_epoch": "1000",
+    "initial_work_target": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "min_work_target": "0000000000000000000000000000000000000000000000000000000000000001",
+    "max_work_target": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "registration_work_target": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "max_committee_change_bps": 3333,
+    "max_epoch_participants": "65536",
+    "max_producer_entries": "4294967296",
+    "max_work_heights": "64"
+  },
+  "max_accounts": "4294967296",
+  "initial_voting_power": "1",
+  "allocation_rule": "EQUAL_INITIAL_GOVERNANCE_ACCOUNTS"
+}

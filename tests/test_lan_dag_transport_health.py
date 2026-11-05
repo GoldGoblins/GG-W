@@ -304,7 +304,7 @@ class TransportHealthTests(unittest.TestCase):
             self.assertEqual(peer._pull(remote,'PAGE',{'after':0}),0)
             self.assertIsInstance(send.call_args.kwargs['deadline'],float)
         peer._slots.acquire();peer._engine=Mock()
-        peer._engine.public_proposals.return_value={'records':[{'hash':'b'*64,'admission_index':1,'wire':b'wire'}]}
+        peer._engine.public_proposals.return_value={'tip':1,'records':[{'hash':'b'*64,'admission_index':1,'wire':b'wire'}]}
         try:
             with (patch.object(peer,'_read',side_effect=(({},10),({},10))),
                   patch.object(peer,'_server_auth',return_value=(remote,'session')),
@@ -339,7 +339,8 @@ class TransportHealthTests(unittest.TestCase):
     def test_pending_connect_600ms_uses_existing_budget_and_is_owned_before_attempt(self):
         peer,remote=self.peer();clock=Clock();sock=ConnectSocket();cancel=threading.Event();polls=[]
         def registered():
-            self.assertIn(sock,peer._sockets);self.assertIn(sock,peer._circle_sockets)
+            self.assertIn(sock,peer._sockets);self.assertIs(peer._socket_cancels[sock],cancel)
+            self.assertNotIn(sock,peer._circle_sockets)
             self.assertFalse(sock.blocking)
         sock.on_connect=registered
         def ready(_readable,writable,errors,delay):
@@ -355,7 +356,7 @@ class TransportHealthTests(unittest.TestCase):
                 self.assertEqual(sock.timeout,lan.IO_TIMEOUT)
         self.assertEqual((create.call_count,sock.connect_calls),(1,1));self.assertGreater(len(polls),1)
         self.assertTrue(all(0<delay<=lan.IO_TIMEOUT for delay in polls));self.assertTrue(sock.closed)
-        self.assertFalse(peer._sockets);self.assertFalse(peer._circle_sockets)
+        self.assertFalse(peer._sockets);self.assertFalse(peer._circle_sockets);self.assertFalse(peer._socket_cancels)
 
     def test_pending_connect_shorter_deadline_expires_without_new_attempt(self):
         peer,remote=self.peer();clock=Clock();sock=ConnectSocket();waits=[]

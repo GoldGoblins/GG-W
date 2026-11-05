@@ -1,0 +1,83 @@
+{
+  "schema": "gg.consensus.sdk-patches.v1",
+  "patches": [
+    {
+      "id": "bounded-mempool-transaction-log",
+      "module": "github.com/cometbft/cometbft",
+      "version": "v0.40.0",
+      "upstream_h1": "h1:0+zc7FlcnonFfMwzhyDCd5vK/fHZqz0RfRyTCxZsFPU=",
+      "patched_h1": "h1:qBoAIXskDy5R9c/5GoVrPK5vC7saa242sUqWVWdGu/4=",
+      "file": "mempool/reactor.go",
+      "original_sha256": "b31e2ec218ecbb144728c0c2cfdced97df5928165aa8581e0c6fbee7e937e24c",
+      "patched_sha256": "c17f30eb5966dc5d5255f389fae8ddb5d973e1df589dc2ea71c859252318047f",
+      "old": "ntx.String()",
+      "new": "ntx.Hash()",
+      "count": 2
+    },
+    {
+      "id": "bounded-completed-message-buffer",
+      "module": "github.com/cometbft/cometbft",
+      "version": "v0.40.0",
+      "upstream_h1": "h1:0+zc7FlcnonFfMwzhyDCd5vK/fHZqz0RfRyTCxZsFPU=",
+      "file": "p2p/conn/connection.go",
+      "original_sha256": "f9c98a612692b02140ab330efddc78fba5c2d47945e781691960f4670913168d",
+      "patched_sha256": "b3188a5d0d936e59612f99fb10fdd3ae28d3b209a4dad29412c9d94b413e5388",
+      "old": "\t\t// clear the slice without re-allocating.\n\t\t// http://stackoverflow.com/questions/16971741/how-do-you-clear-a-slice-in-go\n\t\t//   suggests this could be a memory leak, but we might as well keep the memory for the channel until it closes,\n\t\t//\tat which point the recving slice stops being used and should be garbage collected\n\t\tch.recving = ch.recving[:0] // make([]byte, 0, ch.desc.RecvBufferCapacity)\n",
+      "new": "\t\t// Keep small receive buffers, but release completed large messages.\n\t\t// Otherwise every peer/channel pins its largest historical message.\n\t\tif cap(ch.recving) > 256*1024 {\n\t\t\tch.recving = make([]byte, 0, ch.desc.RecvBufferCapacity)\n\t\t} else {\n\t\t\tch.recving = ch.recving[:0]\n\t\t}\n",
+      "count": 1,
+      "patched_h1": "h1:qBoAIXskDy5R9c/5GoVrPK5vC7saa242sUqWVWdGu/4="
+    },
+    {
+      "id": "cancel-disconnected-mempool-sync-wait",
+      "module": "github.com/cometbft/cometbft",
+      "version": "v0.40.0",
+      "upstream_h1": "h1:0+zc7FlcnonFfMwzhyDCd5vK/fHZqz0RfRyTCxZsFPU=",
+      "patched_h1": "h1:qBoAIXskDy5R9c/5GoVrPK5vC7saa242sUqWVWdGu/4=",
+      "file": "mempool/reactor.go",
+      "original_sha256": "c17f30eb5966dc5d5255f389fae8ddb5d973e1df589dc2ea71c859252318047f",
+      "patched_sha256": "a6f4262a55b2e9a9547306c487b4361043589b2f4da9cae259b7338908eb5eea",
+      "old": "\t\tcase <-memR.waitSyncCh:\n\t\t\t// EnableInOutTxs() has set WaitSync() to false.\n\t\tcase <-memR.Quit():",
+      "new": "\t\tcase <-memR.waitSyncCh:\n\t\t\t// EnableInOutTxs() has set WaitSync() to false.\n\t\tcase <-peer.Quit():\n\t\t\t// A disconnected peer must not retain its buffers until sync finishes.\n\t\t\treturn\n\t\tcase <-memR.Quit():",
+      "count": 1
+    },
+    {
+      "id": "cancel-mempool-peer-state-readiness",
+      "module": "github.com/cometbft/cometbft",
+      "version": "v0.40.0",
+      "upstream_h1": "h1:0+zc7FlcnonFfMwzhyDCd5vK/fHZqz0RfRyTCxZsFPU=",
+      "patched_h1": "h1:qBoAIXskDy5R9c/5GoVrPK5vC7saa242sUqWVWdGu/4=",
+      "file": "mempool/reactor.go",
+      "original_sha256": "a6f4262a55b2e9a9547306c487b4361043589b2f4da9cae259b7338908eb5eea",
+      "patched_sha256": "0740aa4ee1e2d276f9842195887a72b1c7bad4032d6a1245e59c8f6332ac32fa",
+      "old": "\tfor {\n\t\tif ps, ok := peer.Get(types.PeerStateKey).(PeerState); ok {\n\t\t\tpeerState = ps\n\t\t\tbreak\n\t\t}\n\t\t// Peer does not have a state yet.\n\t\ttime.Sleep(PeerCatchupSleepIntervalMS * time.Millisecond)\n\t}",
+      "new": "\tfor {\n\t\tif !peer.IsRunning() || !memR.IsRunning() {\n\t\t\treturn\n\t\t}\n\t\tif ps, ok := peer.Get(types.PeerStateKey).(PeerState); ok {\n\t\t\tpeerState = ps\n\t\t\tbreak\n\t\t}\n\t\t// A peer can disconnect before consensus installs its state.\n\t\tselect {\n\t\tcase <-time.After(PeerCatchupSleepIntervalMS * time.Millisecond):\n\t\tcase <-peer.Quit():\n\t\t\treturn\n\t\tcase <-memR.Quit():\n\t\t\treturn\n\t\t}\n\t}",
+      "count": 1
+    },
+    {
+      "id": "atomic-reconnect-registration-lock",
+      "module": "github.com/cometbft/cometbft",
+      "version": "v0.40.0",
+      "upstream_h1": "h1:0+zc7FlcnonFfMwzhyDCd5vK/fHZqz0RfRyTCxZsFPU=",
+      "patched_h1": "h1:qBoAIXskDy5R9c/5GoVrPK5vC7saa242sUqWVWdGu/4=",
+      "file": "p2p/switch.go",
+      "original_sha256": "192737647242b0f8857088b743b10b5d5cd702c6ac5c1d406926e1ed1d6aa164",
+      "patched_sha256": "6520ae8d3aa8e737221607ccf216da6f0f97daa5fadb9b907ecdece1842f7bdc",
+      "old": "\treconnecting  *cmap.CMap\n",
+      "new": "\treconnecting  *cmap.CMap\n\treconnectMtx  sync.Mutex // atomic registration of one reconnect job per peer ID\n",
+      "count": 1
+    },
+    {
+      "id": "bounded-initial-reconnect-and-stop",
+      "module": "github.com/cometbft/cometbft",
+      "version": "v0.40.0",
+      "upstream_h1": "h1:0+zc7FlcnonFfMwzhyDCd5vK/fHZqz0RfRyTCxZsFPU=",
+      "patched_h1": "h1:qBoAIXskDy5R9c/5GoVrPK5vC7saa242sUqWVWdGu/4=",
+      "file": "p2p/switch.go",
+      "original_sha256": "6520ae8d3aa8e737221607ccf216da6f0f97daa5fadb9b907ecdece1842f7bdc",
+      "patched_sha256": "32b4dfe79d1bf339823d6e6e7ea5fb0058da6b4e00c04039bc0b44d95e338b4b",
+      "old": "func (sw *Switch) reconnectToPeer(addr *NetAddress) {\n\tif sw.reconnecting.Has(string(addr.ID)) {\n\t\treturn\n\t}\n\tsw.reconnecting.Set(string(addr.ID), addr)\n\tdefer sw.reconnecting.Delete(string(addr.ID))\n\n\tstart := time.Now()",
+      "new": "func (sw *Switch) reconnectToPeer(addr *NetAddress) {\n\tsw.reconnectMtx.Lock()\n\tif sw.reconnecting.Has(string(addr.ID)) {\n\t\tsw.reconnectMtx.Unlock()\n\t\treturn\n\t}\n\tsw.reconnecting.Set(string(addr.ID), addr)\n\tsw.reconnectMtx.Unlock()\n\tdefer sw.reconnecting.Delete(string(addr.ID))\n\n\t// A successful handshake can be followed immediately by remote rejection.\n\t// Bound this success/disconnect cycle too, not only failed dial attempts.\n\tselect {\n\tcase <-time.After(reconnectInterval):\n\tcase <-sw.Quit():\n\t\treturn\n\t}\n\n\tstart := time.Now()",
+      "count": 1
+    }
+  ]
+}

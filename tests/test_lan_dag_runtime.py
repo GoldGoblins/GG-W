@@ -136,8 +136,10 @@ class LanDagRuntimeTests(unittest.TestCase):
                      'producer_keys':['c'*64,'d'*64]}}
         for override,expected in (({},False),({'auto_produce':True},True)):
             with self.subTest(override=override):
-                peer=Mock(spec_set=['public_key','allowed','start_pairing','announce_invite','snapshot'])
+                peer=Mock(spec_set=['public_key','allowed','start_pairing','announce_invite','snapshot','_bundle','_invite','public_invite','_proof_factory','node_role','_proof_service','_observer_admissions'])
+                peer.node_role='producer';peer._proof_service=None
                 peer.public_key=own['body']['peer_key'];peer.allowed=runtime._cidr('127.0.0.0/8')
+                peer._bundle=None;peer._invite=own;peer.public_invite.return_value=own
                 peer.start_pairing.return_value=own
                 peer.snapshot.side_effect=lambda:{'lan':{'state':'PAIRING'}}
                 api=Mock(spec_set=['validate_invite','LanDagPeer'])

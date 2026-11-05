@@ -174,7 +174,7 @@ func TestUpstreamSignerSurvivesRestartWithoutKeyFileAndRejectsDoubleSign(t *test
 	genesis, _, _, keys := testGenesis()
 	root := t.TempDir()
 	path := filepath.Join(root, "priv_validator_state.json")
-	pv, err := newSafePV(keys[0], path, genesis.ChainID)
+	pv, err := initializeSafePV(keys[0], path, genesis.ChainID)
 	if err != nil {
 		t.Fatal(err)
 	}

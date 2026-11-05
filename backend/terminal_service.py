@@ -17,7 +17,7 @@ import time
 import uuid
 
 from backend import omni_assets as assets,omni_rpc,omni_wallet
-from backend import lan_dag_runtime
+from backend import lan_dag_runtime,gg_protocol_runtime
 
 COMMANDS={
     'status':{},'help':{},'activity':{},
@@ -41,6 +41,7 @@ COMMANDS={
     'marketplace.delist':{'id'},'marketplace.paper_buy':{'id'},'marketplace.proof':{'id'},
 }
 COMMANDS.update(lan_dag_runtime.COMMANDS)
+COMMANDS.update(gg_protocol_runtime.COMMANDS)
 
 
 class TerminalService:
@@ -55,6 +56,7 @@ class TerminalService:
         self._owns_dag=False
         self._dag_engine=None
         self._lan_runtime=None
+        self._protocol_runtime=None
         self._publish_observation=bool(publish_observation)
         self._observation_publisher=None
         self._closed=False
@@ -77,6 +79,10 @@ class TerminalService:
         # Each terminal owns its peer. Status/construction makes no keys or IO.
         if self._lan_runtime is None:self._lan_runtime=lan_dag_runtime.LanDagRuntime()
         return self._lan_runtime
+
+    def _protocol(self):
+        if self._protocol_runtime is None:self._protocol_runtime=gg_protocol_runtime.ProtocolRuntime()
+        return self._protocol_runtime
 
     def _publish_lan(self,body):
         if not self._publish_observation:return body
@@ -126,16 +132,17 @@ class TerminalService:
             market=marketplace_contract.status_payload()
             market['public_catalog']=marketplace_discovery.snapshot()
             from backend import network_profiles
-            lan=self._publish_lan(self._lan().snapshot())
+            protocol_active=self._protocol_runtime is not None and self._protocol_runtime.active
+            lan=self._publish_lan(self._protocol_runtime.snapshot() if protocol_active else self._lan().snapshot())
             return {'schema':'gg.terminal.status.v1','wallet':self._wallet(),'marketplace':market,
-                    'consensus':self._network().snapshot(),'parallel_dag':lan if self._lan().active else self._dag().snapshot(),'activity':assets.events(),
+                    'consensus':self._network().snapshot(),'parallel_dag':lan if protocol_active or self._lan().active else self._dag().snapshot(),'activity':assets.events(),
                     'network_readiness':network_profiles.snapshot(),'lan_dag':lan,
                     'commands':list(COMMANDS),'platform':os.name}
 
-    def _password(self,prompt,*,repeat=False):
+    def _password(self,prompt,*,repeat=False,domain='WALLET'):
         value=self.secret(prompt)
-        if not isinstance(value,str) or not 12<=len(value)<=256:raise ValueError('WALLET_PASSWORD_LENGTH')
-        if repeat and value!=self.secret('Upprepa lösenordet: '):raise ValueError('WALLET_PASSWORD_MISMATCH')
+        if not isinstance(value,str) or not 12<=len(value)<=256:raise ValueError(domain+'_PASSWORD_LENGTH')
+        if repeat and value!=self.secret('Upprepa lösenordet: '):raise ValueError(domain+'_PASSWORD_MISMATCH')
         return value
 
     def _wallet_effect(self,name,args):
@@ -308,10 +315,41 @@ class TerminalService:
             if command=='help':return {'commands':{name:sorted(keys) for name,keys in COMMANDS.items()}}
             if command=='status':return self.snapshot()
             if command=='activity':return {'activity':assets.events()}
+            if command.startswith('protocol.'):
+                if command in {'protocol.node_start','protocol.light_start','protocol.run','protocol.replica_restore_start'} and (self._lan().active or self._dag_engine is not None and self._dag_engine.snapshot().get('state')!='STOPPED'):
+                    raise ValueError('GG_PROTOCOL_STOP_OTHER_OWNED_NETWORK_FIRST')
+                runtime=self._protocol();protected=self._portable and not runtime.unlocked(command,args)
+                if protected:
+                    from backend import portable_wallet_vault
+                    password=self._password('Profilens lösenord (dolt): ',repeat=command.endswith('_create'),domain='GG_NODE')
+                    try:
+                        with portable_wallet_vault.session(password):result=runtime.dispatch(command,args)
+                    finally:del password
+                else:result=runtime.dispatch(command,args)
+                if isinstance(result,dict) and 'lan_setup' in result:self._publish_lan(result)
+                return result
             if command.startswith('lan.'):
-                if command in {'lan.start','lan.join_file'} and self._dag_engine is not None and self._dag_engine.snapshot().get('state')!='STOPPED':
+                if command in {'lan.start','lan.join_file','lan.resume'} and self._protocol_runtime is not None and self._protocol_runtime.active:
+                    raise ValueError('GG_LAN_STOP_PROTOCOL_NODE_FIRST')
+                if command in {'lan.start','lan.join_file','lan.resume'} and self._dag_engine is not None and self._dag_engine.snapshot().get('state')!='STOPPED':
                     raise ValueError('GG_LAN_STOP_LOCAL_DAG_FIRST')
-                result=self._lan().dispatch(command,args)
+                protected=self._portable and ((command in {'lan.start','lan.join_file','lan.resume','lan.archive_import','lan.transition_commit',
+                    'lan.financial_history_export','lan.financial_history_verify','lan.financial_history_restore',
+                    'lan.observer_history_restore','lan.account_create','lan.account_open',
+                    'lan.validator_create','lan.validator_open','lan.validator_start','lan.validator_invite','lan.validator_index_transition','lan.validator_transition_create',
+                    'lan.observer_create','lan.observer_open','lan.observer_start'} and 'profile' in args)
+                    or command=='lan.transition_invite' and bool(args.get('profiles'))
+                    or command in {'lan.transition_invite','lan.transition_prepare'} and 'owner_profile' in args)
+                if protected and command.startswith('lan.validator_') and self._lan().validator_unlocked(args['profile']):protected=False
+                if protected and command.startswith('lan.observer_') and command!='lan.observer_history_restore' and self._lan().observer_unlocked(args['profile']):protected=False
+                if protected and command.startswith('lan.account_') and self._lan().account_unlocked(args['profile']):protected=False
+                if protected:
+                    from backend import portable_wallet_vault
+                    password=self._password('Kontoprofilens lösenord (dolt): ' if command.startswith('lan.account_') else 'Nodprofilens lösenord (dolt): ',repeat=command in {'lan.start','lan.join_file','lan.validator_create','lan.validator_transition_create','lan.observer_create','lan.account_create'},domain='GG_ACCOUNT' if command.startswith('lan.account_') else 'GG_NODE')
+                    try:
+                        with portable_wallet_vault.session(password):result=self._lan().dispatch(command,args)
+                    finally:del password
+                else:result=self._lan().dispatch(command,args)
                 if isinstance(result,dict) and 'lan_setup' in result:self._publish_lan(result)
                 return result
             if command=='network.readiness':
@@ -424,6 +462,7 @@ class TerminalService:
         # Signal the owned sockets/workers before waiting for an ordinary
         # command holding the service lane. Cleanup then joins in this lane.
         if self._lan_runtime is not None:self._lan_runtime.request_stop()
+        if self._protocol_runtime is not None:self._protocol_runtime.request_stop()
         with self._lock:
             if self._closed:return
             self._closed=True
@@ -431,6 +470,7 @@ class TerminalService:
                 try:self._observation_publisher.close()
                 except OSError:pass
             if self._lan_runtime is not None:self._lan_runtime.stop()
+            if self._protocol_runtime is not None:self._protocol_runtime.close()
             if self._owns_dag:
                 self._dag().stop();self._owns_dag=False
             if self._owns_network:

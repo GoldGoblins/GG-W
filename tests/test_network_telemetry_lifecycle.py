@@ -120,6 +120,20 @@ ApplicationWindow {
         network = other.findChild(QQuickItem, 'omniNetworkLoader')
         return network is not None and js('status === Loader.Ready', network) and network.property('item') is not None
 
+    drained_incubations=[]
+    def finish_visible_component():
+        # An offscreen window may leave delegate creation pending after both
+        # Loaders report Ready. This scenario destroys an established reader,
+        # rather than testing cancellation of unfinished Qt incubation.
+        controller=engine.incubationController()
+        if controller is None:return
+        pending=controller.incubatingObjectCount()
+        if pending:drained_incubations.append(pending)
+        deadline=time.monotonic()+2
+        while controller.incubatingObjectCount() and time.monotonic()<deadline:
+            controller.incubateFor(5)
+        assert controller.incubatingObjectCount()==0,'Nested reader delegates did not finish'
+
     with patch.object(gg_parallel_dag, '_ENGINE', owned):
         if mode == 'owners':
             owned.start_live()
@@ -195,6 +209,7 @@ ApplicationWindow {
                 window.setProperty('otherPage', 'NFT')
                 wait_for(lambda: other_ready('NFT'), 'Hidden NFT surface did not finish loading')
                 assert host._network_telemetry._view == 'DAG'
+                finish_visible_component()
                 window.setProperty('otherLoaded', False)
                 pump(.05)
                 assert host._network_telemetry._view == 'DAG', 'Unrelated surface destruction cancelled visible observer'
@@ -209,6 +224,7 @@ ApplicationWindow {
                 pump(.05)
                 assert host._network_telemetry._view == 'DAG', 'One reader hid a different visible reader'
                 assert host._network_telemetry._worker is worker
+                finish_visible_component()
                 window.setProperty('otherLoaded', False)
                 pump(.05)
                 assert host._network_telemetry._view == '', 'Last reader destruction left background sampling active'
@@ -241,6 +257,7 @@ ApplicationWindow {
                                   'hidden_or_destroyed_other_surface_cancels_reads': False,
                                   'visible_readers_share_one_worker': True,
                                   'last_reader_release_stops_sampling': True,
+                                  'completed_pending_delegate_creations':drained_incubations,
                                   'owner_destroy_after_observer_close_safe': True}))
             assert not warnings, warnings
         finally:

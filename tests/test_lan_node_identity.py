@@ -65,7 +65,7 @@ class NodeIdentityTests(unittest.TestCase):
                'blocks_admitted':7,'transactions_validated':56,
                'block_graph':{'blocks':[{'proposer_index':4,'state':'ADMITTED_UNFINALIZED','transaction_count':8},
                                         {'proposer_index':-1,'state':'GENESIS'}]}}
-        engine=Mock();engine.stored_wire_bytes.return_value=0
+        engine=Mock();engine.stored_wire_bytes.return_value=0;engine.memory_basis_bytes.return_value=0
         engine.snapshot.side_effect=lambda:deepcopy(state);peer._engine=engine
         self.addCleanup(setattr,peer,'_engine',None)
         peer._dag_enabled=False

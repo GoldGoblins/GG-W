@@ -1,9 +1,13 @@
 """Android listener visibility never authorizes a foreign or changed child."""
 from types import SimpleNamespace
+import http.client
+import threading
+import time
 import unittest
 from unittest.mock import Mock,patch
 import psutil
 from backend import gg_consensus as node
+from backend.gg_consensus_process import OwnedNativeRPC
 
 
 class OwnedListenerTests(unittest.TestCase):
@@ -36,6 +40,71 @@ class OwnedListenerTests(unittest.TestCase):
             with patch.object(node,'_nodes',[row]),patch.object(node.psutil,'Process') as probe:
                 probe.return_value.net_connections.return_value=listeners
                 self.assertFalse(node._owned(0))
+
+
+class OwnedRPCStopRaceTests(unittest.TestCase):
+    """Controlled thread interleavings; no listener, node or process is started."""
+    def controller(self):
+        class Controller(OwnedNativeRPC):
+            def __init__(self):
+                self._closed=False;self.profile=SimpleNamespace(_closed=False,_failed=False)
+                self._stop=threading.Event();self._connection=None;self.rpc_port=45123
+                self._unchanged=Mock();self._owned=Mock(return_value=True)
+            def _owner_stopped(self):return self._stop.is_set()
+            def request_stop(self):self._stop.set();self._drop_connection()
+        return Controller()
+
+    def interleave(self,phase,*,replacement=False):
+        entered=threading.Event();release=threading.Event();controller=self.controller();outcomes=[]
+        class Connection:
+            sock=None
+            def __init__(self):self.closed=False;self.requests=0;self.responses=0
+            @property
+            def timeout(self):return 3
+            @timeout.setter
+            def timeout(self,value):
+                if phase=='prepare':
+                    entered.set()
+                    if not release.wait(2):raise TimeoutError('PUBLIC test preparation barrier')
+            def request(self,*args,**kwargs):
+                self.requests+=1
+                if phase=='request':
+                    entered.set()
+                    if not release.wait(2):raise TimeoutError('PUBLIC test request barrier')
+                    if self.closed:raise AttributeError('PUBLIC simulated HTTP socket closed during request')
+            def getresponse(self):self.responses+=1;raise AssertionError('cancelled request obtained response')
+            def close(self):self.closed=True
+        connection=Connection();controller._connection=connection
+        def observer():
+            try:controller._rpc('status');outcomes.append('unexpected success')
+            except (ValueError,OSError,http.client.HTTPException) as error:outcomes.append((type(error),str(error)))
+            except BaseException as error:outcomes.append(('unexpected exception',type(error).__name__))
+        thread=threading.Thread(target=observer,name='PUBLIC controlled RPC observer');thread.start()
+        newer=None
+        try:
+            self.assertTrue(entered.wait(1))
+            before=time.monotonic();controller.request_stop();self.assertLess(time.monotonic()-before,.5)
+            self.assertTrue(connection.closed)
+            if replacement:
+                newer=Connection();controller._connection=newer;controller._stop.clear()
+        finally:release.set();thread.join(2)
+        self.assertFalse(thread.is_alive());self.assertEqual(outcomes,[(ValueError,'GG_NATIVE_OWNER_STOPPED')])
+        self.assertEqual(connection.requests,0 if phase=='prepare' else 1);self.assertEqual(connection.responses,0)
+        controller._unchanged.assert_called_once();controller._owned.assert_called_once()
+        if replacement:
+            self.assertIs(controller._connection,newer);self.assertFalse(newer.closed);controller._drop_connection()
+        else:self.assertIsNone(controller._connection)
+
+    def test_stop_drops_work_connection_during_request_preparation_without_dead_observer(self):self.interleave('prepare')
+
+    def test_stop_interrupts_http_internal_close_race_with_sanitized_owner_boundary(self):self.interleave('request')
+
+    def test_interrupted_old_request_never_closes_a_replacement_connection(self):self.interleave('request',replacement=True)
+
+    def test_listener_ownership_is_still_required_before_work_connection(self):
+        controller=self.controller();controller._owned.return_value=False
+        with patch('backend.gg_consensus_process.http.client.HTTPConnection',side_effect=AssertionError('foreign listener used')):
+            with self.assertRaisesRegex(ValueError,'GG_VALIDATOR_LISTENER_NOT_OWNED'):controller._rpc('status')
 
 
 if __name__=='__main__':unittest.main()

@@ -44,9 +44,12 @@ class ProducerOwnedDagTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'GG_DAG_SIGNATURE'):node.admit_relayed(invalid,0)
         self.assertEqual(node.lan_evidence()['protocol_fault'],'')
         competing=self.resign(value,0)
-        with self.assertRaisesRegex(ValueError,'EQUIVOCATION'):node.admit_relayed(competing,0)
-        with self.assertRaisesRegex(ValueError,'EQUIVOCATION'):node.produce_lan_test_block(0,1)
+        node.admit_relayed(competing,0);node.reconcile()
+        with self.assertRaisesRegex(ValueError,'QUARANTINED'):node.produce_lan_test_block(0,1)
         self.assertEqual(node.lan_evidence()['transactions'],2)
+        self.assertEqual(node.lan_evidence()['protocol_fault'],'')
+        self.assertEqual(len(node._lan_author_slots[(0,1)]),2)
+        node.produce_lan_test_block(1,1)
 
     def test_own_parent_and_sequential_nonce_required_without_reset(self):
         node=self.nodes[0];first=node.produce_lan_test_block(0,1)
@@ -76,13 +79,15 @@ class ProducerOwnedDagTests(unittest.TestCase):
         fork_first=fork.produce_lan_test_block(0,2);fork_child=fork.produce_lan_test_block(0,2)
         before_left=left.lan_evidence();before_fork=fork.lan_evidence()
         for node,opposite,descendant in ((left,fork_first,fork_child),(fork,left_first,left_child)):
-            with self.assertRaisesRegex(ValueError,'EQUIVOCATION'):node.admit_relayed(opposite['wire'],0)
-            with self.assertRaises(ValueError):node.admit_relayed(descendant['wire'],0)
-            with self.assertRaisesRegex(ValueError,'EQUIVOCATION'):node.produce_lan_test_block(0,1)
-            self.assertIn('EQUIVOCATION',node.lan_evidence()['protocol_fault'])
-        self.assertEqual(left._lan_counts[0],2);self.assertEqual(fork._lan_counts[0],4)
-        self.assertEqual(left.lan_evidence()['state_root'],before_left['state_root'])
-        self.assertEqual(fork.lan_evidence()['state_root'],before_fork['state_root'])
+            node.admit_relayed(opposite['wire'],0);node.admit_relayed(descendant['wire'],0);node.reconcile()
+            with self.assertRaisesRegex(ValueError,'QUARANTINED'):node.produce_lan_test_block(0,1)
+            self.assertEqual(node.lan_evidence()['protocol_fault'],'')
+            self.assertEqual(len(node._records),5)
+            self.assertEqual(node.lan_evidence()['transactions'],4)
+            self.assertEqual(node._preview_state[node._producer_public[0]]['nonce'],0)
+        self.assertEqual(left._lan_counts[0],4);self.assertEqual(fork._lan_counts[0],4)
+        self.assertEqual(left.lan_evidence()['state_root'],fork.lan_evidence()['state_root'])
+        self.assertNotEqual(left.lan_evidence()['state_root'],before_left['state_root'])
 
 
 if __name__=='__main__':unittest.main()

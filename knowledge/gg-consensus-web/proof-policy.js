@@ -79,15 +79,49 @@
     const replacements = [
       { range: locations.genesis, value: canonical(trust.genesis) },
       { range: locations.genesis_hash, value: JSON.stringify(trust.genesis_hash) }
-    ].sort((a, b) => b.range[0] - a.range[0]);
+    ];
+    // An authenticated absence path can cover several missing addresses.
+    // Bind the requested wallet account separately from provider proof data.
+    if (value.financial_account !== undefined || trust.expected_financial_account !== undefined) {
+      const expected = trust.expected_financial_account;
+      if (typeof expected !== "string" || !/^[0-9a-f]{64}$/.test(expected) ||
+          value.expected_financial_account !== expected || !value.financial_account ||
+          !value.financial_account.proof || value.financial_account.proof.address !== expected ||
+          !locations.expected_financial_account) fail("GG_PROOF_PIN_MISMATCH");
+      replacements.push({ range: locations.expected_financial_account, value: JSON.stringify(expected) });
+    }
+    // Every selected result belongs to the caller's separately opened request.
+    // A provider may supply paths and certificates, never replace that request
+    // by changing both the proof and its embedded expected selector.
+    for (const name of ["receipt", "registry", "block", "reward"]) {
+      const field = "financial_" + name, selector = "expected_" + field;
+      if (value[field] === undefined && trust[selector] === undefined) continue;
+      if (value[field] === undefined || trust[selector] === undefined ||
+          !locations[selector] || canonical(value[selector]) !== canonical(trust[selector])) fail("GG_PROOF_PIN_MISMATCH");
+      replacements.push({ range: locations[selector], value: canonical(trust[selector]) });
+    }
+    replacements.sort((a, b) => b.range[0] - a.range[0]);
     for (const replacement of replacements) pinned = pinned.slice(0, replacement.range[0]) + replacement.value + pinned.slice(replacement.range[1]);
     if (new TextEncoder().encode(pinned).length > MAX_BYTES) fail("GG_PROOF_LIMIT");
     return pinned;
   }
   function publicError(error) { return CODES.has(error && error.message) ? error.message : "GG_PROOF_INVALID"; }
   function verifiedAccount(raw, result) {
-    if (!result || result.verified !== true || result.account_proof_verified !== true) return null;
+    if (!result || result.verified !== true) return null;
     const value = JSON.parse(raw);
+    if (result.financial_account_verified === true) {
+      const address = value.expected_financial_account;
+      if (result.financial_account_address !== address || typeof result.financial_account_exists !== "boolean") fail("GG_PROOF_INVALID");
+      const exists = result.financial_account_exists;
+      const leaf = result.financial_account;
+      if (exists && (!leaf || leaf.address !== address || typeof leaf.balance_atomic !== "string" ||
+          !/^(0|[1-9][0-9]{0,19})$/.test(leaf.balance_atomic) || typeof leaf.nonce !== "string" ||
+          !/^(0|[1-9][0-9]{0,19})$/.test(leaf.nonce))) fail("GG_PROOF_INVALID");
+      if (!exists && leaf !== null) fail("GG_PROOF_INVALID");
+      return { address, balance_atomic: exists ? leaf.balance_atomic : "0", nonce: exists ? leaf.nonce : "0",
+        exists, symbol: value.state.symbol, decimals: value.state.decimals };
+    }
+    if (result.account_proof_verified !== true) return null;
     const leaf = value.account_proof.leaf;
     return { address: leaf.address, balance_atomic: leaf.balance_atomic, symbol: value.state.symbol, decimals: value.state.decimals };
   }

@@ -30,7 +30,28 @@ def native_build_flags(goos):
 
 
 def source_files():
-    return sorted([SOURCE/'go.mod',SOURCE/'go.sum',SOURCE/'toolchain.json',*SOURCE.glob('*.go')],key=lambda path:path.name)
+    return sorted([SOURCE/'go.mod',SOURCE/'go.sum',SOURCE/'toolchain.json',SOURCE/'install_toolchain.py',SOURCE/'sdk_overlay.py',SOURCE/'sdk_patches.json',*SOURCE.glob('*.go')],key=lambda path:path.name)
+
+
+def sdk_overlay_module():
+    import importlib.util
+    spec=importlib.util.spec_from_file_location('gg_verified_sdk_overlay',SOURCE/'sdk_overlay.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    return module
+
+
+def sdk_overlay_flags(target,environment,executable=None):
+    # Explicit builds may start with a cold module cache. Let Go fetch and
+    # checksum the pinned original before deriving our separately verified tree.
+    archive=Path(environment['GOMODCACHE'])/'cache/download/github.com/cometbft/cometbft/@v/v0.40.0.zip'
+    if not archive.is_file():
+        if executable is None:
+            executable=Path(environment['GOROOT'])/'bin'/('go.exe' if os.name=='nt' else 'go') if environment.get('GOROOT') else shutil.which('go',path=environment.get('PATH'))
+        if not executable:raise RuntimeError('GG_SDK_PATCH_GO_REQUIRED')
+        result=subprocess.run([str(executable),'mod','download','github.com/cometbft/cometbft@v0.40.0'],cwd=SOURCE,
+            env=environment,capture_output=True,timeout=300,creationflags=FLAGS)
+        if result.returncode:raise RuntimeError('GG_SDK_PATCH_MODULE_DOWNLOAD_FAILED')
+    return sdk_overlay_module().overlay_flags(target,environment)
 
 
 def source_fingerprint():
@@ -40,7 +61,7 @@ def source_fingerprint():
 
 
 def light_source_files():
-    return [SOURCE/'go.mod',SOURCE/'go.sum',SOURCE/'toolchain.json',SOURCE/'ledger.go',SOURCE/'verify.go',SOURCE/'light/wasm_main.go']
+    return [SOURCE/'go.mod',SOURCE/'go.sum',SOURCE/'toolchain.json',SOURCE/'install_toolchain.py',SOURCE/'sdk_overlay.py',SOURCE/'sdk_patches.json',SOURCE/'ledger.go',SOURCE/'canonical_stream.go',SOURCE/'canonical_financial_hex.go',SOURCE/'financial_decoded_payments.go',SOURCE/'signature_profile.go',SOURCE/'dag_execution.go',SOURCE/'dag_execution_policy.go',SOURCE/'dag_segmented_execution.go',SOURCE/'dag_segmented_state.go',SOURCE/'dag_segmented_proof.go',SOURCE/'dag_segmented_base_proof.go',SOURCE/'dag_segmented_closed_proof.go',SOURCE/'dag_tx_verify.go',SOURCE/'dag_history.go',SOURCE/'dag_order_root.go',SOURCE/'dag_proof.go',SOURCE/'financial_accounts.go',SOURCE/'financial_accounts_workspace.go',SOURCE/'financial_registry.go',SOURCE/'financial_protocol.go',SOURCE/'financial_protocol_money.go',SOURCE/'financial_protocol_money_batch.go',SOURCE/'financial_payment_codec.go',SOURCE/'financial_protocol_block.go',SOURCE/'financial_protocol_operations.go',SOURCE/'financial_protocol_proof.go',SOURCE/'financial_protocol_block_proof.go',SOURCE/'financial_protocol_reward.go',SOURCE/'financial_economy.go',SOURCE/'financial_mining.go',SOURCE/'financial_admission.go',SOURCE/'financial_committee_proof.go',SOURCE/'financial_account_model.go',SOURCE/'financial_account_proof.go',SOURCE/'financial_execution.go',SOURCE/'financial_dag.go',SOURCE/'financial_state.go',SOURCE/'financial_receipt.go',SOURCE/'financial_producer.go',SOURCE/'membership.go',SOURCE/'verify.go',SOURCE/'light/wasm_main.go']
 
 
 def light_fingerprint():
@@ -63,7 +84,7 @@ def build_light_verifier(target=TARGET):
         environment=build_environment(target)
         environment.update(GOOS='js',GOARCH='wasm',GOMAXPROCS='2')
         artifact=build/'verifier.wasm'
-        result=subprocess.run([str(executable),'build','-p','2','-mod=readonly','-trimpath','-ldflags=-s -w','-o',str(artifact),'.'],
+        result=subprocess.run([str(executable),'build',*sdk_overlay_flags(target,environment,executable),'-p','2','-mod=readonly','-trimpath','-ldflags=-s -w','-o',str(artifact),'.'],
             cwd=build,env=environment,capture_output=True,text=True,encoding='utf-8',timeout=300,creationflags=FLAGS)
         if result.returncode:raise RuntimeError('GG_CONSENSUS_WASM_BUILD_FAILED')
         if light_fingerprint()!=fingerprint:raise RuntimeError('GG_CONSENSUS_LIGHT_SOURCE_CHANGED_DURING_BUILD')
@@ -71,7 +92,7 @@ def build_light_verifier(target=TARGET):
             'wasm_sha256':hashlib.sha256(artifact.read_bytes()).hexdigest(),'wasm_bytes':artifact.stat().st_size,
             'runtime_sha256':hashlib.sha256(runtime.read_bytes()).hexdigest(),'runtime_bytes':runtime.stat().st_size,
             'go':compiler['go'],'cometbft':lock['cometbft'],'goos':'js','goarch':'wasm',
-            'cgo_enabled':False,'build_flags':['-p','2','-mod=readonly','-trimpath','-ldflags=-s -w']}
+            'cgo_enabled':False,'build_flags':['-p','2','-mod=readonly','-trimpath','-ldflags=-s -w'],'dependency_patches':sdk_overlay_module().patch_records()}
         runtime_copy=target/'wasm_exec.js.tmp';shutil.copyfile(runtime,runtime_copy)
         os.replace(artifact,target/'verifier.wasm');os.replace(runtime_copy,target/'wasm_exec.js')
         receipt=target/'light-manifest.json.tmp'
@@ -128,7 +149,7 @@ def write_build_metadata(executable,binary,build,target=TARGET,environment=None)
         'goos':compiler['goos'],'goarch':compiler['goarch'],
         'cometbft':lock['cometbft'],'cgo_enabled':False,'build_flags':native_build_flags(compiler['goos']),
         'compatibility_flags':['-checklinkname=0'] if compiler['goos']=='android' else [],
-        'notices':'notices/modules.json'}
+        'notices':'notices/modules.json','dependency_patches':sdk_overlay_module().patch_records()}
     if compiler['goos']=='android':
         manifest.update(compatibility_reason='Pinned transitive wlynxg/anet v0.0.5 references private net.zoneCache; upstream requires this Android link compatibility flag on Go>=1.23. libp2p remains disabled; SDK cryptographic checks remain enabled.',
                         compatibility_upstream=ANDROID_COMPATIBILITY_URL,experimental=True,target_execution_tested=False)
@@ -150,8 +171,10 @@ def ensure_go(target=TARGET):
         result=subprocess.run([installed,'version'],env=build_environment(target),capture_output=True,text=True,timeout=10)
         release=result.stdout.split()[2:3]
         matched=re.fullmatch(r'go(\d+)\.(\d+)(?:\.(\d+))?',release[0]) if release else None
-        if result.returncode or not matched or tuple(map(int,matched.group(1,2)))<(1,25):
-            raise RuntimeError('GG_CONSENSUS_LOCAL_GO_1_25_REQUIRED')
+        minimum=re.fullmatch(r'go(\d+)\.(\d+)(?:\.(\d+))?',version)
+        parts=lambda match:tuple(int(value or 0) for value in match.group(1,2,3))
+        if result.returncode or not matched or not minimum or parts(matched)<parts(minimum):
+            raise RuntimeError('GG_CONSENSUS_LOCAL_GO_VERSION_REQUIRED')
         return Path(installed)
     if executable.is_file():
         result=subprocess.run([str(executable),'version'],env=build_environment(target),capture_output=True,text=True,timeout=10,creationflags=FLAGS)
@@ -204,7 +227,7 @@ def _build_native(executable,target,environment,destination):
         for source in source_files():shutil.copyfile(source,build/source.name)
         artifact=build/binary.name
         goos=environment.get('GOOS') or compiler_metadata(executable,target,environment)['goos']
-        result=subprocess.run([str(executable),'build',*native_build_flags(goos),'-o',str(artifact),'.'],
+        result=subprocess.run([str(executable),'build',*sdk_overlay_flags(target,environment,executable),*native_build_flags(goos),'-o',str(artifact),'.'],
             cwd=build,env=environment,capture_output=True,text=True,encoding='utf-8',timeout=300,creationflags=FLAGS)
         if result.returncode:raise RuntimeError('GG_CONSENSUS_BUILD_FAILED')
         if source_fingerprint()!=fingerprint:raise RuntimeError('GG_CONSENSUS_SOURCE_CHANGED_DURING_BUILD')

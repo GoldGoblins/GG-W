@@ -1,0 +1,2137 @@
+{
+  "schema": "gg.dagoblin.delivery-contract.v1",
+  "state": "SOURCE5_EXACT_SOURCE_RUNTIME_PENDING",
+  "original_intent": [
+    "Real5000TX/block and hundredsblocks/s; actual validated network traffic, not graph/render/replica-drain rates.",
+    "Slower nodes work at their own pace without globally gating fast producers.",
+    "CLI owns real node/account state; Desktop represents same source accurately with named unique block creators.",
+    "All required code first, then one combined network acceptance suite, then production-like public testnet."
+  ],
+  "assumptions_to_confirm_before_final_benchmark": {
+    "blocks_per_second_working_target": 200,
+    "transactions_per_block": 5000,
+    "derived_unique_transactions_per_second": 1000000,
+    "status": "WORKING_TARGET_NOT_USER_CONFIRMED_OR_MEASURED"
+  },
+  "delivery_order": [
+    {
+      "phase": "CODE",
+      "state": "INCOMPLETE_CAPACITY_CONTINUOUS_STORAGE_AND_CURRENT_ACCEPTANCE",
+      "gate": "All implementation criteria and local regression checks pass; frozen version and exact release artifacts. No incremental device updates/bootstrap cycles."
+    },
+    {
+      "phase": "NETWORK_ACCEPTANCE",
+      "state": "NOT_STARTED",
+      "gate": "One integrated physical/network acceptance suite on the frozen version covers the complete chain and failure/recovery cases. New defects invalidate the affected claims and require correction/reverification."
+    },
+    {
+      "phase": "PRODUCTION_LIKE_TESTNET",
+      "state": "NOT_STARTED",
+      "gate": "Same implementation/protocol/state and operations intended for mainnet, with explicitly separate testnet identity,genesis and test funds. Deploy target and concrete external effects require their own chat decision."
+    }
+  ],
+  "implementation_order": [
+    {
+      "id": 1,
+      "area": "Independent owned node production",
+      "state": "CORE_IMPLEMENTED_PRIOR_LOCAL_COHORT_PASS_CURRENT_CONNECTED_CODE_PENDING_GATES",
+      "accept": [
+        "Any paired opted-in node starts its own bounded production without coordinator RPC, equal peer baseline or every peer online.",
+        "Stop,restart and rate changes of one owned worker do not stop or start other nodes.",
+        "Strict legacy replica test remains separate and cannot manufacture ACK/finality."
+      ]
+    },
+    {
+      "id": 2,
+      "area": "Per-peer flow control and recovery",
+      "state": "BOUNDED_FLOW_RECOVERY_IMPLEMENTED_TARGET_LOAD_CAPABILITY_INCOMPLETE",
+      "accept": [
+        "All queues and memory are bounded; slow peer cannot hold fast-peer work or shared global locks during waits.",
+        "Reconnect and missing data recovery preserve exact validation; growing lag is observable."
+      ]
+    },
+    {
+      "id": 3,
+      "area": "Durable identity and verified state",
+      "state": "CORE_IMPLEMENTED_PRIOR_LOCAL_COHORT_PASS_CURRENT_CONNECTED_CODE_PENDING_GATES",
+      "accept": [
+        "Restart preserves creator identity and validated committed history without duplicate ownership or nonce reuse.",
+        "Crash recovery rejects corrupt/partial/unverified state and never silently rewinds a spend."
+      ]
+    },
+    {
+      "id": 4,
+      "area": "Explicit producer,validator,replica and light-client roles",
+      "state": "CORE_IMPLEMENTED_PRIOR_LOCAL_COHORT_PASS_CURRENT_CONNECTED_CODE_PENDING_GATES",
+      "accept": [
+        "Mobile participation does not imply full global validation or an obligatory vote.",
+        "Role and verification scope are explicit in CLI and Desktop."
+      ]
+    },
+    {
+      "id": 5,
+      "area": "Consensus,availability and finality",
+      "state": "CORE_IMPLEMENTED_PRIOR_LOCAL_COHORT_PASS_CURRENT_CONNECTED_CODE_PENDING_GATES",
+      "accept": [
+        "Use specified membership,quorum,ordering and data-availability rules with adversarial tests; no every-connected-client unanimity shortcut.",
+        "No double spend,equivocation or false finality across partitions,reordering,restarts."
+      ]
+    },
+    {
+      "id": 6,
+      "area": "Measured throughput and resource budgets",
+      "state": "INCOMPLETE_TARGET_NOT_MET",
+      "accept": [
+        "Profile and optimize actual required signing,verification,transport,ordering and storage work.",
+        "Measure the agreed end-to-end workload over sustained runs with physical/independent hosts; report actual bytes,latency,backlog and verification scope.",
+        "Unmet performance target is a remaining requirement or concrete hardware/design blocker,never relabeled as passed."
+      ]
+    },
+    {
+      "id": 7,
+      "area": "Integrated correctness and operation",
+      "state": "CORE_IMPLEMENTED_PRIOR_LOCAL_COHORT_PASS_CURRENT_CONNECTED_CODE_PENDING_GATES",
+      "accept": [
+        "Single acceptance suite includes ownership,CLI/Desktop consistency,slow/offline node,catch-up,crash/restart,malformed/faulty peers,limits and sustained load.",
+        "Versioned reproducible installs and operational recovery work on Windows,Linux and Termux."
+      ]
+    },
+    {
+      "id": 8,
+      "area": "Production-like testnet and release review",
+      "state": "PUBLIC_PRODUCTION_POLICY_WITHHELD_NOT_ACTIVATED",
+      "accept": [
+        "Testnet runs the same reviewed node implementation and protocol as proposed mainnet with separate network/genesis/test funds.",
+        "Public readiness requires operational evidence and independent security review; real mainnet launch is a separate concrete user decision."
+      ]
+    }
+  ],
+  "scope_rule": "No unrelated features,intermediate physical update cycles or invented new requirements. Necessary changes must map to one acceptance criterion. Record facts,findings,decisions,assumptions and unresolved blockers separately. Latestuserexplicitlyauthorizesresearchandlocalregressioniterationsacrossthisfullnetworkscope;onecoherentfinalpushonlyifreleasegatepasses.",
+  "current_facts": [
+    "The proposed Source5 batch preserves exact retained originals/full cold verification and adds owned progress recovery, restored replica floor/context repairs, LIGHT compatibility and exact asynchronous operator completion.",
+    "Focused diagnostics executed: historical native13 had11 passes/2 failures, historical root repair2 had1 pass/1 failure, current native1 passed with two actual restarts, historical Python11 had10 passes/1 error and the single corrected Python case passed. These version-bound diagnostics are not aggregated into all13 or full-cohort acceptance; full native/Python/QML/WASM/operator/package/capacity/physical acceptance remains pending.",
+    "No fixed TPS voting eligibility, new voter role, economic/membership policy, pruning, trusted checkpoint, public activation or capacity result is introduced."
+  ],
+  "decisions": [
+    "Code for agreed whole first; local regression checks during implementation; one frozen combined network suite next; production-like testnet after that.",
+    "No automatic Desktop restart/QML reload or new bootstrap transfer method.",
+    "Do not activate real mainnet or spend real funds under LAN-task authority."
+  ],
+  "unresolved": [
+    "Execute the frozen whole-native/Python/QML/WASM/operator/package cohort and fix actual connected failures without weakening its evidence.",
+    "Measure bounded local capacity and scaling costs, then measure representative stronger server/quorum/network hardware before claiming5000TX/block at hundreds of blocks/s.",
+    "Complete the explicit lifetime/retention and availability strategy for SDK blockstore, per-key indexes and total original history; compact references do not bound total history.",
+    "Run the physical Windows/Linux/Termux network, slow/disconnected/rejoining-node and endurance/fault acceptance against one coherent release.",
+    "Public monetary/membership/availability/endpoint policy and independent security review remain open. Public testnet/mainnet activation requires its separate concrete decision."
+  ],
+  "current_implementation_workflow": {
+    "user_direction_date": "2026-11-03",
+    "state": "COHERENT_LOW_SERVER_CODEC_EXECUTION_CODE_THEN_WHOLE_FROZEN_ACCEPTANCE",
+    "rule": "Build as much of every required interdependent network component as possible before the next combined local test round. Do not repeat small implementation/test/checkpoint cycles. Then debug, fix and retest the coherent implementation. Physical Windows/Linux/Termux acceptance follows the coherent release.",
+    "whole_goal_complete": false,
+    "physical_acceptance_pending": true,
+    "public_activation_requires_separate_concrete_decision": true
+  },
+  "required_research": [
+    "Ownsource,binaries,CLI/UIandbuildchain",
+    "ComparableDAG/consensus/mining/poolimplementationswithboundedGhidraandREAevidence",
+    "Relevantconfirmedsecurityincidentsandlessons",
+    "Monetaryissuance,rewards,fees,pools,mineraccountabilityanddoublespend rulesalreadydefinedbyproject"
+  ],
+  "local_review_results": {
+    "separate_native_wasm_tests": 31,
+    "external_signature_vectors": 210,
+    "cross_runtime_application_profile_vectors": 214,
+    "soak_seconds": 600,
+    "soak_shared_blocks": 1296,
+    "soak_shared_transactions": 41472,
+    "soak_new_transport_failures": 0,
+    "all_implementation_stages_complete": false,
+    "consolidated_initial_regression": {
+      "tests": 290,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "remaining_observation": "QML incubation/destruction warning; isolated lifecycle rerun passed"
+    },
+    "git_push_performed": false,
+    "new_physical_network_test_performed": false,
+    "durable_node": {
+      "scope": "EXPLICIT_PRIVATE_LAN_PROFILES_LOCAL_WINDOWS_PROCESSES",
+      "targeted_profile_tests": 29,
+      "transport_followup_tests": 36,
+      "process_crash_before_and_after_commit": "PASS",
+      "headless_reviewed_files": 108,
+      "physical_linux_termux_execution_tested": false,
+      "whole_disk_rollback_protection": false,
+      "unbounded_pruning_or_fast_sync": false,
+      "full_regression_recheck": {
+        "status": "PASS",
+        "tests": 321,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "source_unchanged_during_tests": true
+      },
+      "git_push_performed": false
+    },
+    "explicit_node_roles": {
+      "scope": "SIGNED_PRIVATE_LAN_ROSTER_AND_OWNED_LOOPBACK_PROCESSES",
+      "replica_implementation": "FULL_ADMISSION_VALIDATION_WITHOUT_ATTACHED_PRODUCER_SIGNERS",
+      "invalid_role_signatures_and_replay_policy": "LOCAL_TESTS_PASSED",
+      "actual_dag_light_client_implemented": false,
+      "dag_consensus_binding_implemented": false,
+      "full_regression": {
+        "status": "PASS",
+        "tests": 331,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "source_unchanged_during_tests": true
+      },
+      "git_push_performed": false,
+      "offscreen_lifecycle_repetitions": 12,
+      "offscreen_lifecycle_warning_filtering": false,
+      "os_data_root_aliases": "CANONICAL_ANCHOR_WITH_PRIVATE_SUBTREE_LINK_REJECTION_TESTED",
+      "headless_reviewed_files": 109,
+      "native_go_wasm_proof_binding": "SEPARATE_EXISTING_TEST_LEDGER_NOT_A_DAG_CERTIFICATE"
+    }
+  },
+  "historical_metadata_before_2026_11_04_reconciliation": {
+    "scope": "DATED_PRIOR_CONTRACT_STATUS_NOT_CURRENT_SOURCE_ACCEPTANCE",
+    "current_facts": [
+      "Private3-device DAG lab exists; unique creators,real individually signed test TX,CLI/Desktop observation and separate own-production metrics physically observed.",
+      "The prior published finite DAG-TX stress mode has no certified DAG finality. The later unpublished code binds actual available DAG execution and order into native consensus AppHash.",
+      "The preceding local replica/light stage passed388Python/runtime/UI tests and103Go tests, with actual four-SDK-process checks. This is local Windows evidence, not physical Linux/Termux acceptance.",
+      "Encrypted owned profiles preserve identity and admitted history. Full replicas verify global payload; genuine light clients verify SDK certificates, selected order membership and own account proofs without downloading global payload.",
+      "The native public proof index now isolates historical reads from consensus locks and commits derived metadata atomically with native history. Its125Go tests pass; broader candidate integration remains subject to the frozen-source review."
+    ],
+    "implementation_states": {
+      "1": "LOCAL_PRODUCTION_TESTS_PASSED_PHYSICAL_ACCEPTANCE_PENDING",
+      "2": "PARTIAL_LOCAL_FLOW_CONTROL_AND_CATCHUP_VERIFIED",
+      "3": "LOCAL_ENCRYPTED_PROFILES_AND_PROCESS_CRASH_RECOVERY_VERIFIED_PHYSICAL_ACCEPTANCE_PENDING",
+      "4": "PRODUCER_FULL_REPLICA_AND_GENUINE_PROOF_ONLY_LIGHT_ROLE_LOCAL_VERIFIED_PHYSICAL_ROLE_ACCEPTANCE_PENDING",
+      "5": "CHECKPOINTS_CONFLICTS_BRANCH_INGRESS_AND_CANDIDATE_RETENTION_LOCAL_VERIFIED_ALTERNATE_SDK_PAYLOAD_RECOVERY_IN_REVIEW_HISTORY_AND_PHYSICAL_GATES_PENDING",
+      "6": "THROUGHPUT_TARGET_NOT_MET",
+      "7": "LOCAL_CLI_VALIDATOR_INTEGRATION_IMPLEMENTED_RESULTS_IN_VERSIONED_REVIEW_PHYSICAL_AND_FINAL_LOAD_ACCEPTANCE_PENDING",
+      "8": "NOT_READY"
+    },
+    "unresolved": [
+      "Exact final performance block rate and hardware/infrastructure budget are not yet agreed.",
+      "Physical acceptance, candidate/pruning/ingress-isolation/data-availability budgets and maximum-payload recovery remain incomplete. Producer branch retention, per-author quarantine and execution of fetched SDK-selected payload are implemented under local review; irreconcilable legacy own branches are never automatically re-signed or reset.",
+      "Public monetary/mining/pool/membership policy, sustained target capacity and independent security acceptance remain incomplete; public network activation requires a concrete decision."
+    ],
+    "work_window": {
+      "deadline_utc": "2026-10-31T10:30:43.826585+00:00",
+      "no_questions": true,
+      "no_intermediate_push_or_physical_test": true
+    }
+  },
+  "local_review_results_scope": "HISTORICAL_BEFORE_2026_11_04_CURRENT_SOURCE_COHORT; counters preserved verbatim, not current acceptance.",
+  "as_of": "2026-11-05",
+  "current_acceptance_snapshot": {
+    "status": "SOURCE7_LOCAL_COHERENT_FUNCTIONAL_GATES_PASSED; PACKAGE_ACCEPTANCE_EXTERNAL_RECEIPT",
+    "as_of": "2026-11-05",
+    "whole_goal_complete": false,
+    "code_goal_complete": false,
+    "integrated_code_files": 118,
+    "expected_native_top_level_tests_by_OS": {
+      "windows-amd64": 458,
+      "linux-amd64": 451
+    },
+    "expected_native_build_input_files": 183,
+    "expected_light_build_input_files": 48,
+    "expected_Python_modules_by_OS": {
+      "windows-amd64": 61,
+      "linux-amd64": 58
+    },
+    "native_source_fingerprint": "0031d975019a5359500acd9ce3d842189fc4b5d7bfa9588dd6d9df1b708705b2",
+    "light_source_fingerprint": "686946784111e9d5c3b59fc2479a00b26ece51c427c7deeeb7ffd26c9aca1523",
+    "native_full_round": {
+      "status": "PASS",
+      "path": ".runtime/dagoblin-whole-throughput-native-v1/run-20261105-075326-a61f031d0c784c02aa3942a13c9a7ee1/validation.json",
+      "sha256": "813a065c8bff2510811afcf8f2d5f003b02917fbcfe3d9aa37476ca6cabb5890",
+      "expected_counts_by_os": {
+        "windows-amd64": 458,
+        "linux-amd64": 451
+      },
+      "fresh_four_target_builds_and_all_eight_groups": true,
+      "native_zero_skips_both_os": true,
+      "scope": "ACTUAL_LOCAL_WINDOWS_AND_WSL_NOT_CAPACITY_OR_PHYSICAL"
+    },
+    "Python_full_round": {
+      "windows": {
+        "status": "PASS",
+        "path": ".runtime/dagoblin-whole-throughput-regression-v1/r7w/python-windows-source-audit.json",
+        "sha256": "3ca6115aa4e44ff48a28efefccca1f7e76e42a97e5331d514afd10ebd67d1d4c",
+        "tests": 736,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3,
+        "actual_protected_restore_sdk_case_passed": true,
+        "actual_QML_in_Windows_suite": true,
+        "source_unchanged": true,
+        "owned_processes_terminal": true,
+        "module_count": 61,
+        "linux_QML_executed": false
+      },
+      "linux": {
+        "status": "PASS",
+        "path": ".runtime/dagoblin-whole-throughput-regression-v1/r7l/python-linux-source-audit.json",
+        "sha256": "418ac042deede6341f0280b21f8abf7bb39cded5c48e4697ba7ec6957fce3160",
+        "tests": 720,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 42,
+        "actual_protected_restore_sdk_case_passed": true,
+        "actual_QML_in_Windows_suite": false,
+        "source_unchanged": true,
+        "owned_processes_terminal": true,
+        "module_count": 58,
+        "linux_QML_executed": false
+      }
+    },
+    "WASM_round": {
+      "status": "PASS",
+      "path": ".runtime/dagoblin-whole-throughput-wasm-v1/r7/result.json",
+      "sha256": "4ac02ab090049811b3514a2f71617bd786743f9b553ea3d0de02d43f2b2be27c",
+      "binding": {
+        "path": ".runtime/dagoblin-whole-throughput-wasm-v1/r7/native-round-binding.json",
+        "sha256": "ccbb3abe45bb2ec38ccabade159fb91ff55e0bf3375afddf7070fcc3b8a90426"
+      },
+      "cases": 54,
+      "actual_callback_calls": 35,
+      "native_comparisons": 35,
+      "scope": "ACTUAL_WASM_PUBLIC_PROOF_CALLBACK_NOT_BROWSER_LINUX_UI_OR_ACCOUNT_WORKSPACE_EXECUTION",
+      "account_workspace_execution_claim": false
+    },
+    "operator_pair": {
+      "status": "PASS",
+      "windows": {
+        "path": ".runtime/dr7-operator-async-fixture-v2/results/actual-operator-runtime-windows-20261105-090840-10864/validation.json",
+        "sha256": "21958817a9a62950cfd8021797ba792445353dd1ceb6de580288893c0541fb40"
+      },
+      "linux": {
+        "path": ".runtime/dr7-operator-async-fixture-v2/results/actual-operator-runtime-linux-20261105-093927-16/validation.json",
+        "sha256": "80552e5606c324be31c1b45d3888ff0c4102ef7e9a284f4f62543ffbcf21d6dc"
+      },
+      "each_APPLIED": 5097,
+      "each_REJECTED": 0,
+      "physical_hosts_independent": false,
+      "capacity_measured": false
+    },
+    "CLI_package_acceptance": {
+      "status": "PASS",
+      "path": ".runtime/dagoblin-whole-throughput-regression-v1/r7-v2-pre-metadata-package-v1/validation.json",
+      "sha256": "e2b2ce82b4b36f9d2f6c8d583cd8f1d24e4a84d9e2d7012ea6cae3daa1f9fad4",
+      "phase": "ACTUAL_PRE_FINAL_METADATA_FUNCTIONAL_PACKAGE",
+      "tests": 27,
+      "final_exact_byte_receipt": "EXTERNAL_REQUIRED_AFTER_METADATA_REFRESH_BEFORE_PUBLICATION"
+    },
+    "fixture_alignment": "PRIVATE_ACTUAL_FOCUSED_ONE_CASE_EACH_OS_PASS_NOT_FULL_SOURCE7_ACCEPTANCE",
+    "current_code_is_not_accepted_by_previous_cohort_receipts": true,
+    "target_capacity_proven": false,
+    "physical_acceptance_pending": true,
+    "public_activation_performed": false,
+    "git_push_performed": false,
+    "historical_source5_native": {
+      "sha256": "228687ee6f9fb8e2155372d0ed29118c7d46878504d1119af57dedf9d168673a",
+      "source6_acceptance": false,
+      "native_graph_identical": true,
+      "path": ".runtime/dagoblin-whole-throughput-native-v1/run-20261105-043022-b050c136f3744f54bfb2e3ae4528f817/validation.json",
+      "expected_tests_by_os": {
+        "linux-amd64": 451,
+        "windows-amd64": 458
+      },
+      "status": "PASS",
+      "zero_skips": true
+    },
+    "historical_source5_windows_python": {
+      "path": ".runtime/dagoblin-whole-throughput-regression-v1/r5w/python-windows.json",
+      "failures": 2,
+      "source6_acceptance": false,
+      "errors": 27,
+      "skipped": 3,
+      "tests": 736,
+      "actual_protected_restore_sdk": true,
+      "status": "FAIL",
+      "actual_QML": true
+    },
+    "historical_source6_acceptance_snapshot": {
+      "status": "SOURCE6_FIXTURE_ALIGNMENT_PENDING_FULL_ACCEPTANCE",
+      "as_of": "2026-11-05",
+      "whole_goal_complete": false,
+      "code_goal_complete": false,
+      "integrated_code_files": 118,
+      "changed_source_targets": 4,
+      "new_distributable_files": 0,
+      "expected_native_top_level_tests_by_OS": {
+        "linux-amd64": 451,
+        "windows-amd64": 458
+      },
+      "expected_native_build_input_files": 183,
+      "expected_light_build_input_files": 48,
+      "expected_Python_modules_by_OS": {
+        "linux-amd64": 58,
+        "windows-amd64": 61
+      },
+      "native_source_fingerprint": "0031d975019a5359500acd9ce3d842189fc4b5d7bfa9588dd6d9df1b708705b2",
+      "light_source_fingerprint": "686946784111e9d5c3b59fc2479a00b26ece51c427c7deeeb7ffd26c9aca1523",
+      "native_full_round": "NOT_EXECUTED_FOR_SOURCE6",
+      "Python_full_round": "NOT_EXECUTED_FOR_SOURCE6",
+      "WASM_round": "NOT_EXECUTED_FOR_SOURCE6",
+      "operator_pair": "NOT_EXECUTED_FOR_SOURCE6",
+      "CLI_package_acceptance": "NOT_EXECUTED_FOR_SOURCE6",
+      "fixture_alignment": "PRIVATE_FOCUSED42_PASS_NOT_FULL_SOURCE6_ACCEPTANCE",
+      "current_code_is_not_accepted_by_previous_cohort_receipts": true,
+      "target_capacity_proven": false,
+      "physical_acceptance_pending": true,
+      "public_activation_performed": false,
+      "git_push_performed": false,
+      "historical_source5_native": {
+        "sha256": "228687ee6f9fb8e2155372d0ed29118c7d46878504d1119af57dedf9d168673a",
+        "source6_acceptance": false,
+        "native_graph_identical": true,
+        "path": ".runtime/dagoblin-whole-throughput-native-v1/run-20261105-043022-b050c136f3744f54bfb2e3ae4528f817/validation.json",
+        "expected_tests_by_os": {
+          "linux-amd64": 451,
+          "windows-amd64": 458
+        },
+        "status": "PASS",
+        "zero_skips": true
+      },
+      "historical_source5_windows_python": {
+        "path": ".runtime/dagoblin-whole-throughput-regression-v1/r5w/python-windows.json",
+        "failures": 2,
+        "source6_acceptance": false,
+        "errors": 27,
+        "skipped": 3,
+        "tests": 736,
+        "actual_protected_restore_sdk": true,
+        "status": "FAIL",
+        "actual_QML": true
+      },
+      "focused_fixture_diagnostic": {
+        "path": ".runtime/dr5-fixture-focus-v1/focus2/result.json",
+        "sha256": "e3fb7647cc445b0570a483a0e92ce73eaf6565b3b5c083df8e6c1ea700f2ffb3",
+        "status": "PASS",
+        "tests": 42,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "full_native_acceptance": false,
+        "full_python_acceptance": false
+      }
+    },
+    "historical_source5_focused_fixture_diagnostic": {
+      "path": ".runtime/dr5-fixture-focus-v1/focus2/result.json",
+      "sha256": "e3fb7647cc445b0570a483a0e92ce73eaf6565b3b5c083df8e6c1ea700f2ffb3",
+      "status": "PASS",
+      "tests": 42,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "full_native_acceptance": false,
+      "full_python_acceptance": false
+    },
+    "focused_startup_fixture_diagnostic": {
+      "status": "PASS",
+      "scope": "ONE_ORIGINAL_ACTUAL_CASE_PER_PLATFORM_WITH_PRIVATE_DONOR_NOT_FULL_SOURCE7_ACCEPTANCE",
+      "case": "tests.test_gg_consensus_service.FourProcessConsensusTests.test_real_processes_exact_roundtrip_certificates_proofs_and_no_secret_files",
+      "selector_sha256": "d41da496e79353467c34723c70b2bbeadd97b757088d7506439e5c786aab4817",
+      "tests_per_platform": 1,
+      "platforms": {
+        "windows": {
+          "status": "PASS",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "source_audit": ".runtime/dr7-startup-focus-v1/w1/python-windows-source-audit.json",
+          "source_audit_sha256": "743fd3bf6c7dd3f1814ba17485eeef3b6b935c569d03252a3d3a6b94c8c64075",
+          "worker_result": ".runtime/dr7-startup-focus-v1/w1/python-windows.json",
+          "worker_result_sha256": "eb4391fe39366f937edc72670b47edd184efe6bdd3c1b6fba0afd61d254e3fa6",
+          "source_files": 889,
+          "source_unchanged": true,
+          "owned_processes_terminal": true,
+          "live_owned_processes_before_cleanup": 0,
+          "exit_code": 0,
+          "full_native_acceptance": false,
+          "full_python_acceptance": false,
+          "guard_result": ".runtime/dr7-startup-focus-v1/w1/one-case-windows-result.json",
+          "guard_result_sha256": "c78d740fbcf66c34a59f541578c842ae2dadc04e0f27afb9e2fc4e39521080e8",
+          "owned_guard_kernel_and_job_closure_proven": true,
+          "cleanup_errors": []
+        },
+        "linux": {
+          "status": "PASS",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "source_audit": ".runtime/dr7-startup-focus-v1/l1/python-linux-source-audit.json",
+          "source_audit_sha256": "7becb43e16e873c63c2321809f0e45a28839e0ba69e5a9181e5af39a63512e74",
+          "worker_result": ".runtime/dr7-startup-focus-v1/l1/python-linux.json",
+          "worker_result_sha256": "e186f81f9744fffddb1d7e5641a9af577eef32a958f23bcd33518f1d503d35ca",
+          "source_files": 889,
+          "source_unchanged": true,
+          "owned_processes_terminal": true,
+          "live_owned_processes_before_cleanup": 0,
+          "exit_code": 0,
+          "full_native_acceptance": false,
+          "full_python_acceptance": false,
+          "cleanup_environment": ".runtime/dr7-startup-focus-v1/l1/linux-committee-history-environment.json",
+          "cleanup_environment_sha256": "56d276581f0e6ca379f0e1ee8155f52c4f70643a76996c6ab898469e6f425759",
+          "secure_linux_tmp_history_closed_and_removed": true,
+          "cleanup_errors": []
+        }
+      },
+      "donor_binding": {
+        "proposal_path": ".runtime/dr7-startup-fixture-v1/proposal.json",
+        "proposal_sha256": "c54343db5733ea885e616c72d7a3a8ed74c219dfa0d419032d44855b3b248226",
+        "canonical_path": "tests/test_gg_consensus_service.py",
+        "canonical_before_sha256": "d1b0fe3fbfeb0a6739573d360f2091e3ff2be1806589d84ac44776a63a6fc71e",
+        "donor_path": ".runtime/dr7-startup-fixture-v1/tests/test_gg_consensus_service.py",
+        "donor_sha256": "a36a6256858c737e11387c25e613f5e85520441403834f6492f73b2f11180b9d"
+      },
+      "native_round_report": ".runtime/dagoblin-whole-throughput-native-v1/run-20261105-052000-2fc0f9cbad934e99819a6f80200e1d74/validation.json",
+      "native_round_report_sha256": "b0229e0552240408768ced4daeaa31a06a41ff80752e1c940464d6bd221c6ec9",
+      "native_artifact_reuse_scope": "FOCUSED_DONOR_DIAGNOSTIC_ONLY_NOT_SOURCE7_COHORT_ACCEPTANCE",
+      "full_native_acceptance": false,
+      "full_python_acceptance": false,
+      "canonical_writes": false
+    },
+    "historical_source6_native": {
+      "path": ".runtime/dagoblin-whole-throughput-native-v1/run-20261105-052000-2fc0f9cbad934e99819a6f80200e1d74/validation.json",
+      "sha256": "b0229e0552240408768ced4daeaa31a06a41ff80752e1c940464d6bd221c6ec9",
+      "status": "PASS",
+      "source7_acceptance": false,
+      "native_graph_identical": true,
+      "zero_skips": true,
+      "expected_tests_by_os": {
+        "windows-amd64": 458,
+        "linux-amd64": 451
+      }
+    },
+    "historical_source6_windows_python": {
+      "path": ".runtime/dagoblin-whole-throughput-regression-v1/r6envw/python-windows-source-audit.json",
+      "sha256": "df67e204ed75222edadb27f5daf9b0cbdd1b3810c90d32fc4f1e55cfcae137a9",
+      "status": "PASS",
+      "tests": 736,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "actual_QML": true,
+      "actual_protected_restore_sdk": true,
+      "source7_acceptance": false,
+      "source_unchanged": true,
+      "owned_processes_terminal": true
+    },
+    "historical_source6_linux_python": {
+      "path": ".runtime/dagoblin-whole-throughput-regression-v1/r6envl/python-linux-source-audit.json",
+      "sha256": "9962740bf508cabf370826d053883696f0f077db76378646069fc2edf2313bd1",
+      "status": "FAIL",
+      "tests": 720,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 42,
+      "actual_QML": false,
+      "actual_protected_restore_sdk": true,
+      "source7_acceptance": false,
+      "source_unchanged": true,
+      "owned_processes_terminal": true
+    },
+    "source_revision": 7,
+    "local_release_validation": {
+      "status": "PASS",
+      "scope": "LOCAL_COHORT_NOT_CAPACITY_OR_PHYSICAL",
+      "source_revision": 7,
+      "working_source_files": 118,
+      "receipts": {
+        "native": {
+          "path": ".runtime/dagoblin-whole-throughput-native-v1/run-20261105-075326-a61f031d0c784c02aa3942a13c9a7ee1/validation.json",
+          "sha256": "813a065c8bff2510811afcf8f2d5f003b02917fbcfe3d9aa37476ca6cabb5890"
+        },
+        "python_windows": {
+          "path": ".runtime/dagoblin-whole-throughput-regression-v1/r7w/python-windows-source-audit.json",
+          "sha256": "3ca6115aa4e44ff48a28efefccca1f7e76e42a97e5331d514afd10ebd67d1d4c"
+        },
+        "python_linux": {
+          "path": ".runtime/dagoblin-whole-throughput-regression-v1/r7l/python-linux-source-audit.json",
+          "sha256": "418ac042deede6341f0280b21f8abf7bb39cded5c48e4697ba7ec6957fce3160"
+        },
+        "wasm": {
+          "path": ".runtime/dagoblin-whole-throughput-wasm-v1/r7/result.json",
+          "sha256": "4ac02ab090049811b3514a2f71617bd786743f9b553ea3d0de02d43f2b2be27c"
+        },
+        "wasm_binding": {
+          "path": ".runtime/dagoblin-whole-throughput-wasm-v1/r7/native-round-binding.json",
+          "sha256": "ccbb3abe45bb2ec38ccabade159fb91ff55e0bf3375afddf7070fcc3b8a90426"
+        },
+        "operator_windows": {
+          "path": ".runtime/dr7-operator-async-fixture-v2/results/actual-operator-runtime-windows-20261105-090840-10864/validation.json",
+          "sha256": "21958817a9a62950cfd8021797ba792445353dd1ceb6de580288893c0541fb40"
+        },
+        "operator_linux": {
+          "path": ".runtime/dr7-operator-async-fixture-v2/results/actual-operator-runtime-linux-20261105-093927-16/validation.json",
+          "sha256": "80552e5606c324be31c1b45d3888ff0c4102ef7e9a284f4f62543ffbcf21d6dc"
+        },
+        "package_before_metadata": {
+          "path": ".runtime/dagoblin-whole-throughput-regression-v1/r7-v2-pre-metadata-package-v1/validation.json",
+          "sha256": "e2b2ce82b4b36f9d2f6c8d583cd8f1d24e4a84d9e2d7012ea6cae3daa1f9fad4"
+        }
+      },
+      "package_receipt_phase": "ACTUAL_PRE_FINAL_METADATA_FUNCTIONAL_PACKAGE",
+      "final_exact_byte_package_validation": "EXTERNAL_REQUIRED_BEFORE_PUBLICATION_NO_FURTHER_CANONICAL_WRITES",
+      "whole_goal_complete": false,
+      "code_goal_complete": false,
+      "capacity_target_verified": false,
+      "physical_acceptance_proven": false,
+      "public_activation_performed": false
+    }
+  },
+  "current_acceptance_matrix": [
+    {
+      "id": 1,
+      "area": "Independent owned node production",
+      "code_status": "CONNECTED_CURRENT_SOURCE_LOCAL_COHORT_PASS",
+      "evidence": [
+        "Protected owner/validator/governance-account profiles, signed public schema7 ceremony, all initial voter endorsements, cold CLI-dispatch start and producer/worker separation."
+      ],
+      "remaining_code": [],
+      "remaining_acceptance": [
+        "Final exact-byte package receipt is external and required before publication.",
+        "Frozen independent physical/endurance/security acceptance for the applicable goal criterion."
+      ],
+      "sources": [
+        "backend/gg_protocol_provisioning.py",
+        "backend/gg_protocol_setup.py",
+        "backend/gg_protocol_runtime.py",
+        "knowledge/dagoblin-protocol-operators.md"
+      ]
+    },
+    {
+      "id": 2,
+      "area": "Per-peer flow control and recovery",
+      "code_status": "BOUNDED_FLOW_RECOVERY_IMPLEMENTED_TARGET_LOAD_CAPABILITY_INCOMPLETE",
+      "evidence": [
+        "Bounded ingress, encrypted proof/relay streams, retained exact originals, same-original work refresh, and real quorum progress with one voter process stopped in prior operator runs."
+      ],
+      "remaining_code": [
+        "Capacity-grade admission/verification/transport scheduling and backlog handling under sustained target offered load; current finite functional traffic does not establish it."
+      ],
+      "remaining_acceptance": [
+        "Slow phone/light-client lag, partition and catch-up at representative load across independent hosts."
+      ],
+      "sources": [
+        "backend/gg_protocol_transport.py",
+        "backend/gg_protocol_runtime.py",
+        "backend/gg_financial_relay.py"
+      ]
+    },
+    {
+      "id": 3,
+      "area": "Durable identity and verified state",
+      "code_status": "CONNECTED_CURRENT_SOURCE_LOCAL_COHORT_PASS",
+      "evidence": [
+        "Protected identity/journals, exact original/nonce ownership, authenticated archive/receipt queries and cold monetary replay exist.",
+        "Protected full archive audit/restore and same-owned-process nonvoting SDK handoff is implemented but current execution acceptance is pending."
+      ],
+      "remaining_code": [
+        "Explicit SDK/per-key-index and total-history lifetime/retention strategy without weakening original availability or full cold replay."
+      ],
+      "remaining_acceptance": [
+        "Long-running storage growth, full disk, power loss and restore under explicit retention/rollback trust assumptions."
+      ],
+      "sources": [
+        "support/gg-consensus/financial_store.go:5",
+        "support/gg-consensus/financial_store.go:266",
+        "support/gg-consensus/financial_store.go:423",
+        "backend/gg_native_start.py:34"
+      ]
+    },
+    {
+      "id": 4,
+      "area": "Explicit producer,validator,replica and light-client roles",
+      "code_status": "CONNECTED_CURRENT_SOURCE_LOCAL_COHORT_PASS",
+      "evidence": [
+        "Proof-only light participation has no vote or local SDK; authenticated creator/worker/owner distinction and explicit multiple-publisher source selection exist."
+      ],
+      "remaining_code": [],
+      "remaining_acceptance": [
+        "Actual Linux QML and physical Termux runtime, independent account/source selection and network status under the new release."
+      ],
+      "sources": [
+        "backend/local_node_observation.py",
+        "backend/gg_protocol_runtime.py",
+        "knowledge/research/dagoblin/integrated-network-implementation-2026-11-03.md"
+      ]
+    },
+    {
+      "id": 5,
+      "area": "Consensus,availability and finality",
+      "code_status": "CONNECTED_CURRENT_SOURCE_LOCAL_COHORT_PASS",
+      "evidence": [
+        "Actual SDK/AppHash-bound DAG monetary execution and authenticated committee/account/block/receipt proofs exist; a transport ACK or graph item is not finality."
+      ],
+      "remaining_code": [
+        "Reviewed public operator/endpoint/environment support if the production-like testnet is internet-facing; current Python ceremony/runtime/proof-relay path is explicitly private-address TESTNET-only."
+      ],
+      "remaining_acceptance": [
+        "Final exact-byte package receipt is external and required before publication.",
+        "Frozen independent physical/endurance/security acceptance for the applicable goal criterion."
+      ],
+      "sources": [
+        "support/gg-consensus/financial_protocol.go:207",
+        "backend/gg_protocol_provisioning.py:50",
+        "backend/gg_protocol_runtime.py:85",
+        "backend/gg_protocol_transport.py:28"
+      ]
+    },
+    {
+      "id": 6,
+      "area": "Measured throughput and resource budgets",
+      "code_status": "INCOMPLETE_TARGET_NOT_MET",
+      "evidence": [
+        "One matched local20-block baseline/COW pair each applied100000 with0rejected, exact final canonical proofs/state and cold equality; COW elapsed18.6%shorter in that fixture."
+      ],
+      "remaining_code": [
+        "Connected improvements to account/registry reads, strict canonical/verification reuse, scheduling, frame/checkpoint envelope and durable storage.",
+        "Present100ms commit wait and32MiB decoded-original checkpoint envelope are not configured for the working200full5000-payment-blocks/s target, even before execution cost."
+      ],
+      "remaining_acceptance": [
+        "Agree final block rate/hardware/infrastructure budget, then measure sustained independently verified user receipts, p50/p95/p99 inclusion, offered load, queues, bytes/role, CPU/RSS and disk/fsync."
+      ],
+      "sources": [
+        "support/gg-consensus/main.go:425",
+        "support/gg-consensus/dag_execution_policy.go:12",
+        "support/gg-consensus/financial_dag.go:493",
+        ".runtime/dagoblin-cow-private-v1/profile-analysis-v1/evidence.json"
+      ]
+    },
+    {
+      "id": 7,
+      "area": "Integrated correctness and operation",
+      "code_status": "CONNECTED_CURRENT_SOURCE_LOCAL_COHORT_PASS",
+      "evidence": [
+        "Real schema7 operator provisioning and reproducible CLI recipe now exist; the earlier test-helper genesis gap is closed.",
+        "Prior real Windows/WSL operator runs each5097APPLIED/0REJECTED include light/relay/pool, explicit UI source readers, voter cold rejoin and same pool journal recovery."
+      ],
+      "remaining_code": [
+        "Continuous target-load storage and connected capacity work from stages2/3/6.",
+        "Fix any concrete defects diagnosed by current coherent acceptance; do not classify unproved filesystem causes as repaired."
+      ],
+      "remaining_acceptance": [
+        "Final exact-byte package receipt is external and required before publication.",
+        "Frozen independent physical/endurance/security acceptance for the applicable goal criterion."
+      ],
+      "sources": [
+        ".runtime/dagoblin-cow-final-v1/close-final-v1/run-20261104-105157-2d02755136a549efaadb442cc28597c6/validation.json",
+        "knowledge/dagoblin-protocol-operators.md",
+        ".runtime/dagoblin-stress-v1/integrated-delivery-v1/combined-runtime-v1/actual-operator-runtime-windows-20261104-080148-22772/validation.json",
+        ".runtime/dagoblin-stress-v1/integrated-delivery-v1/combined-runtime-v1/actual-operator-runtime-linux-20261104-081841-12/validation.json"
+      ]
+    },
+    {
+      "id": 8,
+      "area": "Production-like testnet and release review",
+      "code_status": "PUBLIC_PRODUCTION_POLICY_WITHHELD_NOT_ACTIVATED",
+      "evidence": [
+        "Versioned economics, fees/emission/rewards, producer registration, committee change and durable pool payout code exist; example policy remains TESTNET-only."
+      ],
+      "remaining_code": [
+        "Complete the reviewed public operation path after choosing public monetary/membership/availability and endpoint policy; native MAINNET recognition alone is insufficient."
+      ],
+      "remaining_acceptance": [
+        "Independent voting failure domains, operational/security review and production-like testnet with separate identity/genesis/test funds.",
+        "Mainnet activation remains a separate concrete user decision."
+      ],
+      "sources": [
+        "support/gg-consensus/financial_protocol.go",
+        "support/gg-consensus/financial_economy.go",
+        "support/dagoblin/protocol-testnet-policy.example.json",
+        "backend/gg_protocol_transport.py:28"
+      ]
+    }
+  ],
+  "capacity_and_hardware_prerequisites": {
+    "working_scenario_not_final_or_measured": {
+      "blocks_per_second": 200,
+      "payments_per_block": 5000,
+      "unique_payments_per_second": 1000000
+    },
+    "current_format_byte_floor": {
+      "minimum_canonical_signed_payment_original_bytes": 499,
+      "working_original_bytes_per_second": 499000000,
+      "decimal_Gbit_per_second": 3.992,
+      "scope": "Current uncompressed canonical payment-original representation only;499bytes already includes paymentJSON/signature.",
+      "excludes": [
+        "block headers",
+        "batch base64",
+        "SDK/BFT framing",
+        "fanout",
+        "retransmission",
+        "receipt/proof traffic"
+      ],
+      "not_a_measured_network_rate": true,
+      "not_a_universal_future_encoding_limit": true,
+      "hardware_prerequisite": "A1Gbit/s full validator ingress cannot carry this current uncompressed1million/s scenario even once; actual links, CPU, disk and role budgets must be specified and measured, not assumed."
+    },
+    "current_checkpoint_configuration_budget": {
+      "commit_wait_milliseconds": 100,
+      "decoded_complete_originals_budget_bytes": 33554432,
+      "minimum_5000_payment_array_bytes": 2500001,
+      "optimistic_full_5000_payment_blocks_per_checkpoint": 13,
+      "optimistic_normal_checkpoints_per_second": 10,
+      "derived_optimistic_full_payment_blocks_per_second": 130,
+      "interpretation": "Derived configuration budget with commit waiting, before headers/actual execution/storage/transport; not measured throughput or universal consensus/physical bound. Timer change alone cannot solve measured CPU and data costs."
+    },
+    "local_finite_evidence": {
+      "applied_each": 100000,
+      "rejected_each": 0,
+      "blocks_each": 20,
+      "payments_per_block": 5000,
+      "baseline_native_seconds_with_cold": 183.0520569,
+      "cow_native_seconds_with_cold": 148.9554631,
+      "same_canonical_final_state_receipt_block_payer_genesis_source_hashes": true,
+      "actual_exact_cold_state_and_receipt_bytes": true,
+      "cow_approximate_seconds_through20_commits": 100,
+      "cow_cold_replay_seconds": 48.6057959,
+      "scope": "One local ABCI application with easy fixture work, not a network-TPS measurement, not sustained target acceptance.",
+      "repeated_distribution_comparison_complete": false,
+      "network_capacity_proven": false,
+      "source": ".runtime/dagoblin-cow-private-v1/comparison-v1.json"
+    }
+  },
+  "evidence_references": {
+    "goal_report": "knowledge/research/dagoblin/integrated-network-implementation-2026-11-03.md",
+    "current_374_failure": ".runtime/dagoblin-cow-final-v1/close-final-v1/run-20261104-105157-2d02755136a549efaadb442cc28597c6/validation.json",
+    "private_readonly_eight": ".runtime/dagoblin-observer-close-private-v1/run-20261104-103618-c66bdcb3caf84ccab306f3a012c4e900/validation.json",
+    "cow_exact_comparison": ".runtime/dagoblin-cow-private-v1/comparison-v1.json",
+    "current_profiles": ".runtime/dagoblin-cow-private-v1/profile-analysis-v1/evidence.json",
+    "current_wasm_public_proofs": ".runtime/dagoblin-wasm-private-v1/run-readonly-close-v1/result.json",
+    "prior_linux_373": ".runtime/dagoblin-cow-final-v1/linux-only-20261104-101945-310841559c664695b67b216def9824ee/validation.json",
+    "previous_windows_operator": ".runtime/dagoblin-stress-v1/integrated-delivery-v1/combined-runtime-v1/actual-operator-runtime-windows-20261104-080148-22772/validation.json",
+    "previous_linux_operator": ".runtime/dagoblin-stress-v1/integrated-delivery-v1/combined-runtime-v1/actual-operator-runtime-linux-20261104-081841-12/validation.json",
+    "physical_operator_recipe": "knowledge/dagoblin-protocol-operators.md",
+    "current_coherent_promotion": ".runtime/dagoblin-coherent-promotion-v1/promotion.json",
+    "current_local_acceptance_summary": ".runtime/dagoblin-coherent-promotion-v1/local-acceptance-summary.json",
+    "connected_55_promotion": ".runtime/dagoblin-continuous-storage-promotion-v1/promotion.json",
+    "connected_v2_promotion": ".runtime/dagoblin-connected-storage-promotion-v2/promotion.json",
+    "preceding_connected_55_first_round": ".runtime/dagoblin-continuous-storage-promotion-v1/first-runtime-round.json",
+    "connected_compile_correction": ".runtime/dagoblin-connected-compile-fix-v1/correction.json",
+    "native_418_accepted": ".runtime/dagoblin-cow-final-v1/continuous-storage-v2/run-20261104-164252-ba914bd8d00442ac8997d4ebc92474e0/validation.json",
+    "windows_journal_identity_correction": ".runtime/dagoblin-windows-journal-identity-promotion-v1/promotion.json",
+    "whole_throughput_promotion": ".runtime/dagoblin-whole-throughput-promotion-v1/promotion.json",
+    "first_whole_throughput_native_failed": ".runtime/dagoblin-whole-throughput-native-v1/run-20261104-200253-0f18c97c5eb148459f2c839ff2fc1549/validation.json",
+    "observer_close_correction": ".runtime/dagoblin-observer-sdk-close-promotion-v1/promotion.json",
+    "r3_batch_promotion": ".runtime/dagoblin-whole-throughput-r3-promotion-v1/transaction/promotion.json",
+    "r4_batch_promotion": ".runtime/dagoblin-whole-throughput-r4-promotion-v1/transaction/promotion.json"
+  },
+  "historical_before_connected_storage_55_source_integration": {
+    "state": "CODE_INCOMPLETE_CAPACITY_STORAGE_PUBLIC_POLICY; CURRENT_LOCAL_FUNCTIONAL_GATES_PASSED",
+    "current_facts": [
+      "Current14-file connected cache/witness, normal-pipe and observer-storage/startup-close code group is applied locally but unverified; no gain, physical acceptance or whole-goal completion is claimed.",
+      "Core actual SDK-bound DAG execution, protected identities, explicit roles, monetary rules, pool accounting and schema7 operator ceremony now exist; old no-DAG-certificate/prototype-only statements are dated history.",
+      "Current coherent source includes COW account workspace, Windows pipe handling and checked readonly Close propagation; full current374 native acceptance has an unresolved Windows restore-resume failure.",
+      "Private readonly-close gate passed all8real observer recovery methods; its discarded-error fix is not a demonstrated historicalAccessDenied fix.",
+      "Previous actual Windows/WSL operator baselines each5097APPLIED/0REJECTED remain valid for their exact earlier source, not a new full-current acceptance.",
+      "Matched local COW20-block100000-payment comparison preserved exact final canonical state/proofs and cold bytes, with18.6%shorter native elapsed; it is not network-TPS evidence.",
+      "Physical schema7 Windows/Linux/Termux, actual LinuxQML, sustained target capacity, continuous storage operations, public policy and independent security review remain open."
+    ],
+    "unresolved": [
+      "Capacity and continuous-storage/startup capabilities remain code work, not merely missing physical measurements.",
+      "Current374 Windows restore-resume failure and older bareAccessDenied remain unattributed; current full release and fresh operator/Python/CLI gates are not accepted.",
+      "200blocks/s is still an unconfirmed working assumption. Final sustained rate/hardware/link/CPU/disk/retention budgets must be explicit; existing uncompressed format has the recorded wire/checkpoint constraints.",
+      "Physical LinuxDesktop/QML and Termux operation/lag/recovery need the same frozen release and one integrated acceptance program.",
+      "Public monetary/validator-membership/availability/endpoint and rollback policies need review; TESTNET economics is not a finalized production policy.",
+      "Independent security/operational acceptance and any public/mainnet activation remain separate gates; no100%security or completion percentage/ETA is asserted."
+    ],
+    "implementation_order": [
+      {
+        "id": 1,
+        "area": "Independent owned node production",
+        "state": "CORE_IMPLEMENTED_CURRENT_FULL_ACCEPTANCE_FAILED_OR_PENDING",
+        "accept": [
+          "Any paired opted-in node starts its own bounded production without coordinator RPC, equal peer baseline or every peer online.",
+          "Stop,restart and rate changes of one owned worker do not stop or start other nodes.",
+          "Strict legacy replica test remains separate and cannot manufacture ACK/finality."
+        ]
+      },
+      {
+        "id": 2,
+        "area": "Per-peer flow control and recovery",
+        "state": "BOUNDED_FLOW_RECOVERY_IMPLEMENTED_TARGET_LOAD_CAPABILITY_INCOMPLETE",
+        "accept": [
+          "All queues and memory are bounded; slow peer cannot hold fast-peer work or shared global locks during waits.",
+          "Reconnect and missing data recovery preserve exact validation; growing lag is observable."
+        ]
+      },
+      {
+        "id": 3,
+        "area": "Durable identity and verified state",
+        "state": "CORE_IDENTITY_ORIGINAL_REPLAY_IMPLEMENTED_CONTINUOUS_STORAGE_DESIGN_INCOMPLETE",
+        "accept": [
+          "Restart preserves creator identity and validated committed history without duplicate ownership or nonce reuse.",
+          "Crash recovery rejects corrupt/partial/unverified state and never silently rewinds a spend."
+        ]
+      },
+      {
+        "id": 4,
+        "area": "Explicit producer,validator,replica and light-client roles",
+        "state": "CORE_ROLES_AND_SOURCE_TRUTH_IMPLEMENTED_PHYSICAL_UI_ACCEPTANCE_OPEN",
+        "accept": [
+          "Mobile participation does not imply full global validation or an obligatory vote.",
+          "Role and verification scope are explicit in CLI and Desktop."
+        ]
+      },
+      {
+        "id": 5,
+        "area": "Consensus,availability and finality",
+        "state": "SDK_BOUND_DAG_PROTOCOL_IMPLEMENTED_INDEPENDENT_PUBLIC_SECURITY_ACCEPTANCE_OPEN",
+        "accept": [
+          "Use specified membership,quorum,ordering and data-availability rules with adversarial tests; no every-connected-client unanimity shortcut.",
+          "No double spend,equivocation or false finality across partitions,reordering,restarts."
+        ]
+      },
+      {
+        "id": 6,
+        "area": "Measured throughput and resource budgets",
+        "state": "INCOMPLETE_TARGET_NOT_MET",
+        "accept": [
+          "Profile and optimize actual required signing,verification,transport,ordering and storage work.",
+          "Measure the agreed end-to-end workload over sustained runs with physical/independent hosts; report actual bytes,latency,backlog and verification scope.",
+          "Unmet performance target is a remaining requirement or concrete hardware/design blocker,never relabeled as passed."
+        ]
+      },
+      {
+        "id": 7,
+        "area": "Integrated correctness and operation",
+        "state": "CURRENT_COHERENT_RELEASE_FAILED_OR_PENDING_ENDURANCE_INCOMPLETE",
+        "accept": [
+          "Single acceptance suite includes ownership,CLI/Desktop consistency,slow/offline node,catch-up,crash/restart,malformed/faulty peers,limits and sustained load.",
+          "Versioned reproducible installs and operational recovery work on Windows,Linux and Termux."
+        ]
+      },
+      {
+        "id": 8,
+        "area": "Production-like testnet and release review",
+        "state": "PUBLIC_PRODUCTION_POLICY_WITHHELD_NOT_ACTIVATED",
+        "accept": [
+          "Testnet runs the same reviewed node implementation and protocol as proposed mainnet with separate network/genesis/test funds.",
+          "Public readiness requires operational evidence and independent security review; real mainnet launch is a separate concrete user decision."
+        ]
+      }
+    ],
+    "current_implementation_workflow": {
+      "user_direction_date": "2026-11-03",
+      "state": "CURRENT374_COHERENT_FAILURE_REVIEW_THEN_CONNECTED_REMAINING_CAPACITY_STORAGE_CODE_BEFORE_PHYSICAL_ACCEPTANCE",
+      "rule": "Build as much of every required interdependent network component as possible before the next combined local test round. Do not repeat small implementation/test/checkpoint cycles. Then debug, fix and retest the coherent implementation. Physical Windows/Linux/Termux acceptance follows the coherent release.",
+      "whole_goal_complete": false,
+      "physical_acceptance_pending": true,
+      "public_activation_requires_separate_concrete_decision": true
+    },
+    "current_acceptance_snapshot": {
+      "as_of": "2026-11-04",
+      "status": "LOCAL_COHERENT_FUNCTIONAL_GATES_PASSED; PACKAGE_ACCEPTANCE_EXTERNAL_RECEIPT",
+      "whole_goal_complete": false,
+      "code_goal_complete": false,
+      "catalog_entries": 3337,
+      "native_full_expected_per_OS": 383,
+      "current_windows_native": "PASS_383_ZERO_SKIP",
+      "current_linux_native": "PASS_383_ZERO_SKIP_WSL_NOT_PHYSICAL",
+      "current_four_target_builds": "PASS",
+      "current_wasm_public_proofs": {
+        "status": "PASS",
+        "cases": 54,
+        "actual_callback_and_native_differential_cases": 35,
+        "policy_only_rejections": 19,
+        "workspace_execution_claim": false,
+        "report": ".runtime/dagoblin-wasm-private-v1/run-coherent-cache-v1/result.json"
+      },
+      "private_readonly_close_gate": {
+        "status": "COVERED_BY_CURRENT_383_BOTH_OS_PASS",
+        "historical_IO_cause_fixed": false
+      },
+      "prior_operator_baseline": {
+        "windows_applied": 5097,
+        "windows_rejected": 0,
+        "wsl_linux_applied": 5097,
+        "wsl_linux_rejected": 0,
+        "current_source_acceptance": false,
+        "CLI_dispatch_used": true,
+        "CLI_process_per_command_executed": false,
+        "physical_termux_executed": false,
+        "actual_linux_qml_executed": false,
+        "reports": [
+          ".runtime/dagoblin-stress-v1/integrated-delivery-v1/combined-runtime-v1/actual-operator-runtime-windows-20261104-080148-22772/validation.json",
+          ".runtime/dagoblin-stress-v1/integrated-delivery-v1/combined-runtime-v1/actual-operator-runtime-linux-20261104-081841-12/validation.json"
+        ]
+      },
+      "old_failures_reclassified": false,
+      "historical_windows_access_denied_attributed": false,
+      "fresh_current_operator_pair_pending": false,
+      "current_cli_source_graph_expected": 375,
+      "physical_acceptance_pending": true,
+      "independent_security_acceptance_pending": true,
+      "public_activation_performed": false,
+      "failure_domain_limit": "Four voter processes split2+2 on two computers are only two physical voting domains; one whole voting-host loss cannot be promised continued quorum. PhoneLIGHT is optional/nonvoting.",
+      "source_changes": {
+        "local_integration_files": 14,
+        "new_Go_test_files": 3,
+        "new_native_test_methods": 9,
+        "runtime_memory_limit_changed": false,
+        "cache_or_throughput_benefit_measured": "46.47percent shorter THIS_SINGLE_LOCAL_ABCI_PLUS_COLD_PAIR; no network/capacity-target claim",
+        "startup_close_result_checked": true,
+        "restore_IO_classification_added": true,
+        "all_nine_normal_pipe_call_sites_use_existing_console_flags_helper": true
+      },
+      "diagnostics": {
+        "original_94_instrumented_methods": "COMPLETED_NO_ACCEPTANCE_CREDIT_NO_REPRODUCTION",
+        "fixed_five_times_eight_error_only_methods": "COMPLETED_NO_ACCEPTANCE_CREDIT_NO_REPRODUCTION",
+        "historical_failures_reclassified": false
+      },
+      "current_Python_regressions": {
+        "tests": 551,
+        "skipped": 3,
+        "errors": 0,
+        "failures": 0,
+        "QML": true,
+        "WSL_Linux": {
+          "tests": 145,
+          "skipped": 3,
+          "errors": 0,
+          "failures": 0,
+          "QML": false
+        }
+      },
+      "current_operator_pair": {
+        "status": "PASS",
+        "each_APPLIED": 5097,
+        "each_REJECTED": 0,
+        "Windows_report": ".runtime/dagoblin-stress-v1/integrated-delivery-v1/combined-runtime-v1/actual-operator-runtime-windows-20261104-122740-31848/validation.json",
+        "WSL_Linux_report": ".runtime/dagoblin-stress-v1/integrated-delivery-v1/combined-runtime-v1/actual-operator-runtime-linux-20261104-123417-12/validation.json",
+        "physical_hosts_independent": false
+      },
+      "matched_100k": {
+        "before_seconds_including_cold": 150.5483776,
+        "after_seconds_including_cold": 80.591789,
+        "before_peak_commit_bytes": 198746112,
+        "after_peak_commit_bytes": 224956416,
+        "exact_seven_public_hashes_equal": true,
+        "matched_100k_comparison": ".runtime/dagoblin-capacity-pair-v1/comparison-v1.json",
+        "each_APPLIED": 100000,
+        "each_REJECTED": 0,
+        "network_capacity_proven": false
+      },
+      "CLI_package_acceptance": {
+        "authority": "SEPARATE_EXTERNAL_REVIEW_RECEIPT",
+        "expected_tests": 27,
+        "expected_projection_files": 375,
+        "expected_Python_files": 122,
+        "receipt": ".runtime/dagoblin-lifecycle-ui-final-v1/cli-release-review-coherent-cache-v1/validation.json"
+      }
+    },
+    "current_acceptance_matrix": [
+      {
+        "id": 1,
+        "area": "Independent owned node production",
+        "code_status": "CORE_IMPLEMENTED_CURRENT_FULL_ACCEPTANCE_FAILED_OR_PENDING",
+        "evidence": [
+          "Protected owner/validator/governance-account profiles, signed public schema7 ceremony, all initial voter endorsements, cold CLI-dispatch start and producer/worker separation."
+        ],
+        "remaining_code": [],
+        "remaining_acceptance": [
+          "Fresh coherent current-source operator runs after native/regression gates.",
+          "Same frozen artifacts on physical Windows/Linux/Termux."
+        ],
+        "sources": [
+          "backend/gg_protocol_provisioning.py",
+          "backend/gg_protocol_setup.py",
+          "backend/gg_protocol_runtime.py",
+          "knowledge/dagoblin-protocol-operators.md"
+        ]
+      },
+      {
+        "id": 2,
+        "area": "Per-peer flow control and recovery",
+        "code_status": "BOUNDED_FLOW_RECOVERY_IMPLEMENTED_TARGET_LOAD_CAPABILITY_INCOMPLETE",
+        "evidence": [
+          "Bounded ingress, encrypted proof/relay streams, retained exact originals, same-original work refresh, and real quorum progress with one voter process stopped in prior operator runs."
+        ],
+        "remaining_code": [
+          "Capacity-grade admission/verification/transport scheduling and backlog handling under sustained target offered load; current finite functional traffic does not establish it."
+        ],
+        "remaining_acceptance": [
+          "Slow phone/light-client lag, partition and catch-up at representative load across independent hosts."
+        ],
+        "sources": [
+          "backend/gg_protocol_transport.py",
+          "backend/gg_protocol_runtime.py",
+          "backend/gg_financial_relay.py"
+        ]
+      },
+      {
+        "id": 3,
+        "area": "Durable identity and verified state",
+        "code_status": "CORE_IDENTITY_ORIGINAL_REPLAY_IMPLEMENTED_CONTINUOUS_STORAGE_DESIGN_INCOMPLETE",
+        "evidence": [
+          "Protected identity/journals, exact original/nonce ownership, authenticated archive/receipt queries and cold monetary replay exist."
+        ],
+        "remaining_code": [
+          "A reviewed continuous original-journal/storage/startup strategy at target data growth: current store retains every selected j/ entry and cold startup replays heights1..head; no automatic rolling journal tier/retention policy is implemented."
+        ],
+        "remaining_acceptance": [
+          "Long-running storage growth, full disk, power loss and restore under explicit retention/rollback trust assumptions."
+        ],
+        "sources": [
+          "support/gg-consensus/financial_store.go:5",
+          "support/gg-consensus/financial_store.go:266",
+          "support/gg-consensus/financial_store.go:423",
+          "backend/gg_native_start.py:34"
+        ]
+      },
+      {
+        "id": 4,
+        "area": "Explicit producer,validator,replica and light-client roles",
+        "code_status": "CORE_ROLES_AND_SOURCE_TRUTH_IMPLEMENTED_PHYSICAL_UI_ACCEPTANCE_OPEN",
+        "evidence": [
+          "Proof-only light participation has no vote or local SDK; authenticated creator/worker/owner distinction and explicit multiple-publisher source selection exist."
+        ],
+        "remaining_code": [],
+        "remaining_acceptance": [
+          "Actual Linux QML and physical Termux runtime, independent account/source selection and network status under the new release."
+        ],
+        "sources": [
+          "backend/local_node_observation.py",
+          "backend/gg_protocol_runtime.py",
+          "knowledge/research/dagoblin/integrated-network-implementation-2026-11-03.md"
+        ]
+      },
+      {
+        "id": 5,
+        "area": "Consensus,availability and finality",
+        "code_status": "SDK_BOUND_DAG_PROTOCOL_IMPLEMENTED_INDEPENDENT_PUBLIC_SECURITY_ACCEPTANCE_OPEN",
+        "evidence": [
+          "Actual SDK/AppHash-bound DAG monetary execution and authenticated committee/account/block/receipt proofs exist; a transport ACK or graph item is not finality."
+        ],
+        "remaining_code": [
+          "Reviewed public operator/endpoint/environment support if the production-like testnet is internet-facing; current Python ceremony/runtime/proof-relay path is explicitly private-address TESTNET-only."
+        ],
+        "remaining_acceptance": [
+          "Fresh full current-source correctness/fault gates.",
+          "Public membership, availability, quorum/adversary and recovery policy plus independent review."
+        ],
+        "sources": [
+          "support/gg-consensus/financial_protocol.go:207",
+          "backend/gg_protocol_provisioning.py:50",
+          "backend/gg_protocol_runtime.py:85",
+          "backend/gg_protocol_transport.py:28"
+        ]
+      },
+      {
+        "id": 6,
+        "area": "Measured throughput and resource budgets",
+        "code_status": "INCOMPLETE_TARGET_NOT_MET",
+        "evidence": [
+          "One matched local20-block baseline/COW pair each applied100000 with0rejected, exact final canonical proofs/state and cold equality; COW elapsed18.6%shorter in that fixture."
+        ],
+        "remaining_code": [
+          "Connected improvements to account/registry reads, strict canonical/verification reuse, scheduling, frame/checkpoint envelope and durable storage.",
+          "Present100ms commit wait and32MiB decoded-original checkpoint envelope are not configured for the working200full5000-payment-blocks/s target, even before execution cost."
+        ],
+        "remaining_acceptance": [
+          "Agree final block rate/hardware/infrastructure budget, then measure sustained independently verified user receipts, p50/p95/p99 inclusion, offered load, queues, bytes/role, CPU/RSS and disk/fsync."
+        ],
+        "sources": [
+          "support/gg-consensus/main.go:425",
+          "support/gg-consensus/dag_execution_policy.go:12",
+          "support/gg-consensus/financial_dag.go:493",
+          ".runtime/dagoblin-cow-private-v1/profile-analysis-v1/evidence.json"
+        ]
+      },
+      {
+        "id": 7,
+        "area": "Integrated correctness and operation",
+        "code_status": "CURRENT_COHERENT_RELEASE_FAILED_OR_PENDING_ENDURANCE_INCOMPLETE",
+        "evidence": [
+          "Real schema7 operator provisioning and reproducible CLI recipe now exist; the earlier test-helper genesis gap is closed.",
+          "Prior real Windows/WSL operator runs each5097APPLIED/0REJECTED include light/relay/pool, explicit UI source readers, voter cold rejoin and same pool journal recovery."
+        ],
+        "remaining_code": [
+          "Continuous target-load storage and connected capacity work from stages2/3/6.",
+          "Fix any concrete defects diagnosed by current coherent acceptance; do not classify unproved filesystem causes as repaired."
+        ],
+        "remaining_acceptance": [
+          "Current383 native perOS,551Windows/145focusedLinux regressions, fresh operator pair and CLI375/package/catalog coherence.",
+          "One frozen physical three-device acceptance and representative endurance/failure program."
+        ],
+        "sources": [
+          ".runtime/dagoblin-cow-final-v1/close-final-v1/run-20261104-105157-2d02755136a549efaadb442cc28597c6/validation.json",
+          "knowledge/dagoblin-protocol-operators.md",
+          ".runtime/dagoblin-stress-v1/integrated-delivery-v1/combined-runtime-v1/actual-operator-runtime-windows-20261104-080148-22772/validation.json",
+          ".runtime/dagoblin-stress-v1/integrated-delivery-v1/combined-runtime-v1/actual-operator-runtime-linux-20261104-081841-12/validation.json"
+        ]
+      },
+      {
+        "id": 8,
+        "area": "Production-like testnet and release review",
+        "code_status": "PUBLIC_PRODUCTION_POLICY_WITHHELD_NOT_ACTIVATED",
+        "evidence": [
+          "Versioned economics, fees/emission/rewards, producer registration, committee change and durable pool payout code exist; example policy remains TESTNET-only."
+        ],
+        "remaining_code": [
+          "Complete the reviewed public operation path after choosing public monetary/membership/availability and endpoint policy; native MAINNET recognition alone is insufficient."
+        ],
+        "remaining_acceptance": [
+          "Independent voting failure domains, operational/security review and production-like testnet with separate identity/genesis/test funds.",
+          "Mainnet activation remains a separate concrete user decision."
+        ],
+        "sources": [
+          "support/gg-consensus/financial_protocol.go",
+          "support/gg-consensus/financial_economy.go",
+          "support/dagoblin/protocol-testnet-policy.example.json",
+          "backend/gg_protocol_transport.py:28"
+        ]
+      }
+    ],
+    "capacity_and_hardware_prerequisites": {
+      "working_scenario_not_final_or_measured": {
+        "blocks_per_second": 200,
+        "payments_per_block": 5000,
+        "unique_payments_per_second": 1000000
+      },
+      "current_format_byte_floor": {
+        "minimum_canonical_signed_payment_original_bytes": 499,
+        "working_original_bytes_per_second": 499000000,
+        "decimal_Gbit_per_second": 3.992,
+        "scope": "Current uncompressed canonical payment-original representation only;499bytes already includes paymentJSON/signature.",
+        "excludes": [
+          "block headers",
+          "batch base64",
+          "SDK/BFT framing",
+          "fanout",
+          "retransmission",
+          "receipt/proof traffic"
+        ],
+        "not_a_measured_network_rate": true,
+        "not_a_universal_future_encoding_limit": true,
+        "hardware_prerequisite": "A1Gbit/s full validator ingress cannot carry this current uncompressed1million/s scenario even once; actual links, CPU, disk and role budgets must be specified and measured, not assumed."
+      },
+      "current_checkpoint_configuration_budget": {
+        "commit_wait_milliseconds": 100,
+        "decoded_complete_originals_budget_bytes": 33554432,
+        "minimum_5000_payment_array_bytes": 2500001,
+        "optimistic_full_5000_payment_blocks_per_checkpoint": 13,
+        "optimistic_normal_checkpoints_per_second": 10,
+        "derived_optimistic_full_payment_blocks_per_second": 130,
+        "interpretation": "Derived configuration budget with commit waiting, before headers/actual execution/storage/transport; not measured throughput or universal consensus/physical bound. Timer change alone cannot solve measured CPU and data costs."
+      },
+      "local_finite_evidence": {
+        "applied_each": 100000,
+        "rejected_each": 0,
+        "blocks_each": 20,
+        "payments_per_block": 5000,
+        "baseline_native_seconds_with_cold": 183.0520569,
+        "cow_native_seconds_with_cold": 148.9554631,
+        "same_canonical_final_state_receipt_block_payer_genesis_source_hashes": true,
+        "actual_exact_cold_state_and_receipt_bytes": true,
+        "cow_approximate_seconds_through20_commits": 100,
+        "cow_cold_replay_seconds": 48.6057959,
+        "scope": "One local ABCI application with easy fixture work, not a network-TPS measurement, not sustained target acceptance.",
+        "repeated_distribution_comparison_complete": false,
+        "network_capacity_proven": false,
+        "source": ".runtime/dagoblin-cow-private-v1/comparison-v1.json"
+      }
+    }
+  },
+  "last_accepted_local_cohort_before_connected_storage": {
+    "as_of": "2026-11-04",
+    "status": "LOCAL_COHERENT_FUNCTIONAL_GATES_PASSED; PACKAGE_ACCEPTANCE_EXTERNAL_RECEIPT",
+    "whole_goal_complete": false,
+    "code_goal_complete": false,
+    "catalog_entries": 3337,
+    "native_full_expected_per_OS": 383,
+    "current_windows_native": "PASS_383_ZERO_SKIP",
+    "current_linux_native": "PASS_383_ZERO_SKIP_WSL_NOT_PHYSICAL",
+    "current_four_target_builds": "PASS",
+    "current_wasm_public_proofs": {
+      "status": "PASS",
+      "cases": 54,
+      "actual_callback_and_native_differential_cases": 35,
+      "policy_only_rejections": 19,
+      "workspace_execution_claim": false,
+      "report": ".runtime/dagoblin-wasm-private-v1/run-coherent-cache-v1/result.json"
+    },
+    "private_readonly_close_gate": {
+      "status": "COVERED_BY_CURRENT_383_BOTH_OS_PASS",
+      "historical_IO_cause_fixed": false
+    },
+    "prior_operator_baseline": {
+      "windows_applied": 5097,
+      "windows_rejected": 0,
+      "wsl_linux_applied": 5097,
+      "wsl_linux_rejected": 0,
+      "current_source_acceptance": false,
+      "CLI_dispatch_used": true,
+      "CLI_process_per_command_executed": false,
+      "physical_termux_executed": false,
+      "actual_linux_qml_executed": false,
+      "reports": [
+        ".runtime/dagoblin-stress-v1/integrated-delivery-v1/combined-runtime-v1/actual-operator-runtime-windows-20261104-080148-22772/validation.json",
+        ".runtime/dagoblin-stress-v1/integrated-delivery-v1/combined-runtime-v1/actual-operator-runtime-linux-20261104-081841-12/validation.json"
+      ]
+    },
+    "old_failures_reclassified": false,
+    "historical_windows_access_denied_attributed": false,
+    "fresh_current_operator_pair_pending": false,
+    "current_cli_source_graph_expected": 375,
+    "physical_acceptance_pending": true,
+    "independent_security_acceptance_pending": true,
+    "public_activation_performed": false,
+    "failure_domain_limit": "Four voter processes split2+2 on two computers are only two physical voting domains; one whole voting-host loss cannot be promised continued quorum. PhoneLIGHT is optional/nonvoting.",
+    "source_changes": {
+      "local_integration_files": 14,
+      "new_Go_test_files": 3,
+      "new_native_test_methods": 9,
+      "runtime_memory_limit_changed": false,
+      "cache_or_throughput_benefit_measured": "46.47percent shorter THIS_SINGLE_LOCAL_ABCI_PLUS_COLD_PAIR; no network/capacity-target claim",
+      "startup_close_result_checked": true,
+      "restore_IO_classification_added": true,
+      "all_nine_normal_pipe_call_sites_use_existing_console_flags_helper": true
+    },
+    "diagnostics": {
+      "original_94_instrumented_methods": "COMPLETED_NO_ACCEPTANCE_CREDIT_NO_REPRODUCTION",
+      "fixed_five_times_eight_error_only_methods": "COMPLETED_NO_ACCEPTANCE_CREDIT_NO_REPRODUCTION",
+      "historical_failures_reclassified": false
+    },
+    "current_Python_regressions": {
+      "tests": 551,
+      "skipped": 3,
+      "errors": 0,
+      "failures": 0,
+      "QML": true,
+      "WSL_Linux": {
+        "tests": 145,
+        "skipped": 3,
+        "errors": 0,
+        "failures": 0,
+        "QML": false
+      }
+    },
+    "current_operator_pair": {
+      "status": "PASS",
+      "each_APPLIED": 5097,
+      "each_REJECTED": 0,
+      "Windows_report": ".runtime/dagoblin-stress-v1/integrated-delivery-v1/combined-runtime-v1/actual-operator-runtime-windows-20261104-122740-31848/validation.json",
+      "WSL_Linux_report": ".runtime/dagoblin-stress-v1/integrated-delivery-v1/combined-runtime-v1/actual-operator-runtime-linux-20261104-123417-12/validation.json",
+      "physical_hosts_independent": false
+    },
+    "matched_100k": {
+      "before_seconds_including_cold": 150.5483776,
+      "after_seconds_including_cold": 80.591789,
+      "before_peak_commit_bytes": 198746112,
+      "after_peak_commit_bytes": 224956416,
+      "exact_seven_public_hashes_equal": true,
+      "matched_100k_comparison": ".runtime/dagoblin-capacity-pair-v1/comparison-v1.json",
+      "each_APPLIED": 100000,
+      "each_REJECTED": 0,
+      "network_capacity_proven": false
+    },
+    "CLI_package_acceptance": {
+      "authority": "SEPARATE_EXTERNAL_REVIEW_RECEIPT",
+      "expected_tests": 27,
+      "expected_projection_files": 375,
+      "expected_Python_files": 122,
+      "receipt": ".runtime/dagoblin-lifecycle-ui-final-v1/cli-release-review-coherent-cache-v1/validation.json"
+    },
+    "authoritative_receipt": ".runtime/dagoblin-coherent-promotion-v1/local-acceptance-summary.json"
+  },
+  "historical_before_connected_storage_v2": {
+    "state": "CONNECTED_STORAGE_LIFECYCLE_PROJECTION_CODE_APPLIED_UNVERIFIED_CAPACITY_PUBLIC_POLICY_INCOMPLETE",
+    "status": null,
+    "current_facts": [
+      "Connected55-file code group is applied after independent STATIC source reviews, not runtime accepted yet. Twelve files are new.",
+      "Native history now has authenticated local tiering and logical reads, full cold execution, required-record fault latches and local history reports. SDK blockstore and per-key index still grow; no trusted checkpoint voter or protected foreground restore/start handoff was added.",
+      "Account/pool originals and signed events have bounded active windows, exact archived continuity and versioned global batch references. Full cold verification, archive inventory and historical negative lookup still grow with retained history.",
+      "Finite/native startup/relay lifetime and close-intent fencing now retain exact owners until terminal proof. CLI and Desktop project the same selected local history and own-journal sources without claiming SDK proof or peer contact.",
+      "Prior14-file actual local acceptance remains historical exact-source evidence:383 native eachOS,551 Windows145 WSL regressions,54 public WASM cases,5097 APPLIED zero rejected each operator and27 package checks. It does not accept these55 new code changes.",
+      "Physical Windows/Linux/Termux, sustained capacity, endurance, public policy and independent security acceptance remain open."
+    ],
+    "unresolved": [
+      "Execute the one complete bounded local gate round on the frozen connected55 source; correct actual failures and reverify affected claims.",
+      "Capacity target remains unproved; current wire/checkpoint/execution and hardware budgets still need connected capacity work.200 blocks/s is only a working assumption.",
+      "Native SDK/per-key index and total originals remain growing; protected foreground restore-to-run handoff is not implemented. Cold full replay still costs historical crypto/IO and cannot be silently replaced by snapshot trust.",
+      "The historical intermittent Windows restore IO causes remain unattributed. A fresh passing round would not prove their causes repaired.",
+      "One frozen physical three-device suite and representative endurance/fault program remain after the code release gates.",
+      "Public monetary/membership/availability/endpoint policy and independent review remain open; public/mainnet activation requires its separate concrete decision."
+    ],
+    "current_acceptance_snapshot": {
+      "as_of": "2026-11-04",
+      "status": "CONNECTED_55_CODE_FILES_APPLIED_STATIC_REVIEW_GO_RUNTIME_GATES_NOT_YET_EXECUTED",
+      "whole_goal_complete": false,
+      "code_goal_complete": false,
+      "integrated_code_files": 55,
+      "new_code_files": 12,
+      "expected_native_top_level_tests_each_OS": 402,
+      "expected_native_build_input_files": 164,
+      "native_full_round": "NOT_EXECUTED",
+      "Python_full_round": "NOT_EXECUTED",
+      "WASM_round": "NOT_EXECUTED",
+      "operator_pair": "NOT_EXECUTED",
+      "CLI_package_acceptance": "NOT_EXECUTED",
+      "physical_acceptance_pending": true,
+      "target_capacity_proven": false,
+      "historical_windows_IO_cause_attributed": false,
+      "public_activation_performed": false,
+      "git_push_performed": false,
+      "source_manifest": ".runtime/dagoblin-continuous-storage-promotion-v1/promotion.json",
+      "planned_local_acceptance_summary": ".runtime/dagoblin-continuous-storage-promotion-v1/local-acceptance-summary.json",
+      "current_code_is_not_accepted_by_previous_cohort_receipts": true
+    },
+    "current_acceptance_matrix": [
+      {
+        "id": 1,
+        "area": "Independent owned node production",
+        "code_status": "CONNECTED_CURRENT_SOURCE_APPLIED_PENDING_GATES",
+        "evidence": [
+          "Protected owner/validator/governance-account profiles, signed public schema7 ceremony, all initial voter endorsements, cold CLI-dispatch start and producer/worker separation."
+        ],
+        "remaining_code": [],
+        "remaining_acceptance": [
+          "Current frozen connected418/native+Python/WASM/operator/package local gates.",
+          "Frozen independent physical/endurance/security acceptance for the applicable goal criterion."
+        ],
+        "sources": [
+          "backend/gg_protocol_provisioning.py",
+          "backend/gg_protocol_setup.py",
+          "backend/gg_protocol_runtime.py",
+          "knowledge/dagoblin-protocol-operators.md"
+        ]
+      },
+      {
+        "id": 2,
+        "area": "Per-peer flow control and recovery",
+        "code_status": "BOUNDED_FLOW_RECOVERY_IMPLEMENTED_TARGET_LOAD_CAPABILITY_INCOMPLETE",
+        "evidence": [
+          "Bounded ingress, encrypted proof/relay streams, retained exact originals, same-original work refresh, and real quorum progress with one voter process stopped in prior operator runs."
+        ],
+        "remaining_code": [
+          "Capacity-grade admission/verification/transport scheduling and backlog handling under sustained target offered load; current finite functional traffic does not establish it."
+        ],
+        "remaining_acceptance": [
+          "Slow phone/light-client lag, partition and catch-up at representative load across independent hosts."
+        ],
+        "sources": [
+          "backend/gg_protocol_transport.py",
+          "backend/gg_protocol_runtime.py",
+          "backend/gg_financial_relay.py"
+        ]
+      },
+      {
+        "id": 3,
+        "area": "Durable identity and verified state",
+        "code_status": "CONNECTED_CURRENT_SOURCE_APPLIED_PENDING_GATES",
+        "evidence": [
+          "Protected identity/journals, exact original/nonce ownership, authenticated archive/receipt queries and cold monetary replay exist.",
+          "Protected full archive audit/restore and same-owned-process nonvoting SDK handoff is implemented but current execution acceptance is pending."
+        ],
+        "remaining_code": [
+          "Explicit SDK/per-key-index and total-history lifetime/retention strategy without weakening original availability or full cold replay."
+        ],
+        "remaining_acceptance": [
+          "Long-running storage growth, full disk, power loss and restore under explicit retention/rollback trust assumptions."
+        ],
+        "sources": [
+          "support/gg-consensus/financial_store.go:5",
+          "support/gg-consensus/financial_store.go:266",
+          "support/gg-consensus/financial_store.go:423",
+          "backend/gg_native_start.py:34"
+        ]
+      },
+      {
+        "id": 4,
+        "area": "Explicit producer,validator,replica and light-client roles",
+        "code_status": "CONNECTED_CURRENT_SOURCE_APPLIED_PENDING_GATES",
+        "evidence": [
+          "Proof-only light participation has no vote or local SDK; authenticated creator/worker/owner distinction and explicit multiple-publisher source selection exist."
+        ],
+        "remaining_code": [],
+        "remaining_acceptance": [
+          "Actual Linux QML and physical Termux runtime, independent account/source selection and network status under the new release."
+        ],
+        "sources": [
+          "backend/local_node_observation.py",
+          "backend/gg_protocol_runtime.py",
+          "knowledge/research/dagoblin/integrated-network-implementation-2026-11-03.md"
+        ]
+      },
+      {
+        "id": 5,
+        "area": "Consensus,availability and finality",
+        "code_status": "CONNECTED_CURRENT_SOURCE_APPLIED_PENDING_GATES",
+        "evidence": [
+          "Actual SDK/AppHash-bound DAG monetary execution and authenticated committee/account/block/receipt proofs exist; a transport ACK or graph item is not finality."
+        ],
+        "remaining_code": [
+          "Reviewed public operator/endpoint/environment support if the production-like testnet is internet-facing; current Python ceremony/runtime/proof-relay path is explicitly private-address TESTNET-only."
+        ],
+        "remaining_acceptance": [
+          "Current frozen connected418/native+Python/WASM/operator/package local gates.",
+          "Frozen independent physical/endurance/security acceptance for the applicable goal criterion."
+        ],
+        "sources": [
+          "support/gg-consensus/financial_protocol.go:207",
+          "backend/gg_protocol_provisioning.py:50",
+          "backend/gg_protocol_runtime.py:85",
+          "backend/gg_protocol_transport.py:28"
+        ]
+      },
+      {
+        "id": 6,
+        "area": "Measured throughput and resource budgets",
+        "code_status": "INCOMPLETE_TARGET_NOT_MET",
+        "evidence": [
+          "One matched local20-block baseline/COW pair each applied100000 with0rejected, exact final canonical proofs/state and cold equality; COW elapsed18.6%shorter in that fixture."
+        ],
+        "remaining_code": [
+          "Connected improvements to account/registry reads, strict canonical/verification reuse, scheduling, frame/checkpoint envelope and durable storage.",
+          "Present100ms commit wait and32MiB decoded-original checkpoint envelope are not configured for the working200full5000-payment-blocks/s target, even before execution cost."
+        ],
+        "remaining_acceptance": [
+          "Agree final block rate/hardware/infrastructure budget, then measure sustained independently verified user receipts, p50/p95/p99 inclusion, offered load, queues, bytes/role, CPU/RSS and disk/fsync."
+        ],
+        "sources": [
+          "support/gg-consensus/main.go:425",
+          "support/gg-consensus/dag_execution_policy.go:12",
+          "support/gg-consensus/financial_dag.go:493",
+          ".runtime/dagoblin-cow-private-v1/profile-analysis-v1/evidence.json"
+        ]
+      },
+      {
+        "id": 7,
+        "area": "Integrated correctness and operation",
+        "code_status": "CONNECTED_CURRENT_SOURCE_APPLIED_PENDING_GATES",
+        "evidence": [
+          "Real schema7 operator provisioning and reproducible CLI recipe now exist; the earlier test-helper genesis gap is closed.",
+          "Prior real Windows/WSL operator runs each5097APPLIED/0REJECTED include light/relay/pool, explicit UI source readers, voter cold rejoin and same pool journal recovery."
+        ],
+        "remaining_code": [
+          "Continuous target-load storage and connected capacity work from stages2/3/6.",
+          "Fix any concrete defects diagnosed by current coherent acceptance; do not classify unproved filesystem causes as repaired."
+        ],
+        "remaining_acceptance": [
+          "Current frozen connected418/native+Python/WASM/operator/package local gates.",
+          "Frozen independent physical/endurance/security acceptance for the applicable goal criterion."
+        ],
+        "sources": [
+          ".runtime/dagoblin-cow-final-v1/close-final-v1/run-20261104-105157-2d02755136a549efaadb442cc28597c6/validation.json",
+          "knowledge/dagoblin-protocol-operators.md",
+          ".runtime/dagoblin-stress-v1/integrated-delivery-v1/combined-runtime-v1/actual-operator-runtime-windows-20261104-080148-22772/validation.json",
+          ".runtime/dagoblin-stress-v1/integrated-delivery-v1/combined-runtime-v1/actual-operator-runtime-linux-20261104-081841-12/validation.json"
+        ]
+      },
+      {
+        "id": 8,
+        "area": "Production-like testnet and release review",
+        "code_status": "PUBLIC_PRODUCTION_POLICY_WITHHELD_NOT_ACTIVATED",
+        "evidence": [
+          "Versioned economics, fees/emission/rewards, producer registration, committee change and durable pool payout code exist; example policy remains TESTNET-only."
+        ],
+        "remaining_code": [
+          "Complete the reviewed public operation path after choosing public monetary/membership/availability and endpoint policy; native MAINNET recognition alone is insufficient."
+        ],
+        "remaining_acceptance": [
+          "Independent voting failure domains, operational/security review and production-like testnet with separate identity/genesis/test funds.",
+          "Mainnet activation remains a separate concrete user decision."
+        ],
+        "sources": [
+          "support/gg-consensus/financial_protocol.go",
+          "support/gg-consensus/financial_economy.go",
+          "support/dagoblin/protocol-testnet-policy.example.json",
+          "backend/gg_protocol_transport.py:28"
+        ]
+      }
+    ]
+  },
+  "historical_before_whole_throughput_v1": {
+    "state": "CONNECTED_V2_CODE_APPLIED_UNVERIFIED_CAPACITY_PUBLIC_POLICY_INCOMPLETE",
+    "status": null,
+    "current_facts": [
+      "Connected31-file extension is locally applied after independent static package/merge review; six new files. Combined reviewed source union is 65 files, not yet runtime accepted.",
+      "Native history adds compact 32-byte references and a shared authenticated footer tree while retaining explicit immutable v1 reads, original bytes and full cold replay. No measured current saving or target capacity is claimed.",
+      "Protected nonvoting restore/start now has seed-free audit, durable exact recovery intent before private handoff, same opened ledger/native PID through real SDK startup, exact epoch cleanup and the unchanged 180-second total attempt limit.",
+      "Journal migration/unknown-commit handling, actual Windows ChangeTime inventory, genuine pool fixtures and shared CLI/UI source selection were corrected after the first broad round. Exact decimal progress, own journals and local history remain separate from SDK finality and peer contact.",
+      "The preceding 55-file source passed all402 native cases on both OSs but failed broad Python: Windows613 had3 failures/14 errors, WSL Linux597 had1 failure/14 errors. Those receipts do not accept the current corrected source.",
+      "SDK blockstore/per-key index/total originals and full cold-audit cost still grow. Public policy, sustained target capacity, independent security and physical Windows/Linux/Termux acceptance remain open."
+    ],
+    "unresolved": [
+      "Execute the complete new frozen native/Python/QML/WASM/operator/package/capacity round; correct actual connected failures without weakening evidence.",
+      "Capacity target remains unproved; current wire/checkpoint/execution/hardware budgets still require connected work.200blocks/s remains only a working assumption.",
+      "Define the explicit SDK/per-key-index/total-history retention and availability strategy; compact references are not bounded total disk or trusted checkpoint replay.",
+      "Historical intermittent Windows IO causes remain unattributed; new passing functional results would not prove their cause fixed.",
+      "Run one frozen physical three-device and representative endurance/fault program after the local code gates.",
+      "Public monetary/membership/availability/endpoint policy and independent review remain open; public/mainnet activation requires its separate concrete decision."
+    ],
+    "current_acceptance_snapshot": {
+      "as_of": "2026-11-04",
+      "status": "PYTHON_WINDOWS_IDENTITY_CORRECTION_APPLIED_NATIVE_GO_UNCHANGED_BROAD_PYTHON_PENDING",
+      "whole_goal_complete": false,
+      "code_goal_complete": false,
+      "integrated_code_files": 65,
+      "latest_connected_code_files": 31,
+      "latest_new_code_files": 6,
+      "expected_native_top_level_tests_each_OS": 418,
+      "expected_native_build_input_files": 168,
+      "native_full_round": "PASS_418_EACH_OS_FOR_EXACT_UNCHANGED_GO_GRAPH",
+      "Python_full_round": "NOT_EXECUTED",
+      "WASM_round": "NOT_EXECUTED",
+      "operator_pair": "NOT_EXECUTED",
+      "CLI_package_acceptance": "NOT_EXECUTED",
+      "matched_capacity_pair": "NOT_EXECUTED",
+      "physical_acceptance_pending": true,
+      "target_capacity_proven": false,
+      "historical_windows_IO_cause_attributed": false,
+      "public_activation_performed": false,
+      "git_push_performed": false,
+      "source_manifest": ".runtime/dagoblin-windows-journal-identity-promotion-v1/promotion.json",
+      "planned_local_acceptance_summary": ".runtime/dagoblin-connected-storage-promotion-v2/local-acceptance-summary.json",
+      "current_code_is_not_accepted_by_previous_cohort_receipts": true,
+      "compile_correction": ".runtime/dagoblin-connected-compile-fix-v1/correction.json",
+      "initial_build_attempt": "FAILED_MISSING_IMPORT_BEFORE_RUNTIME_TESTS",
+      "native_artifact_reuse_scope": "UNCHANGED_NATIVE_AND_LIGHT_SOURCE_ONLY_NOT_CURRENT_PYTHON_ACCEPTANCE",
+      "windows_journal_identity_correction": ".runtime/dagoblin-windows-journal-identity-promotion-v1/promotion.json"
+    }
+  },
+  "hardware_scalability_contract": {
+    "source": "Direct user clarification 2026-11-04",
+    "intent": "A network that uses suitable dedicated servers while retaining bounded useful participation on phones and low-resource computers.",
+    "local_devices_are_not_global_capacity_ceiling": true,
+    "roles": "LIGHT verifies selected proofs within bounded local resources and has no vote; full voting validators must actually verify their canonical workload and sufficient voting capacity remains necessary.",
+    "limits": "Local queues, parser/memory and worker limits remain finite; explicit SERVER profiles replace accidental laptop-only defaults without weakening signatures, money, ordering or proof checks.",
+    "target_sizing": {
+      "transactions_per_block": 5000,
+      "working_blocks_per_second": 200,
+      "transactions_per_second": 1000000
+    },
+    "success_evidence": "Cost/scaling analysis followed by representative server, quorum, storage and network measurements; raising constants or passing local correctness tests is insufficient.",
+    "current_target_capacity_proven": false
+  },
+  "historical_before_observer_close_correction": {
+    "as_of": "2026-11-04",
+    "status": "WHOLE_THROUGHPUT_CODE_APPLIED_STATIC_REVIEW_RUNTIME_GATES_PENDING",
+    "whole_goal_complete": false,
+    "code_goal_complete": false,
+    "integrated_code_files": 103,
+    "latest_connected_code_files": 62,
+    "latest_new_code_files": 17,
+    "expected_native_top_level_tests_by_OS": {
+      "windows-amd64": 443,
+      "linux-amd64": 436
+    },
+    "expected_native_build_input_files": 178,
+    "expected_light_build_input_files": 48,
+    "native_full_round": "NOT_EXECUTED_FOR_CURRENT_SOURCE",
+    "Python_full_round": "NOT_EXECUTED_FOR_CURRENT_SOURCE",
+    "WASM_round": "NOT_EXECUTED_FOR_CURRENT_SOURCE",
+    "operator_pair": "NOT_EXECUTED_FOR_CURRENT_SOURCE",
+    "CLI_package_acceptance": "NOT_EXECUTED_FOR_CURRENT_SOURCE",
+    "matched_capacity_pair": "NOT_EXECUTED_FOR_CURRENT_SOURCE",
+    "preceding_source_native": "418 PASS on Windows and WSL Linux; four target builds. This does not accept the new graph.",
+    "preceding_source_python": "Windows649 PASS (3 OS skips), actual QML and actual same-PID restore; Linux633 FAIL (one quorum/restart error,33 OS skips), actual restore PASS. All owned processes terminal and sources unchanged.",
+    "preceding_capacity": "Both matched20x5000 attempts FAILED: BEFORE dedicated-data512MiB, AFTER totalCPU300s. Separate90s-profile diagnostic also FAILED totalCPU300s; completed live20x5000 is not complete cold/network acceptance.",
+    "physical_acceptance_pending": true,
+    "target_capacity_proven": false,
+    "historical_windows_IO_cause_attributed": false,
+    "public_activation_performed": false,
+    "git_push_performed": false,
+    "source_manifest": ".runtime/dagoblin-whole-throughput-promotion-v1/promotion.json",
+    "current_code_is_not_accepted_by_previous_cohort_receipts": true
+  },
+  "historical_before_r3_eight_corrections": {
+    "state": "CURRENT_SOURCE_CLOSE_HARDENED_AFTER_WHOLE_NATIVE_FAILURE_RETEST_PENDING",
+    "status": null,
+    "current_acceptance_snapshot": {
+      "as_of": "2026-11-04",
+      "status": "CLOSE_HARDENING_AND_FAILURE_DIAGNOSTICS_APPLIED_WHOLE_RETEST_PENDING",
+      "whole_goal_complete": false,
+      "code_goal_complete": false,
+      "integrated_code_files": 104,
+      "latest_connected_code_files": 62,
+      "latest_new_code_files": 17,
+      "expected_native_top_level_tests_by_OS": {
+        "windows-amd64": 444,
+        "linux-amd64": 437
+      },
+      "expected_native_build_input_files": 178,
+      "expected_light_build_input_files": 48,
+      "native_full_round": "NOT_EXECUTED_FOR_CORRECTED_SOURCE",
+      "Python_full_round": "NOT_EXECUTED_FOR_CURRENT_SOURCE",
+      "WASM_round": "NOT_EXECUTED_FOR_CURRENT_SOURCE",
+      "operator_pair": "NOT_EXECUTED_FOR_CURRENT_SOURCE",
+      "CLI_package_acceptance": "NOT_EXECUTED_FOR_CURRENT_SOURCE",
+      "matched_capacity_pair": "NOT_EXECUTED_FOR_CURRENT_SOURCE",
+      "preceding_source_native": "418 PASS on Windows and WSL Linux; four target builds. This does not accept the new graph.",
+      "preceding_source_python": "Windows649 PASS (3 OS skips), actual QML and actual same-PID restore; Linux633 FAIL (one quorum/restart error,33 OS skips), actual restore PASS. All owned processes terminal and sources unchanged.",
+      "preceding_capacity": "Both matched20x5000 attempts FAILED: BEFORE dedicated-data512MiB, AFTER totalCPU300s. Separate90s-profile diagnostic also FAILED totalCPU300s; completed live20x5000 is not complete cold/network acceptance.",
+      "physical_acceptance_pending": true,
+      "target_capacity_proven": false,
+      "historical_windows_IO_cause_attributed": false,
+      "public_activation_performed": false,
+      "git_push_performed": false,
+      "source_manifest": ".runtime/dagoblin-observer-sdk-close-promotion-v1/promotion.json",
+      "current_code_is_not_accepted_by_previous_cohort_receipts": true,
+      "first_whole_native_round": {
+        "path": ".runtime/dagoblin-whole-throughput-native-v1/run-20261104-200253-0f18c97c5eb148459f2c839ff2fc1549/validation.json",
+        "sha256": "77bdd0e12a3e418e0d00620fe53786a805b7b0caeea25cb0b7adbfef79218b88",
+        "status": "FAIL",
+        "Windows_passed": 442,
+        "Windows_started": 443,
+        "Linux_passed": 436,
+        "Linux_started": 436,
+        "native_skips": 0,
+        "failure": "One Windows fixture blockstore Open returned bare AccessDenied; cause unproved.",
+        "all_groups_complete": true,
+        "source_and_harness_unchanged": true,
+        "cleanup_errors": []
+      }
+    },
+    "current_facts": [
+      "First whole native round finished: Linux436/436 and Windows442/443,zeroSKIPs,allownedlifetimes terminal,unchangedsource/cleanupPASS. One Windows fixture DB Open failed; cause unproved. Current correction propagates SDK iterator Close errors and named fixture Close errors and retains bounded typed Open diagnostics; it does not claim that historical IO cause fixed. Corrected source requires a fresh whole round444/437.",
+      "The coherent source adds explicit finite LOW/SERVER resource profiles with actual launch/READY/readback binding, bounded parallel execution and retained low-resource behavior. Its broad current-source runtime acceptance is pending.",
+      "Canonical signed originals remain exact. Decoded-envelope reuse never reuses a signature verdict; every execution context still performs its required validation/signatures. Account publication keeps ordered errors, failure atomicity and joined bounded workers.",
+      "Lossless bulk transport has authenticated capability negotiation, bounded raw and encoded credit, deadlines, independently bounded chunks and stable per-epoch codec/workspace budgets. SDK gossip has separate explicit finite SERVER send/receive configuration.",
+      "A new Windows directory identity guard targets the measured repeated path-normalization cost while retaining authenticated full cold replay, exact original bytes and archive failure latching. Historical intermittent IO causes are still unproved.",
+      "The quorum/restart fixture now waits for exact certified survivor agreement before removing the next voter. It does not return stale cached state as a fresh certificate.",
+      "CLI and WASM build closure includes the new dependencies. Source archives require an external exact-release runtime receipt and do not inherit the older5097 acceptance count.",
+      "Server capacity and mobile participation have separate requirements. No laptop/phone network rate, theoretical target, sustained target capacity or public readiness is claimed from configuration or static review."
+    ]
+  },
+  "historical_before_r4_three_corrections": {
+    "state": "R3_EIGHT_CORRECTIONS_APPLIED_CURRENT_RUNTIME_RETEST_PENDING",
+    "status": null,
+    "current_acceptance_snapshot": {
+      "as_of": "2026-11-04",
+      "status": "EIGHT_REVIEWED_CORRECTIONS_APPLIED_NEW_WHOLE_RUNTIME_REQUIRED",
+      "whole_goal_complete": false,
+      "code_goal_complete": false,
+      "integrated_code_files": 107,
+      "latest_corrected_files": 8,
+      "new_whole_code_union_paths": [
+        "backend/gg_consensus_web.py",
+        "tests/test_gg_testnet_process.py",
+        "tests/test_process_termination.py"
+      ],
+      "expected_native_top_level_tests_by_OS": {
+        "windows-amd64": 444,
+        "linux-amd64": 437
+      },
+      "expected_native_build_input_files": 178,
+      "expected_light_build_input_files": 48,
+      "preceding_version_native": {
+        "path": ".runtime/dagoblin-whole-throughput-native-v1/run-20261104-210633-1621e970420b4a45a679aa8b64817e50/validation.json",
+        "sha256": "dff54ed572b95704fcf2732b244ac1cbab13f8730aedfd1783219f7d29f80526",
+        "status": "PASS",
+        "source_files": 104,
+        "expected_counts_by_os": {
+          "windows-amd64": 444,
+          "linux-amd64": 437
+        },
+        "scope": "COMPOSITE_UNCHANGED_PARENT_FOUR_BUILDS_WINDOWS444_PLUS_FRESH_LINUX437_NOT_CAPACITY",
+        "reused_build_and_Windows_provenance": {
+          "path": ".runtime/dagoblin-whole-throughput-native-v1/run-20261104-203119-a618ae3a31264a2e83aaf02a67a28da2/validation.json",
+          "sha256": "c4f38dfd4830a91795d679267213d1bb8aafa02a738207b2629a86146a063004",
+          "status": "FAIL"
+        },
+        "accepts_new_native_fingerprint": false
+      },
+      "preceding_version_broad_python": {
+        "windows": {
+          "status": "FAIL",
+          "tests": 721,
+          "failures": 9,
+          "errors": 1,
+          "skipped": 3,
+          "actual_protected_restore_sdk_case_passed": false,
+          "actual_QML_in_Windows_suite": true,
+          "linux_QML_executed": false,
+          "path": ".runtime/dagoblin-whole-throughput-regression-v1/whole-throughput-r2-windows/python-windows-source-audit.json",
+          "sha256": "0940ffea59a1ce00562f09ff65022ef0edd5c1c8ac604173ae95e3adf5c8a811",
+          "source_unchanged": true,
+          "owned_processes_terminal": true
+        },
+        "linux": {
+          "status": "FAIL",
+          "tests": 705,
+          "failures": 7,
+          "errors": 1,
+          "skipped": 42,
+          "actual_protected_restore_sdk_case_passed": false,
+          "actual_QML_in_Windows_suite": false,
+          "linux_QML_executed": false,
+          "path": ".runtime/dagoblin-whole-throughput-regression-v1/whole-throughput-r2-linux/python-linux-source-audit.json",
+          "sha256": "840ad849c54265076f76cdcce37dcd0f83e91e54f397d157e2987e8a0f1f0d51",
+          "source_unchanged": true,
+          "owned_processes_terminal": true
+        }
+      },
+      "native_full_round": "NOT_EXECUTED_FOR_CORRECTED_SOURCE",
+      "Python_full_round": "NOT_EXECUTED_FOR_CORRECTED_SOURCE",
+      "WASM_round": "NOT_EXECUTED_FOR_CORRECTED_SOURCE",
+      "operator_pair": "NOT_EXECUTED_FOR_CORRECTED_SOURCE",
+      "CLI_package_acceptance": "NOT_EXECUTED_FOR_CORRECTED_SOURCE",
+      "matched_capacity_pair": "NOT_EXECUTED_FOR_CORRECTED_SOURCE",
+      "physical_acceptance_pending": true,
+      "target_capacity_proven": false,
+      "historical_windows_IO_cause_attributed": false,
+      "public_activation_performed": false,
+      "git_push_performed": false,
+      "current_code_is_not_accepted_by_previous_cohort_receipts": true
+    },
+    "current_facts": [
+      "The preceding 104-file source has a version-bound composite native 444 Windows/437 Linux PASS; its Windows broad 721 run failed 9 assertions and 1 error with 3 OS skips. Actual QML passed; actual protected restore did not.",
+      "Both actual terminal/source-unchanged broad Python outcomes are retained exactly in current_acceptance_snapshot.preceding_version_broad_python. They do not accept this corrected source.",
+      "Eight reviewed corrections align the runtime WASM graph, exact resource-profile fixtures and private READY producer canonical bytes; strict frame, signature, ledger, proof, process and resource checks remain.",
+      "The native fingerprint changes. All four targets, all native groups and the full Windows/Linux Python cohort must run freshly. Physical/network/server capacity and public activation remain unproved."
+    ]
+  },
+  "historical_before_source5_recovery": {
+    "state": "R4_THREE_CORRECTIONS_APPLIED_CURRENT_RUNTIME_RETEST_PENDING",
+    "status": null,
+    "current_acceptance_snapshot": {
+      "as_of": "2026-11-04",
+      "status": "THREE_REVIEWED_CORRECTIONS_APPLIED_NEW_WHOLE_RUNTIME_REQUIRED",
+      "whole_goal_complete": false,
+      "code_goal_complete": false,
+      "integrated_code_files": 107,
+      "latest_corrected_files": 3,
+      "new_whole_code_union_paths": [],
+      "expected_native_top_level_tests_by_OS": {
+        "windows-amd64": 445,
+        "linux-amd64": 438
+      },
+      "expected_native_build_input_files": 178,
+      "expected_light_build_input_files": 48,
+      "preceding_version_native": {
+        "path": ".runtime/dagoblin-whole-throughput-native-v1/run-20261104-220022-dfadf82a243e4e4682da923a8b36fe85/validation.json",
+        "sha256": "620e4a128b5a15fba7047a403e360d1d9d3be6e3e441f99bda5317718e4fa1c6",
+        "status": "PASS",
+        "source_files": 107,
+        "expected_counts_by_os": {
+          "windows-amd64": 444,
+          "linux-amd64": 437
+        },
+        "scope": "FRESH_FOUR_TARGET_BUILDS_AND_FOUR_FROZEN_GROUPS_PER_OS_NOT_PHYSICAL_OR_CAPACITY",
+        "fresh_four_target_builds_and_all_eight_groups": true,
+        "accepts_new_native_fingerprint": false
+      },
+      "preceding_version_broad_python": {
+        "windows": {
+          "status": "FAIL",
+          "tests": 725,
+          "failures": 0,
+          "errors": 1,
+          "skipped": 3,
+          "actual_protected_restore_sdk_case_passed": true,
+          "actual_QML_in_Windows_suite": true,
+          "linux_QML_executed": false,
+          "path": ".runtime/dagoblin-whole-throughput-regression-v1/r3w/python-windows-source-audit.json",
+          "sha256": "2a488e9359f8557b139ab2e841a1ee95517ac6aaf23c390fa3199c32b691751d",
+          "source_unchanged": true,
+          "owned_processes_terminal": true
+        },
+        "linux": {
+          "status": "FAIL",
+          "tests": 709,
+          "failures": 0,
+          "errors": 1,
+          "skipped": 42,
+          "actual_protected_restore_sdk_case_passed": true,
+          "actual_QML_in_Windows_suite": false,
+          "linux_QML_executed": false,
+          "path": ".runtime/dagoblin-whole-throughput-regression-v1/r3l/python-linux-source-audit.json",
+          "sha256": "06007ae7ec86762141521ffa52309a1ea9c893a6d63b2aa57255ba1e6bbc94bb",
+          "source_unchanged": true,
+          "owned_processes_terminal": true
+        }
+      },
+      "preceding_version_finite_LOW_cost": {
+        "path": ".runtime/dagoblin-whole-throughput-after20-r3-v1/capacity-after-20261104-221921-5ec56e5eb62445aaaefe59868edce6cf/driver-result.json",
+        "sha256": "e3f3449a96b952b2d1dce973fa9d87d3f685b6e0af9c22e96d44d6770c9e89e3",
+        "status": "PASS",
+        "scope": "FINITE_LOW_SINGLE_APPLICATION_LIVE_AND_FULL_COLD_NOT_NETWORK_TARGET",
+        "native_source_fingerprint": "81ebd76d099dfd137fa5429368c060f4ddb7482a55cacf667a09c38ac405642f",
+        "live_blocks": 20,
+        "APPLIED": 100000,
+        "REJECTED": 0,
+        "full_cold_exact_state_root_and_receipt": true,
+        "original_CPU_and_wall_seconds": 300,
+        "original_memory_and_data_bytes": 536870912,
+        "matched_comparison_performed": false,
+        "accepts_new_native_fingerprint": false,
+        "target_capacity_proven": false
+      },
+      "observed_primary_diagnostic": {
+        "path": ".runtime/dagoblin-server-primary-diagnostic-v2/observed-primary.json",
+        "sha256": "53aa89cc3e0dd1f9d2268205cf3158f8d42605d473f8738b40ba1ee4de4acf56"
+      },
+      "native_full_round": "NOT_EXECUTED_FOR_CORRECTED_SOURCE",
+      "Python_full_round": "NOT_EXECUTED_FOR_CORRECTED_SOURCE",
+      "WASM_round": "NOT_EXECUTED_FOR_CORRECTED_SOURCE",
+      "operator_pair": "NOT_EXECUTED_FOR_CORRECTED_SOURCE",
+      "CLI_package_acceptance": "NOT_EXECUTED_FOR_CORRECTED_SOURCE",
+      "matched_capacity_pair": "NOT_EXECUTED_FOR_CORRECTED_SOURCE",
+      "physical_acceptance_pending": true,
+      "target_capacity_proven": false,
+      "historical_windows_IO_cause_attributed": false,
+      "public_activation_performed": false,
+      "git_push_performed": false,
+      "current_code_is_not_accepted_by_previous_cohort_receipts": true
+    },
+    "current_facts": [
+      "The preceding 107-file source has version-bound fresh native 444 Windows/437 Linux PASS and finite LOW 20x5000 live/full-cold cost PASS. Windows broad 725 had 0 assertion failures, 1 error and 3 OS skips; actual QML and LOW SDK restore passed, SERVER relay integration did not.",
+      "Both actual terminal/source-unchanged broad Python outcomes are retained exactly in current_acceptance_snapshot.preceding_version_broad_python. They do not accept this corrected source.",
+      "Three reviewed changes canonicalize only resource-bearing transport READY, add encoder/framing regression coverage and require both real LOW/SERVER relay/proof paths. Strict parser, signature, ledger, proof, constructor-stop and resource checks remain.",
+      "The native fingerprint changes. All four targets, all native groups and the full Windows/Linux Python cohort must run freshly. Physical/network/server capacity and public activation remain unproved."
+    ]
+  },
+  "historical_before_source7_local_cohort_acceptance": {
+    "status": "SOURCE7_STARTUP_FIXTURE_BARRIER_PENDING_FULL_ACCEPTANCE",
+    "as_of": "2026-11-05",
+    "whole_goal_complete": false,
+    "code_goal_complete": false,
+    "integrated_code_files": 118,
+    "changed_source_targets": 1,
+    "new_distributable_files": 0,
+    "expected_native_top_level_tests_by_OS": {
+      "linux-amd64": 451,
+      "windows-amd64": 458
+    },
+    "expected_native_build_input_files": 183,
+    "expected_light_build_input_files": 48,
+    "expected_Python_modules_by_OS": {
+      "linux-amd64": 58,
+      "windows-amd64": 61
+    },
+    "native_source_fingerprint": "0031d975019a5359500acd9ce3d842189fc4b5d7bfa9588dd6d9df1b708705b2",
+    "light_source_fingerprint": "686946784111e9d5c3b59fc2479a00b26ece51c427c7deeeb7ffd26c9aca1523",
+    "native_full_round": "NOT_EXECUTED_FOR_SOURCE7",
+    "Python_full_round": "NOT_EXECUTED_FOR_SOURCE7",
+    "WASM_round": "NOT_EXECUTED_FOR_SOURCE7",
+    "operator_pair": "NOT_EXECUTED_FOR_SOURCE7",
+    "CLI_package_acceptance": "NOT_EXECUTED_FOR_SOURCE7",
+    "fixture_alignment": "PRIVATE_ACTUAL_FOCUSED_ONE_CASE_EACH_OS_PASS_NOT_FULL_SOURCE7_ACCEPTANCE",
+    "current_code_is_not_accepted_by_previous_cohort_receipts": true,
+    "target_capacity_proven": false,
+    "physical_acceptance_pending": true,
+    "public_activation_performed": false,
+    "git_push_performed": false,
+    "historical_source5_native": {
+      "sha256": "228687ee6f9fb8e2155372d0ed29118c7d46878504d1119af57dedf9d168673a",
+      "source6_acceptance": false,
+      "native_graph_identical": true,
+      "path": ".runtime/dagoblin-whole-throughput-native-v1/run-20261105-043022-b050c136f3744f54bfb2e3ae4528f817/validation.json",
+      "expected_tests_by_os": {
+        "linux-amd64": 451,
+        "windows-amd64": 458
+      },
+      "status": "PASS",
+      "zero_skips": true
+    },
+    "historical_source5_windows_python": {
+      "path": ".runtime/dagoblin-whole-throughput-regression-v1/r5w/python-windows.json",
+      "failures": 2,
+      "source6_acceptance": false,
+      "errors": 27,
+      "skipped": 3,
+      "tests": 736,
+      "actual_protected_restore_sdk": true,
+      "status": "FAIL",
+      "actual_QML": true
+    },
+    "historical_source6_acceptance_snapshot": {
+      "status": "SOURCE6_FIXTURE_ALIGNMENT_PENDING_FULL_ACCEPTANCE",
+      "as_of": "2026-11-05",
+      "whole_goal_complete": false,
+      "code_goal_complete": false,
+      "integrated_code_files": 118,
+      "changed_source_targets": 4,
+      "new_distributable_files": 0,
+      "expected_native_top_level_tests_by_OS": {
+        "linux-amd64": 451,
+        "windows-amd64": 458
+      },
+      "expected_native_build_input_files": 183,
+      "expected_light_build_input_files": 48,
+      "expected_Python_modules_by_OS": {
+        "linux-amd64": 58,
+        "windows-amd64": 61
+      },
+      "native_source_fingerprint": "0031d975019a5359500acd9ce3d842189fc4b5d7bfa9588dd6d9df1b708705b2",
+      "light_source_fingerprint": "686946784111e9d5c3b59fc2479a00b26ece51c427c7deeeb7ffd26c9aca1523",
+      "native_full_round": "NOT_EXECUTED_FOR_SOURCE6",
+      "Python_full_round": "NOT_EXECUTED_FOR_SOURCE6",
+      "WASM_round": "NOT_EXECUTED_FOR_SOURCE6",
+      "operator_pair": "NOT_EXECUTED_FOR_SOURCE6",
+      "CLI_package_acceptance": "NOT_EXECUTED_FOR_SOURCE6",
+      "fixture_alignment": "PRIVATE_FOCUSED42_PASS_NOT_FULL_SOURCE6_ACCEPTANCE",
+      "current_code_is_not_accepted_by_previous_cohort_receipts": true,
+      "target_capacity_proven": false,
+      "physical_acceptance_pending": true,
+      "public_activation_performed": false,
+      "git_push_performed": false,
+      "historical_source5_native": {
+        "sha256": "228687ee6f9fb8e2155372d0ed29118c7d46878504d1119af57dedf9d168673a",
+        "source6_acceptance": false,
+        "native_graph_identical": true,
+        "path": ".runtime/dagoblin-whole-throughput-native-v1/run-20261105-043022-b050c136f3744f54bfb2e3ae4528f817/validation.json",
+        "expected_tests_by_os": {
+          "linux-amd64": 451,
+          "windows-amd64": 458
+        },
+        "status": "PASS",
+        "zero_skips": true
+      },
+      "historical_source5_windows_python": {
+        "path": ".runtime/dagoblin-whole-throughput-regression-v1/r5w/python-windows.json",
+        "failures": 2,
+        "source6_acceptance": false,
+        "errors": 27,
+        "skipped": 3,
+        "tests": 736,
+        "actual_protected_restore_sdk": true,
+        "status": "FAIL",
+        "actual_QML": true
+      },
+      "focused_fixture_diagnostic": {
+        "path": ".runtime/dr5-fixture-focus-v1/focus2/result.json",
+        "sha256": "e3fb7647cc445b0570a483a0e92ce73eaf6565b3b5c083df8e6c1ea700f2ffb3",
+        "status": "PASS",
+        "tests": 42,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "full_native_acceptance": false,
+        "full_python_acceptance": false
+      }
+    },
+    "historical_source5_focused_fixture_diagnostic": {
+      "path": ".runtime/dr5-fixture-focus-v1/focus2/result.json",
+      "sha256": "e3fb7647cc445b0570a483a0e92ce73eaf6565b3b5c083df8e6c1ea700f2ffb3",
+      "status": "PASS",
+      "tests": 42,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "full_native_acceptance": false,
+      "full_python_acceptance": false
+    },
+    "focused_startup_fixture_diagnostic": {
+      "status": "PASS",
+      "scope": "ONE_ORIGINAL_ACTUAL_CASE_PER_PLATFORM_WITH_PRIVATE_DONOR_NOT_FULL_SOURCE7_ACCEPTANCE",
+      "case": "tests.test_gg_consensus_service.FourProcessConsensusTests.test_real_processes_exact_roundtrip_certificates_proofs_and_no_secret_files",
+      "selector_sha256": "d41da496e79353467c34723c70b2bbeadd97b757088d7506439e5c786aab4817",
+      "tests_per_platform": 1,
+      "platforms": {
+        "windows": {
+          "status": "PASS",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "source_audit": ".runtime/dr7-startup-focus-v1/w1/python-windows-source-audit.json",
+          "source_audit_sha256": "743fd3bf6c7dd3f1814ba17485eeef3b6b935c569d03252a3d3a6b94c8c64075",
+          "worker_result": ".runtime/dr7-startup-focus-v1/w1/python-windows.json",
+          "worker_result_sha256": "eb4391fe39366f937edc72670b47edd184efe6bdd3c1b6fba0afd61d254e3fa6",
+          "source_files": 889,
+          "source_unchanged": true,
+          "owned_processes_terminal": true,
+          "live_owned_processes_before_cleanup": 0,
+          "exit_code": 0,
+          "full_native_acceptance": false,
+          "full_python_acceptance": false,
+          "guard_result": ".runtime/dr7-startup-focus-v1/w1/one-case-windows-result.json",
+          "guard_result_sha256": "c78d740fbcf66c34a59f541578c842ae2dadc04e0f27afb9e2fc4e39521080e8",
+          "owned_guard_kernel_and_job_closure_proven": true,
+          "cleanup_errors": []
+        },
+        "linux": {
+          "status": "PASS",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "source_audit": ".runtime/dr7-startup-focus-v1/l1/python-linux-source-audit.json",
+          "source_audit_sha256": "7becb43e16e873c63c2321809f0e45a28839e0ba69e5a9181e5af39a63512e74",
+          "worker_result": ".runtime/dr7-startup-focus-v1/l1/python-linux.json",
+          "worker_result_sha256": "e186f81f9744fffddb1d7e5641a9af577eef32a958f23bcd33518f1d503d35ca",
+          "source_files": 889,
+          "source_unchanged": true,
+          "owned_processes_terminal": true,
+          "live_owned_processes_before_cleanup": 0,
+          "exit_code": 0,
+          "full_native_acceptance": false,
+          "full_python_acceptance": false,
+          "cleanup_environment": ".runtime/dr7-startup-focus-v1/l1/linux-committee-history-environment.json",
+          "cleanup_environment_sha256": "56d276581f0e6ca379f0e1ee8155f52c4f70643a76996c6ab898469e6f425759",
+          "secure_linux_tmp_history_closed_and_removed": true,
+          "cleanup_errors": []
+        }
+      },
+      "donor_binding": {
+        "proposal_path": ".runtime/dr7-startup-fixture-v1/proposal.json",
+        "proposal_sha256": "c54343db5733ea885e616c72d7a3a8ed74c219dfa0d419032d44855b3b248226",
+        "canonical_path": "tests/test_gg_consensus_service.py",
+        "canonical_before_sha256": "d1b0fe3fbfeb0a6739573d360f2091e3ff2be1806589d84ac44776a63a6fc71e",
+        "donor_path": ".runtime/dr7-startup-fixture-v1/tests/test_gg_consensus_service.py",
+        "donor_sha256": "a36a6256858c737e11387c25e613f5e85520441403834f6492f73b2f11180b9d"
+      },
+      "native_round_report": ".runtime/dagoblin-whole-throughput-native-v1/run-20261105-052000-2fc0f9cbad934e99819a6f80200e1d74/validation.json",
+      "native_round_report_sha256": "b0229e0552240408768ced4daeaa31a06a41ff80752e1c940464d6bd221c6ec9",
+      "native_artifact_reuse_scope": "FOCUSED_DONOR_DIAGNOSTIC_ONLY_NOT_SOURCE7_COHORT_ACCEPTANCE",
+      "full_native_acceptance": false,
+      "full_python_acceptance": false,
+      "canonical_writes": false
+    },
+    "historical_source6_native": {
+      "path": ".runtime/dagoblin-whole-throughput-native-v1/run-20261105-052000-2fc0f9cbad934e99819a6f80200e1d74/validation.json",
+      "sha256": "b0229e0552240408768ced4daeaa31a06a41ff80752e1c940464d6bd221c6ec9",
+      "status": "PASS",
+      "source7_acceptance": false,
+      "native_graph_identical": true,
+      "zero_skips": true,
+      "expected_tests_by_os": {
+        "windows-amd64": 458,
+        "linux-amd64": 451
+      }
+    },
+    "historical_source6_windows_python": {
+      "path": ".runtime/dagoblin-whole-throughput-regression-v1/r6envw/python-windows-source-audit.json",
+      "sha256": "df67e204ed75222edadb27f5daf9b0cbdd1b3810c90d32fc4f1e55cfcae137a9",
+      "status": "PASS",
+      "tests": 736,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "actual_QML": true,
+      "actual_protected_restore_sdk": true,
+      "source7_acceptance": false,
+      "source_unchanged": true,
+      "owned_processes_terminal": true
+    },
+    "historical_source6_linux_python": {
+      "path": ".runtime/dagoblin-whole-throughput-regression-v1/r6envl/python-linux-source-audit.json",
+      "sha256": "9962740bf508cabf370826d053883696f0f077db76378646069fc2edf2313bd1",
+      "status": "FAIL",
+      "tests": 720,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 42,
+      "actual_QML": false,
+      "actual_protected_restore_sdk": true,
+      "source7_acceptance": false,
+      "source_unchanged": true,
+      "owned_processes_terminal": true
+    }
+  }
+}

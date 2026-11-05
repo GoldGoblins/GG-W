@@ -127,7 +127,45 @@ slutkvittering är ännu inte godkända. Se [hela provet](knowledge/dagoblin-lan
 `--foreground` visar status och hålls öppet till Ctrl+C. Ett separat
 engångskommando kan inte styra den processen. Interaktiv CLI har samma
 `lan.*`-kommandon i `:`-fältet. Exportfiler måste ha nya namn; befintliga filer
-skrivs aldrig över. Efter processomstart krävs ny parning.
+skrivs aldrig över. RAM-läget kräver ny parning efter processomstart.
+
+För beständig nodidentitet och verifierad historik väljs en egen profil redan
+vid första start. Exempel för Linux (Termux använder `python`):
+
+```sh
+python3 gg-cli.py --foreground --command "lan.start profile=LinuxNode label=Linux allow_dag_transactions=true auto_produce=false" --bootstrap-file gg-lan-bootstrap.json
+```
+
+Efter stopp återupptas samma profil och signerade roster:
+
+```sh
+python3 gg-cli.py --foreground --command "lan.resume profile=LinuxNode"
+```
+
+Windows kan skapa sin egen profil på samma sätt i CLI. Profiler delas inte
+mellan apparater. Windows använder aktuell användares DPAPI; Linux/Termux
+frågar efter ett dolt profillösenord i den riktiga terminalen. Lösenord lämnas
+aldrig som kommandoargument. Befintliga profiler skrivs inte över och saknade
+eller skadade filer skapar inte en ny identitet automatiskt. Återupptagen nod
+startar ingen gammal produktion. Ett nytt eget ändligt jobb begärs uttryckligen
+med `--own-production` eller i samma interaktiva CLI-process.
+
+Roster binder LAN-adress och port. Adressbyte eller förlorad profil kräver
+utredd återhämtning; nycklar kopieras inte från någon annan nod. Detta gäller
+den ändliga privata DAG-labben: det inför inte pruning, kanonisk finalitet eller
+skydd mot återställning av en hel äldre giltig diskbild. Lagringskvoter och
+beständig/RAM-status syns i `lan.status` och Desktopobservationen.
+
+En nod som endast ska hämta och verifiera väljer `node_role=replica` vid
+första `lan.start`, exempelvis tillsammans med `profile=TermuxReplica`.
+Den signerade deltagarlistan binder rollen. Replikan har inga producentsignerare
+anslutna till DAG-motorn, och mottagarna avvisar block från dess reserverade
+producentplatser även om signaturen är korrekt. Rollen bevaras vid
+`lan.resume`. Standardrollen `producer` behåller den tidigare funktionen.
+En replika verifierar fortfarande mottagen historik; den är inte en lättklient
+eller en konsensusvalidator. Den begränsar inte andra noders egna produktion.
+Det äldre synkroniserade treproducentprovet kräver en producentroster och
+väljs separat från egna ändliga produktionsjobb.
 
 En Windowskoordinator kan också köras helt i interaktiv CLI. Starta
 `python gg-cli.py` och kör följande i samma sessions `:`-fält, ett kommando
@@ -369,6 +407,18 @@ och `a` registrerar ett lokalt objekt. Nätverk: `p` startar, `x` stoppar, `v`
 kör feltest och `b` mäter 32 verifierade överföringar. `q` avslutar.
 
 ## Filer, beroenden och källpaket
+
+I den signerade monetära LAN-sessionen kan kommandot
+`lan.financial_submit_file path=/absolut/sökväg/payments.json producer_index=0 transactions_per_block=5000`
+dela den offentliga betalningsfilen i högst åtta egna block. Filens schema är
+`gg.financial.signed-payments.v1`; kontosignaturer och nätverksankare kontrolleras.
+Producentens lokala index måste tillhöra den egna skyddade nodprofilen.
+Originalen lagras atomiskt före sändning. Ett återförsök med samma väntande
+betalningar återanvänder exakt samma original. Kö- eller mempoolsvar innebär
+inte att betalningarna utförts: använd SDK-certifierat kontotillstånd och
+verifierade kvitton. Privata nycklar ska inte ingå i betalningsfilen.
+Detta är ett begränsat privat LAN-flöde; kapacitetsmålet och publik drift är
+fortfarande separata acceptanskrav.
 
 Standard: `%LOCALAPPDATA%/GoldGoblins/gg-terminal` på Windows respektive
 `$XDG_DATA_HOME/goldgoblins/gg-terminal` (eller `~/.local/share/...`) på POSIX.

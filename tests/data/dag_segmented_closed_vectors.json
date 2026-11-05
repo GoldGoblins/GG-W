@@ -1,0 +1,1373 @@
+{
+  "expected": {
+    "closed_first_block_TX": 5000,
+    "epochs": [
+      "1",
+      "2",
+      "3"
+    ],
+    "global_blocks": "5",
+    "transactions": "5007"
+  },
+  "packets": {
+    "1": {
+      "dag_segmented_closed_page": {
+        "closed_path": [
+          {
+            "hash": "bc9aa31ccb0ddc3b23dbf3fe070134196a88b4df69d1fd09b67da3790b31f06d",
+            "side": "right"
+          },
+          {
+            "hash": "501711471d86c81477e0a3f2ccb95d79f4bac520a6b5df5c1f026652cfbed525",
+            "side": "right"
+          }
+        ],
+        "commitment": {
+          "active": {
+            "account_root": "ce223ece5a8ee9d25a820fedcdb6b45e5a57f5d932d923bef7a2bec8e454f174",
+            "blocks": 1,
+            "chain_id": "ggdag:f00ad0afc97212531439e9bca0dee0c2fb0b43f929c9a1cba37196277abedb99",
+            "checkpoint": 1,
+            "genesis_hash": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+            "manifest_hash": "d471b1f921f671a5ddfe8a6a2f09d21c74380301b3f8719cb9015aacfec6194d",
+            "network_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "order_root": "f5a2e97d5b992939d37927d69413483268d83065dd38542c0a7512bb9f7a1b8a",
+            "previous": "4c87c8c93ae25ccb126a58e419ed1e4536898a1347dbfa69a5faafb9da3bad68",
+            "schema": "gg.dag.commitment.v1",
+            "time_ns": "1700000009000000000",
+            "transactions": 5007
+          },
+          "anchor": "5c3c83ac310b55ff5d9fc167a92955565298a3c091b690b2f3665ecad5f98806",
+          "authors": [
+            {
+              "head": "3d4587b2dc365258ff1c32c891aff8499caec3ff889828cd0f0fd24a3a50de27",
+              "key": "0d3dc7fe102dc1d0d643dbe4730699e45b9841fcd6316237c422e04aa88383d2",
+              "nonce": "5002",
+              "sequence": "3"
+            },
+            {
+              "head": "e119338882e98d251c3e0147a30bc9842da48678931b10b38db71ecbacc6e34b",
+              "key": "94f3e72f0a563b76bbe4013a26191db9c018d78e8d482079768dcb095379d92d",
+              "nonce": "2",
+              "sequence": "1"
+            },
+            {
+              "head": "e4cc97a83477612c2d0f7ade6b6b88dbf2457f8db18b663518a3eaa97f23718b",
+              "key": "a4bfc99d0f73b4e450c35ffa59ccdd0b0c22733197b61b4cdfb1b07cd3d3114c",
+              "nonce": "3",
+              "sequence": "1"
+            },
+            {
+              "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+              "key": "70432071235fe0ae468fe9e5852751e1663fa84a01be8e900436469321e51c0e",
+              "nonce": "0",
+              "sequence": "0"
+            },
+            {
+              "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+              "key": "b4a19066384569afed9bf2ea7f09970de6034161f7f0af1009092d745164fda4",
+              "nonce": "0",
+              "sequence": "0"
+            },
+            {
+              "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+              "key": "c0a2d323dde5aa02abae2ad6028ccdcbb5edc6815d9e0561b9ae8f8238bfc16a",
+              "nonce": "0",
+              "sequence": "0"
+            }
+          ],
+          "blocks": "5",
+          "closed_root": "c3af93e26ebfe5e8a5e290b6ae829ddbfd1a36028bb54861b03815192716b5be",
+          "epoch": "4",
+          "last_cut": "489f7a8a95d1ba4a241ff2793379374d443efc700fd9316ccb90f2ebac3002ca",
+          "last_rank": "5",
+          "raw_bytes": "2670661",
+          "schema": "gg.dag.segmented-commitment.v1",
+          "source_hash": "1f5f29281920404890bc10ba19ca72e3fe6eb9e7b64c355e249dfa103fb572d6",
+          "transactions": "5007"
+        },
+        "complete": true,
+        "cut": {
+          "accounts": [
+            {
+              "address": "0d3dc7fe102dc1d0d643dbe4730699e45b9841fcd6316237c422e04aa88383d2",
+              "balance_atomic": "999994999",
+              "nonce": 5001
+            },
+            {
+              "address": "70432071235fe0ae468fe9e5852751e1663fa84a01be8e900436469321e51c0e",
+              "balance_atomic": "1000000000",
+              "nonce": 0
+            },
+            {
+              "address": "94f3e72f0a563b76bbe4013a26191db9c018d78e8d482079768dcb095379d92d",
+              "balance_atomic": "1000005001",
+              "nonce": 0
+            },
+            {
+              "address": "a4bfc99d0f73b4e450c35ffa59ccdd0b0c22733197b61b4cdfb1b07cd3d3114c",
+              "balance_atomic": "1000000000",
+              "nonce": 0
+            },
+            {
+              "address": "b4a19066384569afed9bf2ea7f09970de6034161f7f0af1009092d745164fda4",
+              "balance_atomic": "1000000000",
+              "nonce": 0
+            },
+            {
+              "address": "c0a2d323dde5aa02abae2ad6028ccdcbb5edc6815d9e0561b9ae8f8238bfc16a",
+              "balance_atomic": "1000000000",
+              "nonce": 0
+            }
+          ],
+          "before": {
+            "active": {
+              "account_root": "3b5f8631c563d577a9a7bf23216aaa8e74574eb5a9e8012452a2cb7b964ecbb3",
+              "blocks": 2,
+              "chain_id": "ggdag:f00ad0afc97212531439e9bca0dee0c2fb0b43f929c9a1cba37196277abedb99",
+              "checkpoint": 2,
+              "genesis_hash": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+              "manifest_hash": "ef322ee13a0055728e2583233862f6575f94002693da5be82f4273ecdd7562d5",
+              "network_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "order_root": "1cd8efe1badbc7b93dc3bb7d95e93dfb7c600ef60350d1e7ca2a7e8bff8ee237",
+              "previous": "586b117cafa7ef06b29eac453ddcb1222ea6d437b67e0e7161038499fe9538c6",
+              "schema": "gg.dag.commitment.v1",
+              "time_ns": "1700000003000000000",
+              "transactions": 5001
+            },
+            "anchor": "5c3c83ac310b55ff5d9fc167a92955565298a3c091b690b2f3665ecad5f98806",
+            "authors": [
+              {
+                "head": "e4dc198566bfd5eff604c61fb60439eb519c70f3ca2759200dd60d3c7c772506",
+                "key": "0d3dc7fe102dc1d0d643dbe4730699e45b9841fcd6316237c422e04aa88383d2",
+                "nonce": "5001",
+                "sequence": "2"
+              },
+              {
+                "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+                "key": "94f3e72f0a563b76bbe4013a26191db9c018d78e8d482079768dcb095379d92d",
+                "nonce": "0",
+                "sequence": "0"
+              },
+              {
+                "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+                "key": "a4bfc99d0f73b4e450c35ffa59ccdd0b0c22733197b61b4cdfb1b07cd3d3114c",
+                "nonce": "0",
+                "sequence": "0"
+              },
+              {
+                "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+                "key": "70432071235fe0ae468fe9e5852751e1663fa84a01be8e900436469321e51c0e",
+                "nonce": "0",
+                "sequence": "0"
+              },
+              {
+                "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+                "key": "b4a19066384569afed9bf2ea7f09970de6034161f7f0af1009092d745164fda4",
+                "nonce": "0",
+                "sequence": "0"
+              },
+              {
+                "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+                "key": "c0a2d323dde5aa02abae2ad6028ccdcbb5edc6815d9e0561b9ae8f8238bfc16a",
+                "nonce": "0",
+                "sequence": "0"
+              }
+            ],
+            "blocks": "2",
+            "closed_root": "854c11f07901325b956d7b0abb816d87bf1dab07d098634a04d5a9d94b9ac5bd",
+            "epoch": "1",
+            "last_cut": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+            "last_rank": "2",
+            "raw_bytes": "2665645",
+            "schema": "gg.dag.segmented-commitment.v1",
+            "source_hash": "1f5f29281920404890bc10ba19ca72e3fe6eb9e7b64c355e249dfa103fb572d6",
+            "transactions": "5001"
+          },
+          "history_root": "fbd4678aa1e9803108277625228917e245cecaf28d874a2097642004bd326313",
+          "schema": "gg.dag.history-cut.v1"
+        },
+        "genesis_hash": "5c3c83ac310b55ff5d9fc167a92955565298a3c091b690b2f3665ecad5f98806",
+        "height": 8,
+        "items": [
+          {
+            "leaf": {
+              "creator_key": "0d3dc7fe102dc1d0d643dbe4730699e45b9841fcd6316237c422e04aa88383d2",
+              "global_index": "1",
+              "hash": "c574e30b5211aea9535a9741e2070afe9b1c400e0039698d6ef3661ac2b38ca9",
+              "index": 1,
+              "producer_index": 0,
+              "sequence": "1",
+              "transactions": 5000
+            },
+            "path": [
+              {
+                "hash": "580074cf94925f417208c3bd98572698a44526c121b400d052706f7b88d8e3d9",
+                "side": "right"
+              }
+            ]
+          },
+          {
+            "leaf": {
+              "creator_key": "0d3dc7fe102dc1d0d643dbe4730699e45b9841fcd6316237c422e04aa88383d2",
+              "global_index": "2",
+              "hash": "e4dc198566bfd5eff604c61fb60439eb519c70f3ca2759200dd60d3c7c772506",
+              "index": 2,
+              "producer_index": 0,
+              "sequence": "2",
+              "transactions": 1
+            },
+            "path": [
+              {
+                "hash": "e0c1dcb9b3af547997233ca71b5fa827bd3a72f78c9f1cbdd18fe12a0b698b03",
+                "side": "left"
+              }
+            ]
+          }
+        ],
+        "schema": "gg.dag.segmented-closed-page.v1",
+        "start": 0,
+        "state_root": "d91433587f09323045b32e825da2779eb9915c21781b482f90add1eb0986945b"
+      },
+      "genesis": {
+        "accounts": [
+          "b6a659fd183e3d7df79a7fd194dcd7605596e3db14f0129c120ee039c402e46b",
+          "ebc3c1f26a164be94dcfd1a260a73a35234e6b8369cda921c1b81542359f3987",
+          "83cb5841b1d2bf03cc70b54c93e6fbf990776ac37b6c9ef38b365b3c177ff153",
+          "b92d3c6e562c3a710264cd45ba654fca50a01c5191a94f4ded85250e79bf8024"
+        ],
+        "chain_id": "ggnet:aaaaaaaaaaaaaaaaaaaaaaaa",
+        "dag_segmented": {
+          "accounts": [
+            "0d3dc7fe102dc1d0d643dbe4730699e45b9841fcd6316237c422e04aa88383d2",
+            "70432071235fe0ae468fe9e5852751e1663fa84a01be8e900436469321e51c0e",
+            "94f3e72f0a563b76bbe4013a26191db9c018d78e8d482079768dcb095379d92d",
+            "a4bfc99d0f73b4e450c35ffa59ccdd0b0c22733197b61b4cdfb1b07cd3d3114c",
+            "b4a19066384569afed9bf2ea7f09970de6034161f7f0af1009092d745164fda4",
+            "c0a2d323dde5aa02abae2ad6028ccdcbb5edc6815d9e0561b9ae8f8238bfc16a"
+          ],
+          "allowed_producers": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "genesis": {
+            "account_count": 6,
+            "allocation_atomic": "1000000000",
+            "chain_id": "ggdag:f00ad0afc97212531439e9bca0dee0c2fb0b43f929c9a1cba37196277abedb99",
+            "execution_policy": {
+              "block_max_parents": 7,
+              "block_max_rank": 4096,
+              "block_max_sequence": 4096,
+              "block_max_transactions": 50000,
+              "block_max_wire_bytes": 33554432,
+              "checkpoint_max_blocks": 128,
+              "checkpoint_max_encoded_bytes": 50331648,
+              "checkpoint_max_raw_bytes": 33554432,
+              "history_max_blocks": 4095,
+              "history_max_raw_bytes": 536870912,
+              "history_verification": "FULL_SIGNED_GENESIS_REPLAY",
+              "profile": "GG-DAG-FINITE-v1",
+              "schema": "gg.dag.execution-policy.v1",
+              "transaction_model": "PRODUCER_OWNED_NONFINANCIAL"
+            },
+            "history_policy": {
+              "archive_mode": "ORIGINAL_SIGNED_SEGMENTS_REQUIRED",
+              "boundary": "SDK_CERTIFIED_CUT",
+              "counter_limit": "9223372036854775807",
+              "counter_scope": "GLOBAL_WITH_ACTIVE_SEGMENT_OFFSETS",
+              "profile": "GG-DAG-SEGMENTED-v1",
+              "schema": "gg.dag.history-policy.v1",
+              "verification": "FULL_SIGNED_ARCHIVE_CHAIN_REPLAY"
+            },
+            "precheck_root": "60d4b2086c73f2b626803c22c9f5e49292b67db7111b785cbd70cbd12b6b6baa",
+            "producers": [
+              "0d3dc7fe102dc1d0d643dbe4730699e45b9841fcd6316237c422e04aa88383d2",
+              "94f3e72f0a563b76bbe4013a26191db9c018d78e8d482079768dcb095379d92d",
+              "a4bfc99d0f73b4e450c35ffa59ccdd0b0c22733197b61b4cdfb1b07cd3d3114c",
+              "70432071235fe0ae468fe9e5852751e1663fa84a01be8e900436469321e51c0e",
+              "b4a19066384569afed9bf2ea7f09970de6034161f7f0af1009092d745164fda4",
+              "c0a2d323dde5aa02abae2ad6028ccdcbb5edc6815d9e0561b9ae8f8238bfc16a"
+            ],
+            "schema": "gg.parallel-dag.genesis.v4",
+            "test_mode": "PRODUCER_OWNED_NONFINANCIAL"
+          },
+          "genesis_hash": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+          "network_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "schema": "gg.dag.consensus.source.v2",
+          "signature_profile": "GG-Ed25519-PrimeOrder-v1",
+          "started_at_ns": "1700000000000000000"
+        },
+        "decimals": 6,
+        "genesis_time_unix": 1700000000,
+        "schema": "gg.native.genesis.v4",
+        "supply_atomic": "1000000000000",
+        "symbol": "GG-NET-TEST",
+        "validators": [
+          "4d0f79266245558cf760b730b8d818b147b484004a0da9b3c2da9ae7c53288dd",
+          "8dad1109d4dcae0b7116fafaa05866beeff61e11615df21787a71255a25f182b",
+          "9ac1a88434c27bcff952e1c10270bab8c82387cfe8c3e10c573a972b2e8eb2eb",
+          "0ef8610d0ee0af27e6bd4b6712350d3f76fc6544234990af38a50b5948be14d9"
+        ]
+      },
+      "genesis_hash": "5c3c83ac310b55ff5d9fc167a92955565298a3c091b690b2f3665ecad5f98806",
+      "schema": "gg.consensus.proof.v1",
+      "signed_header": {
+        "commit": {
+          "block_id": {
+            "hash": "DF99811905304C8C18475948EB16E0724FBC2FBF47121F2E2855738AEED9CFC7",
+            "parts": {
+              "hash": "0707070707070707070707070707070707070707070707070707070707070707",
+              "total": 1
+            }
+          },
+          "height": "9",
+          "round": 0,
+          "signatures": [
+            {
+              "block_id_flag": 2,
+              "signature": "ZSKlQeZ1qQM8W66iFQtVbJ1RDr4KLHw95Zwa9JfCm15cTaMcotUlQBt7kJy1/VC72NS3fvmDR/BcPBgvHcQbDQ==",
+              "timestamp": "2023-11-14T22:13:29Z",
+              "validator_address": "17BC0A602CC76F51C78954B241229904F51C2E2E"
+            },
+            {
+              "block_id_flag": 2,
+              "signature": "VO5RWtwPbq+mshanNVcAEn2gOz1WIX9OlNqI7iQKcKe+vgDwx+GfPCUxWI/f9taV7SCrOGaK34f9Qf0qj2c7Bw==",
+              "timestamp": "2023-11-14T22:13:29Z",
+              "validator_address": "7004F633DFADAA16B7CFB37D35E245C982B27A89"
+            },
+            {
+              "block_id_flag": 2,
+              "signature": "KJSnMHmTlsoSeAXF1YVnwK0npK9I97xNFPv+xPP6uDWbefl6DEN4rOy15cGLX/ivvLDlNb45ye9bVYcehSajAQ==",
+              "timestamp": "2023-11-14T22:13:29Z",
+              "validator_address": "87BE0043179B46F6A822E0CE706CE58CFE5DC983"
+            },
+            {
+              "block_id_flag": 2,
+              "signature": "Vq36S2FOGvx3d5wNXAxRpfI7yUppebH9Uoh02p4sBvQAcZ6xN1+SIP2TM1p98satfe2CcPcMEFPF5YOlnCUwAQ==",
+              "timestamp": "2023-11-14T22:13:29Z",
+              "validator_address": "A976127F9B6EDDDF03413C79C51B582A5AA43D4D"
+            }
+          ]
+        },
+        "header": {
+          "app_hash": "D91433587F09323045B32E825DA2779EB9915C21781B482F90ADD1EB0986945B",
+          "chain_id": "ggnet:aaaaaaaaaaaaaaaaaaaaaaaa",
+          "consensus_hash": "0505050505050505050505050505050505050505050505050505050505050505",
+          "data_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "evidence_hash": "",
+          "height": "9",
+          "last_block_id": {
+            "hash": "",
+            "parts": {
+              "hash": "",
+              "total": 0
+            }
+          },
+          "last_commit_hash": "",
+          "last_results_hash": "",
+          "next_validators_hash": "DB2C5146E6D9AAF11E8C89C9A95F4673C0DCE2FF30C2C5571512F911BE41F243",
+          "proposer_address": "17BC0A602CC76F51C78954B241229904F51C2E2E",
+          "time": "2023-11-14T22:13:29Z",
+          "validators_hash": "DB2C5146E6D9AAF11E8C89C9A95F4673C0DCE2FF30C2C5571512F911BE41F243",
+          "version": {
+            "app": "1",
+            "block": "11"
+          }
+        }
+      },
+      "state": {
+        "account_root": "f30c964c5a1c9a49d3f6775c2e60ee49916ac6ebe1ef45782e814e779f84881e",
+        "accounts": [
+          {
+            "address": "83cb5841b1d2bf03cc70b54c93e6fbf990776ac37b6c9ef38b365b3c177ff153",
+            "balance_atomic": "250000000000",
+            "nonce": 0
+          },
+          {
+            "address": "b6a659fd183e3d7df79a7fd194dcd7605596e3db14f0129c120ee039c402e46b",
+            "balance_atomic": "250000000000",
+            "nonce": 0
+          },
+          {
+            "address": "b92d3c6e562c3a710264cd45ba654fca50a01c5191a94f4ded85250e79bf8024",
+            "balance_atomic": "250000000000",
+            "nonce": 0
+          },
+          {
+            "address": "ebc3c1f26a164be94dcfd1a260a73a35234e6b8369cda921c1b81542359f3987",
+            "balance_atomic": "250000000000",
+            "nonce": 0
+          }
+        ],
+        "chain_id": "ggnet:aaaaaaaaaaaaaaaaaaaaaaaa",
+        "dag_segmented": {
+          "active": {
+            "account_root": "ce223ece5a8ee9d25a820fedcdb6b45e5a57f5d932d923bef7a2bec8e454f174",
+            "blocks": 1,
+            "chain_id": "ggdag:f00ad0afc97212531439e9bca0dee0c2fb0b43f929c9a1cba37196277abedb99",
+            "checkpoint": 1,
+            "genesis_hash": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+            "manifest_hash": "d471b1f921f671a5ddfe8a6a2f09d21c74380301b3f8719cb9015aacfec6194d",
+            "network_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "order_root": "f5a2e97d5b992939d37927d69413483268d83065dd38542c0a7512bb9f7a1b8a",
+            "previous": "4c87c8c93ae25ccb126a58e419ed1e4536898a1347dbfa69a5faafb9da3bad68",
+            "schema": "gg.dag.commitment.v1",
+            "time_ns": "1700000009000000000",
+            "transactions": 5007
+          },
+          "anchor": "5c3c83ac310b55ff5d9fc167a92955565298a3c091b690b2f3665ecad5f98806",
+          "authors": [
+            {
+              "head": "3d4587b2dc365258ff1c32c891aff8499caec3ff889828cd0f0fd24a3a50de27",
+              "key": "0d3dc7fe102dc1d0d643dbe4730699e45b9841fcd6316237c422e04aa88383d2",
+              "nonce": "5002",
+              "sequence": "3"
+            },
+            {
+              "head": "e119338882e98d251c3e0147a30bc9842da48678931b10b38db71ecbacc6e34b",
+              "key": "94f3e72f0a563b76bbe4013a26191db9c018d78e8d482079768dcb095379d92d",
+              "nonce": "2",
+              "sequence": "1"
+            },
+            {
+              "head": "e4cc97a83477612c2d0f7ade6b6b88dbf2457f8db18b663518a3eaa97f23718b",
+              "key": "a4bfc99d0f73b4e450c35ffa59ccdd0b0c22733197b61b4cdfb1b07cd3d3114c",
+              "nonce": "3",
+              "sequence": "1"
+            },
+            {
+              "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+              "key": "70432071235fe0ae468fe9e5852751e1663fa84a01be8e900436469321e51c0e",
+              "nonce": "0",
+              "sequence": "0"
+            },
+            {
+              "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+              "key": "b4a19066384569afed9bf2ea7f09970de6034161f7f0af1009092d745164fda4",
+              "nonce": "0",
+              "sequence": "0"
+            },
+            {
+              "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+              "key": "c0a2d323dde5aa02abae2ad6028ccdcbb5edc6815d9e0561b9ae8f8238bfc16a",
+              "nonce": "0",
+              "sequence": "0"
+            }
+          ],
+          "blocks": "5",
+          "closed_root": "c3af93e26ebfe5e8a5e290b6ae829ddbfd1a36028bb54861b03815192716b5be",
+          "epoch": "4",
+          "last_cut": "489f7a8a95d1ba4a241ff2793379374d443efc700fd9316ccb90f2ebac3002ca",
+          "last_rank": "5",
+          "raw_bytes": "2670661",
+          "schema": "gg.dag.segmented-commitment.v1",
+          "source_hash": "1f5f29281920404890bc10ba19ca72e3fe6eb9e7b64c355e249dfa103fb572d6",
+          "transactions": "5007"
+        },
+        "decimals": 6,
+        "genesis_hash": "5c3c83ac310b55ff5d9fc167a92955565298a3c091b690b2f3665ecad5f98806",
+        "height": 8,
+        "schema": "gg.native.state.v3",
+        "state_root": "d91433587f09323045b32e825da2779eb9915c21781b482f90add1eb0986945b",
+        "supply_atomic": "1000000000000",
+        "symbol": "GG-NET-TEST"
+      }
+    },
+    "2": {
+      "dag_segmented_closed_page": {
+        "closed_path": [
+          {
+            "hash": "e73f590aaa907fd2e3aa7fe578b9c1e6d103ff18f49d3c010a21d6a7225cdb47",
+            "side": "left"
+          },
+          {
+            "hash": "501711471d86c81477e0a3f2ccb95d79f4bac520a6b5df5c1f026652cfbed525",
+            "side": "right"
+          }
+        ],
+        "commitment": {
+          "active": {
+            "account_root": "ce223ece5a8ee9d25a820fedcdb6b45e5a57f5d932d923bef7a2bec8e454f174",
+            "blocks": 1,
+            "chain_id": "ggdag:f00ad0afc97212531439e9bca0dee0c2fb0b43f929c9a1cba37196277abedb99",
+            "checkpoint": 1,
+            "genesis_hash": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+            "manifest_hash": "d471b1f921f671a5ddfe8a6a2f09d21c74380301b3f8719cb9015aacfec6194d",
+            "network_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "order_root": "f5a2e97d5b992939d37927d69413483268d83065dd38542c0a7512bb9f7a1b8a",
+            "previous": "4c87c8c93ae25ccb126a58e419ed1e4536898a1347dbfa69a5faafb9da3bad68",
+            "schema": "gg.dag.commitment.v1",
+            "time_ns": "1700000009000000000",
+            "transactions": 5007
+          },
+          "anchor": "5c3c83ac310b55ff5d9fc167a92955565298a3c091b690b2f3665ecad5f98806",
+          "authors": [
+            {
+              "head": "3d4587b2dc365258ff1c32c891aff8499caec3ff889828cd0f0fd24a3a50de27",
+              "key": "0d3dc7fe102dc1d0d643dbe4730699e45b9841fcd6316237c422e04aa88383d2",
+              "nonce": "5002",
+              "sequence": "3"
+            },
+            {
+              "head": "e119338882e98d251c3e0147a30bc9842da48678931b10b38db71ecbacc6e34b",
+              "key": "94f3e72f0a563b76bbe4013a26191db9c018d78e8d482079768dcb095379d92d",
+              "nonce": "2",
+              "sequence": "1"
+            },
+            {
+              "head": "e4cc97a83477612c2d0f7ade6b6b88dbf2457f8db18b663518a3eaa97f23718b",
+              "key": "a4bfc99d0f73b4e450c35ffa59ccdd0b0c22733197b61b4cdfb1b07cd3d3114c",
+              "nonce": "3",
+              "sequence": "1"
+            },
+            {
+              "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+              "key": "70432071235fe0ae468fe9e5852751e1663fa84a01be8e900436469321e51c0e",
+              "nonce": "0",
+              "sequence": "0"
+            },
+            {
+              "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+              "key": "b4a19066384569afed9bf2ea7f09970de6034161f7f0af1009092d745164fda4",
+              "nonce": "0",
+              "sequence": "0"
+            },
+            {
+              "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+              "key": "c0a2d323dde5aa02abae2ad6028ccdcbb5edc6815d9e0561b9ae8f8238bfc16a",
+              "nonce": "0",
+              "sequence": "0"
+            }
+          ],
+          "blocks": "5",
+          "closed_root": "c3af93e26ebfe5e8a5e290b6ae829ddbfd1a36028bb54861b03815192716b5be",
+          "epoch": "4",
+          "last_cut": "489f7a8a95d1ba4a241ff2793379374d443efc700fd9316ccb90f2ebac3002ca",
+          "last_rank": "5",
+          "raw_bytes": "2670661",
+          "schema": "gg.dag.segmented-commitment.v1",
+          "source_hash": "1f5f29281920404890bc10ba19ca72e3fe6eb9e7b64c355e249dfa103fb572d6",
+          "transactions": "5007"
+        },
+        "complete": true,
+        "cut": {
+          "accounts": [
+            {
+              "address": "0d3dc7fe102dc1d0d643dbe4730699e45b9841fcd6316237c422e04aa88383d2",
+              "balance_atomic": "999994999",
+              "nonce": 5001
+            },
+            {
+              "address": "70432071235fe0ae468fe9e5852751e1663fa84a01be8e900436469321e51c0e",
+              "balance_atomic": "1000000000",
+              "nonce": 0
+            },
+            {
+              "address": "94f3e72f0a563b76bbe4013a26191db9c018d78e8d482079768dcb095379d92d",
+              "balance_atomic": "1000004999",
+              "nonce": 2
+            },
+            {
+              "address": "a4bfc99d0f73b4e450c35ffa59ccdd0b0c22733197b61b4cdfb1b07cd3d3114c",
+              "balance_atomic": "1000000002",
+              "nonce": 0
+            },
+            {
+              "address": "b4a19066384569afed9bf2ea7f09970de6034161f7f0af1009092d745164fda4",
+              "balance_atomic": "1000000000",
+              "nonce": 0
+            },
+            {
+              "address": "c0a2d323dde5aa02abae2ad6028ccdcbb5edc6815d9e0561b9ae8f8238bfc16a",
+              "balance_atomic": "1000000000",
+              "nonce": 0
+            }
+          ],
+          "before": {
+            "active": {
+              "account_root": "161de656d1610bae9beec6a9cda611ec4a028ab062ac76e4a0aea6bc4f5869b4",
+              "blocks": 1,
+              "chain_id": "ggdag:f00ad0afc97212531439e9bca0dee0c2fb0b43f929c9a1cba37196277abedb99",
+              "checkpoint": 1,
+              "genesis_hash": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+              "manifest_hash": "fdea5c7885e6f64b172a28cfbe6aab8424138bcc8b4fa1031c704bd5148d8c22",
+              "network_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "order_root": "6999c0a3bd937a943d7b9c8c9c418d4d6c8c592100b16ad5a76af63edfef155c",
+              "previous": "31b1be42c3f3c4799bded7a76ed30b8782ea069af0c3871ed5cd56562633431f",
+              "schema": "gg.dag.commitment.v1",
+              "time_ns": "1700000005000000000",
+              "transactions": 5003
+            },
+            "anchor": "5c3c83ac310b55ff5d9fc167a92955565298a3c091b690b2f3665ecad5f98806",
+            "authors": [
+              {
+                "head": "e4dc198566bfd5eff604c61fb60439eb519c70f3ca2759200dd60d3c7c772506",
+                "key": "0d3dc7fe102dc1d0d643dbe4730699e45b9841fcd6316237c422e04aa88383d2",
+                "nonce": "5001",
+                "sequence": "2"
+              },
+              {
+                "head": "e119338882e98d251c3e0147a30bc9842da48678931b10b38db71ecbacc6e34b",
+                "key": "94f3e72f0a563b76bbe4013a26191db9c018d78e8d482079768dcb095379d92d",
+                "nonce": "2",
+                "sequence": "1"
+              },
+              {
+                "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+                "key": "a4bfc99d0f73b4e450c35ffa59ccdd0b0c22733197b61b4cdfb1b07cd3d3114c",
+                "nonce": "0",
+                "sequence": "0"
+              },
+              {
+                "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+                "key": "70432071235fe0ae468fe9e5852751e1663fa84a01be8e900436469321e51c0e",
+                "nonce": "0",
+                "sequence": "0"
+              },
+              {
+                "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+                "key": "b4a19066384569afed9bf2ea7f09970de6034161f7f0af1009092d745164fda4",
+                "nonce": "0",
+                "sequence": "0"
+              },
+              {
+                "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+                "key": "c0a2d323dde5aa02abae2ad6028ccdcbb5edc6815d9e0561b9ae8f8238bfc16a",
+                "nonce": "0",
+                "sequence": "0"
+              }
+            ],
+            "blocks": "3",
+            "closed_root": "e73f590aaa907fd2e3aa7fe578b9c1e6d103ff18f49d3c010a21d6a7225cdb47",
+            "epoch": "2",
+            "last_cut": "119965c70872a203e4a042493d9799844a72006d49f8c6e99c73f5719ff50100",
+            "last_rank": "3",
+            "raw_bytes": "2667316",
+            "schema": "gg.dag.segmented-commitment.v1",
+            "source_hash": "1f5f29281920404890bc10ba19ca72e3fe6eb9e7b64c355e249dfa103fb572d6",
+            "transactions": "5003"
+          },
+          "history_root": "957355493f92fc448d328cf7c093f7539043c9b135066e0a6fe683716b563efa",
+          "schema": "gg.dag.history-cut.v1"
+        },
+        "genesis_hash": "5c3c83ac310b55ff5d9fc167a92955565298a3c091b690b2f3665ecad5f98806",
+        "height": 8,
+        "items": [
+          {
+            "leaf": {
+              "creator_key": "94f3e72f0a563b76bbe4013a26191db9c018d78e8d482079768dcb095379d92d",
+              "global_index": "3",
+              "hash": "e119338882e98d251c3e0147a30bc9842da48678931b10b38db71ecbacc6e34b",
+              "index": 1,
+              "producer_index": 1,
+              "sequence": "1",
+              "transactions": 2
+            },
+            "path": []
+          }
+        ],
+        "schema": "gg.dag.segmented-closed-page.v1",
+        "start": 0,
+        "state_root": "d91433587f09323045b32e825da2779eb9915c21781b482f90add1eb0986945b"
+      },
+      "genesis": {
+        "accounts": [
+          "b6a659fd183e3d7df79a7fd194dcd7605596e3db14f0129c120ee039c402e46b",
+          "ebc3c1f26a164be94dcfd1a260a73a35234e6b8369cda921c1b81542359f3987",
+          "83cb5841b1d2bf03cc70b54c93e6fbf990776ac37b6c9ef38b365b3c177ff153",
+          "b92d3c6e562c3a710264cd45ba654fca50a01c5191a94f4ded85250e79bf8024"
+        ],
+        "chain_id": "ggnet:aaaaaaaaaaaaaaaaaaaaaaaa",
+        "dag_segmented": {
+          "accounts": [
+            "0d3dc7fe102dc1d0d643dbe4730699e45b9841fcd6316237c422e04aa88383d2",
+            "70432071235fe0ae468fe9e5852751e1663fa84a01be8e900436469321e51c0e",
+            "94f3e72f0a563b76bbe4013a26191db9c018d78e8d482079768dcb095379d92d",
+            "a4bfc99d0f73b4e450c35ffa59ccdd0b0c22733197b61b4cdfb1b07cd3d3114c",
+            "b4a19066384569afed9bf2ea7f09970de6034161f7f0af1009092d745164fda4",
+            "c0a2d323dde5aa02abae2ad6028ccdcbb5edc6815d9e0561b9ae8f8238bfc16a"
+          ],
+          "allowed_producers": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "genesis": {
+            "account_count": 6,
+            "allocation_atomic": "1000000000",
+            "chain_id": "ggdag:f00ad0afc97212531439e9bca0dee0c2fb0b43f929c9a1cba37196277abedb99",
+            "execution_policy": {
+              "block_max_parents": 7,
+              "block_max_rank": 4096,
+              "block_max_sequence": 4096,
+              "block_max_transactions": 50000,
+              "block_max_wire_bytes": 33554432,
+              "checkpoint_max_blocks": 128,
+              "checkpoint_max_encoded_bytes": 50331648,
+              "checkpoint_max_raw_bytes": 33554432,
+              "history_max_blocks": 4095,
+              "history_max_raw_bytes": 536870912,
+              "history_verification": "FULL_SIGNED_GENESIS_REPLAY",
+              "profile": "GG-DAG-FINITE-v1",
+              "schema": "gg.dag.execution-policy.v1",
+              "transaction_model": "PRODUCER_OWNED_NONFINANCIAL"
+            },
+            "history_policy": {
+              "archive_mode": "ORIGINAL_SIGNED_SEGMENTS_REQUIRED",
+              "boundary": "SDK_CERTIFIED_CUT",
+              "counter_limit": "9223372036854775807",
+              "counter_scope": "GLOBAL_WITH_ACTIVE_SEGMENT_OFFSETS",
+              "profile": "GG-DAG-SEGMENTED-v1",
+              "schema": "gg.dag.history-policy.v1",
+              "verification": "FULL_SIGNED_ARCHIVE_CHAIN_REPLAY"
+            },
+            "precheck_root": "60d4b2086c73f2b626803c22c9f5e49292b67db7111b785cbd70cbd12b6b6baa",
+            "producers": [
+              "0d3dc7fe102dc1d0d643dbe4730699e45b9841fcd6316237c422e04aa88383d2",
+              "94f3e72f0a563b76bbe4013a26191db9c018d78e8d482079768dcb095379d92d",
+              "a4bfc99d0f73b4e450c35ffa59ccdd0b0c22733197b61b4cdfb1b07cd3d3114c",
+              "70432071235fe0ae468fe9e5852751e1663fa84a01be8e900436469321e51c0e",
+              "b4a19066384569afed9bf2ea7f09970de6034161f7f0af1009092d745164fda4",
+              "c0a2d323dde5aa02abae2ad6028ccdcbb5edc6815d9e0561b9ae8f8238bfc16a"
+            ],
+            "schema": "gg.parallel-dag.genesis.v4",
+            "test_mode": "PRODUCER_OWNED_NONFINANCIAL"
+          },
+          "genesis_hash": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+          "network_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "schema": "gg.dag.consensus.source.v2",
+          "signature_profile": "GG-Ed25519-PrimeOrder-v1",
+          "started_at_ns": "1700000000000000000"
+        },
+        "decimals": 6,
+        "genesis_time_unix": 1700000000,
+        "schema": "gg.native.genesis.v4",
+        "supply_atomic": "1000000000000",
+        "symbol": "GG-NET-TEST",
+        "validators": [
+          "4d0f79266245558cf760b730b8d818b147b484004a0da9b3c2da9ae7c53288dd",
+          "8dad1109d4dcae0b7116fafaa05866beeff61e11615df21787a71255a25f182b",
+          "9ac1a88434c27bcff952e1c10270bab8c82387cfe8c3e10c573a972b2e8eb2eb",
+          "0ef8610d0ee0af27e6bd4b6712350d3f76fc6544234990af38a50b5948be14d9"
+        ]
+      },
+      "genesis_hash": "5c3c83ac310b55ff5d9fc167a92955565298a3c091b690b2f3665ecad5f98806",
+      "schema": "gg.consensus.proof.v1",
+      "signed_header": {
+        "commit": {
+          "block_id": {
+            "hash": "DF99811905304C8C18475948EB16E0724FBC2FBF47121F2E2855738AEED9CFC7",
+            "parts": {
+              "hash": "0707070707070707070707070707070707070707070707070707070707070707",
+              "total": 1
+            }
+          },
+          "height": "9",
+          "round": 0,
+          "signatures": [
+            {
+              "block_id_flag": 2,
+              "signature": "ZSKlQeZ1qQM8W66iFQtVbJ1RDr4KLHw95Zwa9JfCm15cTaMcotUlQBt7kJy1/VC72NS3fvmDR/BcPBgvHcQbDQ==",
+              "timestamp": "2023-11-14T22:13:29Z",
+              "validator_address": "17BC0A602CC76F51C78954B241229904F51C2E2E"
+            },
+            {
+              "block_id_flag": 2,
+              "signature": "VO5RWtwPbq+mshanNVcAEn2gOz1WIX9OlNqI7iQKcKe+vgDwx+GfPCUxWI/f9taV7SCrOGaK34f9Qf0qj2c7Bw==",
+              "timestamp": "2023-11-14T22:13:29Z",
+              "validator_address": "7004F633DFADAA16B7CFB37D35E245C982B27A89"
+            },
+            {
+              "block_id_flag": 2,
+              "signature": "KJSnMHmTlsoSeAXF1YVnwK0npK9I97xNFPv+xPP6uDWbefl6DEN4rOy15cGLX/ivvLDlNb45ye9bVYcehSajAQ==",
+              "timestamp": "2023-11-14T22:13:29Z",
+              "validator_address": "87BE0043179B46F6A822E0CE706CE58CFE5DC983"
+            },
+            {
+              "block_id_flag": 2,
+              "signature": "Vq36S2FOGvx3d5wNXAxRpfI7yUppebH9Uoh02p4sBvQAcZ6xN1+SIP2TM1p98satfe2CcPcMEFPF5YOlnCUwAQ==",
+              "timestamp": "2023-11-14T22:13:29Z",
+              "validator_address": "A976127F9B6EDDDF03413C79C51B582A5AA43D4D"
+            }
+          ]
+        },
+        "header": {
+          "app_hash": "D91433587F09323045B32E825DA2779EB9915C21781B482F90ADD1EB0986945B",
+          "chain_id": "ggnet:aaaaaaaaaaaaaaaaaaaaaaaa",
+          "consensus_hash": "0505050505050505050505050505050505050505050505050505050505050505",
+          "data_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "evidence_hash": "",
+          "height": "9",
+          "last_block_id": {
+            "hash": "",
+            "parts": {
+              "hash": "",
+              "total": 0
+            }
+          },
+          "last_commit_hash": "",
+          "last_results_hash": "",
+          "next_validators_hash": "DB2C5146E6D9AAF11E8C89C9A95F4673C0DCE2FF30C2C5571512F911BE41F243",
+          "proposer_address": "17BC0A602CC76F51C78954B241229904F51C2E2E",
+          "time": "2023-11-14T22:13:29Z",
+          "validators_hash": "DB2C5146E6D9AAF11E8C89C9A95F4673C0DCE2FF30C2C5571512F911BE41F243",
+          "version": {
+            "app": "1",
+            "block": "11"
+          }
+        }
+      },
+      "state": {
+        "account_root": "f30c964c5a1c9a49d3f6775c2e60ee49916ac6ebe1ef45782e814e779f84881e",
+        "accounts": [
+          {
+            "address": "83cb5841b1d2bf03cc70b54c93e6fbf990776ac37b6c9ef38b365b3c177ff153",
+            "balance_atomic": "250000000000",
+            "nonce": 0
+          },
+          {
+            "address": "b6a659fd183e3d7df79a7fd194dcd7605596e3db14f0129c120ee039c402e46b",
+            "balance_atomic": "250000000000",
+            "nonce": 0
+          },
+          {
+            "address": "b92d3c6e562c3a710264cd45ba654fca50a01c5191a94f4ded85250e79bf8024",
+            "balance_atomic": "250000000000",
+            "nonce": 0
+          },
+          {
+            "address": "ebc3c1f26a164be94dcfd1a260a73a35234e6b8369cda921c1b81542359f3987",
+            "balance_atomic": "250000000000",
+            "nonce": 0
+          }
+        ],
+        "chain_id": "ggnet:aaaaaaaaaaaaaaaaaaaaaaaa",
+        "dag_segmented": {
+          "active": {
+            "account_root": "ce223ece5a8ee9d25a820fedcdb6b45e5a57f5d932d923bef7a2bec8e454f174",
+            "blocks": 1,
+            "chain_id": "ggdag:f00ad0afc97212531439e9bca0dee0c2fb0b43f929c9a1cba37196277abedb99",
+            "checkpoint": 1,
+            "genesis_hash": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+            "manifest_hash": "d471b1f921f671a5ddfe8a6a2f09d21c74380301b3f8719cb9015aacfec6194d",
+            "network_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "order_root": "f5a2e97d5b992939d37927d69413483268d83065dd38542c0a7512bb9f7a1b8a",
+            "previous": "4c87c8c93ae25ccb126a58e419ed1e4536898a1347dbfa69a5faafb9da3bad68",
+            "schema": "gg.dag.commitment.v1",
+            "time_ns": "1700000009000000000",
+            "transactions": 5007
+          },
+          "anchor": "5c3c83ac310b55ff5d9fc167a92955565298a3c091b690b2f3665ecad5f98806",
+          "authors": [
+            {
+              "head": "3d4587b2dc365258ff1c32c891aff8499caec3ff889828cd0f0fd24a3a50de27",
+              "key": "0d3dc7fe102dc1d0d643dbe4730699e45b9841fcd6316237c422e04aa88383d2",
+              "nonce": "5002",
+              "sequence": "3"
+            },
+            {
+              "head": "e119338882e98d251c3e0147a30bc9842da48678931b10b38db71ecbacc6e34b",
+              "key": "94f3e72f0a563b76bbe4013a26191db9c018d78e8d482079768dcb095379d92d",
+              "nonce": "2",
+              "sequence": "1"
+            },
+            {
+              "head": "e4cc97a83477612c2d0f7ade6b6b88dbf2457f8db18b663518a3eaa97f23718b",
+              "key": "a4bfc99d0f73b4e450c35ffa59ccdd0b0c22733197b61b4cdfb1b07cd3d3114c",
+              "nonce": "3",
+              "sequence": "1"
+            },
+            {
+              "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+              "key": "70432071235fe0ae468fe9e5852751e1663fa84a01be8e900436469321e51c0e",
+              "nonce": "0",
+              "sequence": "0"
+            },
+            {
+              "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+              "key": "b4a19066384569afed9bf2ea7f09970de6034161f7f0af1009092d745164fda4",
+              "nonce": "0",
+              "sequence": "0"
+            },
+            {
+              "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+              "key": "c0a2d323dde5aa02abae2ad6028ccdcbb5edc6815d9e0561b9ae8f8238bfc16a",
+              "nonce": "0",
+              "sequence": "0"
+            }
+          ],
+          "blocks": "5",
+          "closed_root": "c3af93e26ebfe5e8a5e290b6ae829ddbfd1a36028bb54861b03815192716b5be",
+          "epoch": "4",
+          "last_cut": "489f7a8a95d1ba4a241ff2793379374d443efc700fd9316ccb90f2ebac3002ca",
+          "last_rank": "5",
+          "raw_bytes": "2670661",
+          "schema": "gg.dag.segmented-commitment.v1",
+          "source_hash": "1f5f29281920404890bc10ba19ca72e3fe6eb9e7b64c355e249dfa103fb572d6",
+          "transactions": "5007"
+        },
+        "decimals": 6,
+        "genesis_hash": "5c3c83ac310b55ff5d9fc167a92955565298a3c091b690b2f3665ecad5f98806",
+        "height": 8,
+        "schema": "gg.native.state.v3",
+        "state_root": "d91433587f09323045b32e825da2779eb9915c21781b482f90add1eb0986945b",
+        "supply_atomic": "1000000000000",
+        "symbol": "GG-NET-TEST"
+      }
+    },
+    "3": {
+      "dag_segmented_closed_page": {
+        "closed_path": [
+          {
+            "hash": "0b03d3a98a82cbc496bdcc7d30ace754877dc0812f00b2dbffbaa67ce094d4e2",
+            "side": "right"
+          },
+          {
+            "hash": "52db042aa22a6ca34f435e2306156014c558abaf152c562ad5ab8708d4f83a4f",
+            "side": "left"
+          }
+        ],
+        "commitment": {
+          "active": {
+            "account_root": "ce223ece5a8ee9d25a820fedcdb6b45e5a57f5d932d923bef7a2bec8e454f174",
+            "blocks": 1,
+            "chain_id": "ggdag:f00ad0afc97212531439e9bca0dee0c2fb0b43f929c9a1cba37196277abedb99",
+            "checkpoint": 1,
+            "genesis_hash": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+            "manifest_hash": "d471b1f921f671a5ddfe8a6a2f09d21c74380301b3f8719cb9015aacfec6194d",
+            "network_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "order_root": "f5a2e97d5b992939d37927d69413483268d83065dd38542c0a7512bb9f7a1b8a",
+            "previous": "4c87c8c93ae25ccb126a58e419ed1e4536898a1347dbfa69a5faafb9da3bad68",
+            "schema": "gg.dag.commitment.v1",
+            "time_ns": "1700000009000000000",
+            "transactions": 5007
+          },
+          "anchor": "5c3c83ac310b55ff5d9fc167a92955565298a3c091b690b2f3665ecad5f98806",
+          "authors": [
+            {
+              "head": "3d4587b2dc365258ff1c32c891aff8499caec3ff889828cd0f0fd24a3a50de27",
+              "key": "0d3dc7fe102dc1d0d643dbe4730699e45b9841fcd6316237c422e04aa88383d2",
+              "nonce": "5002",
+              "sequence": "3"
+            },
+            {
+              "head": "e119338882e98d251c3e0147a30bc9842da48678931b10b38db71ecbacc6e34b",
+              "key": "94f3e72f0a563b76bbe4013a26191db9c018d78e8d482079768dcb095379d92d",
+              "nonce": "2",
+              "sequence": "1"
+            },
+            {
+              "head": "e4cc97a83477612c2d0f7ade6b6b88dbf2457f8db18b663518a3eaa97f23718b",
+              "key": "a4bfc99d0f73b4e450c35ffa59ccdd0b0c22733197b61b4cdfb1b07cd3d3114c",
+              "nonce": "3",
+              "sequence": "1"
+            },
+            {
+              "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+              "key": "70432071235fe0ae468fe9e5852751e1663fa84a01be8e900436469321e51c0e",
+              "nonce": "0",
+              "sequence": "0"
+            },
+            {
+              "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+              "key": "b4a19066384569afed9bf2ea7f09970de6034161f7f0af1009092d745164fda4",
+              "nonce": "0",
+              "sequence": "0"
+            },
+            {
+              "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+              "key": "c0a2d323dde5aa02abae2ad6028ccdcbb5edc6815d9e0561b9ae8f8238bfc16a",
+              "nonce": "0",
+              "sequence": "0"
+            }
+          ],
+          "blocks": "5",
+          "closed_root": "c3af93e26ebfe5e8a5e290b6ae829ddbfd1a36028bb54861b03815192716b5be",
+          "epoch": "4",
+          "last_cut": "489f7a8a95d1ba4a241ff2793379374d443efc700fd9316ccb90f2ebac3002ca",
+          "last_rank": "5",
+          "raw_bytes": "2670661",
+          "schema": "gg.dag.segmented-commitment.v1",
+          "source_hash": "1f5f29281920404890bc10ba19ca72e3fe6eb9e7b64c355e249dfa103fb572d6",
+          "transactions": "5007"
+        },
+        "complete": true,
+        "cut": {
+          "accounts": [
+            {
+              "address": "0d3dc7fe102dc1d0d643dbe4730699e45b9841fcd6316237c422e04aa88383d2",
+              "balance_atomic": "999994999",
+              "nonce": 5001
+            },
+            {
+              "address": "70432071235fe0ae468fe9e5852751e1663fa84a01be8e900436469321e51c0e",
+              "balance_atomic": "1000000003",
+              "nonce": 0
+            },
+            {
+              "address": "94f3e72f0a563b76bbe4013a26191db9c018d78e8d482079768dcb095379d92d",
+              "balance_atomic": "1000004999",
+              "nonce": 2
+            },
+            {
+              "address": "a4bfc99d0f73b4e450c35ffa59ccdd0b0c22733197b61b4cdfb1b07cd3d3114c",
+              "balance_atomic": "999999999",
+              "nonce": 3
+            },
+            {
+              "address": "b4a19066384569afed9bf2ea7f09970de6034161f7f0af1009092d745164fda4",
+              "balance_atomic": "1000000000",
+              "nonce": 0
+            },
+            {
+              "address": "c0a2d323dde5aa02abae2ad6028ccdcbb5edc6815d9e0561b9ae8f8238bfc16a",
+              "balance_atomic": "1000000000",
+              "nonce": 0
+            }
+          ],
+          "before": {
+            "active": {
+              "account_root": "0d33f3f93b80a9c70b885a104043df9ffcf3c074addab70184c81587d690f849",
+              "blocks": 1,
+              "chain_id": "ggdag:f00ad0afc97212531439e9bca0dee0c2fb0b43f929c9a1cba37196277abedb99",
+              "checkpoint": 1,
+              "genesis_hash": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+              "manifest_hash": "b34b01da693c59ac2c07f9e883a7cf14d7ddb01c9cb6c85d6fc6836fc051a31c",
+              "network_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "order_root": "bb968b9b9fb010d316532f035ad36a07cdd2cd2494af433f5dc02823072db4bb",
+              "previous": "cbc9427456ded958c2177ad7a16d4efa09a6b2e9c0da468f96b98a3ad68f0a3c",
+              "schema": "gg.dag.commitment.v1",
+              "time_ns": "1700000007000000000",
+              "transactions": 5006
+            },
+            "anchor": "5c3c83ac310b55ff5d9fc167a92955565298a3c091b690b2f3665ecad5f98806",
+            "authors": [
+              {
+                "head": "e4dc198566bfd5eff604c61fb60439eb519c70f3ca2759200dd60d3c7c772506",
+                "key": "0d3dc7fe102dc1d0d643dbe4730699e45b9841fcd6316237c422e04aa88383d2",
+                "nonce": "5001",
+                "sequence": "2"
+              },
+              {
+                "head": "e119338882e98d251c3e0147a30bc9842da48678931b10b38db71ecbacc6e34b",
+                "key": "94f3e72f0a563b76bbe4013a26191db9c018d78e8d482079768dcb095379d92d",
+                "nonce": "2",
+                "sequence": "1"
+              },
+              {
+                "head": "e4cc97a83477612c2d0f7ade6b6b88dbf2457f8db18b663518a3eaa97f23718b",
+                "key": "a4bfc99d0f73b4e450c35ffa59ccdd0b0c22733197b61b4cdfb1b07cd3d3114c",
+                "nonce": "3",
+                "sequence": "1"
+              },
+              {
+                "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+                "key": "70432071235fe0ae468fe9e5852751e1663fa84a01be8e900436469321e51c0e",
+                "nonce": "0",
+                "sequence": "0"
+              },
+              {
+                "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+                "key": "b4a19066384569afed9bf2ea7f09970de6034161f7f0af1009092d745164fda4",
+                "nonce": "0",
+                "sequence": "0"
+              },
+              {
+                "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+                "key": "c0a2d323dde5aa02abae2ad6028ccdcbb5edc6815d9e0561b9ae8f8238bfc16a",
+                "nonce": "0",
+                "sequence": "0"
+              }
+            ],
+            "blocks": "4",
+            "closed_root": "52db042aa22a6ca34f435e2306156014c558abaf152c562ad5ab8708d4f83a4f",
+            "epoch": "3",
+            "last_cut": "861af8b4ede842ea0f05099a510b467824ad67f0b8d9d442a492c66815696de1",
+            "last_rank": "4",
+            "raw_bytes": "2669517",
+            "schema": "gg.dag.segmented-commitment.v1",
+            "source_hash": "1f5f29281920404890bc10ba19ca72e3fe6eb9e7b64c355e249dfa103fb572d6",
+            "transactions": "5006"
+          },
+          "history_root": "fedd7adb15ba3a0fd1aa66f59063a68a800bc38e7f5f6a0a1e64efd18dbc49f8",
+          "schema": "gg.dag.history-cut.v1"
+        },
+        "genesis_hash": "5c3c83ac310b55ff5d9fc167a92955565298a3c091b690b2f3665ecad5f98806",
+        "height": 8,
+        "items": [
+          {
+            "leaf": {
+              "creator_key": "a4bfc99d0f73b4e450c35ffa59ccdd0b0c22733197b61b4cdfb1b07cd3d3114c",
+              "global_index": "4",
+              "hash": "e4cc97a83477612c2d0f7ade6b6b88dbf2457f8db18b663518a3eaa97f23718b",
+              "index": 1,
+              "producer_index": 2,
+              "sequence": "1",
+              "transactions": 3
+            },
+            "path": []
+          }
+        ],
+        "schema": "gg.dag.segmented-closed-page.v1",
+        "start": 0,
+        "state_root": "d91433587f09323045b32e825da2779eb9915c21781b482f90add1eb0986945b"
+      },
+      "genesis": {
+        "accounts": [
+          "b6a659fd183e3d7df79a7fd194dcd7605596e3db14f0129c120ee039c402e46b",
+          "ebc3c1f26a164be94dcfd1a260a73a35234e6b8369cda921c1b81542359f3987",
+          "83cb5841b1d2bf03cc70b54c93e6fbf990776ac37b6c9ef38b365b3c177ff153",
+          "b92d3c6e562c3a710264cd45ba654fca50a01c5191a94f4ded85250e79bf8024"
+        ],
+        "chain_id": "ggnet:aaaaaaaaaaaaaaaaaaaaaaaa",
+        "dag_segmented": {
+          "accounts": [
+            "0d3dc7fe102dc1d0d643dbe4730699e45b9841fcd6316237c422e04aa88383d2",
+            "70432071235fe0ae468fe9e5852751e1663fa84a01be8e900436469321e51c0e",
+            "94f3e72f0a563b76bbe4013a26191db9c018d78e8d482079768dcb095379d92d",
+            "a4bfc99d0f73b4e450c35ffa59ccdd0b0c22733197b61b4cdfb1b07cd3d3114c",
+            "b4a19066384569afed9bf2ea7f09970de6034161f7f0af1009092d745164fda4",
+            "c0a2d323dde5aa02abae2ad6028ccdcbb5edc6815d9e0561b9ae8f8238bfc16a"
+          ],
+          "allowed_producers": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "genesis": {
+            "account_count": 6,
+            "allocation_atomic": "1000000000",
+            "chain_id": "ggdag:f00ad0afc97212531439e9bca0dee0c2fb0b43f929c9a1cba37196277abedb99",
+            "execution_policy": {
+              "block_max_parents": 7,
+              "block_max_rank": 4096,
+              "block_max_sequence": 4096,
+              "block_max_transactions": 50000,
+              "block_max_wire_bytes": 33554432,
+              "checkpoint_max_blocks": 128,
+              "checkpoint_max_encoded_bytes": 50331648,
+              "checkpoint_max_raw_bytes": 33554432,
+              "history_max_blocks": 4095,
+              "history_max_raw_bytes": 536870912,
+              "history_verification": "FULL_SIGNED_GENESIS_REPLAY",
+              "profile": "GG-DAG-FINITE-v1",
+              "schema": "gg.dag.execution-policy.v1",
+              "transaction_model": "PRODUCER_OWNED_NONFINANCIAL"
+            },
+            "history_policy": {
+              "archive_mode": "ORIGINAL_SIGNED_SEGMENTS_REQUIRED",
+              "boundary": "SDK_CERTIFIED_CUT",
+              "counter_limit": "9223372036854775807",
+              "counter_scope": "GLOBAL_WITH_ACTIVE_SEGMENT_OFFSETS",
+              "profile": "GG-DAG-SEGMENTED-v1",
+              "schema": "gg.dag.history-policy.v1",
+              "verification": "FULL_SIGNED_ARCHIVE_CHAIN_REPLAY"
+            },
+            "precheck_root": "60d4b2086c73f2b626803c22c9f5e49292b67db7111b785cbd70cbd12b6b6baa",
+            "producers": [
+              "0d3dc7fe102dc1d0d643dbe4730699e45b9841fcd6316237c422e04aa88383d2",
+              "94f3e72f0a563b76bbe4013a26191db9c018d78e8d482079768dcb095379d92d",
+              "a4bfc99d0f73b4e450c35ffa59ccdd0b0c22733197b61b4cdfb1b07cd3d3114c",
+              "70432071235fe0ae468fe9e5852751e1663fa84a01be8e900436469321e51c0e",
+              "b4a19066384569afed9bf2ea7f09970de6034161f7f0af1009092d745164fda4",
+              "c0a2d323dde5aa02abae2ad6028ccdcbb5edc6815d9e0561b9ae8f8238bfc16a"
+            ],
+            "schema": "gg.parallel-dag.genesis.v4",
+            "test_mode": "PRODUCER_OWNED_NONFINANCIAL"
+          },
+          "genesis_hash": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+          "network_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "schema": "gg.dag.consensus.source.v2",
+          "signature_profile": "GG-Ed25519-PrimeOrder-v1",
+          "started_at_ns": "1700000000000000000"
+        },
+        "decimals": 6,
+        "genesis_time_unix": 1700000000,
+        "schema": "gg.native.genesis.v4",
+        "supply_atomic": "1000000000000",
+        "symbol": "GG-NET-TEST",
+        "validators": [
+          "4d0f79266245558cf760b730b8d818b147b484004a0da9b3c2da9ae7c53288dd",
+          "8dad1109d4dcae0b7116fafaa05866beeff61e11615df21787a71255a25f182b",
+          "9ac1a88434c27bcff952e1c10270bab8c82387cfe8c3e10c573a972b2e8eb2eb",
+          "0ef8610d0ee0af27e6bd4b6712350d3f76fc6544234990af38a50b5948be14d9"
+        ]
+      },
+      "genesis_hash": "5c3c83ac310b55ff5d9fc167a92955565298a3c091b690b2f3665ecad5f98806",
+      "schema": "gg.consensus.proof.v1",
+      "signed_header": {
+        "commit": {
+          "block_id": {
+            "hash": "DF99811905304C8C18475948EB16E0724FBC2FBF47121F2E2855738AEED9CFC7",
+            "parts": {
+              "hash": "0707070707070707070707070707070707070707070707070707070707070707",
+              "total": 1
+            }
+          },
+          "height": "9",
+          "round": 0,
+          "signatures": [
+            {
+              "block_id_flag": 2,
+              "signature": "ZSKlQeZ1qQM8W66iFQtVbJ1RDr4KLHw95Zwa9JfCm15cTaMcotUlQBt7kJy1/VC72NS3fvmDR/BcPBgvHcQbDQ==",
+              "timestamp": "2023-11-14T22:13:29Z",
+              "validator_address": "17BC0A602CC76F51C78954B241229904F51C2E2E"
+            },
+            {
+              "block_id_flag": 2,
+              "signature": "VO5RWtwPbq+mshanNVcAEn2gOz1WIX9OlNqI7iQKcKe+vgDwx+GfPCUxWI/f9taV7SCrOGaK34f9Qf0qj2c7Bw==",
+              "timestamp": "2023-11-14T22:13:29Z",
+              "validator_address": "7004F633DFADAA16B7CFB37D35E245C982B27A89"
+            },
+            {
+              "block_id_flag": 2,
+              "signature": "KJSnMHmTlsoSeAXF1YVnwK0npK9I97xNFPv+xPP6uDWbefl6DEN4rOy15cGLX/ivvLDlNb45ye9bVYcehSajAQ==",
+              "timestamp": "2023-11-14T22:13:29Z",
+              "validator_address": "87BE0043179B46F6A822E0CE706CE58CFE5DC983"
+            },
+            {
+              "block_id_flag": 2,
+              "signature": "Vq36S2FOGvx3d5wNXAxRpfI7yUppebH9Uoh02p4sBvQAcZ6xN1+SIP2TM1p98satfe2CcPcMEFPF5YOlnCUwAQ==",
+              "timestamp": "2023-11-14T22:13:29Z",
+              "validator_address": "A976127F9B6EDDDF03413C79C51B582A5AA43D4D"
+            }
+          ]
+        },
+        "header": {
+          "app_hash": "D91433587F09323045B32E825DA2779EB9915C21781B482F90ADD1EB0986945B",
+          "chain_id": "ggnet:aaaaaaaaaaaaaaaaaaaaaaaa",
+          "consensus_hash": "0505050505050505050505050505050505050505050505050505050505050505",
+          "data_hash": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+          "evidence_hash": "",
+          "height": "9",
+          "last_block_id": {
+            "hash": "",
+            "parts": {
+              "hash": "",
+              "total": 0
+            }
+          },
+          "last_commit_hash": "",
+          "last_results_hash": "",
+          "next_validators_hash": "DB2C5146E6D9AAF11E8C89C9A95F4673C0DCE2FF30C2C5571512F911BE41F243",
+          "proposer_address": "17BC0A602CC76F51C78954B241229904F51C2E2E",
+          "time": "2023-11-14T22:13:29Z",
+          "validators_hash": "DB2C5146E6D9AAF11E8C89C9A95F4673C0DCE2FF30C2C5571512F911BE41F243",
+          "version": {
+            "app": "1",
+            "block": "11"
+          }
+        }
+      },
+      "state": {
+        "account_root": "f30c964c5a1c9a49d3f6775c2e60ee49916ac6ebe1ef45782e814e779f84881e",
+        "accounts": [
+          {
+            "address": "83cb5841b1d2bf03cc70b54c93e6fbf990776ac37b6c9ef38b365b3c177ff153",
+            "balance_atomic": "250000000000",
+            "nonce": 0
+          },
+          {
+            "address": "b6a659fd183e3d7df79a7fd194dcd7605596e3db14f0129c120ee039c402e46b",
+            "balance_atomic": "250000000000",
+            "nonce": 0
+          },
+          {
+            "address": "b92d3c6e562c3a710264cd45ba654fca50a01c5191a94f4ded85250e79bf8024",
+            "balance_atomic": "250000000000",
+            "nonce": 0
+          },
+          {
+            "address": "ebc3c1f26a164be94dcfd1a260a73a35234e6b8369cda921c1b81542359f3987",
+            "balance_atomic": "250000000000",
+            "nonce": 0
+          }
+        ],
+        "chain_id": "ggnet:aaaaaaaaaaaaaaaaaaaaaaaa",
+        "dag_segmented": {
+          "active": {
+            "account_root": "ce223ece5a8ee9d25a820fedcdb6b45e5a57f5d932d923bef7a2bec8e454f174",
+            "blocks": 1,
+            "chain_id": "ggdag:f00ad0afc97212531439e9bca0dee0c2fb0b43f929c9a1cba37196277abedb99",
+            "checkpoint": 1,
+            "genesis_hash": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+            "manifest_hash": "d471b1f921f671a5ddfe8a6a2f09d21c74380301b3f8719cb9015aacfec6194d",
+            "network_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "order_root": "f5a2e97d5b992939d37927d69413483268d83065dd38542c0a7512bb9f7a1b8a",
+            "previous": "4c87c8c93ae25ccb126a58e419ed1e4536898a1347dbfa69a5faafb9da3bad68",
+            "schema": "gg.dag.commitment.v1",
+            "time_ns": "1700000009000000000",
+            "transactions": 5007
+          },
+          "anchor": "5c3c83ac310b55ff5d9fc167a92955565298a3c091b690b2f3665ecad5f98806",
+          "authors": [
+            {
+              "head": "3d4587b2dc365258ff1c32c891aff8499caec3ff889828cd0f0fd24a3a50de27",
+              "key": "0d3dc7fe102dc1d0d643dbe4730699e45b9841fcd6316237c422e04aa88383d2",
+              "nonce": "5002",
+              "sequence": "3"
+            },
+            {
+              "head": "e119338882e98d251c3e0147a30bc9842da48678931b10b38db71ecbacc6e34b",
+              "key": "94f3e72f0a563b76bbe4013a26191db9c018d78e8d482079768dcb095379d92d",
+              "nonce": "2",
+              "sequence": "1"
+            },
+            {
+              "head": "e4cc97a83477612c2d0f7ade6b6b88dbf2457f8db18b663518a3eaa97f23718b",
+              "key": "a4bfc99d0f73b4e450c35ffa59ccdd0b0c22733197b61b4cdfb1b07cd3d3114c",
+              "nonce": "3",
+              "sequence": "1"
+            },
+            {
+              "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+              "key": "70432071235fe0ae468fe9e5852751e1663fa84a01be8e900436469321e51c0e",
+              "nonce": "0",
+              "sequence": "0"
+            },
+            {
+              "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+              "key": "b4a19066384569afed9bf2ea7f09970de6034161f7f0af1009092d745164fda4",
+              "nonce": "0",
+              "sequence": "0"
+            },
+            {
+              "head": "1d230cd8c9a419616662190ad6212f8fecd52cc291c1468271b819fce14ad077",
+              "key": "c0a2d323dde5aa02abae2ad6028ccdcbb5edc6815d9e0561b9ae8f8238bfc16a",
+              "nonce": "0",
+              "sequence": "0"
+            }
+          ],
+          "blocks": "5",
+          "closed_root": "c3af93e26ebfe5e8a5e290b6ae829ddbfd1a36028bb54861b03815192716b5be",
+          "epoch": "4",
+          "last_cut": "489f7a8a95d1ba4a241ff2793379374d443efc700fd9316ccb90f2ebac3002ca",
+          "last_rank": "5",
+          "raw_bytes": "2670661",
+          "schema": "gg.dag.segmented-commitment.v1",
+          "source_hash": "1f5f29281920404890bc10ba19ca72e3fe6eb9e7b64c355e249dfa103fb572d6",
+          "transactions": "5007"
+        },
+        "decimals": 6,
+        "genesis_hash": "5c3c83ac310b55ff5d9fc167a92955565298a3c091b690b2f3665ecad5f98806",
+        "height": 8,
+        "schema": "gg.native.state.v3",
+        "state_root": "d91433587f09323045b32e825da2779eb9915c21781b482f90add1eb0986945b",
+        "supply_atomic": "1000000000000",
+        "symbol": "GG-NET-TEST"
+      }
+    }
+  },
+  "schema": "gg.public.segmented-closed-test-vectors.v1",
+  "scope": "PUBLIC_SDK_APPLICATION_FIXTURES_VALID_TEST_QUORUM_SIGNATURES_NOT_PHYSICAL_NETWORK"
+}

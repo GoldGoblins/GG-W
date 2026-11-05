@@ -20,6 +20,28 @@ def snapshot():
 
 
 class ForegroundDiagnosticsTests(unittest.TestCase):
+    def test_producer_replica_is_not_presented_as_consensus_validator_or_miner(self):
+        body=snapshot();body['lan']['participation']={'producer':True,'replica':True,'consensus_validator':False,
+            'light_client':False,'mining':False,'financial_execution':False,'verification_scope':'ALL_ADMITTED_DAG_TEST_TX','secret_key':'MUST_NOT_EXPORT'}
+        result=cli.foreground_summary('lan.start',body)['participation']
+        self.assertTrue(result['producer']);self.assertTrue(result['replica'])
+        self.assertFalse(result['consensus_validator']);self.assertFalse(result['mining'])
+        self.assertNotIn('MUST_NOT_EXPORT',json.dumps(result))
+
+    def test_peer_catchup_is_separate_from_transport_and_filters_private_or_false_fields(self):
+        body=snapshot();body['lan']['peer_status']=[{'label':'Linux','state':'CONNECTED','sync':{
+            'state':'CATCHING_UP','remote_records':20,'received_records':12,'pending_records':8,
+            'observed_at':100,'private_key':'MUST_NOT_EXPORT'}}]
+        first=cli.foreground_summary('lan.start',body)
+        self.assertEqual(first['peer_sync'][0]['pending_records'],8)
+        self.assertEqual(first['peer_sync'][0]['state'],'CATCHING_UP')
+        self.assertNotIn('MUST_NOT_EXPORT',json.dumps(first))
+        body['lan']['peer_status'][0]['sync']['observed_at']=200
+        self.assertEqual(first,cli.foreground_summary('lan.start',body))
+        body['lan']['peer_status'][0]['sync']['received_records']=True
+        safe=cli.foreground_summary('lan.start',body)['peer_sync'][0]
+        self.assertEqual(safe['state'],'UNOBSERVED');self.assertIsNone(safe['received_records'])
+
     def test_own_production_is_reported_independently_of_missing_all_peer_ack(self):
         body=snapshot();production={'basis':'LOCAL_OWN_PRODUCTION_NOT_NETWORK_CAPACITY','state':'COMPLETE',
             'blocks':12,'transactions':384,'elapsed_ms':4000,'bps':3,'tps':96,'private_key':'MUST_NOT_EXPORT'}

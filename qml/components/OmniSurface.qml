@@ -21,6 +21,7 @@ Item {
     property real lastDagObservationMonotonic:-1
     readonly property var networkState: mergeTelemetry(state,telemetryPatch)
     property string pendingTelemetry: ""
+    property string observationSelectionError: ""
     property var requestedNetworkStops: ({})
     property var networkStopErrors: ({})
     readonly property var telemetryWindow: root.Window.window
@@ -48,6 +49,7 @@ Item {
         try {
             var next=JSON.parse(raw)
             if (next && !Array.isArray(next) && next.assets) {
+                next=protectObservationChoice(next)
                 reconcileTelemetrySession(next)
                 next=mergeTelemetry(next,telemetryPatch)
                 next=preserveNewerObservation(next,"testnet")
@@ -69,9 +71,25 @@ Item {
         }
     }
     function observationTime(body){return Number((body||{}).observation_at||((body||{}).block_graph||{}).observed_at||0)}
+    function olderSourceChoice(incoming,current) {
+        return current&&current.selection==="EXPLICIT"&&(!incoming||incoming.reader_handle===current.reader_handle&&Number(incoming.selection_revision||0)<Number(current.selection_revision||0))
+    }
+    function sameObservationSource(left,right) {
+        var a=(left||{}).observation||({}),b=(right||{}).observation||({})
+        if(a.source_handle||b.source_handle)return a.source_handle===b.source_handle&&a.reader_handle===b.reader_handle
+        return a.publisher_started_at===b.publisher_started_at
+    }
+    function protectObservationChoice(next) {
+        var current=networkState
+        if(olderSourceChoice(next.local_node_sources,current.local_node_sources)) {
+            next=Object.assign({},next,{local_node_sources:current.local_node_sources,parallel_dag:current.parallel_dag,lan_dag:current.parallel_dag})
+        }
+        return next
+    }
     function preserveNewerObservation(next,key){
         var old=networkState[key], incoming=next[key]
         if(!old || !incoming || incoming.state==="STOPPED")return next
+        if(key==="parallel_dag"&&((old.observation||{}).read_only||(incoming.observation||{}).read_only)&&!sameObservationSource(old,incoming))return next
         var identity=key==="testnet"?"session":"chain_id"
         if(!old[identity] || old[identity]!==incoming[identity] || observationTime(old)<=observationTime(incoming))return next
         var body=Object.assign({},incoming)
@@ -84,16 +102,22 @@ Item {
     }
     function mergeTelemetry(body,patch) {
         var key=patch.network_page==="TESTNET"?"testnet":patch.network_page==="DAG"?"parallel_dag":""
-        if(!key || !patch[key])return body
+        if(!key || !Object.prototype.hasOwnProperty.call(patch,key))return body
+        if(olderSourceChoice(patch.local_node_sources,body.local_node_sources))return body
+        var catalog=patch.local_node_sources
+        var base=catalog?Object.assign({},body,{local_node_sources:catalog}):body
+        if(key==="parallel_dag"&&catalog&&catalog.view_available!==false&&(catalog.state==="CHOICE_REQUIRED"||catalog.state==="UNAVAILABLE"))return Object.assign({},base,{parallel_dag:null})
+        if(!patch[key])return base
         var old=body[key]||({}), fresh=patch[key]
         if(key==="parallel_dag") {
             var oldCli=(old.observation||{}).read_only===true
             var freshCli=(fresh.observation||{}).read_only===true&&(fresh.observation||{}).source==="LOCAL_CLI"
-            if(freshCli&&oldCli&&fresh.observation.publisher_started_at===old.observation.publisher_started_at&&typeof fresh.observation.publication_sequence==="number"&&fresh.observation.publication_sequence<Number(old.observation.publication_sequence||0))return body
+            if(freshCli&&catalog&&catalog.selected_handle!==fresh.observation.source_handle)return body
+            if(freshCli&&oldCli&&sameObservationSource(fresh,old)&&typeof fresh.observation.publication_sequence==="number"&&fresh.observation.publication_sequence<Number(old.observation.publication_sequence||0))return base
             // Observing an already running CLI is a read-only source change,
             // never permission to start/adopt a node or replace an owned peer.
             if(freshCli&&(oldCli||(!old.state||old.state==="STOPPED")&&!(old.lan_setup||{}).active)||oldCli&&!freshCli&&fresh.state==="STOPPED") {
-                var observed=Object.assign({},body);observed[key]=fresh;return observed
+                var observed=Object.assign({},base);observed[key]=fresh;return observed
             }
         }
         var identity=key==="testnet"?"session":"chain_id"
@@ -102,7 +126,7 @@ Item {
         // current lightweight header. It must not move the live graph back.
         var oldTime=observationTime(old), freshTime=observationTime(fresh)
         if(fresh.state!=="STOPPED" && oldTime>freshTime || old.state==="STOPPED" && fresh.state!=="STOPPED")return body
-        var result=Object.assign({},body)
+        var result=Object.assign({},base)
         result[key]=Object.assign({},old,fresh)
         return result
     }
@@ -141,6 +165,17 @@ Item {
             surfaceHost.setNetworkTelemetryView(selected)
     }
     function pull() { if (visible && surfaceHost && surfaceHost.omniStatus) apply(surfaceHost.omniStatus()) }
+    function selectObservationSource(handle) {
+        if(!surfaceHost||!surfaceHost.selectLocalNodeObservationSource)return
+        try {
+            var selected=JSON.parse(surfaceHost.selectLocalNodeObservationSource(handle))
+            if(selected.error){observationSelectionError="Källan är inte tillgänglig";return}
+            observationSelectionError="";pendingTelemetry=""
+            telemetryPatch={network_page:"DAG",local_node_sources:selected.local_node_sources,parallel_dag:selected.parallel_dag}
+            state=Object.assign({},state,selected)
+            pull()
+        } catch(e){observationSelectionError="Källan kunde inte väljas"}
+    }
     function run(name,args) {
         if((name==="testnet_stop" || name==="dag_stop") && surfaceHost && surfaceHost.requestNetworkStop) {
             var target=name==="testnet_stop"?"TESTNET":"DAG"
@@ -211,6 +246,7 @@ Item {
             stopRequested:!!root.requestedNetworkStops.DAG;stopError:String(root.networkStopErrors.DAG||"")
             onActionRequested:function(name,args){root.run(name,args)}
             onRefreshRequested:root.pull()
+            onSourceSelectionRequested:function(handle){root.selectObservationSource(handle)}
             onPageRequested:function(page){root.page=page}
         }
     }

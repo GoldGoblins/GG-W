@@ -10,6 +10,7 @@ from ctypes import wintypes
 import os
 import subprocess
 import threading
+from backend import gg_process_termination as termination
 
 MEMORY_BYTES = 512 * 1024 * 1024
 CPU_SECONDS = 300
@@ -70,11 +71,14 @@ def _kernel():
 def _stop_owned(process):
     """Only use the Popen object's owned process handle, never a searched PID."""
     try:
-        if process.poll() is None:
+        if not termination.process_terminal(process):
             process.kill()
-        process.wait(timeout=3)
+        termination.wait_process_terminal(process,3)
     except (OSError, subprocess.TimeoutExpired):
         pass
+    try:terminal=termination.process_terminal(process)
+    except OSError:terminal=False
+    if not terminal:raise RuntimeError('GG_TESTNET_STOP_PENDING')
 
 
 class ProcessLease:
@@ -123,6 +127,17 @@ def contain(process):
     Non-Windows callers receive truthful unavailable facts and retain their
     normal Popen termination responsibility.
     """
+    return _contain(process,persistent=False)
+
+
+def _persistent_child_lease(process,*,resources=None):
+    """Internal leaf of an owned native group; its CPU rate is group-scoped."""
+    return _contain(process,persistent=True,resources=resources)
+
+
+def _contain(process,*,persistent,resources=None):
+    from backend.gg_native_resources import resolve
+    selected=resolve(resources)
     if not isinstance(process, subprocess.Popen) or type(process.pid) is not int or process.pid <= 0 or process.pid == os.getpid():
         raise ValueError("GG_TESTNET_OWNED_CHILD_REQUIRED")
     if process.poll() is not None:
@@ -148,10 +163,12 @@ def contain(process):
         if not job:
             raise RuntimeError("CREATE")
         limits = _ExtendedLimits()
-        limits.basic.flags = _FLAGS
-        limits.basic.process_time = CPU_SECONDS * 10_000_000
+        expected_flags = _FLAGS & ~_PROCESS_TIME if persistent else _FLAGS
+        expected_time = 0 if persistent else CPU_SECONDS * 10_000_000
+        limits.basic.flags = expected_flags
+        limits.basic.process_time = expected_time
         limits.basic.active_processes = ACTIVE_PROCESS_LIMIT
-        limits.process_memory = MEMORY_BYTES
+        limits.process_memory = selected.process_memory_bytes
         if not kernel.SetInformationJobObject(job, _EXTENDED_LIMIT_INFORMATION,
                                                ctypes.byref(limits), ctypes.sizeof(limits)):
             raise RuntimeError("SET")
@@ -164,14 +181,16 @@ def contain(process):
         member = wintypes.BOOL()
         if not kernel.IsProcessInJob(child, job, ctypes.byref(member)) or not member.value:
             raise RuntimeError("MEMBERSHIP")
-        if actual.basic.flags & _FLAGS != _FLAGS or actual.process_memory != MEMORY_BYTES or \
-                actual.basic.active_processes != ACTIVE_PROCESS_LIMIT or actual.basic.process_time != CPU_SECONDS * 10_000_000:
+        if actual.basic.flags & expected_flags != expected_flags or actual.process_memory != selected.process_memory_bytes or \
+                actual.basic.active_processes != ACTIVE_PROCESS_LIMIT or actual.basic.process_time != expected_time or \
+                persistent and actual.basic.flags & _PROCESS_TIME:
             raise RuntimeError("LIMIT_MISMATCH")
         lease = ProcessLease(kernel=kernel, job=job, facts={"provider": "WINDOWS_JOB_OBJECT",
             "verified": True, "memory_bytes": actual.process_memory,
-            "cpu_seconds": actual.basic.process_time // 10_000_000,
+            "cpu_seconds": None if persistent else actual.basic.process_time // 10_000_000,
             "active_process_limit": actual.basic.active_processes,
-            "kill_on_close": bool(actual.basic.flags & _KILL_ON_CLOSE)})
+            "kill_on_close": bool(actual.basic.flags & _KILL_ON_CLOSE),
+            "resource_profile":selected.wire()})
         job = None
         return lease
     except Exception:

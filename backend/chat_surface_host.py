@@ -2432,6 +2432,15 @@ class ChatSurfaceHost(QObject):
     def omniStatus(self) -> str:
         return self._omni_runtime().snapshot()
 
+    @Slot(str, result=str)
+    def selectLocalNodeObservationSource(self, handle: str) -> str:
+        """Choose only a validated public CLI observation, never a signer."""
+        from backend.omni_service import select_observation_source
+        try:
+            return json.dumps(select_observation_source(handle), separators=(',', ':'), allow_nan=False)
+        except ValueError:
+            return json.dumps({'error': 'GG_NODE_OBSERVATION_SOURCE_UNAVAILABLE'})
+
     @Slot(str)
     def setNetworkTelemetryView(self, page: str) -> None:
         runtime = getattr(self, '_network_telemetry', None)

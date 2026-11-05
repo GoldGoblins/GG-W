@@ -218,7 +218,9 @@ class DagStressProtocolTests(unittest.TestCase):
         first=ParallelDag.produce_lan_test_block(source._engine,0,1)
         child=ParallelDag.produce_lan_test_block(source._engine,0,1)
         value=json.loads(child['wire']);tx=value['body']['transactions'][0]
-        tx['body']['to']=[]
+        # A scalar has a possible wire shape but still violates TX semantics.
+        # It reaches the bounded orphan path before its parent is available.
+        tx['body']['to']=0
         tx['signature']=source._local_keys[0].sign_message(b'GG-DAG-LAN-TEST-TX-SIGN-v2\0'+pack(tx['body'])).hex()
         value['body']['payload_root']=_tree(value['body']['transactions'],b'GG-DAG-PAYLOAD-v1\0')[-1][0]
         value['signature']=source._local_keys[0].sign_message(b'GG-DAG-PROPOSAL-SIGN-v1\0'+pack(value['body'])).hex()
@@ -228,6 +230,26 @@ class DagStressProtocolTests(unittest.TestCase):
         self.assertEqual(evidence['blocks'],1);self.assertEqual(evidence['transactions'],1)
         self.assertEqual(receiver._engine._lan_counts[0],1);self.assertEqual(evidence['protocol_fault'],'')
         self.assertEqual(len(receiver._orphans),0);self.assertEqual(receiver._last_error,'GG_DAG_TX_ACCOUNT')
+
+    def test_impossible_signed_orphan_shape_is_rejected_before_buffer_and_valid_child_still_admits(self):
+        source,receiver,_=self.peers
+        first=ParallelDag.produce_lan_test_block(source._engine,0,1)
+        child=ParallelDag.produce_lan_test_block(source._engine,0,1)
+        value=json.loads(child['wire']);tx=value['body']['transactions'][0]
+        tx['body']['to']=[]
+        tx['signature']=source._local_keys[0].sign_message(b'GG-DAG-LAN-TEST-TX-SIGN-v2\0'+pack(tx['body'])).hex()
+        value['body']['payload_root']=_tree(value['body']['transactions'],b'GG-DAG-PAYLOAD-v1\0')[-1][0]
+        value['signature']=source._local_keys[0].sign_message(b'GG-DAG-PROPOSAL-SIGN-v1\0'+pack(value['body'])).hex()
+        with self.assertRaisesRegex(ValueError,'GG_DAG_WIRE_JSON_SHAPE'):
+            receiver._ingest(pack(value),source.public_key)
+        self.assertEqual(len(receiver._orphans),0)
+        self.assertEqual(receiver._engine.lan_evidence()['transactions'],0)
+        self.assertEqual(receiver._ingest(first['wire'],source.public_key),'ADMITTED_UNFINALIZED')
+        self.assertEqual(receiver._ingest(child['wire'],source.public_key),'ADMITTED_UNFINALIZED')
+        evidence=receiver._engine.lan_evidence()
+        self.assertEqual(evidence['blocks'],2);self.assertEqual(evidence['transactions'],2)
+        self.assertEqual(receiver._engine._lan_counts[0],2);self.assertEqual(evidence['protocol_fault'],'')
+        self.assertEqual(len(receiver._orphans),0)
 
 
     def _duplicate_fixture(self):

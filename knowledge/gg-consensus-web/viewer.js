@@ -34,10 +34,16 @@
         detail("Konto", account.address);
       }
       detail("Saldobild / certifikat", value.state_height + " / " + value.certificate_height);
-      detail("Kvorum", value.quorum_required + " av " + value.validator_count + " fasta validatorer");
+      const weighted = typeof value.voting_power_total === "string" && typeof value.quorum_voting_power_required === "string";
+      detail("Kvorum", weighted ? value.quorum_voting_power_required + " av " + value.voting_power_total + " röster · " + value.validator_count + " validatorer" : value.quorum_required + " av " + value.validator_count + " validatorer");
       detail("Tillståndsrot", value.state_root);
-      detail("Kontobevis", value.account_proof_verified ? "Verifierat" : "Ingår inte i paketet");
-      detail("Transaktionsbevis", value.transaction_inclusion_verified ? "Verifierat" : "Ingår inte i paketet");
+      detail("Kontobevis", value.account_proof_verified || value.financial_account_verified ? "Verifierat" : "Ingår inte i paketet");
+      detail("Transaktionsbevis", value.financial_receipt_verified ? "SDK-certifierat betalningskvitto" : value.transaction_inclusion_verified ? "Verifierat" : "Ingår inte i paketet");
+      if (value.financial_receipt_verified && value.financial_receipt) detail("Betalningsutfall", value.financial_receipt.outcome);
+      if (value.financial_block_verified && value.financial_block) {
+        detail("Blockskapare", value.financial_block.creator.key);
+        if (value.financial_block.creator.worker_key) detail("Arbetare", value.financial_block.creator.worker_key);
+      }
       detail("Exekvering", value.execution_status_verified ? "Verifierad från certifierat föregående tillstånd" : "Ingår inte i paketet");
       if (Number.isFinite(value.wasm_linear_memory_bytes)) detail("WASM linjärt minne", (value.wasm_linear_memory_bytes / 1048576).toFixed(1) + " MiB under kontrollen");
     }
@@ -67,11 +73,15 @@
   fetch("/trust.json", { cache: "no-store", credentials: "omit" }).then(async response => {
     if (!response.ok) throw new Error("unavailable");
     const raw = await response.text();
-    if (byteLength(raw) > 16384) throw new Error("invalid");
+    if (byteLength(raw) > 98304) throw new Error("invalid");
     const pinned = JSON.parse(raw);
     if (!pinned.genesis || typeof pinned.genesis_hash !== "string") throw new Error("invalid");
     trust = Object.freeze(pinned);
     element("chain").textContent = pinned.genesis.chain_id;
+    element("network-symbol").textContent = pinned.genesis.symbol;
+    const committee = pinned.genesis.protocol && pinned.genesis.protocol.committee;
+    element("validator-trust").textContent = committee ? "Genesis: " + committee.members.length + " validatorer · ändringar kräver föregående kvorum" : "4 validatorer · 3 krävs";
+    element("quorum-explanation").textContent = committee ? "Mer än två tredjedelar av certifierad rösträtt" : "Minst 3 av 4 signaturer";
     element("connection").textContent = "Lokal förankring låst";
     element("artifact").textContent = "Verifieraren: " + (pinned.verifier_wasm_bytes / 1048576).toFixed(2) + " MiB. Laddas vid kontroll; arbetaren avslutas efteråt.";
     button.disabled = false;

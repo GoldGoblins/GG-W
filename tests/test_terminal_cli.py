@@ -57,6 +57,22 @@ class FakeService:
 
 
 class PureTerminalTests(unittest.TestCase):
+    def test_foreground_account_profile_opens_only_for_observation_without_signing(self):
+        service=FakeService()
+        with redirect_stdout(io.StringIO()),patch('backend.terminal_cli.foreground_session') as foreground:
+            code=main(['--json','--foreground','--command','lan.resume','--args','{"profile":"Owner"}',
+                       '--account-profile','Alice'],service_factory=lambda:service)
+        self.assertEqual(code,0);self.assertEqual(service.closed,1)
+        self.assertEqual(service.calls,[('lan.resume',{'profile':'Owner'}),('lan.account_open',{'profile':'Alice'})])
+        foreground.assert_called_once()
+
+    def test_account_profile_flag_cannot_attach_to_unrelated_or_background_command(self):
+        for args in (['--json','--command','network.start','--account-profile','Alice'],
+                     ['--json','--command','lan.resume','--args','{"profile":"Owner"}','--account-profile','Alice']):
+            created=[]
+            with redirect_stdout(io.StringIO()):code=main(args,service_factory=lambda:created.append(FakeService()))
+            self.assertEqual(code,1);self.assertEqual(created,[])
+
     def test_review_keeps_digest_and_selected_account(self):
         state=fixture();state['consensus']['review']={'id':'gg-review','review_digest':'a'*64,'amount':'1','symbol':'GG-NET-TEST'}
         body={'account_id':'watch-1','amount':'1.000001','symbol':'GGHB','from':'source','to':'recipient','chain_id':'solana:mainnet'}

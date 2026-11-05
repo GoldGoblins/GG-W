@@ -93,6 +93,23 @@ Varje peer annonserar sin signerade publika inbjudan till koordinatorn;
 Windows granskar de två kandidaterna och godkänner den gemensamma sessionen.
 Ingen manuell IP-letning behövs när klienterna väl har startats.
 
+Välj också `profile=LinuxNode` vid första `lan.start` för krypterade egna nycklar
+och beständig verifierad historik. Efter stopp används
+`python3 gg-cli.py --foreground --command "lan.resume profile=LinuxNode"`.
+Samma profil behåller identitet, signerad roster, konton och nästa sekvens;
+gamla produktionsjobb återupptas inte. Linux/Termux begär profillösenord dolt i
+terminalen. Windows använder DPAPI. Lägg aldrig lösenord i argument eller
+bootstrapfiler. Profiler är lokala per apparat och skrivs inte över. LAN-adress
+och port förblir bundna till den signerade sessionen. Utan profil fortsätter
+det tidigare RAM-läget med ny parning efter omstart. Detta är en ändlig privat
+LAB-journal, inte kanonisk DAG-finalitet eller obegränsad produktionslagring.
+
+`node_role=replica` vid första start väljer en full verifierande replika med
+avstängd blockproduktion. Rollen är signerad, kontrolleras vid admission och
+återställs med profilen. Standardrollen är `producer`. Full replika innebär
+verifiering av mottagen historik och är inte en DAG-lättklient eller en
+konsensusvalidator. Andra noders egna produktionsjobb fortsätter oberoende.
+
 Detta val gäller signerade, icke-finansiella testtransaktioner **i DAGoblin-
 blocken**. Alla tre behöver uppdaterad kod och uttryckligt deltagarval före
 ny parning. Windows väljer DAG-testtransaktioner i LAN-dialogen och kör sedan

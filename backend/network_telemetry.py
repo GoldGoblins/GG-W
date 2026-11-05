@@ -35,12 +35,18 @@ def observe(page):
         # Capture the revision first: a concurrent admission may cause one
         # extra read, but cannot hide a newer graph behind a newer revision.
         revision = source.telemetry_revision()
-        body = source.snapshot()
+        view = source.view() if hasattr(source, 'view') else None
+        body = view['parallel_dag'] if view is not None else source.snapshot()
         if body is None:
-            from backend import gg_parallel_dag
-            body=gg_parallel_dag.snapshot()
+            if view is None:
+                from backend import gg_parallel_dag
+                body=gg_parallel_dag.snapshot()
+        from backend.local_node_observation import source_reader
+        sources = view['local_node_sources'] if view is not None else source_reader().view()['local_node_sources']
+        from backend import lan_dag_runtime
+        sources={**sources,'view_available':lan_dag_runtime.active_manager() is None}
         return {'network_page': page, 'revision': revision, 'parallel_dag': body,
-                'observed_monotonic':time.monotonic()}
+                'local_node_sources':sources, 'observed_monotonic':time.monotonic()}
     return None
 
 

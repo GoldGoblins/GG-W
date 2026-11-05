@@ -28,6 +28,9 @@ from backend.gg_ed25519 import Keypair
 
 from backend.application_paths import PROJECT_ROOT, TOOLS_ROOT
 from backend.gg_testnet_process import contain
+from backend.gg_native_start import native_pipe_creation_flags
+from backend import gg_native_pipe_lifecycle as native_pipes
+from backend import gg_process_termination as termination
 from backend.omni_assets import amount_atomic, format_atomic
 from backend.gg_block_graph import BlockHistory, block_hash, comet_block
 
@@ -86,6 +89,7 @@ _binary_stamp=None
 _connections={}
 _block_history=BlockHistory('CometBFT v0.40.0',first_height=1)
 _certified_tip=None
+_safety_fault=''
 
 
 class RpcUnavailable(ValueError):
@@ -113,10 +117,11 @@ def _measure(operation,started,state):
                           'state':state,'observed_at':time.time()})
 
 
-def _environment():
+def _environment(resources=None):
     allowed={'SYSTEMROOT','WINDIR','SYSTEMDRIVE','COMSPEC','PATH','PATHEXT','TEMP','TMP','USERPROFILE','HOME','LANG','LC_ALL'}
     result={k:v for k,v in os.environ.items() if k.upper() in allowed}
-    result.update(GOMAXPROCS='2',GOMEMLIMIT='256MiB')
+    from backend.gg_native_resources import resolve
+    result.update(resolve(resources).environment())
     return result
 
 
@@ -127,22 +132,29 @@ def available():
 def _validate_binary():
     """Bind the optional executable to its public, reproducible source build."""
     global _binary_stamp
-    path=TOOLS/'build-manifest.json'
+    _binary_stamp=_validate_binary_at(TOOLS,BINARY)
+
+
+def _validate_binary_at(tools,binary):
+    tools=Path(tools);binary=Path(binary)
+    path=tools/'build-manifest.json'
     if not path.is_file() or path.stat().st_size>16384:raise ValueError('GG_CONSENSUS_BUILD_RECEIPT_REQUIRED')
     record=json.loads(path.read_text(encoding='utf-8'))
-    if (BINARY.is_symlink() or BINARY.resolve().parent!=TOOLS.resolve()
-        or record.get('binary')!=BINARY.name or _installed_binary(TOOLS)!=BINARY):
+    if (binary.is_symlink() or binary.resolve().parent!=tools.resolve()
+        or record.get('binary')!=binary.name or _installed_binary(tools)!=binary):
         raise ValueError('GG_CONSENSUS_BINARY_PATH')
-    files=sorted([SOURCES/'go.mod',SOURCES/'go.sum',SOURCES/'toolchain.json',*SOURCES.glob('*.go')],key=lambda p:p.name)
+    files=sorted([SOURCES/'go.mod',SOURCES/'go.sum',SOURCES/'toolchain.json',SOURCES/'install_toolchain.py',SOURCES/'sdk_overlay.py',SOURCES/'sdk_patches.json',*SOURCES.glob('*.go')],key=lambda p:p.name)
     entries={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
     expected=hashlib.sha256(json.dumps(entries,sort_keys=True,separators=(',',':')).encode()).hexdigest()
     if record.get('schema')!='gg.consensus.build.v1' or record.get('source_sha256')!=expected or record.get('cometbft')!='v0.40.0':
         raise ValueError('GG_CONSENSUS_REBUILD_REQUIRED')
+    patches=json.loads((SOURCES/'sdk_patches.json').read_text(encoding='utf-8'))['patches']
+    if record.get('dependency_patches')!=patches:raise ValueError('GG_CONSENSUS_REBUILD_REQUIRED')
     digest=hashlib.sha256()
-    with BINARY.open('rb') as binary:
-        for chunk in iter(lambda:binary.read(1024*1024),b''):digest.update(chunk)
+    with binary.open('rb') as incoming:
+        for chunk in iter(lambda:incoming.read(1024*1024),b''):digest.update(chunk)
     if digest.hexdigest()!=record.get('binary_sha256'):raise ValueError('GG_CONSENSUS_BINARY_CHANGED')
-    stat=BINARY.stat();_binary_stamp=(stat.st_size,stat.st_mtime_ns)
+    stat=binary.stat();return stat.st_size,stat.st_mtime_ns
 
 
 def _alive(index):
@@ -195,7 +207,16 @@ def _read_ready(node,process,expected):
         value=json.loads(raw,object_pairs_hook=pairs)
         if (not isinstance(value,dict) or value!=expected
             or any(type(value.get(k)) is not int for k in ('pid','rpc_port','p2p_port'))):return
-        if node.get('process') is process:node['_ready']={'process':process}
+        if 'resources' in value:
+            from backend.gg_native_resources import valid_readiness
+            if (not valid_readiness(value['resources'])
+                    or any(type(value.get(name)) is not int for name in ('sdk_send_bytes_per_second','sdk_recv_bytes_per_second'))):return
+        if node.get('process') is process:
+            accepted={'process':process}
+            if 'resources' in value:
+                accepted['resources']=value['resources']
+                accepted['sdk_rates']={name:value[name] for name in ('sdk_send_bytes_per_second','sdk_recv_bytes_per_second')}
+            node['_ready']=accepted
     except (OSError,ValueError,TypeError):pass
     finally:
         try:process.stdout.close()
@@ -276,27 +297,45 @@ def _read_state_at(index,height):
 
 
 def _verify(payload):
-    if _binary_stamp is not None:
-        stat=BINARY.stat()
-        if (stat.st_size,stat.st_mtime_ns)!=_binary_stamp:raise ValueError('GG_CONSENSUS_BINARY_CHANGED')
+    return _verify_public(payload,BINARY,_binary_stamp)
+
+
+def _verify_public(payload,binary,stamp):
+    if not isinstance(payload,dict) or not isinstance(payload.get('genesis'),dict):raise ValueError('GG_CONSENSUS_CERTIFICATE_INVALID')
+    if 'committee_trust_path' in payload:raise ValueError('GG_CONSENSUS_REMOTE_TRUST_PATH_FORBIDDEN')
+    public=payload['genesis'].get('schema')=='gg.native.genesis.v7'
+    if stamp is not None:
+        stat=binary.stat()
+        if (stat.st_size,stat.st_mtime_ns)!=stamp:raise ValueError('GG_CONSENSUS_BINARY_CHANGED')
     raw=_pack(payload)
     if len(raw)>256*1024:raise ValueError('GG_CONSENSUS_PROOF_LIMIT')
-    flags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0
-    try:
-        result=subprocess.run([str(BINARY),'verify'],input=raw,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,
-                              env=_environment(),timeout=6,creationflags=flags)
-    except (OSError,subprocess.TimeoutExpired):
-        raise ValueError('GG_CONSENSUS_VERIFY_UNAVAILABLE') from None
-    if result.returncode or len(result.stdout)>8192:raise ValueError('GG_CONSENSUS_CERTIFICATE_INVALID')
-    verified=json.loads(result.stdout)
+    if public:
+        from backend.gg_committee_history import history
+        owned=history({'genesis':payload['genesis'],'genesis_hash':payload['genesis_hash']},binary,stamp)
+        verified=owned.verify(payload)
+    else:
+        flags=native_pipe_creation_flags()
+        try:
+            result=native_pipes.LEGACY_VERIFY.run([str(binary),'verify'],input=raw,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,
+                                  env=_environment(),timeout=6,creationflags=flags)
+        except (OSError,subprocess.TimeoutExpired):
+            raise ValueError('GG_CONSENSUS_VERIFY_UNAVAILABLE') from None
+        if result.returncode or len(result.stdout)>8192:raise ValueError('GG_CONSENSUS_CERTIFICATE_INVALID')
+        verified=json.loads(result.stdout)
     if (not isinstance(verified,dict) or verified.get('verified') is not True
         or verified.get('schema')!='gg.consensus.proof-result.v1'
-        or verified.get('validator_count')!=COUNT or verified.get('quorum_required')!=QUORUM
+        or not public and (verified.get('validator_count')!=COUNT or verified.get('quorum_required')!=QUORUM)
         or verified.get('chain_id')!=payload['genesis']['chain_id']
         or verified.get('state_height')!=payload['state']['height']
         or verified.get('certificate_height')!=payload['state']['height']+1
         or verified.get('state_root')!=payload['state']['state_root']):
         raise ValueError('GG_CONSENSUS_CERTIFICATE_INVALID')
+    if public:
+        count=verified.get('validator_count');power=verified.get('voting_power_total');quorum=verified.get('quorum_voting_power_required')
+        if (type(count) is not int or not 4<=count<=64 or type(power) is not str or not re.fullmatch(r'[1-9][0-9]{0,18}',power)
+                or type(quorum) is not str or quorum!=str(int(power)*2//3+1) or verified.get('quorum_required') is not None
+                or verified.get('committee_trust_scope')!='PINNED_GENESIS_AND_PRECEDING_COMMITTEE_QUORUM_CERTIFICATES'):
+            raise ValueError('GG_CONSENSUS_CERTIFICATE_INVALID')
     return verified
 
 
@@ -306,7 +345,8 @@ def _proof_payload(state,header):
 
 
 def _verified_state():
-    global _last_state,_last_proof,_certified_tip
+    global _last_state,_last_proof,_certified_tip,_safety_fault,_review
+    if _safety_fault:raise ValueError(_safety_fault)
     candidates=[]
     for index in range(COUNT):
         if not _alive(index):continue
@@ -317,6 +357,9 @@ def _verified_state():
         except (ValueError,KeyError,TypeError,OSError,http.client.HTTPException):continue
     if not candidates:raise ValueError('GG_CONSENSUS_NO_CERTIFIED_STATE')
     for height,index in sorted(candidates,reverse=True):
+        # A reachable lagging validator cannot rewind an already certified
+        # account view or supply an old nonce for a fresh spending review.
+        if _certified_tip is not None and height<_certified_tip[0]:continue
         try:
             commit=_rpc(index,'commit',{'height':str(height)})['signed_header']
             state=_read_state_at(index,height-1)
@@ -331,10 +374,19 @@ def _verified_state():
                 verified=_verify(payload)
                 if len(_certificate_cache)>=32:_certificate_cache.clear()
                 _certificate_cache[cache_key]=dict(verified)
+            certified=(height,block_hash(commit['commit']['block_id']['hash']))
+            if _certified_tip is not None and height==_certified_tip[0] and certified!=_certified_tip:
+                # Latch only after SDK verification, never on an unverified RPC
+                # claim. Two conflicting valid certificates break the assumed
+                # fault bound; later peers must not silently erase that fact.
+                _safety_fault='GG_CONSENSUS_CONFLICTING_CERTIFICATE';_review=None
+                raise ValueError(_safety_fault)
             _last_state=state;_last_proof=verified
-            _certified_tip=(height,block_hash(commit['commit']['block_id']['hash']))
+            _certified_tip=certified
             return index,state,verified
-        except (ValueError,KeyError,TypeError,OSError,http.client.HTTPException):continue
+        except (ValueError,KeyError,TypeError,OSError,http.client.HTTPException):
+            if _safety_fault:raise ValueError(_safety_fault) from None
+            continue
     raise ValueError('GG_CONSENSUS_NO_CERTIFIED_STATE')
 
 
@@ -359,9 +411,52 @@ def export_proof(account=0):
         return json.loads(_pack(payload))
 
 
+def export_dag_proof(account,block=None):
+    """Public DAG membership under this owned test committee's pinned genesis."""
+    with LOCK:
+        segmented=bool(_genesis and _genesis.get('dag_segmented') is not None)
+        source=_genesis.get('dag_segmented' if segmented else 'dag') if _genesis else None
+        if source is None:raise ValueError('GG_CONSENSUS_DAG_NOT_CONFIGURED')
+        if account not in source['accounts']:raise ValueError('GG_CONSENSUS_DAG_ACCOUNT')
+        if block is not None and (not isinstance(block,str) or not re.fullmatch(r'[0-9a-f]{64}',block)):
+            raise ValueError('GG_CONSENSUS_DAG_BLOCK')
+        index,state,verified=_verified_state()
+        if state['height']<1 or not segmented and state['dag']['checkpoint']<1:raise ValueError('GG_CONSENSUS_DAG_NO_CERTIFIED_CHECKPOINT')
+        header=_rpc(index,'commit',{'height':str(verified['certificate_height'])})['signed_header']
+        payload=_proof_payload(state,header)
+        payload['dag_segmented_account_proof' if segmented else 'dag_account_proof']=_query(index,'/gg/dag/account-proof',state['height'],bytes.fromhex(account))
+        if block is not None:
+            payload['dag_segmented_block_proof' if segmented else 'dag_block_proof']=_query(index,'/gg/dag/block-proof',state['height'],bytes.fromhex(block))
+        if segmented:
+            from backend.gg_dag_segmented import verify_membership
+            verify_membership(payload,{'genesis':_genesis,'genesis_hash':_genesis_hash},binary=BINARY,stamp=_binary_stamp)
+            return json.loads(_pack(payload))
+        result=_verify(payload)
+        if (result.get('dag_account_proof_verified') is not True
+                or block is not None and result.get('dag_block_proof_verified') is not True
+                or result.get('dag_commitment')!=state['dag']):
+            raise ValueError('GG_CONSENSUS_DAG_MEMBERSHIP_REQUIRED')
+        return json.loads(_pack(payload))
+
+
+def export_dag_base_proof():
+    """Read-only selected epoch context from the same owned SDK authority."""
+    from backend.gg_dag_segmented import verify_epoch_base
+    with LOCK:
+        if _genesis is None or _genesis.get('dag_segmented') is None:raise ValueError('GG_CONSENSUS_SEGMENTED_DAG_NOT_CONFIGURED')
+        index,state,verified=_verified_state()
+        header=_rpc(index,'commit',{'height':str(verified['certificate_height'])})['signed_header']
+        payload=_proof_payload(state,header)
+        payload['dag_segmented_base_proof']=_query(index,'/gg/dag/base-proof',state['height'],None)
+        verify_epoch_base(payload,{'genesis':_genesis,'genesis_hash':_genesis_hash},binary=BINARY,stamp=_binary_stamp)
+        return json.loads(_pack(payload))
+
+
 def _launch(index):
     node=_nodes[index]
     if _alive(index):return
+    # A cached exit code is not permission to overwrite an owned child/lease.
+    if node.get('process') is not None or node.get('lease') is not None:_stop_process(index)
     if _binary_stamp is not None:
         stat=BINARY.stat()
         if (stat.st_size,stat.st_mtime_ns)!=_binary_stamp:raise ValueError('GG_CONSENSUS_BINARY_CHANGED')
@@ -374,7 +469,7 @@ def _launch(index):
                'node_seed':bytes(_node_keys[index])[:32].hex(),'root':node['root'],
                'rpc_port':node['rpc_port'],'p2p_port':node['p2p_port'],
                'peers':[{'id':other['node_id'],'port':other['p2p_port']} for i,other in enumerate(_nodes) if i!=index]}
-    flags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0
+    flags=native_pipe_creation_flags()
     process=subprocess.Popen([str(BINARY)],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,
                              cwd=node['root'],env=_environment(),creationflags=flags)
     node['process']=process;node['_ready']=None;node['ownership_provider']='UNVERIFIED'
@@ -398,26 +493,47 @@ def _stop_process(index):
     node=_nodes[index];process=node.get('process');lease=node.get('lease')
     _drop_connection(index)
     errors=[]
+    # Preserve the original four-second terminate + three-second kill budgets.
+    # Cached Popen.returncode must never skip borrowed-handle terminal proof.
+    if process is not None:
+        deadline=time.monotonic()+7
+        try:
+            if not termination.process_terminal(process):process.terminate()
+            termination.wait_process_terminal(process,min(4,max(0,deadline-time.monotonic())))
+        except (OSError,subprocess.TimeoutExpired):
+            try:
+                if not termination.process_terminal(process):process.kill()
+                termination.wait_process_terminal(process,min(3,max(0,deadline-time.monotonic())))
+            except (OSError,subprocess.TimeoutExpired):errors.append('process')
+        try:terminal=termination.process_terminal(process)
+        except OSError:terminal=False
+        if not terminal:raise ValueError('GG_CONSENSUS_STOP_FAILED')
+    # A pending child or failed leaf close retains every exact owner for retry.
     try:
-        if process is not None and process.poll() is None:
-            process.terminate()
-            try:process.wait(timeout=4)
-            except subprocess.TimeoutExpired:process.kill();process.wait(timeout=3)
-    except (OSError,subprocess.TimeoutExpired):errors.append('process')
-    try:
-        if lease:lease.close()
-    except (OSError,RuntimeError):errors.append('lease')
-    if process is not None and process.poll() is None:raise ValueError('GG_CONSENSUS_STOP_FAILED')
+        if lease is not None:lease.close()
+    except (OSError,RuntimeError):raise ValueError('GG_CONSENSUS_STOP_CLEANUP_FAILED') from None
+    if process is not None:
+        for stream in (process.stdin,process.stdout):
+            if stream is not None:
+                try:stream.close()
+                except (OSError,ValueError):errors.append('pipe')
     node['process']=None;node['lease']=None;node['_ready']=None
     if errors:raise ValueError('GG_CONSENSUS_STOP_CLEANUP_FAILED')
 
 
-def start():
+def start(*,dag_source=None):
     global _temporary,_genesis,_genesis_hash,_accounts,_validator_keys,_node_keys,_nodes
     global _review,_last_state,_last_proof,_last_test,_benchmark,_submitted
+    if dag_source is not None:
+        from backend.gg_dag_checkpoint import validate_source
+        dag_source=validate_source(dag_source)
+        if int(dag_source['started_at_ns'])>time.time_ns()+5_000_000_000:
+            raise ValueError('GG_CONSENSUS_DAG_SOURCE_TIME')
     with LOCK:
         if _closed:raise ValueError('GG_CONSENSUS_SHUTTING_DOWN')
         if _genesis is not None:
+            if dag_source is not None and dag_source!=_genesis.get('dag_segmented',_genesis.get('dag')):
+                raise ValueError('GG_CONSENSUS_DAG_ALREADY_BOUND')
             # Paused validators retain their chain and RAM signer identities.
             # A new genesis requires an explicit complete stop first.
             for index in range(COUNT):
@@ -427,6 +543,8 @@ def start():
         if not available():raise ValueError('GG_CONSENSUS_TOOLCHAIN_REQUIRED')
         _validate_binary()
         _temporary=tempfile.TemporaryDirectory(prefix='gg-consensus-public-')
+        # Only strict stop() may delete a root still used by an owned child.
+        _temporary._finalizer.detach()
         _accounts=[Keypair() for _ in range(COUNT)]
         _validator_keys=[Keypair() for _ in range(COUNT)]
         _node_keys=[Keypair() for _ in range(COUNT)]
@@ -434,6 +552,9 @@ def start():
                   'genesis_time_unix':int(time.time()),'accounts':[_public(k) for k in _accounts],
                   'validators':[_public(k) for k in _validator_keys],'supply_atomic':str(SUPPLY),
                   'decimals':DECIMALS,'symbol':SYMBOL}
+        if dag_source is not None:
+            if dag_source['schema']=='gg.dag.consensus.source.v2':_genesis.update(schema='gg.native.genesis.v4',dag_segmented=dag_source)
+            else:_genesis.update(schema='gg.native.genesis.v2',dag=dag_source)
         _genesis_hash=_digest(_genesis)
         _block_history.reset(_genesis_hash)
         reservations=[]
@@ -471,17 +592,17 @@ def start():
 
 
 def stop():
-    global _temporary,_genesis,_genesis_hash,_accounts,_validator_keys,_node_keys,_nodes,_review,_last_state,_last_proof,_certified_tip
+    global _temporary,_genesis,_genesis_hash,_accounts,_validator_keys,_node_keys,_nodes,_review,_last_state,_last_proof,_certified_tip,_safety_fault
     with LOCK:
         errors=[]
         for index in range(len(_nodes)):
             try:_stop_process(index)
             except (ValueError,OSError):errors.append(index)
-        if any(_alive(i) for i in range(len(_nodes))):raise ValueError('GG_CONSENSUS_STOP_FAILED')
+        if any(node.get('process') is not None or node.get('lease') is not None for node in _nodes):raise ValueError('GG_CONSENSUS_STOP_FAILED')
         temporary=_temporary;_temporary=None
         _nodes=[];_review=None;_accounts=[];_validator_keys=[];_node_keys=[];_genesis=None;_genesis_hash=''
         _last_state=None;_last_proof=None;_certificate_cache.clear();_execution_cache.clear()
-        _certified_tip=None;_block_history.reset('')
+        _certified_tip=None;_safety_fault='';_block_history.reset('')
         if temporary is not None:temporary.cleanup()
         if errors:raise ValueError('GG_CONSENSUS_STOP_CLEANUP_FAILED')
         return {'state':'STOPPED'}
@@ -524,6 +645,7 @@ def prepare(sender,recipient,amount):
     global _review
     with LOCK:
         _review=None
+        if _safety_fault:raise ValueError(_safety_fault)
         if _genesis is None:raise ValueError('GG_CONSENSUS_STOPPED')
         _index(sender)
         if sum(_alive(i) for i in range(COUNT))<QUORUM:raise ValueError('GG_CONSENSUS_NO_QUORUM')
@@ -624,6 +746,8 @@ def _submit(raw,description,wait=8):
 def send(identifier,review_digest):
     global _review
     with LOCK:
+        if _safety_fault:
+            _review=None;raise ValueError(_safety_fault)
         review=_review
         if not review or review.get('id')!=identifier or review.get('review_digest')!=review_digest:
             raise ValueError('GG_CONSENSUS_REVIEW_REQUIRED')
@@ -844,10 +968,10 @@ def snapshot():
                                      'atomic':mapping[a]['balance_atomic'],'nonce':mapping[a]['nonce']} for i,a in enumerate(_genesis['accounts'])])
             result['block_graph']=_block_graph(verified_index,proof['certificate_height'])
         except (ValueError,KeyError,TypeError,OSError,http.client.HTTPException):
-            result.update(state='READ_FAILED' if result['online']>=QUORUM else 'NO_QUORUM',error='GG_CONSENSUS_READ_FAILED')
+            result.update(state='SAFETY_FAULT' if _safety_fault else 'READ_FAILED' if result['online']>=QUORUM else 'NO_QUORUM',error=_safety_fault or 'GG_CONSENSUS_READ_FAILED')
             result['block_graph']=_block_history.snapshot(_transactions,ttf_basis='API_SUBMISSION_TO_EXECUTION_PROOF',stale=True)
         if _review and time.time()>_review['expires_at']:_review=None
-        if result['state'] in {'READ_FAILED','NO_QUORUM'}:_review=None
+        if result['state'] in {'READ_FAILED','NO_QUORUM','SAFETY_FAULT'}:_review=None
         result['review']=dict(_review) if _review else None
         result['transactions']=[{k:v for k,v in record.items() if not k.startswith('_')} for record in _transactions]
         result['unresolved']=any(t['state'] in {'SUBMITTED','BROADCAST_UNKNOWN'} for t in _transactions)

@@ -14,15 +14,22 @@ import (
 )
 
 func validatorSet(genesis Genesis) *types.ValidatorSet {
-	validators := make([]*types.Validator, 4)
+	validators := make([]*types.Validator, len(genesis.Validators))
 	for i, encoded := range genesis.Validators {
 		public, _ := hex.DecodeString(encoded)
-		validators[i] = types.NewValidator(cmted.PubKey(public), 1)
+		validators[i] = types.NewValidator(cmted.PubKey(public), genesisValidatorPower(genesis, i))
 	}
 	return types.NewValidatorSet(validators)
 }
 
 func invalidResult() string { return `{"verified":false,"error":"GG_PROOF_INVALID"}` }
+
+func loadInputCommitteeTrust(input *VerifyInput) error {
+	if input.CommitteeTrustPath != "" {
+		return errCommittee
+	}
+	return nil
+}
 
 func verifyPublic(_ js.Value, arguments []js.Value) (result any) {
 	result = invalidResult()
@@ -39,7 +46,7 @@ func verifyPublic(_ js.Value, arguments []js.Value) (result any) {
 		return result
 	}
 	var input VerifyInput
-	if decodeStrict([]byte(raw), &input) != nil {
+	if decodeStrictLimited([]byte(raw), &input, MaxBlockTxs, 64) != nil {
 		return result
 	}
 	verified, err := verifyInput(input)

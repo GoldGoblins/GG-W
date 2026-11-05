@@ -57,6 +57,119 @@ def fixture():
     return copy.deepcopy(_FIXTURE[0]),installer
 
 
+class GeneralAccountPolicyTests(unittest.TestCase):
+    """Request pin/projection policy only; cryptographic tests run real WASM."""
+    def policy(self,packet,trust,result=None):
+        node=shutil.which('node')
+        if not node:self.skipTest('Node is required for public proof policy tests')
+        script="const fs=require('node:fs'),p=require(process.argv[1]),v=JSON.parse(fs.readFileSync(0,'utf8'));try{const raw=p.pinPacket(v.packet,v.trust);process.stdout.write(JSON.stringify({ok:true,pinned:JSON.parse(raw),account:v.result?p.verifiedAccount(raw,v.result):null}));}catch(e){process.stdout.write(JSON.stringify({ok:false,error:p.publicError(e)}));}"
+        run=subprocess.run([node,'-e',script,str(web.ASSETS/'proof-policy.js')],input=pack({'packet':pack(packet).decode(),'trust':trust,'result':result}),capture_output=True,timeout=5,creationflags=FLAGS)
+        self.assertEqual(run.returncode,0)
+        return json.loads(run.stdout)
+
+    def sample(self):
+        address='a'*64;genesis={'chain_id':'ggnet:'+'b'*24}
+        packet={'genesis':genesis,'genesis_hash':'c'*64,'expected_financial_account':address,
+                'financial_account':{'proof':{'address':address}},'state':{'symbol':'GG-NET-TEST','decimals':6}}
+        trust={'genesis':genesis,'genesis_hash':'c'*64,'expected_financial_account':address}
+        return packet,trust
+
+    def test_account_proof_requires_the_independently_pinned_requested_address(self):
+        packet,trust=self.sample()
+        self.assertTrue(self.policy(packet,trust)['ok'])
+        for mode in ('missing_pin','different_pin','provider_changes_both_fields'):
+            with self.subTest(mode=mode):
+                value=copy.deepcopy(packet);pin=copy.deepcopy(trust)
+                if mode=='missing_pin':pin.pop('expected_financial_account')
+                elif mode=='different_pin':pin['expected_financial_account']='d'*64
+                else:value['expected_financial_account']='d'*64;value['financial_account']['proof']['address']='d'*64
+                outcome=self.policy(value,pin)
+                self.assertFalse(outcome['ok']);self.assertEqual(outcome['error'],'GG_PROOF_PIN_MISMATCH')
+
+    def test_verified_general_account_projection_preserves_decimal_nonce(self):
+        packet,trust=self.sample();address=trust['expected_financial_account']
+        result={'verified':True,'financial_account_verified':True,'financial_account_address':address,'financial_account_exists':True,
+                'financial_account':{'address':address,'balance_atomic':'123','nonce':'18446744073709551615'}}
+        outcome=self.policy(packet,trust,result)
+        self.assertTrue(outcome['ok']);self.assertEqual(outcome['account'],{'address':address,'balance_atomic':'123','nonce':'18446744073709551615','exists':True,'symbol':'GG-NET-TEST','decimals':6})
+        result['financial_account_address']='d'*64
+        self.assertFalse(self.policy(packet,trust,result)['ok'])
+
+    def test_verified_absence_is_explicit_and_cannot_carry_a_fabricated_account(self):
+        packet,trust=self.sample();address=trust['expected_financial_account']
+        result={'verified':True,'financial_account_verified':True,'financial_account_address':address,'financial_account_exists':False,'financial_account':None}
+        outcome=self.policy(packet,trust,result)
+        self.assertTrue(outcome['ok']);self.assertFalse(outcome['account']['exists']);self.assertEqual(outcome['account']['balance_atomic'],'0')
+        result['financial_account']={'address':address,'balance_atomic':'999','nonce':'0'}
+        self.assertFalse(self.policy(packet,trust,result)['ok'])
+
+
+class SelectedPublicProofPolicyTests(unittest.TestCase):
+    """Request selection boundaries only; real WASM checks certificates below."""
+    policy=GeneralAccountPolicyTests.policy
+
+    def samples(self):
+        base={'genesis':{'chain_id':'ggnet:'+'a'*24},'genesis_hash':'b'*64}
+        selectors={'receipt':{'block':'c'*64,'index':0,'transaction_id':'d'*64},
+                   'registry':{'namespace':'producers','key':'e'*64},'block':'c'*64,
+                   'reward':{'index':'1','address':'f'*64}}
+        for name,selector in selectors.items():
+            packet={**copy.deepcopy(base),'financial_'+name:{},'expected_financial_'+name:copy.deepcopy(selector)}
+            trust={**copy.deepcopy(base),'expected_financial_'+name:copy.deepcopy(selector)}
+            yield name,packet,trust
+
+    def test_every_selected_proof_requires_an_independent_request(self):
+        for name,packet,trust in self.samples():
+            selector='expected_financial_'+name
+            with self.subTest(proof=name):
+                self.assertTrue(self.policy(packet,trust)['ok'])
+                missing=copy.deepcopy(trust);missing.pop(selector)
+                self.assertEqual(self.policy(packet,missing),{'ok':False,'error':'GG_PROOF_PIN_MISMATCH'})
+                changed=copy.deepcopy(packet)
+                if isinstance(changed[selector],dict):changed[selector]['provider_override']='x'
+                else:changed[selector]='9'*64
+                self.assertEqual(self.policy(changed,trust),{'ok':False,'error':'GG_PROOF_PIN_MISMATCH'})
+
+    def test_requested_proof_cannot_be_omitted_from_an_otherwise_valid_packet(self):
+        for name,packet,trust in self.samples():
+            packet.pop('financial_'+name);packet.pop('expected_financial_'+name)
+            with self.subTest(proof=name):
+                self.assertEqual(self.policy(packet,trust),{'ok':False,'error':'GG_PROOF_PIN_MISMATCH'})
+        packet,trust=GeneralAccountPolicyTests.sample(self)
+        packet.pop('financial_account');packet.pop('expected_financial_account')
+        self.assertEqual(self.policy(packet,trust),{'ok':False,'error':'GG_PROOF_PIN_MISMATCH'})
+
+    def trust(self):
+        from tests.test_financial_general_clients import public_general_pin,public_key
+        value=public_general_pin()
+        value.update(expected_financial_account=public_key(0).pubkey().hex(),
+            expected_financial_receipt={'block':'c'*64,'index':4999,'transaction_id':'d'*64},
+            expected_financial_registry={'namespace':'operations','key':'e'*64},expected_financial_block='c'*64,
+            expected_financial_reward={'index':'1','address':public_key(1).pubkey().hex()})
+        return value
+
+    def test_loopback_trust_keeps_an_owned_copy_of_every_exact_selector(self):
+        trust=self.trust();pinned=web._pin(trust)
+        self.assertEqual(pinned,trust)
+        trust['expected_financial_receipt']['index']=0
+        self.assertEqual(pinned['expected_financial_receipt']['index'],4999)
+
+    def test_loopback_pin_rejects_ambiguous_or_out_of_bound_selectors(self):
+        for name,value in (
+            ('expected_financial_account','0'*64),('expected_financial_block','G'*64),
+            ('expected_financial_receipt',{'block':'c'*64,'index':True,'transaction_id':'d'*64}),
+            ('expected_financial_receipt',{'block':'c'*64,'index':5000,'transaction_id':'d'*64}),
+            ('expected_financial_receipt',{'block':'c'*64,'index':0,'transaction_id':'d'*64,'trusted':True}),
+            ('expected_financial_registry',{'namespace':'unknown','key':'e'*64}),
+            ('expected_financial_reward',{'index':'0','address':'f'*64}),
+            ('expected_financial_reward',{'index':'18446744073709551616','address':'f'*64}),
+            ('expected_financial_reward',{'index':1,'address':'f'*64})):
+            trust=self.trust();trust[name]=value
+            with self.subTest(selector=name,value_type=type(value).__name__),self.assertRaises(ValueError):web._pin(trust)
+        trust=self.trust();trust['trusted']=True
+        with self.assertRaises(ValueError):web._pin(trust)
+
+
 class PublicFixture(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -176,6 +289,8 @@ class LoopbackViewerTests(PublicFixture):
         first=web.start(self.trust);old=json.loads(self.request(first['url'],'/trust.json')[2])
         changed=copy.deepcopy(self.trust)
         changed['genesis']['chain_id']='ggnet:'+'d'*24
+        if 'membership' in changed['genesis']:
+            changed['genesis']['membership']['chain_id']=changed['genesis']['chain_id']
         changed['genesis_hash']=hashlib.sha256(pack(changed['genesis'])).hexdigest()
         second=web.start(changed)
         self.assertNotEqual(first['url'],second['url'])

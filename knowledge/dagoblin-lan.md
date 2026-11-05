@@ -4,6 +4,16 @@ Första målet är en Windows-dator, en Linux-dator och en Androidtelefon med
 Termux på samma privata nät. VPS och huvudnät ingår inte i detta steg.
 Samma headless-transport används av Desktop och terminalpaketen.
 
+## Låst leveransordning
+
+[Leveranskontraktet](research/dagoblin/delivery-contract.json) bevarar målet
+och acceptanskraven. All överenskommen kod byggs och kontrolleras lokalt
+först. Därefter fryses en version för en samlad nätverksacceptanssvit.
+Nästa fas är ett testnät med samma implementation och driftflöde som det
+föreslagna huvudnätet, men separat nätidentitet, genesis och testmedel.
+Det görs inga deluppdateringar eller nya fysiska bootstrapcykler per modul.
+Målet får inte markeras klart genom att sänka eller byta ut dess mätkrav.
+
 ## Noder i olika takt och vad provet mäter
 
 En långsam deltagare ska kunna arbeta och hämta block i sin egen takt utan
@@ -389,3 +399,75 @@ trafik trots samma SSID. Ändra nät-/brandväggsinställningar först när ett
 konkret anslutningsfel visar att det behövs.
 
 [Nästa steg och publik beredskap](dagoblin-launch-readiness.md)
+
+## Oberoende egna jobb och hämtning
+
+Den lokala granskningskandidaten har `lan.dag_produce_start` och
+`lan.dag_produce_stop`. De styr bara den anropande processens egna två
+producenter. Parametrarna är `duration_ms`, `transactions_per_block` och
+`interval_ms`. Slut på ett eget jobb stoppar inte peerens mottagning.
+Det samordnade trepartsprovet är en separat åtgärd och dess kvittensregler
+är oförändrat strikta.
+
+Foreground-CLI kan uttryckligen beställa ett enda ändligt eget jobb när
+parningen blivit klar, exempelvis i PowerShell eller Linux-/Termux-skal:
+
+```text
+python gg-cli.py --foreground --command "lan.start label=Linux" --own-production '{"duration_ms":60000,"transactions_per_block":32,"interval_ms":2000}'
+```
+
+Samma flagga fungerar med `lan.join_file` och den befintliga publika
+bootstrapfilen. Flaggan innebär uttryckligt DAG-TX-val för den egna noden.
+Jobbet startas en gång; misslyckad start spelas inte automatiskt om.
+Ctrl+C avslutar den egna foreground-processen. I interaktiv CLI kan de
+nya servicekommandona användas inom samma ägda session.
+
+CLI och Desktop visar nu även hämtad peerhistorik separat från anslutning:
+antal poster vid senaste autentiserade kontroll, återstående poster och
+eventuell lokal blockstorleksgräns. Dessa observationer ger inte finalitet.
+Rollen är producent och replika med verifierade DAG-testtransaktioner;
+det innebär varken PoW-mining eller deltagande i en publik konsensus.
+
+En explicit vald `node_role=replica` är nu en signerad roll för full lokal
+verifiering utan produktion. DAG-motorn ansluter inga egna producentsignerare
+och mottagarna avvisar förslag från de reserverade producentplatserna.
+CLI/Desktop visar rollen, faktisk lokal producentmängd och nätets tillåtna
+producenter. En beständig profil bevarar rollen efter återstart. Detta är
+fortfarande full mottagarverifiering, inte ett verifierat DAG-lättklientläge.
+
+[Säkerhetsgranskning och kvarvarande leveranskrav](research/dagoblin/security-review-2026-10-31.md)
+
+### Full SDK-observer från CLI
+
+En beständig ägarprofil kan uttryckligen öppna en separat full SDK-observer med
+noll rösträtt. Efter att den signerade LAN-kommittén installerats kan CLI skapa,
+öppna, starta och stoppa profilen med `lan.observer_create`, `lan.observer_open`,
+`lan.observer_start` och `lan.observer_stop`, vardera med `profile=Profilnamn`.
+Högst två egna observerprofiler kan vara öppna samtidigt. Den skyddade profilens
+lösenord läses dolt i terminalen och hör aldrig hemma i kommandoargument.
+
+Vid en befintlig LAN-session håller exempelvis följande kommando både den egna
+LAN-processen och den uttryckligt valda observern öppna fram till Ctrl+C:
+
+```text
+gg-cli --foreground --command "lan.resume profile=Termux" --observer-profile PhoneFull
+```
+
+För en ny observerprofil används `--observer-create PhoneFull` i stället.
+CLI väntar på den signerade kommittén före skapande/start och återförsöker inte
+en misslyckad start automatiskt. En lättklient får inte starta en full observer.
+
+Desktop visar samma publicerade nodidentitet, verklig SDK-kontakt, synkning och
+historiska certifikat. Kvitterat tillträde betyder inte att SDK:n är ansluten.
+Äldre CLI-status kan inte visa aktuell kontakt eller påstå att processen ännu
+kör. En observer får ingen rösträtt och blir inte ägare till den delegerande
+producentens block. [Granskning och testernas räckvidd](research/dagoblin/observer-control-review-2026-11-02.md).
+
+Om en profil behöver återöppnas efter ett osäkert lagringsutfall används det
+vanliga `lan.validator_open` respektive `lan.observer_open` med samma profilnamn.
+Det läser och kontrollerar den befintliga profilen på nytt utan att starta en SDK
+eller ändra dess identitet. Fel lösenord eller ändrad identitet ersätter inte
+den tidigare kopplingen. Tidigare startavsikt med saknad nativehistorik förblir
+ett fel. Endast en bevisat aldrig överlämnad, ny startreservation kan släppas;
+delvis skickad startdata får inte tyst bli en ny historik.
+[Start-, lagrings- och livstidsgranskning](research/dagoblin/native-start-review-2026-11-02.md).

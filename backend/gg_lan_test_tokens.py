@@ -60,6 +60,18 @@ class TestTokenLedger:
         self._state={peer:{'balance_atomic':ALLOCATION_ATOMIC,'nonce':0} for peer in self._accounts}
         self._initial=digest({'network_id':network_id,'genesis':descriptor},b'GG-LAN-TEST-TOKEN-GENESIS-v1\0')
         self._head=self._initial;self._records=[];self._by_transaction={};self._lock=threading.RLock()
+        self._durable_sink=None;self._storage_failed=False
+
+    def attach_durable_journal(self,append):
+        if not callable(append):raise ValueError('GG_LAN_TOKEN_DURABLE_CALLBACK')
+        with self._lock:self._durable_sink=append
+
+    def _durable_receipts(self,records):
+        if self._storage_failed:raise ValueError('GG_NODE_STORE_WRITE_FAILED')
+        if records and self._durable_sink is not None:
+            try:self._durable_sink([pack(record) for record in records])
+            except Exception:
+                self._storage_failed=True;raise
 
     def _root(self,state):
         return digest([{'peer_key':peer,'account_key':self._accounts[peer],**state[peer]} for peer in sorted(state)],b'GG-LAN-TEST-TOKEN-STATE-v1\0')
@@ -108,6 +120,7 @@ class TestTokenLedger:
     def sign_batch(self,recipient_peer_key,amount,count=1,*,check=None):
         value=amount_atomic(amount);_integer(count,1,MAX_BATCH)
         with self._lock:
+            if self._storage_failed:raise ValueError('GG_NODE_STORE_WRITE_FAILED')
             if recipient_peer_key not in self._accounts or recipient_peer_key==self._local:raise ValueError('GG_LAN_TOKEN_RECIPIENT')
             source=self._state[self._local]
             if value*count>int(source['balance_atomic']):raise ValueError('GG_LAN_TOKEN_BALANCE')
@@ -165,6 +178,7 @@ class TestTokenLedger:
                 head=digest(receipt_body,b'GG-LAN-TEST-TOKEN-RECEIPT-ID-v1\0')
                 records.append(receipt);returned.append(deepcopy(receipt));new_ids[identifier]=receipt
             if check is not None:check()
+            self._durable_receipts(records)
             self._state=state;self._records.extend(records);self._by_transaction.update(new_ids);self._head=head
             return returned
 
@@ -194,8 +208,9 @@ class TestTokenLedger:
                 if body['state_root']!=self._root(state):raise ValueError('GG_LAN_TOKEN_STATE_ROOT')
                 records.append(deepcopy(receipt));new_ids[identifier]=records[-1]
                 head=digest(body,b'GG-LAN-TEST-TOKEN-RECEIPT-ID-v1\0')
+            self._durable_receipts(records)
             self._state=state;self._records.extend(records);self._by_transaction.update(new_ids);self._head=head
             return self.status()
 
     def clear(self):
-        with self._lock:self._signer=None;self._authority=None
+        with self._lock:self._signer=None;self._authority=None;self._durable_sink=None
